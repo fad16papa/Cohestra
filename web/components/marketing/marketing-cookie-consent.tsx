@@ -71,7 +71,7 @@ export function MarketingCookieConsent() {
   }
 
   if (!visible) {
-    return null;
+    return <div data-cookie-consent="hidden" hidden />;
   }
 
   return (
@@ -80,6 +80,7 @@ export function MarketingCookieConsent() {
         ref={bannerRef}
         role="region"
         aria-label="Cookie consent"
+        data-cookie-consent="visible"
         className="relative z-20 border-b border-line bg-paper px-5 py-3 sm:px-8 lg:px-10"
       >
         <div className="mx-auto flex max-w-6xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">

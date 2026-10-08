@@ -10,19 +10,32 @@ const evidenceDir = path.resolve(
   "../../_bmad-output/planning-artifacts/evidence/px2-43-5"
 );
 
-async function clearConsent(page: Page): Promise<void> {
-  await page.addInitScript((key) => {
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // ignore
-    }
-  }, MARKETING_COOKIE_CONSENT_KEY);
+async function seedConsentAndOpen(
+  page: Page,
+  stored: string | null,
+  route = "/"
+): Promise<void> {
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await page.evaluate(
+    ({ key, value }) => {
+      try {
+        if (value == null) {
+          localStorage.removeItem(key);
+        } else {
+          localStorage.setItem(key, value);
+        }
+      } catch {
+        // ignore
+      }
+    },
+    { key: MARKETING_COOKIE_CONSENT_KEY, value: stored }
+  );
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("[data-cookie-consent]")).toHaveCount(1);
 }
 
-async function openMarketing(page: Page, route = "/"): Promise<void> {
-  await page.goto(route, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("body")).toBeVisible();
+async function waitForConsentDecision(page: Page): Promise<void> {
+  await expect(page.locator('[data-cookie-consent="hidden"]')).toHaveCount(1);
 }
 
 function cookieBanner(page: Page) {
@@ -65,8 +78,7 @@ test.describe("Story 43.5 — product-wide closure", () => {
     test.setTimeout(60_000);
     fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
     await page.setViewportSize({ width: 390, height: 844 });
-    await clearConsent(page);
-    await openMarketing(page);
+    await seedConsentAndOpen(page, null);
     await expectCtaClearOfBanner(page);
     await expect(page.getByRole("button", { name: "Accept" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Reject non-essential" })).toBeVisible();
@@ -77,8 +89,10 @@ test.describe("Story 43.5 — product-wide closure", () => {
     await page.getByRole("link", { name: "Start free" }).first().click();
     await expect(page).toHaveURL(/\/signup/);
     await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator('[data-cookie-consent="visible"]')).toHaveCount(1);
     await expect(cookieBanner(page)).toBeVisible();
     await page.getByRole("button", { name: "Reject non-essential" }).click();
+    await waitForConsentDecision(page);
     await expect(cookieBanner(page)).toHaveCount(0);
     const stored = await page.evaluate(
       (key) => localStorage.getItem(key),
@@ -89,6 +103,7 @@ test.describe("Story 43.5 — product-wide closure", () => {
       path: path.join(evidenceDir, "viewports", "marketing-cookie-390-rejected.png"),
     });
     await page.goto("/pricing", { waitUntil: "domcontentloaded" });
+    await waitForConsentDecision(page);
     await expect(cookieBanner(page)).toHaveCount(0);
   });
 
@@ -96,13 +111,13 @@ test.describe("Story 43.5 — product-wide closure", () => {
     test.setTimeout(60_000);
     fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
     await page.setViewportSize({ width: 1440, height: 900 });
-    await clearConsent(page);
-    await openMarketing(page);
+    await seedConsentAndOpen(page, null);
     await expectCtaClearOfBanner(page);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "marketing-cookie-1440-first-visit.png"),
     });
     await page.getByRole("button", { name: "Accept" }).click();
+    await waitForConsentDecision(page);
     await expect(cookieBanner(page)).toHaveCount(0);
     const stored = await page.evaluate(
       (key) => localStorage.getItem(key),
@@ -110,6 +125,7 @@ test.describe("Story 43.5 — product-wide closure", () => {
     );
     expect(stored).toBe("accepted");
     await page.goto("/docs", { waitUntil: "domcontentloaded" });
+    await waitForConsentDecision(page);
     await expect(cookieBanner(page)).toHaveCount(0);
   });
 
@@ -119,8 +135,7 @@ test.describe("Story 43.5 — product-wide closure", () => {
     test.setTimeout(60_000);
     fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
     await page.setViewportSize({ width: 390, height: 844 });
-    await clearConsent(page);
-    await openMarketing(page);
+    await seedConsentAndOpen(page, null);
     await page.getByRole("button", { name: "Preferences" }).click();
     const dialog = page.getByRole("dialog", { name: "Cookie preferences" });
     await expect(dialog).toBeVisible();
@@ -130,6 +145,7 @@ test.describe("Story 43.5 — product-wide closure", () => {
       path: path.join(evidenceDir, "viewports", "marketing-cookie-390-preferences.png"),
     });
     await dialog.getByRole("button", { name: "Save choices" }).click();
+    await waitForConsentDecision(page);
     await expect(cookieBanner(page)).toHaveCount(0);
     const stored = await page.evaluate(
       (key) => localStorage.getItem(key),
@@ -139,20 +155,14 @@ test.describe("Story 43.5 — product-wide closure", () => {
   });
 
   test("accepted legacy value does not re-prompt", async ({ page }) => {
-    await page.addInitScript((key) => {
-      try {
-        localStorage.setItem(key, "accepted");
-      } catch {
-        // ignore
-      }
-    }, MARKETING_COOKIE_CONSENT_KEY);
-    await openMarketing(page);
+    await seedConsentAndOpen(page, "accepted");
+    await waitForConsentDecision(page);
     await expect(cookieBanner(page)).toHaveCount(0);
   });
 
   test("Cinema #crm hides the cookie banner", async ({ page }) => {
-    await clearConsent(page);
-    await page.goto("/#crm", { waitUntil: "domcontentloaded" });
+    await seedConsentAndOpen(page, null, "/#crm");
+    await waitForConsentDecision(page);
     await expect(cookieBanner(page)).toHaveCount(0);
   });
 });

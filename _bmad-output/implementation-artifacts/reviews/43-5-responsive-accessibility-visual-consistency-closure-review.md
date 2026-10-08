@@ -1,6 +1,6 @@
 # Code review — Story 43.5 product-wide closure
 
-HEAD reviewed: branch `cursor/story-43-5-product-closure-8d20` (post-compact-banner)  
+HEAD reviewed: branch `cursor/story-43-5-product-closure-8d20` (post Docker-smoke persistence fix)  
 Date: 2026-10-08  
 Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor
 
