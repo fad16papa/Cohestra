@@ -272,6 +272,7 @@ development_status:
   # Evidence: 19-4-sandbox-uat-execution-2026-10-08.md. Production NO-GO. Do not mark done.
   # Post-merge 2026-10-08: PR #404 = 69814fc3 on main; CI 37791850295 green; UAT SHA unproven;
   # GitHub Deploy failed empty host; SSH still denied. Evidence: 19-4-post-merge-sandbox-uat-2026-10-08.md.
+  # Owner authorized UAT deploy of merged main 2026-10-08; agent SSH still denied — not deployed.
   epic-19: in-progress
   19-1-uat-droplet-deploy-and-smoke: in-progress
   19-2-https-edge-security-header-verify: review

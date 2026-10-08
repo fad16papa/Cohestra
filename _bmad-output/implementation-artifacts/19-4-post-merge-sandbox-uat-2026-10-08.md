@@ -17,7 +17,9 @@ PR #404 is on `origin/main`. Post-merge GitHub CI on `69814fc3` is green. Automa
 
 **UAT is not proven to be `69814fc3`.** GitHub Actions Deploy on main **failed** (`missing server host` — droplet SSH secrets empty, by Epic 19.1 design). This Cloud Agent has **no SSH private key**, so it cannot deploy or read the droplet SHA.
 
-Real Paddle sandbox Groups A–G were **not** executed. Story 19.4 stays open. **Stop at the UAT deployment gate** until the owner approves deploy **and** provides working `deploy@` access.
+Real Paddle sandbox Groups A–G were **not** executed. Story 19.4 stays open.
+
+**UAT deploy authorization (2026-10-08, this run):** owner explicitly authorized **UAT deploy of merged main**. Access is still **BLOCKED**: this Cloud Agent has no `~/.ssh/cohestra_uat` (or any private key). Re-attempt `ssh -o BatchMode=yes -o IdentitiesOnly=yes deploy@129.212.235.2` → `Permission denied (publickey)`. GitHub Actions Deploy was **not** invoked (empty droplet secrets; concurrency group `deploy-production`; Epic 19.1 forbids uploading `cohestra_uat`). No UAT mutation was performed.
 
 ---
 
@@ -110,9 +112,11 @@ A public key pasted into chat is not sufficient.
 
 ## 8. Deployment gate
 
-Merge of #404 **does not** authorize UAT deploy. **No UAT deploy approval in this run.** **BLOCKED.**
+Owner **authorized** UAT deploy of merged main. Agent execution: **BLOCKED** (no SSH private key). GitHub Actions Deploy **not** used.
 
-Prepared procedure (owner workstation, after approval):
+### Owner workstation — run now
+
+Target SHA: `69814fc3b172d23dfe2782ad837140e234a9ffc7` (`origin/main` at authorization). Do not print secret values. Do not set `Paddle__AllowLive`.
 
 ```bash
 git fetch origin main

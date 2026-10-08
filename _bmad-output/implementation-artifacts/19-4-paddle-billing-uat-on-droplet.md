@@ -14,7 +14,7 @@ Sandbox walk script (do not execute live; sandbox credentials only): `19-4-paddl
 
 ### Dev Agent Record (2026-10-08)
 
-**Halt** (`bmad-dev-story`): PR #404 **merged** as `69814fc3` on `main`. Post-merge CI green. UAT deploy **not** authorized. SSH still `Permission denied (publickey)` (no private key on this VM). Real sandbox Groups A–G **not** executed. Evidence: `19-4-post-merge-sandbox-uat-2026-10-08.md`. Do **not** mark done.
+**Halt** (`bmad-dev-story`): PR #404 **merged** as `69814fc3`. Owner **authorized** UAT deploy of merged main. Agent still cannot SSH (`Permission denied (publickey)`; no `cohestra_uat` private key). Deploy **not** executed from this VM. Evidence: `19-4-post-merge-sandbox-uat-2026-10-08.md`. Do **not** mark done.
 
 ## Story
 
