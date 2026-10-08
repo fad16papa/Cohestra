@@ -100,9 +100,59 @@ public sealed class PaddleCredentialGuardTests
         };
 
         var exception = Record.Exception(() =>
-            PaddleCredentialGuard.Validate(settings, Host(Environments.Production)));
+            PaddleCredentialGuard.Validate(
+                settings,
+                Host(Environments.Production),
+                "https://cohestra.app"));
 
         Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_rejects_live_on_uat_host_even_when_allow_live()
+    {
+        var settings = new PaddleSettings
+        {
+            Environment = "production",
+            ApiKey = "pdl_live_apikey",
+            ClientToken = "live_client",
+            WebhookSecret = "pdl_ntfset_live",
+            AllowLive = true,
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            PaddleCredentialGuard.Validate(
+                settings,
+                Host(Environments.Production),
+                "https://uat.cohestra.app"));
+
+        Assert.Contains("UAT public host", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("AllowLive", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_allows_sandbox_on_uat_host_even_when_allow_live_is_set()
+    {
+        var settings = SandboxSettings();
+        settings.AllowLive = true;
+
+        var exception = Record.Exception(() =>
+            PaddleCredentialGuard.Validate(
+                settings,
+                Host(Environments.Production),
+                "http://uat.cohestra.app"));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void IsUatPublicHost_matches_locked_uat_hostname()
+    {
+        Assert.True(PaddleCredentialGuard.IsUatPublicHost("https://uat.cohestra.app"));
+        Assert.True(PaddleCredentialGuard.IsUatPublicHost("http://uat.example.test/billing"));
+        Assert.False(PaddleCredentialGuard.IsUatPublicHost("https://cohestra.app"));
+        Assert.False(PaddleCredentialGuard.IsUatPublicHost("http://localhost:3000"));
+        Assert.False(PaddleCredentialGuard.IsUatPublicHost(null));
     }
 
     private static PaddleSettings SandboxSettings() =>

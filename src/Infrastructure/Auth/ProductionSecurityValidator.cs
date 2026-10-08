@@ -18,7 +18,8 @@ public static class ProductionSecurityValidator
     {
         var paddle = configuration.GetSection(PaddleSettings.SectionName).Get<PaddleSettings>()
             ?? new PaddleSettings();
-        PaddleCredentialGuard.Validate(paddle, environment);
+        var publicBaseUrl = configuration["PublicWeb:BaseUrl"];
+        PaddleCredentialGuard.Validate(paddle, environment, publicBaseUrl);
 
         if (environment.IsDevelopment() || string.Equals(environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
         {

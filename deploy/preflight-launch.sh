@@ -158,11 +158,26 @@ if [[ -n "$paddle_client" ]]; then
   fi
 fi
 
+public_host="$(python3 - "${PUBLIC_BASE_URL:-}" <<'PY'
+import sys
+from urllib.parse import urlparse
+raw = sys.argv[1] if len(sys.argv) > 1 else ""
+host = (urlparse(raw).hostname or "").lower()
+print(host)
+PY
+)"
+is_uat_host=false
+if [[ "$public_host" == "uat.cohestra.app" || "$public_host" == uat.* ]]; then
+  is_uat_host=true
+fi
+
 if [[ -n "$paddle_api" ]]; then
   require_nonempty "Paddle__WebhookSecret" "${Paddle__WebhookSecret:-}"
   require_nonempty "Paddle__ClientToken" "${Paddle__ClientToken:-}"
 
-  if [[ "$paddle_env" == "production" ]]; then
+  if [[ "$is_uat_host" == true && ( "$paddle_env" == "production" || "$paddle_api_is_live" == true || "$paddle_client_is_live" == true ) ]]; then
+    fail "Live Paddle cannot be used when PUBLIC_BASE_URL is a UAT host, even with AllowLive"
+  elif [[ "$paddle_env" == "production" ]]; then
     if [[ "$paddle_api_is_sandbox" == true || "$paddle_client_is_sandbox" == true ]]; then
       fail "Sandbox Paddle credentials cannot be used when Paddle__Environment=production"
     fi

@@ -39,7 +39,7 @@ Classify with `bash deploy/classify-paddle-env.sh` — expect LIVE labels, never
 
 ## After env change
 
-Live credentials are rejected by `PaddleCredentialGuard` and `deploy/preflight-launch.sh` unless the owner sets `Paddle__AllowLive=true` (or `COHESTRA_ALLOW_LIVE_PADDLE=1`) for this documented cutover. Do not set those flags on UAT or Development.
+Live credentials are rejected by `PaddleCredentialGuard` and `deploy/preflight-launch.sh` unless the owner sets `Paddle__AllowLive=true` (or `COHESTRA_ALLOW_LIVE_PADDLE=1`) **and** `PUBLIC_BASE_URL` is not a UAT host (`uat.cohestra.app` / `uat.*`). AllowLive cannot enable live Paddle on UAT. Do not set live flags while `PUBLIC_BASE_URL=http://uat.cohestra.app`.
 
 ```bash
 Paddle__AllowLive=true COHESTRA_ALLOW_LIVE_PADDLE=1 bash deploy/preflight-launch.sh

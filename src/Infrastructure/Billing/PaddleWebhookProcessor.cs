@@ -81,7 +81,7 @@ internal sealed class PaddleWebhookProcessor(
                 => await HandleSubscriptionUpdatedAsync(notification!.Data, cancellationToken),
             "subscription.canceled" => await HandleSubscriptionCanceledAsync(notification!.Data, cancellationToken),
             "adjustment.created" or "adjustment.updated"
-                => await HandleAdjustmentAsync(notification!.Data, cancellationToken),
+                => await HandleAdjustmentAsync(notification!, cancellationToken),
             _ => false,
         };
 
@@ -102,10 +102,16 @@ internal sealed class PaddleWebhookProcessor(
         {
             await dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException ex) when (IsUniqueViolation(ex))
+        catch (DbUpdateException ex) when (IsUniqueViolation(ex, out var constraint))
         {
-            logger.LogInformation(ex, "Concurrent webhook delivery for event {EventId}", eventId);
-            return PaddleWebhookProcessResult.DuplicateEvent();
+            if (IsWebhookEventIdConstraint(constraint))
+            {
+                logger.LogInformation(ex, "Concurrent webhook delivery for event {EventId}", eventId);
+                return PaddleWebhookProcessResult.DuplicateEvent();
+            }
+
+            logger.LogInformation(ex, "Concurrent adjustment cursor write for event {EventId}", eventId);
+            return PaddleWebhookProcessResult.Retry("Concurrent adjustment update.");
         }
 
         var tenantId = dbContext.ChangeTracker.Entries<Tenant>()
@@ -271,11 +277,11 @@ internal sealed class PaddleWebhookProcessor(
     }
 
     private async Task<bool> HandleAdjustmentAsync(
-        JsonElement data,
+        PaddleNotification notification,
         CancellationToken cancellationToken)
     {
-        var adjustment = data.Deserialize<PaddleAdjustment>(PaddleJson.Options);
-        if (adjustment is null)
+        var adjustment = notification.Data.Deserialize<PaddleAdjustment>(PaddleJson.Options);
+        if (adjustment is null || string.IsNullOrWhiteSpace(adjustment.Id))
         {
             return false;
         }
@@ -298,6 +304,36 @@ internal sealed class PaddleWebhookProcessor(
             return false;
         }
 
+        var occurredAt = notification.OccurredAt
+            ?? adjustment.UpdatedAt
+            ?? adjustment.CreatedAt
+            ?? DateTimeOffset.UtcNow;
+        var action = adjustment.Action?.Trim().ToLowerInvariant() ?? string.Empty;
+        var status = adjustment.Status?.Trim().ToLowerInvariant() ?? string.Empty;
+
+        var cursor = await dbContext.PaddleAdjustmentCursors
+            .FirstOrDefaultAsync(item => item.AdjustmentId == adjustment.Id, cancellationToken);
+        if (cursor is not null && cursor.OccurredAt >= occurredAt)
+        {
+            logger.LogInformation(
+                "Ignoring stale Paddle adjustment {AdjustmentId} at {OccurredAt} (cursor {CursorOccurredAt} {CursorStatus})",
+                adjustment.Id,
+                occurredAt,
+                cursor.OccurredAt,
+                cursor.Status);
+            return true;
+        }
+
+        if (cursor is null)
+        {
+            cursor = new PaddleAdjustmentCursor { AdjustmentId = adjustment.Id };
+            dbContext.PaddleAdjustmentCursors.Add(cursor);
+        }
+
+        cursor.OccurredAt = occurredAt;
+        cursor.Status = status;
+        cursor.Action = action;
+
         if (tenant.IsComplimentary)
         {
             logger.LogInformation(
@@ -307,8 +343,6 @@ internal sealed class PaddleWebhookProcessor(
             return true;
         }
 
-        var action = adjustment.Action?.Trim().ToLowerInvariant();
-        var status = adjustment.Status?.Trim().ToLowerInvariant();
         if (status is not "approved")
         {
             return true;
@@ -425,16 +459,23 @@ internal sealed class PaddleWebhookProcessor(
     private static bool IsRenewalOrigin(string? origin) =>
         origin is "subscription_recurring" or "subscription_charge" or "subscription_update";
 
-    private static bool IsUniqueViolation(DbUpdateException ex)
+    private static bool IsUniqueViolation(DbUpdateException ex, out string? constraintName)
     {
+        constraintName = null;
         for (var inner = ex.InnerException; inner is not null; inner = inner.InnerException)
         {
             if (inner is PostgresException postgres && postgres.SqlState == PostgresErrorCodes.UniqueViolation)
             {
+                constraintName = postgres.ConstraintName;
                 return true;
             }
         }
 
         return false;
     }
+
+    private static bool IsWebhookEventIdConstraint(string? constraintName) =>
+        string.IsNullOrWhiteSpace(constraintName)
+        || constraintName.Contains("paddle_webhook_events", StringComparison.OrdinalIgnoreCase)
+        || constraintName.Contains("EventId", StringComparison.OrdinalIgnoreCase);
 }

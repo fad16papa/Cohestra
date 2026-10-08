@@ -196,7 +196,8 @@ public sealed class ProductionSecurityValidatorTests
             "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
             paddleEnvironment: "sandbox",
             paddleApiKey: "pdl_sdbx_apikey",
-            paddleClientToken: "test_client");
+            paddleClientToken: "test_client",
+            publicBaseUrl: "http://uat.cohestra.app");
 
         var exception = Record.Exception(() =>
             ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
@@ -235,18 +236,57 @@ public sealed class ProductionSecurityValidatorTests
         Assert.Contains("Paddle:AllowLive=true", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Validate_rejects_live_paddle_on_uat_public_host_even_with_allow_live()
+    {
+        var configuration = ProductionConfig(
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+            paddleEnvironment: "production",
+            paddleApiKey: "pdl_live_apikey",
+            paddleClientToken: "live_client",
+            paddleAllowLive: true,
+            publicBaseUrl: "https://uat.cohestra.app");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("UAT public host", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_allows_sandbox_uat_when_allow_live_is_accidentally_true()
+    {
+        var configuration = ProductionConfig(
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+            paddleEnvironment: "sandbox",
+            paddleApiKey: "pdl_sdbx_apikey",
+            paddleClientToken: "test_client",
+            paddleAllowLive: true,
+            publicBaseUrl: "http://uat.cohestra.app");
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
     private static IConfiguration ProductionConfig(
         string connectionString,
         string? paddleEnvironment = null,
         string? paddleApiKey = null,
         string? paddleClientToken = null,
-        bool? paddleAllowLive = null)
+        bool? paddleAllowLive = null,
+        string? publicBaseUrl = null)
     {
         var values = new Dictionary<string, string?>
         {
             ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
             ["ConnectionStrings:DefaultConnection"] = connectionString,
         };
+        if (publicBaseUrl is not null)
+        {
+            values["PublicWeb:BaseUrl"] = publicBaseUrl;
+        }
         if (paddleEnvironment is not null)
         {
             values["Paddle:Environment"] = paddleEnvironment;

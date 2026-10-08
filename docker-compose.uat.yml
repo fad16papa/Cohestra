@@ -112,6 +112,7 @@ services:
       Paddle__ClientToken: ${Paddle__ClientToken:-}
       Paddle__WebhookSecret: ${Paddle__WebhookSecret:-}
       Paddle__Environment: ${Paddle__Environment:-sandbox}
+      Paddle__AllowLive: ${Paddle__AllowLive:-false}
       Paddle__PriceCoreMonthly: ${Paddle__PriceCoreMonthly:-}
       Paddle__PriceCoreAnnual: ${Paddle__PriceCoreAnnual:-}
       Paddle__PriceProMonthly: ${Paddle__PriceProMonthly:-}

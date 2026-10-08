@@ -59,7 +59,7 @@ Webhook URL: `https://<uat-host>/api/v1/system/paddle/webhook`
 - Signature + duplicate unit tests (`PaddleSignatureTests`, `PaddleWebhookProcessorTests`)  
 - Retryable webhook failures return **503** (Paddle retries); invalid payloads **400**; duplicates **200**  
 - `adjustment.created` / `adjustment.updated` ingested: approved chargeback → PastDue; approved refund → log only pending owner policy  
-- `PaddleCredentialGuard` + Production boot + `deploy/preflight-launch.sh` reject live keys unless `Paddle__AllowLive=true` / `COHESTRA_ALLOW_LIVE_PADDLE=1` (cutover doc only)  
+- `PaddleCredentialGuard` + Production boot + `deploy/preflight-launch.sh` reject live keys unless `Paddle__AllowLive=true` / `COHESTRA_ALLOW_LIVE_PADDLE=1` **and** `PUBLIC_BASE_URL` is not a UAT host. AllowLive cannot enable live Paddle on `uat.cohestra.app`.  
 - UAT compose forwards `Paddle__*`  
 - Preflight fails on leftover Stripe keys  
 - Classify script: `deploy/classify-paddle-env.sh`  
