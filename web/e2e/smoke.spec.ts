@@ -4,9 +4,13 @@ const baseURL = process.env.PUBLIC_BASE_URL ?? "http://localhost:8088";
 
 test.describe("smoke", () => {
   test("marketing home loads", async ({ page }) => {
-    const response = await page.goto("/");
+    // Cinema / hero subresources can keep the `load` event open in Docker.
+    // DOM + primary CTA is the smoke contract; 43.5 cookie specs use the same wait.
+    const response = await page.goto("/", { waitUntil: "domcontentloaded" });
     expect(response?.ok()).toBeTruthy();
     await expect(page.locator("body")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Start free" }).first()).toBeVisible();
   });
 
   test("pricing page loads", async ({ page }) => {

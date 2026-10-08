@@ -25,7 +25,12 @@ import {
 import { cn } from "@/lib/utils";
 
 function setBannerHeightVariable(px: number): void {
-  document.documentElement.style.setProperty("--marketing-cookie-banner-height", `${px}px`);
+  const next = `${px}px`;
+  const root = document.documentElement;
+  if (root.style.getPropertyValue("--marketing-cookie-banner-height") === next) {
+    return;
+  }
+  root.style.setProperty("--marketing-cookie-banner-height", next);
 }
 
 export function MarketingCookieConsent() {
@@ -54,7 +59,8 @@ export function MarketingCookieConsent() {
     if (!node) {
       return;
     }
-    const publish = () => setBannerHeightVariable(node.getBoundingClientRect().height);
+    const publish = () =>
+      setBannerHeightVariable(Math.round(node.getBoundingClientRect().height));
     publish();
     const observer = new ResizeObserver(publish);
     observer.observe(node);
