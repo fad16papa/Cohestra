@@ -170,14 +170,83 @@ public sealed class ProductionSecurityValidatorTests
         Assert.Contains("isolated Compose", exception.Message, StringComparison.Ordinal);
     }
 
-    private static IConfiguration ProductionConfig(string connectionString) =>
-        new ConfigurationBuilder()
+    [Fact]
+    public void Validate_rejects_live_paddle_keys_in_development()
+    {
+        var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
-                ["ConnectionStrings:DefaultConnection"] = connectionString,
+                ["Jwt:SigningKey"] = "DEV_ONLY_CHANGE_IN_PRODUCTION_use_at_least_32_chars",
+                ["Paddle:Environment"] = "sandbox",
+                ["Paddle:ApiKey"] = "pdl_live_apikey",
+                ["Paddle:ClientToken"] = "live_client",
             })
             .Build();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Development)));
+
+        Assert.Contains("Live Paddle", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_allows_uat_production_host_with_sandbox_paddle()
+    {
+        var configuration = ProductionConfig(
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+            paddleEnvironment: "sandbox",
+            paddleApiKey: "pdl_sdbx_apikey",
+            paddleClientToken: "test_client");
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_rejects_sandbox_paddle_keys_when_environment_is_production()
+    {
+        var configuration = ProductionConfig(
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+            paddleEnvironment: "production",
+            paddleApiKey: "pdl_sdbx_apikey",
+            paddleClientToken: "test_client");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Sandbox Paddle credentials", exception.Message, StringComparison.Ordinal);
+    }
+
+    private static IConfiguration ProductionConfig(
+        string connectionString,
+        string? paddleEnvironment = null,
+        string? paddleApiKey = null,
+        string? paddleClientToken = null)
+    {
+        var values = new Dictionary<string, string?>
+        {
+            ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
+            ["ConnectionStrings:DefaultConnection"] = connectionString,
+        };
+        if (paddleEnvironment is not null)
+        {
+            values["Paddle:Environment"] = paddleEnvironment;
+        }
+
+        if (paddleApiKey is not null)
+        {
+            values["Paddle:ApiKey"] = paddleApiKey;
+        }
+
+        if (paddleClientToken is not null)
+        {
+            values["Paddle:ClientToken"] = paddleClientToken;
+        }
+
+        return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+    }
 
     private sealed class StubHostEnvironment(string environmentName) : IHostEnvironment
     {

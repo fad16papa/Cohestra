@@ -28,4 +28,21 @@ public sealed class PaddleSettings
     public bool IsSandbox =>
         string.IsNullOrWhiteSpace(Environment)
         || string.Equals(Environment.Trim(), "sandbox", StringComparison.OrdinalIgnoreCase);
+
+    public bool LooksLikeSandboxApiKey =>
+        !string.IsNullOrWhiteSpace(ApiKey)
+        && ApiKey.Contains("sdbx", StringComparison.OrdinalIgnoreCase);
+
+    public bool LooksLikeLiveApiKey =>
+        !string.IsNullOrWhiteSpace(ApiKey)
+        && ApiKey.Contains("live", StringComparison.OrdinalIgnoreCase)
+        && !LooksLikeSandboxApiKey;
+
+    public bool LooksLikeSandboxClientToken =>
+        !string.IsNullOrWhiteSpace(ClientToken)
+        && ClientToken.StartsWith("test_", StringComparison.Ordinal);
+
+    public bool LooksLikeLiveClientToken =>
+        !string.IsNullOrWhiteSpace(ClientToken)
+        && ClientToken.StartsWith("live_", StringComparison.Ordinal);
 }

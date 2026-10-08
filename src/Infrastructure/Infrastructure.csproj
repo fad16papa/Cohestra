@@ -33,6 +33,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Infrastructure.Tests" />
+    <InternalsVisibleTo Include="Api.IntegrationTests" />
   </ItemGroup>
 
   <ItemGroup>

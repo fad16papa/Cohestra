@@ -30,6 +30,8 @@ internal sealed class PaddleWebhookProcessor(
         "subscription.canceled",
         "subscription.past_due",
         "subscription.activated",
+        "adjustment.created",
+        "adjustment.updated",
     };
 
     public async Task<PaddleWebhookProcessResult> ProcessAsync(
@@ -38,7 +40,7 @@ internal sealed class PaddleWebhookProcessor(
     {
         if (string.IsNullOrWhiteSpace(rawJson))
         {
-            return new PaddleWebhookProcessResult(false, false, "Missing payload.");
+            return PaddleWebhookProcessResult.Invalid("Missing payload.");
         }
 
         PaddleNotification? notification;
@@ -48,14 +50,14 @@ internal sealed class PaddleWebhookProcessor(
         }
         catch (JsonException)
         {
-            return new PaddleWebhookProcessResult(false, false, "Invalid JSON.");
+            return PaddleWebhookProcessResult.Invalid("Invalid JSON.");
         }
 
         var eventId = notification?.EventId ?? notification?.NotificationId ?? string.Empty;
         var eventType = notification?.EventType ?? string.Empty;
         if (string.IsNullOrWhiteSpace(eventId))
         {
-            return new PaddleWebhookProcessResult(false, false, "Missing event id.");
+            return PaddleWebhookProcessResult.Invalid("Missing event id.");
         }
 
         var existing = await dbContext.PaddleWebhookEvents
@@ -63,12 +65,12 @@ internal sealed class PaddleWebhookProcessor(
             .FirstOrDefaultAsync(e => e.EventId == eventId, cancellationToken);
         if (existing is not null)
         {
-            return new PaddleWebhookProcessResult(false, true, "Duplicate event.");
+            return PaddleWebhookProcessResult.DuplicateEvent();
         }
 
         if (!TrackedEventTypes.Contains(eventType))
         {
-            return new PaddleWebhookProcessResult(false, false, "Ignored event type.");
+            return PaddleWebhookProcessResult.Ignored("Ignored event type.");
         }
 
         var handled = eventType.ToLowerInvariant() switch
@@ -78,12 +80,14 @@ internal sealed class PaddleWebhookProcessor(
             "subscription.created" or "subscription.updated" or "subscription.past_due" or "subscription.activated"
                 => await HandleSubscriptionUpdatedAsync(notification!.Data, cancellationToken),
             "subscription.canceled" => await HandleSubscriptionCanceledAsync(notification!.Data, cancellationToken),
+            "adjustment.created" or "adjustment.updated"
+                => await HandleAdjustmentAsync(notification!.Data, cancellationToken),
             _ => false,
         };
 
         if (!handled)
         {
-            return new PaddleWebhookProcessResult(false, false, "Handler failed.");
+            return PaddleWebhookProcessResult.Retry("Handler failed.");
         }
 
         dbContext.PaddleWebhookEvents.Add(new PaddleWebhookEvent
@@ -101,10 +105,32 @@ internal sealed class PaddleWebhookProcessor(
         catch (DbUpdateException ex) when (IsUniqueViolation(ex))
         {
             logger.LogInformation(ex, "Concurrent webhook delivery for event {EventId}", eventId);
-            return new PaddleWebhookProcessResult(false, true, "Duplicate event.");
+            return PaddleWebhookProcessResult.DuplicateEvent();
         }
 
-        return new PaddleWebhookProcessResult(true, false, "Processed.");
+        var tenantId = dbContext.ChangeTracker.Entries<Tenant>()
+            .Select(entry => entry.Entity.Id)
+            .FirstOrDefault();
+        if (tenantId != Guid.Empty)
+        {
+            var tenant = await dbContext.Tenants.FirstOrDefaultAsync(item => item.Id == tenantId, cancellationToken);
+            if (tenant is not null)
+            {
+                try
+                {
+                    await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(
+                        ex,
+                        "Site page seed failed after webhook ledger commit for tenant {TenantId}",
+                        tenant.Id);
+                }
+            }
+        }
+
+        return PaddleWebhookProcessResult.ProcessedOk();
     }
 
     private async Task<bool> HandleTransactionCompletedAsync(
@@ -131,23 +157,27 @@ internal sealed class PaddleWebhookProcessor(
         if (IsRenewalOrigin(transaction.Origin))
         {
             TenantBillingPlanSync.ApplyInvoicePaid(tenant);
-            await dbContext.SaveChangesAsync(cancellationToken);
             return true;
         }
 
         if (string.IsNullOrWhiteSpace(transaction.SubscriptionId))
         {
-            await dbContext.SaveChangesAsync(cancellationToken);
             return !string.IsNullOrWhiteSpace(tenant.PaddleCustomerId);
         }
 
         try
         {
             var subscription = await paddleClient.GetSubscriptionAsync(transaction.SubscriptionId, cancellationToken);
-            if (subscription is not null)
+            if (subscription is null)
             {
-                await ApplyLiveSubscriptionAsync(tenant, subscription, cancellationToken);
+                logger.LogWarning(
+                    "transaction.completed missing subscription {SubscriptionId} for transaction {TransactionId}",
+                    transaction.SubscriptionId,
+                    transaction.Id);
+                return false;
             }
+
+            await ApplyLiveSubscriptionAsync(tenant, subscription, cancellationToken);
         }
         catch (PaddleApiException ex)
         {
@@ -156,10 +186,9 @@ internal sealed class PaddleWebhookProcessor(
                 "Failed to fetch subscription {SubscriptionId} for transaction {TransactionId}",
                 transaction.SubscriptionId,
                 transaction.Id);
+            return false;
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
         return !string.IsNullOrWhiteSpace(tenant.PaddleSubscriptionId);
     }
 
@@ -186,7 +215,6 @@ internal sealed class PaddleWebhookProcessor(
         }
 
         TenantBillingPlanSync.ApplyInvoicePaymentFailed(tenant);
-        await dbContext.SaveChangesAsync(cancellationToken);
         return true;
     }
 
@@ -213,8 +241,6 @@ internal sealed class PaddleWebhookProcessor(
         }
 
         await ApplyLiveSubscriptionAsync(tenant, subscription, cancellationToken);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await EnsurePaidSitePageIfNeededAsync(tenant, cancellationToken);
         return true;
     }
 
@@ -241,7 +267,73 @@ internal sealed class PaddleWebhookProcessor(
         }
 
         TenantBillingPlanSync.ApplySubscriptionDeleted(tenant);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    private async Task<bool> HandleAdjustmentAsync(
+        JsonElement data,
+        CancellationToken cancellationToken)
+    {
+        var adjustment = data.Deserialize<PaddleAdjustment>(PaddleJson.Options);
+        if (adjustment is null)
+        {
+            return false;
+        }
+
+        Tenant? tenant = null;
+        if (!string.IsNullOrWhiteSpace(adjustment.SubscriptionId))
+        {
+            tenant = await dbContext.Tenants
+                .FirstOrDefaultAsync(item => item.PaddleSubscriptionId == adjustment.SubscriptionId, cancellationToken);
+        }
+
+        tenant ??= await ResolveTenantAsync(default, adjustment.CustomerId, cancellationToken);
+
+        if (tenant is null)
+        {
+            logger.LogWarning(
+                "adjustment {AdjustmentId} without resolvable tenant for subscription {SubscriptionId}",
+                adjustment.Id,
+                adjustment.SubscriptionId);
+            return false;
+        }
+
+        if (tenant.IsComplimentary)
+        {
+            logger.LogInformation(
+                "Ignoring Paddle adjustment {AdjustmentId} for complimentary tenant {TenantId}",
+                adjustment.Id,
+                tenant.Id);
+            return true;
+        }
+
+        var action = adjustment.Action?.Trim().ToLowerInvariant();
+        var status = adjustment.Status?.Trim().ToLowerInvariant();
+        if (status is not "approved")
+        {
+            return true;
+        }
+
+        if (action is "chargeback")
+        {
+            TenantBillingPlanSync.ApplyInvoicePaymentFailed(tenant);
+            logger.LogWarning(
+                "Approved Paddle chargeback {AdjustmentId} started PastDue for tenant {TenantId}",
+                adjustment.Id,
+                tenant.Id);
+            return true;
+        }
+
+        if (action is "refund")
+        {
+            logger.LogWarning(
+                "Approved Paddle refund {AdjustmentId} for tenant {TenantId} subscription {SubscriptionId} left entitlements unchanged pending product refund policy",
+                adjustment.Id,
+                tenant.Id,
+                adjustment.SubscriptionId);
+            return true;
+        }
+
         return true;
     }
 

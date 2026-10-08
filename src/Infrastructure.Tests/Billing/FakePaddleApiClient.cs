@@ -62,6 +62,8 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public int AttachSubscriptionAfterGetCalls { get; set; }
 
+    public bool GetSubscriptionShouldFail { get; set; }
+
     public Task<PaddleCustomer> CreateCustomerAsync(
         string email,
         string name,
@@ -193,8 +195,15 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public Task<PaddleSubscription?> GetSubscriptionAsync(
         string subscriptionId,
-        CancellationToken cancellationToken = default) =>
-        Task.FromResult(Subscription is not null && Subscription.Id == subscriptionId ? Subscription : Subscription);
+        CancellationToken cancellationToken = default)
+    {
+        if (GetSubscriptionShouldFail)
+        {
+            throw new PaddleApiException("paddle unavailable", 503, "unavailable");
+        }
+
+        return Task.FromResult(Subscription is not null && Subscription.Id == subscriptionId ? Subscription : Subscription);
+    }
 
     public Task<IReadOnlyList<PaddleSubscription>> ListSubscriptionsAsync(
         string customerId,

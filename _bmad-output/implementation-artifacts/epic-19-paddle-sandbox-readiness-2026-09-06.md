@@ -76,7 +76,7 @@ UAT URL once HTTPS exists:
 
 `https://<uat-host>/api/v1/system/paddle/webhook`
 
-Do not add a second endpoint. Events handled: `transaction.completed`, `transaction.payment_failed`, `subscription.created|updated|canceled|past_due|activated`. Duplicates return `200` `{ duplicate: true }` via `PaddleWebhookEvents.EventId`.
+Do not add a second endpoint. Events handled: `transaction.completed`, `transaction.payment_failed`, `subscription.created|updated|canceled|past_due|activated`, `adjustment.created|updated`. Duplicates return `200` `{ duplicate: true }` via `PaddleWebhookEvents.EventId`. Handler failures return **503** so Paddle retries (ledger row is not written until success).
 
 Related (not the webhook): `GET /api/v1/system/paddle/checkout-return`, marketing `/billing/paddle-return`.
 

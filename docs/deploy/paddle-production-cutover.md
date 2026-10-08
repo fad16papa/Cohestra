@@ -27,7 +27,7 @@ Classify with `bash deploy/classify-paddle-env.sh` — expect LIVE labels, never
 ## Live notification destination
 
 - URL: `https://<production-host>/api/v1/system/paddle/webhook`  
-- Events: `transaction.completed`, `transaction.payment_failed`, `subscription.created`, `subscription.updated`, `subscription.canceled`, `subscription.past_due`, `subscription.activated`  
+- Events: `transaction.completed`, `transaction.payment_failed`, `subscription.created`, `subscription.updated`, `subscription.canceled`, `subscription.past_due`, `subscription.activated`, `adjustment.created`, `adjustment.updated`  
 - Own webhook secret — not the sandbox destination secret  
 
 ## Live dashboard
@@ -38,8 +38,10 @@ Classify with `bash deploy/classify-paddle-env.sh` — expect LIVE labels, never
 
 ## After env change
 
+Live credentials are rejected by `PaddleCredentialGuard` and `deploy/preflight-launch.sh` unless the owner sets `COHESTRA_ALLOW_LIVE_PADDLE=1` for this documented cutover. Do not set that flag on UAT or Development.
+
 ```bash
-bash deploy/preflight-launch.sh
+COHESTRA_ALLOW_LIVE_PADDLE=1 bash deploy/preflight-launch.sh
 docker compose -f docker-compose.uat.yml up -d --build
 # rebuild web if PUBLIC_BASE_URL / return origin changed
 ```

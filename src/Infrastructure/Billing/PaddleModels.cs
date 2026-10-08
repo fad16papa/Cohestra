@@ -254,3 +254,18 @@ internal sealed class PaddleNotification
 
     public JsonElement Data { get; set; }
 }
+
+internal sealed class PaddleAdjustment
+{
+    public string Id { get; set; } = string.Empty;
+
+    public string? Action { get; set; }
+
+    public string? Status { get; set; }
+
+    public string? CustomerId { get; set; }
+
+    public string? SubscriptionId { get; set; }
+
+    public string? TransactionId { get; set; }
+}
