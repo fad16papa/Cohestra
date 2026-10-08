@@ -2,13 +2,14 @@
 # last_updated: 2026-10-08
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
-# 43.5 done; epic 43 done after cross-story close; STOP no new epic
+# 43.5 done; epic 43 done after cross-story close
+# epic 44 planning approved 2026-10-08 (PR #411); stories backlog; no implementation
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (1–10) + Enterprise (11–29) + Registration Capture (30–32) + Live Proof Cinema (33)
-# epics_source: epics.md (1–10) + epics-cohestra-enterprise.md (11–29) + epics-registration-capture.md (30–32) + epics-live-proof-cinema.md (33)
+# initiative: Platform 0 (1–10) + Enterprise (11–29) + Registration Capture (30–32) + Live Proof Cinema (33) + Platform Production Support (44)
+# epics_source: epics.md (1–10) + epics-cohestra-enterprise.md (11–29) + epics-registration-capture.md (30–32) + epics-live-proof-cinema.md (33) + epics-platform-production-support.md (44)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -438,6 +439,19 @@ development_status:
   43-4-platform-administration: done
   43-5-responsive-accessibility-visual-consistency-closure: done
   epic-43-retrospective: done
+
+  # Epic 44 — Platform Production Operations & Support Center (planning only)
+  epic-44: backlog
+  44-1-platform-ops-http-gates-policy-recovery-rate-limits: backlog
+  44-2-production-overview-source-backed-kpis: backlog
+  44-3-authenticated-infrastructure-health-operations-shell: backlog
+  44-4-outbox-notification-observability-read-only: backlog
+  44-5-additive-paddle-disposition-billing-diagnostics: backlog
+  44-6-tenant-diagnostic-timeline: backlog
+  44-7-platform-wide-searchable-audits: backlog
+  44-8-support-severity: backlog
+  44-9-deployment-version-health-read-only: backlog
+  epic-44-retrospective: optional
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done

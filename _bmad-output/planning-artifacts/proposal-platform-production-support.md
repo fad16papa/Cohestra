@@ -1,11 +1,11 @@
 # Proposal: Platform Production Operations & Support Center
 
-**Status:** Awaiting owner approval — no implementation  
-**HEAD audited:** `main` `69814fc3` (2026-10-08)  
-**Skills:** `bmad-investigate` (concluded) · `bmad-party-mode` (trade-off lock)  
-**Next after approval:** `bmad-create-epics-and-stories` for **Epic 44** (number unused on tracker)
+**Status:** Owner-approved with refinements 2026-10-08 — planning complete; no implementation  
+**HEAD audited:** `main` `69814fc3` (reconciled with PR #411; `origin/main` has no additional commits)  
+**Canonical epic:** `_bmad-output/planning-artifacts/epics-platform-production-support.md`  
+**Skills:** `bmad-investigate` · `bmad-party-mode` · `bmad-create-epics-and-stories` · `bmad-architecture` · `bmad-ux` · `bmad-testarch-test-design`
 
-Do not run create-story / dev-story until this proposal is accepted.
+Do not run `bmad-create-story` / `bmad-dev-story` until the owner authorizes implementation.
 
 Related: `_bmad-output/implementation-artifacts/investigations/platform-admin-production-support-investigation.md`
 
@@ -130,33 +130,34 @@ PlatformKpi<T> { value, source, observedAt, freshness: actual | missing_instrume
 
 Webhook replay · marking invoices paid · editing `BillingStatus` by hand · impersonation · raw SQL · shell · revealing `Paddle__*` / JWT / SendGrid keys · unbounded `IgnoreQueryFilters` dumps · returning outbox `PayloadJson`.
 
-### Bounded recovery (phase-gated)
+### Bounded recovery (not in Epic 44)
 
-Only after outbox read model is in production use: `POST /api/v1/platform/ops/outbox/{id}/requeue` if Status=Failed; CAS to Pending; keep LastError history in audit; rate-limit per actor; `PlatformAuditAction.OutboxRequeued`. No payload edit. No completed-message replay.
+Failed-outbox requeue is **not authorized**. Recorded as a conditional future decision after Story 44.4 is accepted. No requeue route in this epic.
 
 ---
 
-## 5. Proposed Epic 44 story breakdown (not created yet)
+## 5. Epic 44 story breakdown (canonical)
+
+Canonical source: `_bmad-output/planning-artifacts/epics-platform-production-support.md`.
 
 **Epic name:** Platform Production Operations & Support Center  
 **Depends on:** existing PlatformAdmin plane (11, 12.4, 17.3, 26–28, 43.4). **Does not depend on** Epic 19 close. **Must not block or replace** 19.4/19.5.
 
-| Story | Scope | Depends | Authz | Threats | Tests | Rollback |
-| ----- | ----- | ------- | ----- | ------- | ----- | -------- |
-| **44.0 Hardening** | Policy test includes `PlatformOpsController`; HTTP integration tests for snapshot/search/members/recovery; recovery rate-limit | none | existing | recovery email flood | unit + integration + TenantIsolation 403 | revert tests/middleware only |
-| **44.1 Overview** | `/platform/overview` + `GET /api/v1/platform/ops/overview` fleet KPIs (tenant counts by status/billing, open support, health rollup) with provenance | 44.0 | PlatformAdminOnly | enumeration; expensive counts | unit, integration, Playwright 1440/390, a11y | feature-flag or revert route; directory remains home |
-| **44.2 Health** | Authenticated health DTO wrapping ready checks + outbox depth KPIs; Operations Health section; directory degraded banner | 44.1 or parallel after 44.0 | PlatformAdminOnly | info leak via health details | unit (sanitize), integration, E2E degraded copy | revert endpoint; `/ready` unchanged |
-| **44.3 Outbox observability** | Paginated failed/pending lists, counts by type; no payload | 44.2 | PlatformAdminOnly | PII in LastError; unbounded queries | unit redaction, integration, TenantIsolation on tenantId filter | revert |
-| **44.4 Paddle diagnostics** | Browse processed ledger + config flags; additive delivery dispositions **without** changing processor outcomes | 44.2 | PlatformAdminOnly | secret leak; payload leak; accidental replay UI | unit, webhook integration regression, E2E | disposition table additive; processor untouched |
-| **44.5 Tenant timeline** | `GET .../tenants/{id}/timeline` merging audits, support status, billing status fields, tenant outbox summaries | 44.3, 44.4 | PlatformAdminOnly | cross-tenant mix; PII | integration two-tenant, Playwright on detail | revert section; snapshot stays |
-| **44.6 Audit search** | `/platform/audits` + paginated search/export CSV | 44.0 | PlatformAdminOnly | bulk PII export | integration pagination, E2E, a11y | revert |
-| **44.7 Support severity** | Additive `Severity` on `SupportIssue`; filter + display; **no** new Incident entity unless owner rejects this | 44.0 | PlatformAdminOnly + existing tenant submit unchanged default | enum abuse | unit, integration, Playwright inbox | nullable column; UI hides |
-| **44.8 Version health** | Authenticated version (SHA, env name, api version); display on Overview/Ops; **read-only** | 44.1 | PlatformAdminOnly | fingerprinting (acceptable for staff) | unit missing-SHA → `missing_instrumentation` | revert; deploy scripts unchanged |
-| **44.9 Failed-outbox requeue** | **Go/no-go after 44.3 evidence.** CAS requeue + audit + rate limit | 44.3 | PlatformAdminOnly | double-send mitigated by outbox dedupe keys; still audit | concurrency tests, integration, E2E AlertDialog | disable endpoint |
+| Story | Scope | Depends |
+| ----- | ----- | ------- |
+| **44.1** Platform ops HTTP gates, policy coverage, recovery rate limits | first story; no 44.0 | none |
+| **44.2** Production overview `/platform/overview` | provenance KPIs; directory stays `/platform` | 44.1 |
+| **44.3** Authenticated health + Operations shell + directory banner | `/ready` unchanged | 44.2 |
+| **44.4** Outbox observability read-only | no payload; no requeue | 44.3 |
+| **44.5** Additive Paddle disposition + billing diagnostics | processor unchanged | 44.3 |
+| **44.6** Tenant diagnostic timeline | | 44.4, 44.5 |
+| **44.7** Searchable audits | | 44.1 |
+| **44.8** Support severity | no Incident entity | 44.1 |
+| **44.9** Version health read-only | | 44.2, 44.3 |
 
-**Out of epic:** impersonation, SQL, Hangfire UI, rollback execute, Paddle replay, payment mutation, OTel, Epic 19 UAT, flattening `--plat-*`, Cinema.
+**Out of epic:** outbox requeue, impersonation, SQL, Hangfire UI, rollback execute, Paddle replay, payment mutation, OTel, Epic 19 UAT, flattening `--plat-*`, Cinema.
 
-Each created story (after approval) must still pass `bmad-create-story` → `bmad-dev-story` → build/test → `bmad-code-review` loop → product/UX acceptance → `bmad-testarch-*` as applicable (ATDD for 44.1/44.2, automate, NFR for 44.3/44.4, tenant-isolation trace).
+Implementation (when owner authorizes) still follows `bmad-create-story` → `bmad-dev-story` → build/test → `bmad-code-review` loop → product/UX acceptance.
 
 ---
 
@@ -170,8 +171,8 @@ Each created story (after approval) must still pass `bmad-create-story` → `bma
 | Authz | `PlatformAdminOnly` claim + no hybrid tokens |
 | Tenant isolation | Tenant JWTs 403 on `/api/v1/platform/*`; platform queries with `tenantId` never return another tenant’s rows |
 | Data minimization | No secrets, no outbox payloads, truncated errors, Paddle ids only if already implied by ops need (prefer not to show customer id unless timeline requires it) |
-| Abuse | Pagination caps; recovery + requeue + search rate limits; CAS on requeue |
-| Audit | Mutations (requeue, severity, existing lifecycle) write `PlatformAuditLog`; do not log tokens |
+| Abuse | Pagination caps; recovery rate limits; search/export caps |
+| Audit | Mutations (severity, existing lifecycle/recovery) write `PlatformAuditLog`; do not log tokens |
 | Billing | Read-only diagnostics; processor and FR-23/Suspend invariants unchanged |
 | Deploy | No production credential changes; no merge-to-main of this proposal as “done product” |
 
@@ -181,9 +182,9 @@ Each created story (after approval) must still pass `bmad-create-story` → `bma
 2. PlatformAdmin requests tenant B timeline with tenant A id → empty/404, no mix.  
 3. Outbox list JSON must not contain `PayloadJson` or email bodies.  
 4. Health details must not include connection strings or Paddle secrets.  
-5. UI has no Replay Webhook / Mark Paid / Impersonate.  
-6. Concurrent requeue of one Failed row succeeds once.  
-7. Unbounded pageSize clamped.
+5. UI has no Replay Webhook / Mark Paid / Impersonate / Requeue.  
+6. Unbounded pageSize clamped.  
+7. `/ready` check set unchanged.
 
 ### Measurable acceptance (epic)
 
@@ -204,13 +205,10 @@ Additive routes and tables. Revert the Epic 44 PR(s). Existing `/platform` direc
 
 ---
 
-## Approval ask
+## Approval (recorded)
 
-Please confirm or amend:
+Owner approved 2026-10-08 with refinements: Overview at `/platform/overview`; `/platform` stays directory; Operations and Audits separate nav; severity without Incident; additive disposition logging; requeue not authorized; Epic 19 independent.
 
-1. Epic 44 numbering and story cut (§5), especially **severity-only vs Incident entity** and **44.9 go/no-go**.  
-2. Nav: Overview as extra item vs pulse-strip-only on directory.  
-3. Additive webhook **disposition** table (recommended) vs success-ledger-only (will show `missing_instrumentation` for failures).  
-4. Authorization to run `bmad-create-epics-and-stories` after this file.
+Remaining owner decisions are listed in the canonical epic file.
 
-**Stop.** No feature implementation until that approval.
+**Stop.** No `bmad-dev-story`, feature code, merge, or production changes from this planning pass.
