@@ -19,7 +19,10 @@ PR #404 is on `origin/main`. Post-merge GitHub CI on `69814fc3` is green. Automa
 
 Real Paddle sandbox Groups A–G were **not** executed. Story 19.4 stays open.
 
-**UAT deploy authorization (2026-10-08, this run):** owner explicitly authorized **UAT deploy of merged main**. Access is still **BLOCKED**: this Cloud Agent has no `~/.ssh/cohestra_uat` (or any private key). Re-attempt `ssh -o BatchMode=yes -o IdentitiesOnly=yes deploy@129.212.235.2` → `Permission denied (publickey)`. GitHub Actions Deploy was **not** invoked (empty droplet secrets; concurrency group `deploy-production`; Epic 19.1 forbids uploading `cohestra_uat`). No UAT mutation was performed.
+**UAT deploy authorization (2026-10-08, this run):** owner explicitly authorized **UAT deploy of merged main**. Access is still **BLOCKED**.
+
+- Cloud Agent: no `~/.ssh/cohestra_uat`; `deploy@129.212.235.2` → `Permission denied (publickey)`.
+- Owner workstation (Git Bash `Admin`): `origin/main` **PASS** `69814fc3`. `ssh-add` / `uat-deploy-from-workstation.sh` **FAIL** — `/c/Users/Admin/.ssh/cohestra_uat: No such file or directory`. The documented private-key filename is missing on that profile. GitHub Actions Deploy was **not** invoked. No UAT mutation from this agent.
 
 ---
 
@@ -139,6 +142,33 @@ PUBLIC_BASE_URL=https://uat.cohestra.app bash deploy/uat-smoke.sh
 ```
 
 Do not use GitHub Actions Deploy until `DROPLET_HOST`/`DROPLET_SSH_KEY` are intentionally filled — Epic 19.1 says not to upload `cohestra_uat`.
+
+### Workstation key missing (2026-10-08)
+
+`C:\Users\Admin\.ssh\cohestra_uat` does not exist. Repo default identity is that filename (`UAT_SSH_KEY` may override). Alternate documented name: `cohestra_uat_v2`. Do **not** paste private keys into chat.
+
+Inventory (fingerprints only):
+
+```bash
+ls -la ~/.ssh
+for f in ~/.ssh/*; do
+  [ -f "$f" ] || continue
+  case "$(basename "$f")" in
+    known_hosts*|config|*.pub) ssh-keygen -l -f "$f" 2>/dev/null && echo "  file=$(basename "$f")" ;;
+    *) ssh-keygen -l -f "$f" 2>/dev/null && echo "  private=$(basename "$f")" ;;
+  esac
+done
+```
+
+If a private key exists (e.g. `id_ed25519` or `cohestra_uat_v2`):
+
+```bash
+eval "$(ssh-agent -s)"
+ssh-add /c/Users/Admin/.ssh/THAT_FILE
+UAT_SSH_KEY=/c/Users/Admin/.ssh/THAT_FILE bash deploy/uat-deploy-from-workstation.sh
+```
+
+If **no** private key exists: recover via DigitalOcean **browser console** (do not replace existing `authorized_keys` lines). Generate locally `ssh-keygen -t ed25519 -f ~/.ssh/cohestra_uat`, append **only** `cohestra_uat.pub` to `/home/deploy/.ssh/authorized_keys`, then rerun deploy. Never commit the key.
 
 ## 9. Paddle sandbox configuration vs code
 
