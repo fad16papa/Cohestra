@@ -6,7 +6,7 @@ status: ready-for-dev
 
 # Story 19.4: Paddle billing UAT on droplet
 
-Status: ready-for-dev — **infrastructure URL/HTTPS exist (independent probe 2026-10-08)**; still blocked on **owner sandbox UAT walk**, **deploy of PR #404**, notification destination (including adjustments), and refund-policy decisions. Uses existing **sandbox** credentials only. Do not mark done.
+Status: ready-for-dev — **PR #404 merged as `69814fc3`**. Public URL/HTTPS exist; still blocked on **owner UAT deploy of that SHA**, **sandbox UAT walk**, notification destination (including adjustments), and refund-policy decisions. Uses existing **sandbox** credentials only. Do not mark done.
 
 Code-side webhook retry, refund ingest, and credential isolation landed 2026-10-08 on the Paddle billing remediation branch. **Do not mark this story done** until droplet sandbox UAT + Mandatory Code Review Loop + product acceptance complete.
 
@@ -14,7 +14,7 @@ Sandbox walk script (do not execute live; sandbox credentials only): `19-4-paddl
 
 ### Dev Agent Record (2026-10-08)
 
-**Halt** (`bmad-dev-story`): no owner merge authorization; no droplet SSH (`Permission denied (publickey)`); no Paddle dashboard. Real sandbox scenarios **not** executed. Evidence: `19-4-sandbox-uat-execution-2026-10-08.md`. Do **not** mark done.
+**Halt** (`bmad-dev-story`): PR #404 **merged** as `69814fc3` on `main`. Post-merge CI green. UAT deploy **not** authorized. SSH still `Permission denied (publickey)` (no private key on this VM). Real sandbox Groups A–G **not** executed. Evidence: `19-4-post-merge-sandbox-uat-2026-10-08.md`. Do **not** mark done.
 
 ## Story
 
