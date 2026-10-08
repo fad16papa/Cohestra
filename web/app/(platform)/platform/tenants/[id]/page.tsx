@@ -199,7 +199,7 @@ export default function PlatformTenantDetailPage() {
   const isDefaultTenant =
     tenant.id === DEFAULT_TENANT_ID || tenant.slug === "default";
   const canSuspend = tenant.status === "Active" && !isDefaultTenant;
-  const canReactivate = tenant.status === "Suspended" && !isDefaultTenant;
+  const canReactivate = tenant.status === "Suspended";
   const canArchive = tenant.status !== "Archived" && !isDefaultTenant;
   const canChangeComplimentary = tenant.status !== "Archived" && !isDefaultTenant;
   const tenantStatus = describePlatformTenantStatus(tenant.status);

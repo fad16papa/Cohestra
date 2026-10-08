@@ -38,8 +38,8 @@ export default function PlatformRootLayout({
       className="platform-console min-h-0 flex-1"
       style={platformSurfaceStyle}
     >
-      <AdminSkipLink />
       <PlatformRouteGuard>
+        <AdminSkipLink />
         <PlatformHeader />
         <main
           id={MAIN_CONTENT_ID}
