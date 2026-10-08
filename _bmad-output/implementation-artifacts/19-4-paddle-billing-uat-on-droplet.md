@@ -12,6 +12,10 @@ Code-side webhook retry, refund ingest, and credential isolation landed 2026-10-
 
 Sandbox walk script (do not execute live; sandbox credentials only): `19-4-paddle-sandbox-uat-execution-plan-2026-10-08.md`.
 
+### Dev Agent Record (2026-10-08)
+
+**Halt** (`bmad-dev-story`): no owner merge authorization; no droplet SSH (`Permission denied (publickey)`); no Paddle dashboard. Real sandbox scenarios **not** executed. Evidence: `19-4-sandbox-uat-execution-2026-10-08.md`. Do **not** mark done.
+
 ## Story
 
 As a **platform operator**,
