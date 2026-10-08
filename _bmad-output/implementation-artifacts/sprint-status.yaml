@@ -1,8 +1,8 @@
 # generated: 2026-06-16
-# last_updated: 2026-10-07
-# story 43.3 done; 43.1–43.3 done; epic 43 in-progress; 42.x done
+# last_updated: 2026-10-08
+# story 43.3 done; 43.1–43.3 done; 43.4 ready-for-dev; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
-# 43.4–43.5 not started
+# 43.5 not started
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -56,7 +56,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-10-06
+last_updated: 2026-10-08
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -427,6 +427,7 @@ development_status:
   43-1-settings-nested-routes: done
   43-2-team-and-permissions: done
   43-3-billing-presentation: done
+  43-4-platform-administration: in-progress
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done

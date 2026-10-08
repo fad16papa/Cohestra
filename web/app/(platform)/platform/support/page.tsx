@@ -56,7 +56,11 @@ export default function PlatformSupportInboxPage() {
         if (requestId !== requestIdRef.current) {
           return;
         }
-        setError(err instanceof Error ? err.message : "Could not load support issues.");
+        setError(
+          err instanceof Error
+            ? `${err.message} Refresh the inbox or try the search again.`
+            : "Support issues could not be loaded. Refresh the inbox or try the search again."
+        );
         setItems([]);
         setTotalCount(0);
         setLoading(false);
@@ -200,7 +204,7 @@ export default function PlatformSupportInboxPage() {
             type="button"
             disabled={page <= 1 || loading}
             onClick={() => setPage((current) => Math.max(1, current - 1))}
-            className="min-h-10 rounded-[10px] border border-[var(--plat-line-strong)] px-3 disabled:opacity-40"
+            className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-3 disabled:opacity-40"
           >
             Previous
           </button>
@@ -208,7 +212,7 @@ export default function PlatformSupportInboxPage() {
             type="button"
             disabled={page >= totalPages || loading}
             onClick={() => setPage((current) => current + 1)}
-            className="min-h-10 rounded-[10px] border border-[var(--plat-line-strong)] px-3 disabled:opacity-40"
+            className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-3 disabled:opacity-40"
           >
             Next
           </button>

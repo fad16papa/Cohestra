@@ -141,4 +141,41 @@ public sealed class PlatformTenantLifecycleIntegrationTests(IntegrationTestFixtu
         Assert.Contains(PlatformAuditAction.ComplimentarySet, actions);
         Assert.Contains(PlatformAuditAction.ComplimentaryCleared, actions);
     }
+
+    [SkippableFact]
+    public async Task Default_tenant_lifecycle_and_complimentary_mutations_return_409()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(fixture.Factory);
+
+        using var platformClient = fixture.Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platformClient);
+        IntegrationTestHelpers.UseBearerToken(platformClient, platformToken);
+
+        using var operatorClient = fixture.Factory.CreateClient();
+        var operatorToken = await IntegrationTestHelpers.LoginAsOperatorAsync(operatorClient);
+        IntegrationTestHelpers.UseBearerToken(operatorClient, operatorToken);
+
+        using var operatorForbidden = await operatorClient.PostAsJsonAsync(
+            $"/api/v1/platform/tenants/{TenantIds.Default}/suspend",
+            new SuspendTenantRequest("should fail"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Forbidden, operatorForbidden.StatusCode);
+
+        using var suspendResponse = await platformClient.PostAsJsonAsync(
+            $"/api/v1/platform/tenants/{TenantIds.Default}/suspend",
+            new SuspendTenantRequest("should fail"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Conflict, suspendResponse.StatusCode);
+
+        using var archiveResponse = await platformClient.PostAsync(
+            $"/api/v1/platform/tenants/{TenantIds.Default}/archive",
+            null);
+        Assert.Equal(HttpStatusCode.Conflict, archiveResponse.StatusCode);
+
+        using var complimentaryResponse = await platformClient.PostAsJsonAsync(
+            $"/api/v1/platform/tenants/{TenantIds.Default}/complimentary",
+            new SetComplimentaryRequest(true, "Pro", "should fail"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.Conflict, complimentaryResponse.StatusCode);
+    }
 }

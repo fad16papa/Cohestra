@@ -4,6 +4,10 @@ import Link from "next/link";
 
 import { PlatformCard } from "@/components/platform/platform-card";
 import type { PlatformTenantSnapshot } from "@/lib/platform-api";
+import {
+  describePlatformBillingStatus,
+  describePlatformTenantStatus,
+} from "@/lib/platform-status-copy";
 
 type PlatformSnapshotCardProps = {
   snapshot: PlatformTenantSnapshot | null;
@@ -55,8 +59,14 @@ export function PlatformSnapshotCard({
 
       <dl className="mt-4 space-y-3 text-sm">
         <Row label="Plan" value={snapshot.plan} />
-        <Row label="Status" value={snapshot.status} />
-        <Row label="Billing" value={snapshot.billingStatus} />
+        <Row
+          label="Status"
+          value={formatStatusValue(describePlatformTenantStatus(snapshot.status))}
+        />
+        <Row
+          label="Billing"
+          value={formatBillingValue(snapshot.billingStatus)}
+        />
         {snapshot.isComplimentary ? <Row label="Complimentary" value="Yes" /> : null}
         <MeterRow label="Seats" meter={snapshot.seats} />
         <MeterRow label="Communities" meter={snapshot.communities} />
@@ -99,6 +109,19 @@ export function PlatformSnapshotCard({
       ) : null}
     </PlatformCard>
   );
+}
+
+function formatStatusValue(presentation: { label: string; headline: string }): string {
+  return presentation.headline !== presentation.label
+    ? `${presentation.label} — ${presentation.headline}`
+    : presentation.label;
+}
+
+function formatBillingValue(status: string): string {
+  const presentation = describePlatformBillingStatus(status);
+  return presentation.headline !== status
+    ? `${status} — ${presentation.headline}`
+    : status;
 }
 
 function Row({ label, value }: { label: string; value: string }) {

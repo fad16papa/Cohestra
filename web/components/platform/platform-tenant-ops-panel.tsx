@@ -6,6 +6,16 @@ import Link from "next/link";
 import { PlatformCard } from "@/components/platform/platform-card";
 import { PlatformSnapshotCard } from "@/components/platform/platform-snapshot-card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   getPlatformTenantSnapshot,
   listPlatformTenantMembers,
   listPlatformTenantOpenIssues,
@@ -37,6 +47,10 @@ export function PlatformTenantOpsPanel({
   const [members, setMembers] = useState<PlatformTenantMember[]>([]);
   const [openIssues, setOpenIssues] = useState<PlatformTenantOpenIssue[]>([]);
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
+  const [recovery, setRecovery] = useState<{
+    member: PlatformTenantMember;
+    action: "reset" | "verify";
+  } | null>(null);
 
   const load = useCallback(async () => {
     setSnapshotLoading(true);
@@ -66,15 +80,6 @@ export function PlatformTenantOpsPanel({
     memberUserId: string,
     action: "reset" | "verify"
   ) {
-    const confirmed = window.confirm(
-      action === "reset"
-        ? "Send a password reset email to this member? This action is audited."
-        : "Resend email verification to this member? This action is audited."
-    );
-    if (!confirmed) {
-      return;
-    }
-
     setBusyMemberId(memberUserId);
     onActionMessage?.(null);
     try {
@@ -163,8 +168,8 @@ export function PlatformTenantOpsPanel({
                   <button
                     type="button"
                     disabled={busyMemberId === member.userId}
-                    onClick={() => void runRecovery(member.userId, "reset")}
-                    className="min-h-9 rounded-[10px] border border-[var(--plat-line-strong)] px-3 text-xs font-semibold disabled:opacity-50"
+                    onClick={() => setRecovery({ member, action: "reset" })}
+                    className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-3 text-xs font-semibold disabled:opacity-50"
                   >
                     Send password reset
                   </button>
@@ -172,8 +177,8 @@ export function PlatformTenantOpsPanel({
                     type="button"
                     disabled={busyMemberId === member.userId || member.emailVerified}
                     title={member.emailVerified ? "Already verified" : undefined}
-                    onClick={() => void runRecovery(member.userId, "verify")}
-                    className="min-h-9 rounded-[10px] border border-[var(--plat-line-strong)] px-3 text-xs font-semibold disabled:opacity-50"
+                    onClick={() => setRecovery({ member, action: "verify" })}
+                    className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-3 text-xs font-semibold disabled:opacity-50"
                   >
                     Resend verification
                   </button>
@@ -182,7 +187,46 @@ export function PlatformTenantOpsPanel({
             ))}
           </ul>
         )}
-      </PlatformCard>
+        </PlatformCard>
+
+      <AlertDialog
+        open={recovery !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRecovery(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {recovery?.action === "reset"
+                ? `Send a password reset to ${recovery.member.email}?`
+                : `Resend email verification to ${recovery?.member.email}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action is audited. It emails the member and does not change tenant
+              lifecycle or billing.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="min-h-11">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="min-h-11"
+              onClick={() => {
+                if (!recovery) {
+                  return;
+                }
+                const next = recovery;
+                setRecovery(null);
+                void runRecovery(next.member.userId, next.action);
+              }}
+            >
+              {recovery?.action === "reset" ? "Send password reset" : "Resend verification"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
