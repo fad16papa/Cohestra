@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+
+import { analyzeAxe } from "./helpers/analyze-axe";
 
 import {
   loginOperatorSession,
@@ -45,14 +46,7 @@ async function settleForAxe(page: Page): Promise<void> {
 
 async function runAxe(page: Page): Promise<AxeViolation[]> {
   await settleForAxe(page);
-  // Inactive controls are WCAG 1.4.3 exempt. Base UI may keep tabindex on
-  // aria-disabled submits; exclude them rather than treating opacity-50 as a
-  // semantic-token failure.
-  const results = await new AxeBuilder({ page })
-    .exclude('[disabled]')
-    .exclude('[aria-disabled="true"]')
-    .exclude('[data-disabled]')
-    .analyze();
+  const results = await analyzeAxe(page);
   return results.violations.map((violation) => ({
     id: violation.id,
     impact: violation.impact ?? null,

@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page, type Route } from "@playwright/test";
+
+import { analyzeAxe } from "./helpers/analyze-axe";
 
 import {
   PX2_BASIC_TENANT,
@@ -151,11 +152,8 @@ async function assertNoOverflow(page: Page, label: string): Promise<void> {
 }
 
 async function assertAxe(page: Page, label: string): Promise<void> {
-  const results = await new AxeBuilder({ page })
-    .exclude("[disabled]")
-    .exclude('[aria-disabled="true"]')
-    .exclude(".border-warn\\/30")
-    .analyze();
+  // .border-warn/30 is a plan-lock surface, not a disabled-control hide.
+  const results = await analyzeAxe(page, { extraExcludes: [".border-warn\\/30"] });
   const blocking = (results.violations as AxeViolation[]).filter(
     (violation) =>
       (violation.impact === "serious" || violation.impact === "critical") &&

@@ -186,7 +186,6 @@ export function CommunityDetailPage({ id }: CommunityDetailPageProps) {
             clientsTableGridClassName,
             "hidden border-b border-border-warm bg-muted/30 py-3 md:grid"
           )}
-          role="row"
         >
           <span className="min-w-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm">
             Name

@@ -7,8 +7,8 @@ export default function RegisterPage() {
   return (
     <AuthFlowShell
       eyebrow="First-time setup"
-      title="Create your operator account"
-      description="One workspace, one operator. Set up Cohestra with your email, nickname, and password."
+      title="Create your workspace admin account"
+      description="This creates the initial admin account for your workspace. You can invite teammates later, according to your plan."
       footer={
         <p className="text-xs leading-relaxed text-text-muted-warm">
           By continuing, you agree to secure this workspace for authorized use only.

@@ -24,6 +24,7 @@ export function marketingAtelierButtonClass(
 ) {
   return cn(
     "marketing-atelier-btn inline-flex items-center justify-center rounded-[10px] border font-semibold",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2 focus-visible:ring-offset-paper",
     size === "default" ? "h-12 px-5 text-sm" : "h-10 px-4 text-[0.8125rem]",
     variant === "lagoon" &&
       "border-transparent bg-lagoon text-lagoon-fg hover:bg-lagoon-deep",
@@ -89,24 +90,24 @@ export function MarketingShell({
             <Link
               key={link.href}
               href={link.href}
-              className="hidden text-sm font-medium text-stone hover:text-ink lg:inline"
+              className="hidden text-sm font-medium text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2 lg:inline"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href="/pricing"
-            className="text-sm font-medium text-stone hover:text-ink lg:hidden"
+            className="text-sm font-medium text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2 lg:hidden"
           >
             Pricing
           </Link>
-          <Link href="/login" className="text-sm font-medium text-stone hover:text-ink">
+          <Link href="/login" className="text-sm font-medium text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2">
             Sign in
           </Link>
         </nav>
       </header>
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col">{children}</div>
       <MarketingCookieConsent />
+      <div className="relative z-10 flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   );
 }
@@ -160,7 +161,7 @@ export function MarketingFooter() {
             <ul className="mt-4 space-y-2.5">
               {column.links.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-stone hover:text-ink">
+                  <Link href={link.href} className="text-sm text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2">
                     {link.label}
                   </Link>
                 </li>

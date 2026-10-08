@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
+
+import { analyzeAxe } from "./helpers/analyze-axe";
 
 import {
   DEFAULT_PRO_TENANT,
@@ -463,10 +464,7 @@ test.describe("Story 42.3 — Form Studio touch and builder controls", () => {
     await nameHandle.focus();
     await expect(nameHandle).toBeFocused();
 
-    const axe = await new AxeBuilder({ page })
-      .exclude("[disabled]")
-      .exclude('[aria-disabled="true"]')
-      .analyze();
+    const axe = await analyzeAxe(page);
     const blocking = axe.violations.filter(
       (violation) =>
         (violation.impact === "serious" || violation.impact === "critical") &&

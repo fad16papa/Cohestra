@@ -3,8 +3,9 @@ title: Cohestra Product Experience 2.0 — visual QA matrix
 phase: 0.1
 status: audit-complete
 created: 2026-09-22
-updated: 2026-09-22
+updated: 2026-10-08
 head_phase0: 5c3fe75d
+head_43_5: 0a160132
 viewports:
   - 1440x900
   - 1280x800
@@ -25,7 +26,32 @@ checks:
 
 # Visual QA matrix
 
-Cells record **this Phase 0 run**. They are not a promise that the product passes.
+## Story 43.5 closure (CURRENT HEAD)
+
+Do not treat Phase 0.1 cells below as the 43.5 result. 43.5 re-verified the residual surfaces only.
+
+| Route | Viewport | Role/plan | State | Responsive | Keyboard | Axe | Contrast | Focus | Result | Evidence |
+| ----- | -------- | --------- | ----- | ---------- | -------- | --- | -------- | ----- | ------ | -------- |
+| `/` marketing | 390 | visitor | first visit, banner visible | PASS — Start free clear of banner | PASS — Accept/Reject/Preferences are buttons | PASS helper | PASS `text-text-muted` | PASS atelier rings | PASS | `evidence/px2-43-5/viewports/marketing-cookie-390-first-visit.png` |
+| `/` marketing | 1440 | visitor | first visit, banner visible | PASS | PASS | PASS | PASS | PASS | PASS | `evidence/px2-43-5/viewports/marketing-cookie-1440-first-visit.png` |
+| `/` marketing | 390 | visitor | Preferences open | PASS 390 dialog | PASS 38.6 trap/Esc | — | PASS | PASS restore | PASS | `evidence/px2-43-5/viewports/marketing-cookie-390-preferences.png` |
+| `/` marketing | 390 | visitor | rejected non-essential | PASS no leftover gap | — | — | — | — | PASS | `evidence/px2-43-5/viewports/marketing-cookie-390-rejected.png` |
+| `/#crm` | 1440 | visitor | Cinema | PASS banner hidden | — | — | — | — | PASS | Playwright `Cinema #crm hides` |
+| `/register` | 390 / 1440 | bootstrap | copy | PASS | — | — | — | — | PASS | Playwright + source: teammates, not one operator |
+| Public Suspended | CODE | public | Suspended | — | — | — | — | — | PASS | H1 “paused”, never “on hold” |
+| Billing OnHold | E2E 43.3 | TenantAdmin | OnHold | PASS | PASS | — | PASS | PASS | ALREADY SATISFIED | 43.3 |
+| Platform Suspended | E2E 43.4 | PlatformAdmin | Suspended | PASS | PASS | — | PASS | PASS | ALREADY SATISFIED | 43.4 |
+| `/clients` table | E2E 40.3 | admin | list | PASS | PASS | PASS | PASS | PASS | ALREADY SATISFIED | no `role="row"` |
+| Community leads | CODE | admin | list header | — | — | — | — | — | PASS | `role="row"` removed |
+| Admin 390/1440 gutters | CODE | admin | shell | PASS tab clearance | — | — | — | — | ALREADY SATISFIED | dashboard-layout safe-area padding |
+| Creation Studios | E2E 42.x | Pro | studio | PASS specialized gutters | PASS | PASS via analyzeAxe | PASS | PASS | ALREADY SATISFIED | protected |
+| Public registration | E2E 35 | public | Join 48px | PASS | PASS | — | PASS | Epic 35 frozen ring | ALREADY SATISFIED | do not restyle |
+
+Phase 0.1 historical cells remain below for archaeology. They still contain stale notes (“One workspace, one operator.”, cookie covers CTAs, Suspended “is on hold”) that 43.5 closed.
+
+---
+
+Cells record **the original Phase 0 run**. They are not a promise that the product passes.
 
 | Code | Meaning |
 |------|---------|

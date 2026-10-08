@@ -2,7 +2,7 @@
 # last_updated: 2026-10-08
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
-# 43.5 not started
+# 43.5 in-progress — product-wide a11y/responsive/copy closure
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -428,6 +428,7 @@ development_status:
   43-2-team-and-permissions: done
   43-3-billing-presentation: done
   43-4-platform-administration: done
+  43-5-responsive-accessibility-visual-consistency-closure: in-progress
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done

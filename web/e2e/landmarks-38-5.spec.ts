@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import AxeBuilder from "@axe-core/playwright";
+import { analyzeAxe } from "./helpers/analyze-axe";
 import { expect, test, type Page } from "@playwright/test";
 
 import {
@@ -89,11 +89,7 @@ async function assertOneMainOneH1(
 }
 
 async function runAxe(page: Page): Promise<AxeViolation[]> {
-  const results = await new AxeBuilder({ page })
-    .exclude('[disabled]')
-    .exclude('[aria-disabled="true"]')
-    .exclude('[data-disabled]')
-    .analyze();
+  const results = await analyzeAxe(page);
   return results.violations.map((violation) => ({
     id: violation.id,
     impact: violation.impact ?? null,

@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+
+import { analyzeAxe } from "./helpers/analyze-axe";
 
 import {
   DEFAULT_PRO_TENANT,
@@ -191,11 +192,7 @@ test.describe("Story 42.4 — Preview and publishing continuity", () => {
     await page.locator("#form-studio-tab-build").click();
     await closeSheet(page);
     await waitStudio(page);
-    const axe = await new AxeBuilder({ page })
-      .include("main#main-content")
-      .exclude("[disabled]")
-      .exclude('[aria-disabled="true"]')
-      .analyze();
+    const axe = await analyzeAxe(page, { include: "main#main-content" });
     const blocking = axe.violations.filter(
       (violation) =>
         (violation.impact === "serious" || violation.impact === "critical") &&

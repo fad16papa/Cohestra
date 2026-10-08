@@ -59,6 +59,9 @@ describe("Story 38.6 overlay source contract", () => {
 
   it("keeps named custom-dialog exceptions out of the 38.6 migration set", () => {
     expect(source("../components/marketing/marketing-cookie-consent.tsx")).toMatch(
+      /role=["']region["']/
+    );
+    expect(source("../components/marketing/marketing-cookie-consent.tsx")).not.toMatch(
       /role=["']dialog["']/
     );
     expect(source("../components/dashboard/activity-calendar-popout.tsx")).toMatch(
