@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-08
-# story 43.3 done; 43.1–43.3 done; 43.4 ready-for-dev; epic 43 in-progress; 42.x done
+# story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 not started
 # project: cohestra
@@ -427,7 +427,7 @@ development_status:
   43-1-settings-nested-routes: done
   43-2-team-and-permissions: done
   43-3-billing-presentation: done
-  43-4-platform-administration: in-progress
+  43-4-platform-administration: done
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done
