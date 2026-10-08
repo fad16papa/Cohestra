@@ -10,7 +10,7 @@ namespace Cohestra.Infrastructure.Tests.Billing;
 public sealed class PaddleWebhookProcessorTests
 {
     [Fact]
-    public async Task ProcessAsync_missing_event_id_is_ignored()
+    public async Task ProcessAsync_missing_event_id_is_invalid()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
         var processor = CreateProcessor(db, new FakePaddleApiClient());
@@ -19,6 +19,7 @@ public sealed class PaddleWebhookProcessorTests
 
         Assert.False(result.Processed);
         Assert.Equal("Missing event id.", result.Detail);
+        Assert.Equal(PaddleWebhookDisposition.Invalid, result.Disposition);
     }
 
     [Fact]
@@ -76,8 +77,11 @@ public sealed class PaddleWebhookProcessorTests
         var second = await processor.ProcessAsync(payload);
 
         Assert.True(first.Processed);
+        Assert.Equal(PaddleWebhookDisposition.Processed, first.Disposition);
         Assert.True(second.Duplicate);
         Assert.False(second.Processed);
+        Assert.Equal(PaddleWebhookDisposition.Duplicate, second.Disposition);
+        Assert.Single(db.PaddleWebhookEvents);
     }
 
     [Fact]
@@ -172,6 +176,344 @@ public sealed class PaddleWebhookProcessorTests
 
         Assert.True(result.Processed);
         Assert.True(client.EndTrialCalled);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_get_subscription_failure_is_retryable_and_does_not_record_event()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db, TenantPlan.Core, BillingStatus.Active);
+        var client = new FakePaddleApiClient { GetSubscriptionShouldFail = true };
+        var processor = CreateProcessor(db, client);
+        var payload = $$"""
+            {
+              "event_id": "evt_retry",
+              "event_type": "transaction.completed",
+              "data": {
+                "id": "txn_retry",
+                "status": "completed",
+                "customer_id": "ctm_1",
+                "subscription_id": "sub_retry",
+                "custom_data": { "tenant_id": "{{tenant.Id}}" }
+              }
+            }
+            """;
+
+        var result = await processor.ProcessAsync(payload);
+
+        Assert.False(result.Processed);
+        Assert.Equal(PaddleWebhookDisposition.Retryable, result.Disposition);
+        db.ChangeTracker.Clear();
+        Assert.Empty(db.PaddleWebhookEvents);
+        var unchanged = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Null(unchanged.PaddleSubscriptionId);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_retry_after_transient_failure_processes_once()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db, TenantPlan.Core, BillingStatus.Active);
+        var client = new FakePaddleApiClient { GetSubscriptionShouldFail = true };
+        var processor = CreateProcessor(db, client);
+        var payload = $$"""
+            {
+              "event_id": "evt_retry_then_ok",
+              "event_type": "transaction.completed",
+              "data": {
+                "id": "txn_retry_then_ok",
+                "status": "completed",
+                "customer_id": "ctm_1",
+                "subscription_id": "sub_ok",
+                "custom_data": { "tenant_id": "{{tenant.Id}}" }
+              }
+            }
+            """;
+
+        var failed = await processor.ProcessAsync(payload);
+        Assert.Equal(PaddleWebhookDisposition.Retryable, failed.Disposition);
+        db.ChangeTracker.Clear();
+        Assert.Empty(db.PaddleWebhookEvents);
+
+        client.GetSubscriptionShouldFail = false;
+        client.Subscription = new PaddleSubscription
+        {
+            Id = "sub_ok",
+            Status = "active",
+            CustomerId = "ctm_1",
+            Items = [new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = "pri_core_m" } }],
+        };
+
+        var recovered = await processor.ProcessAsync(payload);
+        Assert.True(recovered.Processed);
+        Assert.Equal(PaddleWebhookDisposition.Processed, recovered.Disposition);
+        Assert.Single(db.PaddleWebhookEvents);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal("sub_ok", updated.PaddleSubscriptionId);
+        Assert.Equal(BillingStatus.Active, updated.BillingStatus);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_unknown_event_type_is_ignored_without_ledger()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var processor = CreateProcessor(db, new FakePaddleApiClient());
+
+        var result = await processor.ProcessAsync("""
+            {"event_id":"evt_skip","event_type":"address.updated","data":{}}
+            """);
+
+        Assert.False(result.Processed);
+        Assert.Equal(PaddleWebhookDisposition.Ignored, result.Disposition);
+        Assert.Empty(db.PaddleWebhookEvents);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_approved_chargeback_starts_pastdue()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db, TenantPlan.Pro, BillingStatus.Active);
+        tenant.PaddleCustomerId = "ctm_cb";
+        tenant.PaddleSubscriptionId = "sub_cb";
+        await db.SaveChangesAsync();
+        var processor = CreateProcessor(db, new FakePaddleApiClient());
+        var payload = """
+            {
+              "event_id": "evt_cb",
+              "event_type": "adjustment.updated",
+              "occurred_at": "2030-01-02T00:00:00Z",
+              "data": {
+                "id": "adj_cb",
+                "action": "chargeback",
+                "status": "approved",
+                "customer_id": "ctm_cb",
+                "subscription_id": "sub_cb"
+              }
+            }
+            """;
+
+        var result = await processor.ProcessAsync(payload);
+
+        Assert.True(result.Processed);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal(TenantPlan.Pro, updated.Plan);
+        Assert.Equal(BillingStatus.PastDue, updated.BillingStatus);
+        Assert.NotNull(updated.DelinquencyStartedAt);
+        Assert.Equal("sub_cb", updated.PaddleSubscriptionId);
+        Assert.Equal("approved", db.PaddleAdjustmentCursors.Single(c => c.AdjustmentId == "adj_cb").Status);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_approved_refund_does_not_revoke_entitlements()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db, TenantPlan.Pro, BillingStatus.Active);
+        tenant.PaddleCustomerId = "ctm_rf";
+        tenant.PaddleSubscriptionId = "sub_rf";
+        await db.SaveChangesAsync();
+        var processor = CreateProcessor(db, new FakePaddleApiClient());
+        var payload = """
+            {
+              "event_id": "evt_rf",
+              "event_type": "adjustment.created",
+              "data": {
+                "id": "adj_rf",
+                "action": "refund",
+                "status": "approved",
+                "customer_id": "ctm_rf",
+                "subscription_id": "sub_rf"
+              }
+            }
+            """;
+
+        var result = await processor.ProcessAsync(payload);
+
+        Assert.True(result.Processed);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal(TenantPlan.Pro, updated.Plan);
+        Assert.Equal(BillingStatus.Active, updated.BillingStatus);
+        Assert.Equal("sub_rf", updated.PaddleSubscriptionId);
+        Assert.Null(updated.DelinquencyStartedAt);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_pending_refund_is_recorded_without_plan_change()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db, TenantPlan.Core, BillingStatus.Active);
+        tenant.PaddleCustomerId = "ctm_pending";
+        tenant.PaddleSubscriptionId = "sub_pending";
+        await db.SaveChangesAsync();
+        var processor = CreateProcessor(db, new FakePaddleApiClient());
+        var payload = """
+            {
+              "event_id": "evt_pending_rf",
+              "event_type": "adjustment.created",
+              "data": {
+                "id": "adj_pending",
+                "action": "refund",
+                "status": "pending_approval",
+                "customer_id": "ctm_pending",
+                "subscription_id": "sub_pending"
+              }
+            }
+            """;
+
+        var result = await processor.ProcessAsync(payload);
+
+        Assert.True(result.Processed);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal(BillingStatus.Active, updated.BillingStatus);
+        Assert.Equal(TenantPlan.Core, updated.Plan);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_complimentary_chargeback_is_ignored()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db, TenantPlan.Pro, BillingStatus.Free, complimentary: true);
+        tenant.PaddleCustomerId = "ctm_comp";
+        await db.SaveChangesAsync();
+        var processor = CreateProcessor(db, new FakePaddleApiClient());
+        var payload = """
+            {
+              "event_id": "evt_comp",
+              "event_type": "adjustment.updated",
+              "data": {
+                "id": "adj_comp",
+                "action": "chargeback",
+                "status": "approved",
+                "customer_id": "ctm_comp"
+              }
+            }
+            """;
+
+        var result = await processor.ProcessAsync(payload);
+
+        Assert.True(result.Processed);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal(BillingStatus.Free, updated.BillingStatus);
+        Assert.True(updated.IsComplimentary);
+        Assert.Null(updated.DelinquencyStartedAt);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_unresolvable_adjustment_is_retryable_without_ledger()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var processor = CreateProcessor(db, new FakePaddleApiClient());
+        var payload = """
+            {
+              "event_id": "evt_orphan_adj",
+              "event_type": "adjustment.created",
+              "data": {
+                "id": "adj_orphan",
+                "action": "refund",
+                "status": "approved",
+                "customer_id": "ctm_missing"
+              }
+            }
+            """;
+
+        var result = await processor.ProcessAsync(payload);
+
+        Assert.False(result.Processed);
+        Assert.Equal(PaddleWebhookDisposition.Retryable, result.Disposition);
+        Assert.Empty(db.PaddleWebhookEvents);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_stale_pending_after_approved_chargeback_does_not_clear_pastdue()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db, TenantPlan.Pro, BillingStatus.Active);
+        tenant.PaddleCustomerId = "ctm_order";
+        tenant.PaddleSubscriptionId = "sub_order";
+        await db.SaveChangesAsync();
+        var processor = CreateProcessor(db, new FakePaddleApiClient());
+
+        var approved = await processor.ProcessAsync("""
+            {
+              "event_id": "evt_adj_new",
+              "event_type": "adjustment.updated",
+              "occurred_at": "2030-01-02T00:00:00Z",
+              "data": {
+                "id": "adj_order",
+                "action": "chargeback",
+                "status": "approved",
+                "customer_id": "ctm_order",
+                "subscription_id": "sub_order"
+              }
+            }
+            """);
+        var stalePending = await processor.ProcessAsync("""
+            {
+              "event_id": "evt_adj_old",
+              "event_type": "adjustment.created",
+              "occurred_at": "2030-01-01T00:00:00Z",
+              "data": {
+                "id": "adj_order",
+                "action": "chargeback",
+                "status": "pending_approval",
+                "customer_id": "ctm_order",
+                "subscription_id": "sub_order"
+              }
+            }
+            """);
+
+        Assert.True(approved.Processed);
+        Assert.True(stalePending.Processed);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal(BillingStatus.PastDue, updated.BillingStatus);
+        Assert.Equal(TenantPlan.Pro, updated.Plan);
+        Assert.Equal("approved", db.PaddleAdjustmentCursors.Single().Status);
+    }
+
+    [Fact]
+    public async Task ProcessAsync_stale_approved_after_newer_rejected_does_not_start_pastdue()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db, TenantPlan.Pro, BillingStatus.Active);
+        tenant.PaddleCustomerId = "ctm_rej";
+        tenant.PaddleSubscriptionId = "sub_rej";
+        await db.SaveChangesAsync();
+        var processor = CreateProcessor(db, new FakePaddleApiClient());
+
+        var rejected = await processor.ProcessAsync("""
+            {
+              "event_id": "evt_rej",
+              "event_type": "adjustment.updated",
+              "occurred_at": "2030-02-02T00:00:00Z",
+              "data": {
+                "id": "adj_rej",
+                "action": "chargeback",
+                "status": "rejected",
+                "customer_id": "ctm_rej",
+                "subscription_id": "sub_rej"
+              }
+            }
+            """);
+        var staleApproved = await processor.ProcessAsync("""
+            {
+              "event_id": "evt_stale_ok",
+              "event_type": "adjustment.updated",
+              "occurred_at": "2030-02-01T00:00:00Z",
+              "data": {
+                "id": "adj_rej",
+                "action": "chargeback",
+                "status": "approved",
+                "customer_id": "ctm_rej",
+                "subscription_id": "sub_rej"
+              }
+            }
+            """);
+
+        Assert.True(rejected.Processed);
+        Assert.True(staleApproved.Processed);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal(BillingStatus.Active, updated.BillingStatus);
+        Assert.Equal(TenantPlan.Pro, updated.Plan);
+        Assert.Null(updated.DelinquencyStartedAt);
     }
 
     private static PaddleWebhookProcessor CreateProcessor(Cohestra.Infrastructure.Persistence.CohestraDbContext db, FakePaddleApiClient client) =>

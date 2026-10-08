@@ -133,15 +133,70 @@ else
   pass "Cohestra diagnostic host ports are isolated defaults or overrides"
 fi
 
-if [[ -n "${Paddle__ApiKey:-}" ]]; then
+paddle_api="${Paddle__ApiKey:-}"
+paddle_client="${Paddle__ClientToken:-}"
+paddle_env="$(echo "${Paddle__Environment:-sandbox}" | tr '[:upper:]' '[:lower:]')"
+allow_live_paddle="${COHESTRA_ALLOW_LIVE_PADDLE:-${Paddle__AllowLive:-}}"
+
+paddle_api_is_sandbox=false
+paddle_api_is_live=false
+if [[ -n "$paddle_api" ]]; then
+  if [[ "$paddle_api" == *"sdbx"* ]]; then
+    paddle_api_is_sandbox=true
+  elif [[ "$paddle_api" == *"live"* ]]; then
+    paddle_api_is_live=true
+  fi
+fi
+
+paddle_client_is_sandbox=false
+paddle_client_is_live=false
+if [[ -n "$paddle_client" ]]; then
+  if [[ "$paddle_client" == test_* ]]; then
+    paddle_client_is_sandbox=true
+  elif [[ "$paddle_client" == live_* ]]; then
+    paddle_client_is_live=true
+  fi
+fi
+
+public_host="$(python3 - "${PUBLIC_BASE_URL:-}" <<'PY'
+import sys
+from urllib.parse import urlparse
+raw = sys.argv[1] if len(sys.argv) > 1 else ""
+host = (urlparse(raw).hostname or "").lower()
+print(host)
+PY
+)"
+is_uat_host=false
+if [[ "$public_host" == "uat.cohestra.app" || "$public_host" == uat.* ]]; then
+  is_uat_host=true
+fi
+
+if [[ -n "$paddle_api" ]]; then
   require_nonempty "Paddle__WebhookSecret" "${Paddle__WebhookSecret:-}"
   require_nonempty "Paddle__ClientToken" "${Paddle__ClientToken:-}"
-  if [[ "${Paddle__Environment:-sandbox}" == "production" ]]; then
-    warn "Paddle__Environment=production — UAT should use sandbox until public launch"
+
+  if [[ "$is_uat_host" == true && ( "$paddle_env" == "production" || "$paddle_api_is_live" == true || "$paddle_client_is_live" == true ) ]]; then
+    fail "Live Paddle cannot be used when PUBLIC_BASE_URL is a UAT host, even with AllowLive"
+  elif [[ "$paddle_env" == "production" ]]; then
+    if [[ "$paddle_api_is_sandbox" == true || "$paddle_client_is_sandbox" == true ]]; then
+      fail "Sandbox Paddle credentials cannot be used when Paddle__Environment=production"
+    fi
+    if [[ "$allow_live_paddle" == "1" || "$allow_live_paddle" == "true" ]]; then
+      pass "Paddle live cutover override (COHESTRA_ALLOW_LIVE_PADDLE / Paddle__AllowLive)"
+    else
+      fail "Paddle__Environment=production requires COHESTRA_ALLOW_LIVE_PADDLE=1 after owner-approved cutover"
+    fi
   else
-    pass "Paddle sandbox configured"
+    if [[ "$paddle_api_is_live" == true || "$paddle_client_is_live" == true ]]; then
+      fail "Live Paddle credentials cannot be used when Paddle__Environment is sandbox (or unset)"
+    else
+      pass "Paddle sandbox configured"
+    fi
   fi
 else
+  if [[ "$paddle_client_is_live" == true ]]; then
+    fail "Live Paddle client token cannot be used without a matching sandbox/live API key pair"
+  fi
   warn "Paddle__ApiKey unset — stack smoke (19.1) can proceed; billing UAT (19.4) needs sandbox keys"
 fi
 

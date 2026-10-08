@@ -252,5 +252,26 @@ internal sealed class PaddleNotification
 
     public string? EventType { get; set; }
 
+    public DateTimeOffset? OccurredAt { get; set; }
+
     public JsonElement Data { get; set; }
+}
+
+internal sealed class PaddleAdjustment
+{
+    public string Id { get; set; } = string.Empty;
+
+    public string? Action { get; set; }
+
+    public string? Status { get; set; }
+
+    public string? CustomerId { get; set; }
+
+    public string? SubscriptionId { get; set; }
+
+    public string? TransactionId { get; set; }
+
+    public DateTimeOffset? CreatedAt { get; set; }
+
+    public DateTimeOffset? UpdatedAt { get; set; }
 }

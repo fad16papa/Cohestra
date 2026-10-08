@@ -28,4 +28,28 @@ public sealed class PaddleSettingsTests
         Assert.Equal(30, new PaddleSettings().TrialPeriodDays);
         Assert.Equal("Paddle", PaddleSettings.SectionName);
     }
+
+    [Fact]
+    public void Credential_shape_classifiers_distinguish_sandbox_and_live()
+    {
+        var sandbox = new PaddleSettings
+        {
+            ApiKey = "pdl_sdbx_apikey",
+            ClientToken = "test_client",
+        };
+        Assert.True(sandbox.LooksLikeSandboxApiKey);
+        Assert.False(sandbox.LooksLikeLiveApiKey);
+        Assert.True(sandbox.LooksLikeSandboxClientToken);
+        Assert.False(sandbox.LooksLikeLiveClientToken);
+
+        var live = new PaddleSettings
+        {
+            ApiKey = "pdl_live_apikey",
+            ClientToken = "live_client",
+        };
+        Assert.False(live.LooksLikeSandboxApiKey);
+        Assert.True(live.LooksLikeLiveApiKey);
+        Assert.False(live.LooksLikeSandboxClientToken);
+        Assert.True(live.LooksLikeLiveClientToken);
+    }
 }

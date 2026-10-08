@@ -79,6 +79,20 @@ bash deploy/host-proxy/persist-cohestra-vhost.sh
 | Tenant TLS | FAIL (SNI serves `thesocialcollectivesg.com` cert) |
 | DNS | PASS (both A records → 129.212.235.2) |
 
+## Independent public probe (2026-10-08)
+
+Cloud Agent has **no SSH**. Public TLS checks only (no secrets):
+
+| Check | Result |
+|-------|--------|
+| HTTP Host `uat.cohestra.app` | **301** to HTTPS, `X-Cohestra-Edge-Vhost: uat` |
+| Cert SAN | `uat.cohestra.app` + `*.uat.cohestra.app` (notBefore Sep 14 2026, notAfter Dec 13 2026) |
+| `https://uat.cohestra.app/ready` | **200** Healthy |
+| `https://creativorare.uat.cohestra.app/` | **200**, same wildcard cert, HSTS `max-age=31536000`, CSP includes Paddle **sandbox** origins |
+| Tenant SNI | Serves UAT wildcard, not `thesocialcollectivesg.com` |
+
+Owner SSH checkboxes above remain **unchecked**. Tracker stays **review / not done**. This probe does **not** replace `prove-edge-tls-wildcard.sh`, existing-app regression, or BMAD close. Apex `cohestra.app` cert expiry is **unrelated** (shared droplet serves another site cert).
+
 ## Renewal
 
 **MANUAL-ACCEPTED** for UAT until DNS provider automation exists.

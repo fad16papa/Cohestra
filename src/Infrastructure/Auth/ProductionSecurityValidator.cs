@@ -1,3 +1,4 @@
+using Cohestra.Infrastructure.Billing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 
@@ -15,6 +16,11 @@ public static class ProductionSecurityValidator
 
     public static void Validate(IConfiguration configuration, IHostEnvironment environment)
     {
+        var paddle = configuration.GetSection(PaddleSettings.SectionName).Get<PaddleSettings>()
+            ?? new PaddleSettings();
+        var publicBaseUrl = configuration["PublicWeb:BaseUrl"];
+        PaddleCredentialGuard.Validate(paddle, environment, publicBaseUrl);
+
         if (environment.IsDevelopment() || string.Equals(environment.EnvironmentName, "Testing", StringComparison.OrdinalIgnoreCase))
         {
             return;
