@@ -2,17 +2,19 @@
 id: 43.5
 key: 43-5-responsive-accessibility-visual-consistency-closure
 title: Responsive, accessibility, visual, and consistency closure
-status: review
+status: done
 epic: 43
 created: 2026-10-08
 baseline_commit: 0a160132d076d7df752179fec1dd020a784e22ca
+accepted_commit: ee4d780dd5d31056d58b28aabc7fb9949d1191dd
+implementation_merge: e18f5d937064cdc7d9390eae940efc80ed42c3d5
 ---
 
 # Story 43.5: Responsive, accessibility, visual, and consistency closure
 
-Status: review
+Status: done
 
-Code review PASS (no BLOCKER/MAJOR). Checkpoint PASS. Trace PASS. Pending exact-HEAD CI.
+DONE requires the Mandatory Code Review Loop on the final HEAD.
 
 DONE requires the Mandatory Code Review Loop on the final HEAD.
 
@@ -58,13 +60,21 @@ PASS. Delta classified, party resolved one direction, UX/spec/architecture recor
 - No 44px threshold weaken
 - Epic 35–37 untouched
 
+## Close
+
+Story 43.5 DONE on accepted HEAD `ee4d780d` (PR #401 merge `e18f5d93`). Epic 43 cross-story close follows this tracker. Do not start a new epic.
+
+## Exact stop
+
+Story 43.5 DONE. Epic 43 closes with this tracker. STOP. Do not start Epic 19, Epic 33 backlog, or a new Product Experience epic.
+
 ## Tasks
 
-- [ ] Cookie lib + UI + shell
-- [ ] Copy (register, manual, Suspended)
-- [ ] Axe helper + migrate e2e
-- [ ] Community row + marketing focus
-- [ ] Vitest + Playwright 43.5
-- [ ] Overlays 38.6 cookie exception update
-- [ ] Visual QA matrix 43.5 section
-- [ ] Build / test / review / checkpoint / trace
+- [x] Cookie lib + UI + shell
+- [x] Copy (register, manual, Suspended)
+- [x] Axe helper + migrate e2e
+- [x] Community row + marketing focus
+- [x] Vitest + Playwright 43.5
+- [x] Overlays 38.6 cookie exception update
+- [x] Visual QA matrix 43.5 section
+- [x] Build / test / review / checkpoint / trace
