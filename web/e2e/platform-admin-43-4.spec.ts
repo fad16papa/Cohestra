@@ -145,7 +145,7 @@ test.describe("Story 43.4 — Platform administration", () => {
     await expect(confirmSuspend).toBeDisabled();
     await page.locator("#suspend-reason").fill("E2E abuse freeze — not collections");
     await confirmSuspend.click();
-    await expect(page.getByText("Workspace paused.")).toBeVisible();
+    await expect(page.getByText(/Workspace paused\./).first()).toBeVisible();
     await expect(page.getByText(/Billing is on hold/i)).toHaveCount(0);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "platform-suspend.png"),
@@ -156,7 +156,7 @@ test.describe("Story 43.4 — Platform administration", () => {
 
     await page.getByRole("button", { name: "Archive" }).click();
     await page.getByRole("button", { name: "Archive workspace" }).click();
-    await expect(page.getByText("Workspace archived.")).toBeVisible();
+    await expect(page.getByText(/Workspace archived\./).first()).toBeVisible();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await openPlatform(page, session, `/platform/tenants/${disposable.id}`);
