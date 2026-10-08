@@ -1,7 +1,7 @@
 # PR #404 independent pre-merge review
 
 **Reviewed against:** `origin/main` `c82f44ee`  
-**Implementation HEAD at review close:** see git log on `cursor/paddle-billing-remediation-8d24`  
+**Implementation HEAD at review close:** `35a663165f3b3bd58ef31bdbeaa473bdf5f09572`  
 **Model:** Grok 4.6 only (no Composer, no Auto, no cross-model subagents)  
 **Loop:** Mandatory Code Review Loop in force. Story 19.4 remains ready-for-dev.
 
