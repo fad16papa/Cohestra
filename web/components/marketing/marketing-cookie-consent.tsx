@@ -80,46 +80,50 @@ export function MarketingCookieConsent() {
         ref={bannerRef}
         role="region"
         aria-label="Cookie consent"
-        className="relative z-20 border-b border-line bg-paper px-5 py-4 sm:px-8 lg:px-10"
+        className="relative z-20 border-b border-line bg-paper px-5 py-3 sm:px-8 lg:px-10"
       >
-        <p className="text-sm font-semibold text-ink">Cookies on this site</p>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-muted">
-          Cohestra uses essential cookies to keep you signed in and to remember this choice. Optional
-          analytics are not currently used. See our{" "}
-          <Link
-            href="/privacy"
-            className="font-medium text-lagoon underline-offset-2 hover:text-lagoon-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2"
-          >
-            Privacy policy
-          </Link>
-          .
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            className={cn(marketingAtelierButtonClass("lagoon", "sm"), "min-h-11 min-w-11 px-4")}
-            onClick={() => persist(CONSENT_ACCEPTED)}
-          >
-            Accept
-          </button>
-          <button
-            type="button"
-            className={cn(marketingAtelierButtonClass("ghost", "sm"), "min-h-11 min-w-11 px-4")}
-            onClick={() => persist(CONSENT_ESSENTIAL)}
-          >
-            Reject non-essential
-          </button>
-          <button
-            ref={preferencesButtonRef}
-            type="button"
-            className={cn(marketingAtelierButtonClass("ghost", "sm"), "min-h-11 min-w-11 px-4")}
-            onClick={() => {
-              setOptionalAnalytics(false);
-              setPreferencesOpen(true);
-            }}
-          >
-            Preferences
-          </button>
+        <div className="mx-auto flex max-w-6xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">Cookies on this site</p>
+            <p className="mt-1 max-w-3xl text-sm leading-snug text-text-muted">
+              Essential cookies keep you signed in and remember this choice. Optional analytics are
+              not currently used. See our{" "}
+              <Link
+                href="/privacy"
+                className="font-medium text-lagoon underline-offset-2 hover:text-lagoon-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2"
+              >
+                Privacy policy
+              </Link>
+              .
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 lg:shrink-0">
+            <button
+              type="button"
+              className={cn(marketingAtelierButtonClass("lagoon", "sm"), "min-h-11 min-w-11 px-4")}
+              onClick={() => persist(CONSENT_ACCEPTED)}
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              className={cn(marketingAtelierButtonClass("ghost", "sm"), "min-h-11 min-w-11 px-4")}
+              onClick={() => persist(CONSENT_ESSENTIAL)}
+            >
+              Reject non-essential
+            </button>
+            <button
+              ref={preferencesButtonRef}
+              type="button"
+              className={cn(marketingAtelierButtonClass("ghost", "sm"), "min-h-11 min-w-11 px-4")}
+              onClick={() => {
+                setOptionalAnalytics(false);
+                setPreferencesOpen(true);
+              }}
+            >
+              Preferences
+            </button>
+          </div>
         </div>
       </div>
 

@@ -73,7 +73,6 @@ test.describe("Story 43.5 — product-wide closure", () => {
     await expect(page.getByRole("button", { name: "Preferences" })).toBeVisible();
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "marketing-cookie-390-first-visit.png"),
-      fullPage: true,
     });
     await page.getByRole("link", { name: "Start free" }).first().click();
     await expect(page).toHaveURL(/\/signup/);
@@ -88,7 +87,6 @@ test.describe("Story 43.5 — product-wide closure", () => {
     expect(stored).toBe("essential");
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "marketing-cookie-390-rejected.png"),
-      fullPage: true,
     });
     await page.goto("/pricing", { waitUntil: "domcontentloaded" });
     await expect(cookieBanner(page)).toHaveCount(0);
@@ -103,7 +101,6 @@ test.describe("Story 43.5 — product-wide closure", () => {
     await expectCtaClearOfBanner(page);
     await page.screenshot({
       path: path.join(evidenceDir, "viewports", "marketing-cookie-1440-first-visit.png"),
-      fullPage: true,
     });
     await page.getByRole("button", { name: "Accept" }).click();
     await expect(cookieBanner(page)).toHaveCount(0);
