@@ -136,7 +136,7 @@ fi
 paddle_api="${Paddle__ApiKey:-}"
 paddle_client="${Paddle__ClientToken:-}"
 paddle_env="$(echo "${Paddle__Environment:-sandbox}" | tr '[:upper:]' '[:lower:]')"
-allow_live_paddle="${COHESTRA_ALLOW_LIVE_PADDLE:-}"
+allow_live_paddle="${COHESTRA_ALLOW_LIVE_PADDLE:-${Paddle__AllowLive:-}}"
 
 paddle_api_is_sandbox=false
 paddle_api_is_live=false
@@ -166,8 +166,8 @@ if [[ -n "$paddle_api" ]]; then
     if [[ "$paddle_api_is_sandbox" == true || "$paddle_client_is_sandbox" == true ]]; then
       fail "Sandbox Paddle credentials cannot be used when Paddle__Environment=production"
     fi
-    if [[ "$allow_live_paddle" == "1" ]]; then
-      pass "Paddle live cutover override COHESTRA_ALLOW_LIVE_PADDLE=1"
+    if [[ "$allow_live_paddle" == "1" || "$allow_live_paddle" == "true" ]]; then
+      pass "Paddle live cutover override (COHESTRA_ALLOW_LIVE_PADDLE / Paddle__AllowLive)"
     else
       fail "Paddle__Environment=production requires COHESTRA_ALLOW_LIVE_PADDLE=1 after owner-approved cutover"
     fi

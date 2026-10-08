@@ -211,7 +211,8 @@ public sealed class ProductionSecurityValidatorTests
             "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
             paddleEnvironment: "production",
             paddleApiKey: "pdl_sdbx_apikey",
-            paddleClientToken: "test_client");
+            paddleClientToken: "test_client",
+            paddleAllowLive: true);
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
             ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
@@ -219,11 +220,27 @@ public sealed class ProductionSecurityValidatorTests
         Assert.Contains("Sandbox Paddle credentials", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Validate_rejects_production_paddle_environment_without_allow_live()
+    {
+        var configuration = ProductionConfig(
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+            paddleEnvironment: "production",
+            paddleApiKey: "pdl_live_apikey",
+            paddleClientToken: "live_client");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Paddle:AllowLive=true", exception.Message, StringComparison.Ordinal);
+    }
+
     private static IConfiguration ProductionConfig(
         string connectionString,
         string? paddleEnvironment = null,
         string? paddleApiKey = null,
-        string? paddleClientToken = null)
+        string? paddleClientToken = null,
+        bool? paddleAllowLive = null)
     {
         var values = new Dictionary<string, string?>
         {
@@ -243,6 +260,11 @@ public sealed class ProductionSecurityValidatorTests
         if (paddleClientToken is not null)
         {
             values["Paddle:ClientToken"] = paddleClientToken;
+        }
+
+        if (paddleAllowLive is not null)
+        {
+            values["Paddle:AllowLive"] = paddleAllowLive.Value ? "true" : "false";
         }
 
         return new ConfigurationBuilder().AddInMemoryCollection(values).Build();

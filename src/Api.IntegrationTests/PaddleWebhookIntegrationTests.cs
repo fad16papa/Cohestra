@@ -12,26 +12,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Cohestra.Api.IntegrationTests;
 
 [Trait("Category", "Integration")]
-public sealed class PaddleWebhookIntegrationTests : IAsyncLifetime
+[Collection(PaddleWebhookIntegrationCollection.Name)]
+public sealed class PaddleWebhookIntegrationTests(PaddleWebhookIntegrationFixture fixture)
 {
-    private PaddleWebhookWebApplicationFactory? _factory;
-
-    private PaddleWebhookWebApplicationFactory Factory =>
-        _factory ?? throw new InvalidOperationException("Test factory not initialized.");
-
-    public async Task InitializeAsync()
-    {
-        _factory = new PaddleWebhookWebApplicationFactory();
-        await _factory.InitializeAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (_factory is not null)
-        {
-            await _factory.DisposeAsync();
-        }
-    }
+    private PaddleWebhookWebApplicationFactory Factory => fixture.Factory;
 
     [SkippableFact]
     public async Task Webhook_missing_signature_returns_400()

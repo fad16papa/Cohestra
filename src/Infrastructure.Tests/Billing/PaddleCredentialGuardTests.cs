@@ -41,10 +41,28 @@ public sealed class PaddleCredentialGuardTests
     }
 
     [Fact]
+    public void Validate_rejects_production_paddle_without_allow_live()
+    {
+        var settings = new PaddleSettings
+        {
+            Environment = "production",
+            ApiKey = "pdl_live_apikey",
+            ClientToken = "live_client",
+            AllowLive = false,
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            PaddleCredentialGuard.Validate(settings, Host(Environments.Production)));
+
+        Assert.Contains("Paddle:AllowLive=true", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Validate_rejects_sandbox_keys_when_environment_is_production()
     {
         var settings = SandboxSettings();
         settings.Environment = "production";
+        settings.AllowLive = true;
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
             PaddleCredentialGuard.Validate(settings, Host(Environments.Production)));
@@ -60,6 +78,7 @@ public sealed class PaddleCredentialGuardTests
             Environment = "production",
             ApiKey = "pdl_live_apikey",
             ClientToken = "live_client",
+            AllowLive = true,
         };
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -77,6 +96,7 @@ public sealed class PaddleCredentialGuardTests
             ApiKey = "pdl_live_apikey",
             ClientToken = "live_client",
             WebhookSecret = "pdl_ntfset_live",
+            AllowLive = true,
         };
 
         var exception = Record.Exception(() =>

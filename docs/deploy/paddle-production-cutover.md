@@ -19,6 +19,7 @@ This is SANDBOX → LIVE. Live credentials are a final production owner gate. Ep
 | `Paddle__ClientToken` | starts with `live_` |
 | `Paddle__WebhookSecret` | secret of the **live** notification destination |
 | `Paddle__Environment` | `production` → `https://api.paddle.com/` |
+| `Paddle__AllowLive` | `true` (required; also accepted as `COHESTRA_ALLOW_LIVE_PADDLE=1`) |
 | `Paddle__PriceCoreMonthly` / `Annual` | live `pri_…` |
 | `Paddle__PriceProMonthly` / `Annual` | live `pri_…` |
 
@@ -38,10 +39,10 @@ Classify with `bash deploy/classify-paddle-env.sh` — expect LIVE labels, never
 
 ## After env change
 
-Live credentials are rejected by `PaddleCredentialGuard` and `deploy/preflight-launch.sh` unless the owner sets `COHESTRA_ALLOW_LIVE_PADDLE=1` for this documented cutover. Do not set that flag on UAT or Development.
+Live credentials are rejected by `PaddleCredentialGuard` and `deploy/preflight-launch.sh` unless the owner sets `Paddle__AllowLive=true` (or `COHESTRA_ALLOW_LIVE_PADDLE=1`) for this documented cutover. Do not set those flags on UAT or Development.
 
 ```bash
-COHESTRA_ALLOW_LIVE_PADDLE=1 bash deploy/preflight-launch.sh
+Paddle__AllowLive=true COHESTRA_ALLOW_LIVE_PADDLE=1 bash deploy/preflight-launch.sh
 docker compose -f docker-compose.uat.yml up -d --build
 # rebuild web if PUBLIC_BASE_URL / return origin changed
 ```

@@ -38,6 +38,12 @@ public static class PaddleCredentialGuard
         }
         else
         {
+            if (!settings.AllowLive)
+            {
+                throw new InvalidOperationException(
+                    "Paddle:Environment=production requires Paddle:AllowLive=true after owner-approved cutover.");
+            }
+
             if (sandboxApi || sandboxClient)
             {
                 throw new InvalidOperationException(
