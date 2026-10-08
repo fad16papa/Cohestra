@@ -151,6 +151,50 @@ export async function loginOperator(request: APIRequestContext): Promise<string>
   return session.accessToken;
 }
 
+const PLATFORM_ADMIN_EMAIL =
+  process.env.E2E_PLATFORM_ADMIN_EMAIL ?? "platform-admin@cohestra.local";
+const PLATFORM_ADMIN_PASSWORD =
+  process.env.E2E_PLATFORM_ADMIN_PASSWORD ?? "ChangeMe123!";
+
+export async function loginPlatformAdminSession(
+  request: APIRequestContext
+): Promise<OperatorSession> {
+  const response = await request.post(`${API_BASE}/api/v1/auth/login`, {
+    data: { email: PLATFORM_ADMIN_EMAIL, password: PLATFORM_ADMIN_PASSWORD },
+  });
+  if (!response.ok()) {
+    throw new Error(`Platform admin login failed: ${response.status()} ${await response.text()}`);
+  }
+  const body = (await response.json()) as {
+    accessToken?: string;
+    refreshToken?: string;
+    expiresIn?: number;
+    expiresInSeconds?: number;
+    ExpiresInSeconds?: number;
+  };
+  if (!body.accessToken || !body.refreshToken) {
+    throw new Error("Platform admin login response missing tokens");
+  }
+  const expiresInSec = body.expiresInSeconds ?? body.ExpiresInSeconds ?? body.expiresIn ?? 3600;
+  return {
+    accessToken: body.accessToken,
+    refreshToken: body.refreshToken,
+    expiresAt: Date.now() + expiresInSec * 1000,
+  };
+}
+
+export async function waitForPlatformConsole(
+  page: import("@playwright/test").Page
+): Promise<void> {
+  await page.waitForFunction(
+    () =>
+      !window.location.pathname.includes("/login") &&
+      !document.body.textContent?.includes("Loading platform console"),
+    undefined,
+    { timeout: 60_000 }
+  );
+}
+
 export async function seedOperatorAuthSession(
   page: import("@playwright/test").Page,
   session: OperatorSession

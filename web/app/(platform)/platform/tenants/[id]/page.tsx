@@ -7,6 +7,16 @@ import { useParams } from "next/navigation";
 import { PlatformTenantOpsPanel } from "@/components/platform/platform-tenant-ops-panel";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   archivePlatformTenant,
   getPlatformTenant,
   reactivatePlatformTenant,
@@ -15,6 +25,10 @@ import {
   type PlatformAuditEntry,
   type TenantResponse,
 } from "@/lib/platform-api";
+import {
+  describePlatformBillingStatus,
+  describePlatformTenantStatus,
+} from "@/lib/platform-status-copy";
 
 const COMPLIMENTARY_PLANS = ["Basic", "Core", "Pro"] as const;
 /** Platform 0 default tenant — complimentary mutations are rejected server-side (409). */
@@ -34,6 +48,7 @@ export default function PlatformTenantDetailPage() {
   const [busy, setBusy] = useState(false);
   const [suspendReason, setSuspendReason] = useState("");
   const [showSuspend, setShowSuspend] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [compPlan, setCompPlan] = useState<string>("Core");
   const [compReason, setCompReason] = useState("");
   const busyRef = useRef(false);
@@ -63,7 +78,11 @@ export default function PlatformTenantDetailPage() {
           return;
         }
         if (clearTenantOnError) {
-          setError(err instanceof Error ? err.message : "Could not load tenant.");
+          setError(
+            err instanceof Error
+              ? `${err.message} Return to the directory and open the workspace again.`
+              : "This tenant could not be loaded. It may have been removed, or the link may be wrong. Return to the directory."
+          );
           setTenant(null);
         } else {
           setActionError(
@@ -91,6 +110,7 @@ export default function PlatformTenantDetailPage() {
     setActionError(null);
     setSuspendReason("");
     setShowSuspend(false);
+    setArchiveOpen(false);
     busyRef.current = false;
     setBusy(false);
     actionGenRef.current += 1;
@@ -142,6 +162,7 @@ export default function PlatformTenantDetailPage() {
       }
       setTenant(updated);
       setShowSuspend(false);
+      setArchiveOpen(false);
       setSuspendReason("");
       setCompReason("");
       await loadDetail({ clearTenantOnError: false });
@@ -169,18 +190,20 @@ export default function PlatformTenantDetailPage() {
           {error ?? "Tenant not found."}
         </p>
         <Link href="/platform" className="text-sm text-[var(--plat-lagoon)] underline-offset-4 hover:underline">
-          Back to directory
+          Return to the tenant directory
         </Link>
       </div>
     );
   }
 
-  const canSuspend = tenant.status === "Active";
-  const canReactivate = tenant.status === "Suspended";
-  const canArchive = tenant.status !== "Archived";
   const isDefaultTenant =
     tenant.id === DEFAULT_TENANT_ID || tenant.slug === "default";
+  const canSuspend = tenant.status === "Active" && !isDefaultTenant;
+  const canReactivate = tenant.status === "Suspended" && !isDefaultTenant;
+  const canArchive = tenant.status !== "Archived" && !isDefaultTenant;
   const canChangeComplimentary = tenant.status !== "Archived" && !isDefaultTenant;
+  const tenantStatus = describePlatformTenantStatus(tenant.status);
+  const billingStatus = describePlatformBillingStatus(tenant.billingStatus);
 
   return (
     <div className="space-y-10">
@@ -201,7 +224,10 @@ export default function PlatformTenantDetailPage() {
           {tenant.name} · created {formatDate(tenant.createdAt)}
         </p>
         <p className="mt-3 text-sm text-[var(--plat-ink-soft)]">
-          <span className="text-[var(--plat-stone)]">Status</span> {tenant.status}
+          <span className="text-[var(--plat-stone)]">Status</span> {tenantStatus.label}
+          {tenantStatus.headline !== tenantStatus.label ? (
+            <span> — {tenantStatus.headline}</span>
+          ) : null}
           <span className="mx-2 text-[var(--plat-line-strong)]">·</span>
           <span className="text-[var(--plat-stone)]">Plan</span> {tenant.plan}
           {tenant.isComplimentary ? (
@@ -212,6 +238,9 @@ export default function PlatformTenantDetailPage() {
           ) : null}
           <span className="mx-2 text-[var(--plat-line-strong)]">·</span>
           <span className="text-[var(--plat-stone)]">Billing</span> {tenant.billingStatus}
+          {billingStatus.headline !== tenant.billingStatus ? (
+            <span> — {billingStatus.headline}</span>
+          ) : null}
         </p>
         <p className="mt-1 text-sm text-[var(--plat-ink-soft)]">
           <span className="text-[var(--plat-stone)]">Admin contact</span>{" "}
@@ -244,6 +273,12 @@ export default function PlatformTenantDetailPage() {
           Suspend is break-glass for abuse, ToS, or support freeze — not for non-payment.
           BillingStatus is never changed by these actions.
         </p>
+        {isDefaultTenant ? (
+          <p className="text-sm text-[var(--plat-stone)]">
+            Suspend, archive, and complimentary cannot be changed on the Platform 0 default
+            tenant.
+          </p>
+        ) : null}
 
         {actionError ? (
           <p role="alert" className="text-sm text-[var(--plat-danger)]">
@@ -278,21 +313,41 @@ export default function PlatformTenantDetailPage() {
             <button
               type="button"
               disabled={busy}
-              onClick={() => {
-                if (
-                  typeof window !== "undefined" &&
-                  !window.confirm(`Archive tenant ${tenant.slug}? This is a soft archive.`)
-                ) {
-                  return;
-                }
-                void runAction(() => archivePlatformTenant(authFetch, tenant.id));
-              }}
+              onClick={() => setArchiveOpen(true)}
               className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-4 text-sm font-semibold text-[var(--plat-ink)] disabled:opacity-50"
             >
               Archive
             </button>
           ) : null}
         </div>
+
+        <AlertDialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Archive {tenant.slug}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This is a soft archive of workspace {tenant.name}. The workspace leaves the
+                operational directory. This does not collect payment and does not delete data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy} className="min-h-11">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={busy}
+                className="min-h-11"
+                onClick={() => {
+                  setArchiveOpen(false);
+                  void runAction(() => archivePlatformTenant(authFetch, tenant.id));
+                }}
+              >
+                Archive workspace
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {showSuspend ? (
           <div className="max-w-xl space-y-3 border-t border-[var(--plat-line)] pt-4">

@@ -19,9 +19,13 @@ import {
   listPlatformTenants,
   type TenantListItem,
 } from "@/lib/platform-api";
+import {
+  describePlatformBillingStatus,
+  describePlatformTenantStatus,
+} from "@/lib/platform-status-copy";
 
 const TENANT_STATUSES = ["Active", "Suspended", "Archived"] as const;
-const BILLING_STATUSES = ["Free", "Active", "PastDue", "Canceled"] as const;
+const BILLING_STATUSES = ["Free", "Active", "PastDue", "OnHold", "Canceled"] as const;
 const PLANS = ["Basic", "Core", "Pro"] as const;
 
 export default function PlatformTenantDirectoryPage() {
@@ -74,7 +78,11 @@ export default function PlatformTenantDirectoryPage() {
         if (cancelled) {
           return;
         }
-        setError(err instanceof Error ? err.message : "Could not load tenants.");
+        setError(
+          err instanceof Error
+            ? `${err.message} Refresh the directory or try the search again.`
+            : "The tenant directory could not be loaded. Refresh the page or try the search again."
+        );
         setItems([]);
         setTotalCount(0);
         setLoading(false);
@@ -325,7 +333,10 @@ export default function PlatformTenantDirectoryPage() {
                 </td>
               </tr>
             ) : (
-              items.map((tenant) => (
+              items.map((tenant) => {
+                const tenantStatus = describePlatformTenantStatus(tenant.status);
+                const billingStatus = describePlatformBillingStatus(tenant.billingStatus);
+                return (
                 <PlatformDataTableRow key={tenant.id}>
                   <PlatformDataTableCell>
                     <Link
@@ -338,8 +349,18 @@ export default function PlatformTenantDirectoryPage() {
                   <PlatformDataTableCell className="text-[var(--plat-ink-soft)]">
                     {tenant.name}
                   </PlatformDataTableCell>
-                  <PlatformDataTableCell>{tenant.status}</PlatformDataTableCell>
-                  <PlatformDataTableCell>{tenant.billingStatus}</PlatformDataTableCell>
+                  <PlatformDataTableCell>
+                    <StatusCopy
+                      label={tenantStatus.label}
+                      headline={tenantStatus.headline}
+                    />
+                  </PlatformDataTableCell>
+                  <PlatformDataTableCell>
+                    <StatusCopy
+                      label={tenant.billingStatus}
+                      headline={billingStatus.headline}
+                    />
+                  </PlatformDataTableCell>
                   <PlatformDataTableCell className="tabular-nums text-[var(--plat-stone)]">
                     {formatDate(tenant.createdAt)}
                   </PlatformDataTableCell>
@@ -353,7 +374,8 @@ export default function PlatformTenantDirectoryPage() {
                     {tenant.clientCount}
                   </PlatformDataTableCell>
                 </PlatformDataTableRow>
-              ))
+                );
+              })
             )}
           </PlatformDataTableBody>
         </PlatformDataTable>
@@ -369,7 +391,7 @@ export default function PlatformTenantDirectoryPage() {
             type="button"
             disabled={page <= 1 || loading}
             onClick={() => setPage((current) => Math.max(1, current - 1))}
-            className="min-h-10 rounded-[10px] border border-[var(--plat-line-strong)] px-3 disabled:opacity-40"
+            className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-3 disabled:opacity-40"
           >
             Previous
           </button>
@@ -377,13 +399,24 @@ export default function PlatformTenantDirectoryPage() {
             type="button"
             disabled={page >= totalPages || loading}
             onClick={() => setPage((current) => current + 1)}
-            className="min-h-10 rounded-[10px] border border-[var(--plat-line-strong)] px-3 disabled:opacity-40"
+            className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] px-3 disabled:opacity-40"
           >
             Next
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+function StatusCopy({ label, headline }: { label: string; headline: string }) {
+  return (
+    <>
+      <span>{label}</span>
+      {headline !== label ? (
+        <span className="block text-xs text-[var(--plat-stone)]">{headline}</span>
+      ) : null}
+    </>
   );
 }
 
