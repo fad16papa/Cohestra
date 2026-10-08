@@ -31,6 +31,12 @@ Unresolved BLOCKER/MAJOR on this patch set: **none**.
 - Live apex `https://cohestra.app` + AllowLive + live keys: **allowed** (cutover path only)
 - No live billing activation; no production host changes; PR not merged
 
+## Merge gate (later 2026-10-08)
+
+Re-fetched `origin/main` (`c82f44ee`) and PR #404. **HEAD remains** `47ebb1b532d464a9fdc326437d53447f6bc2c5fd`. CI run `37786641310` all SUCCESS (including Docker stack smoke + GitGuardian). `mergeable=MERGEABLE`, `mergeStateStatus=CLEAN`. No new BLOCKER/MAJOR. Artifact: `paddle-pr-404-merge-gate-2026-10-08.md`.
+
+**MERGE READY for owner authorization. Not merged.**
+
 ## Tests executed after the patch
 
 See the agent delivery report for commands and counts.

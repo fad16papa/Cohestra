@@ -262,6 +262,12 @@ development_status:
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
   # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.
   # Isolation review on 95e5bd0 found BLOCKER/MAJOR; patches applied, story stays in-progress.
+  # 2026-10-08 independent public probe (no SSH): https://uat.cohestra.app/ready Healthy,
+  # HTTP→HTTPS 301, wildcard SAN uat + *.uat, webhook 400 missing signature.
+  # Do NOT mark 19.1/19.2 done — product acceptance + BMAD close still required.
+  # 19.4 blocked on PR #404 deploy + sandbox UAT walk, not on missing public URL/TLS.
+  # Merge gate 2026-10-08: PR #404 HEAD 47ebb1b5 CI green — MERGE READY, not merged.
+  # Execution plan: 19-4-paddle-sandbox-uat-execution-plan-2026-10-08.md (stop before charge).
   epic-19: in-progress
   19-1-uat-droplet-deploy-and-smoke: in-progress
   19-2-https-edge-security-header-verify: review

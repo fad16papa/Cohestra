@@ -39,6 +39,7 @@ Local sandbox: use the **ngrok HTTPS** apex (same tunnel as the webhook) and set
 | Environment | Default payment link |
 |---|---|
 | Local Docker sandbox | `https://{ngrok-host}/billing/paddle-return` |
+| UAT droplet (sandbox Paddle) | `https://uat.cohestra.app/billing/paddle-return` |
 | Production | `https://cohestra.app/billing/paddle-return` |
 | nip.io UAT | `https://{ip-dashed}.nip.io/billing/paddle-return` |
 

@@ -42,6 +42,10 @@ These are **business-policy** decisions. Engineering will not invent them.
 
 Until (1)–(3) are decided in writing, Story 19.4 sandbox UAT should still verify **ingest + logs + chargeback→PastDue**, not entitlement revoke on refund.
 
+## Residual (recorded 2026-10-08, PR #404 review)
+
+**Cross-event chargeback vs recovery:** `paddle_adjustment_cursors` orders **adjustment** notifications only. A delayed approved `chargeback` with a **new** `event_id` that arrives after a later `transaction.completed` / `subscription.updated` (Active restore) can still re-enter PastDue. Same-`event_id` Paddle retries stay idempotent (200 duplicate). Do not invent auto-restore on `rejected`/`reversed`. Owner item (3) must cover this before live cutover. Story 19.4 sandbox should include: chargeback → PastDue, then successful payment, then confirm whether a delayed chargeback replay (new event id) is in-scope to ignore.
+
 ## Explicitly out of scope
 
 - Live Paddle activation, live catalog, charging real customers.

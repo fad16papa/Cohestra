@@ -10,6 +10,11 @@ This is SANDBOX → LIVE. Live credentials are a final production owner gate. Ep
 - [ ] Owner approved live cutover in writing  
 - [ ] Live Paddle catalog exists (separate from sandbox). Do not reuse `pri_…` / `pdl_sdbx_…` / `test_…` in production  
 - [ ] Postgres dump taken  
+- [ ] Owner written policy for refunds, partials, and chargeback reverse/restore — including **delayed approved chargeback after a later paid recovery** (adjustment cursors order adjustments only; a new `event_id` can still re-enter PastDue). Do not invent auto-restore.
+
+**Residual launch risk (do not cut over until decided):** `paddle_adjustment_cursors` is adjustment-only. Same-`event_id` retries stay idempotent. Cross-event delayed chargeback vs recovery is an owner policy item, not an engineering default.
+
+Production remains **NO-GO** until Story 19.4 sandbox UAT is accepted.  
 
 ## Live values (owner-supplied, droplet `.env` only)
 

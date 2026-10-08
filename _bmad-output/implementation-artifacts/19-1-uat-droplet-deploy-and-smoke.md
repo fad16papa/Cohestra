@@ -138,3 +138,14 @@ Mandatory Code Review Loop on implementation HEAD `170458c`. CI: PASS (isolation
 - [x] [Review][Defer] buildTenantDashboardUrl on uat apex omits `{slug}` [signup-api.ts] — deferred, pre-existing same-origin patch
 - [x] [Review][Defer] Reserved slug list does not include `uat` [TenantSlugRules.cs] — deferred, pre-existing
 
+## Independent public probe (2026-10-08)
+
+Cloud Agent has **no SSH**. Public checks only (no secrets):
+
+| Check | Result |
+|-------|--------|
+| `https://uat.cohestra.app/ready` | **200** Healthy (`postgres`, `redis`, `default-tenant`) |
+| `http://uat.cohestra.app/ready` | **301** → `https://uat.cohestra.app/ready` (`X-Cohestra-Edge-Vhost: uat`) |
+
+Tracker stays **in-progress / not done**. This probe does **not** replace droplet smoke (`uat-smoke.sh`), owner SSH acceptance, or the Mandatory Code Review Loop close. Public stack is **not** proven to be PR #404 HEAD `47ebb1b5`.
+
