@@ -1,9 +1,10 @@
 # generated: 2026-06-16
-# last_updated: 2026-10-08
+# last_updated: 2026-10-09
+# 44.1 review — draft PR, stop before merge
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 done; epic 43 done after cross-story close
-# epic 44 planning approved 2026-10-08 (PR #411); stories backlog; no implementation
+# epic 44 planning approved 2026-10-08 (PR #411); 44.1 ready-for-dev 2026-10-09
 # project: cohestra
 # project_key: NOKEY
 # tracking_system: file-system
@@ -57,7 +58,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-10-08
+last_updated: 2026-10-09
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -440,9 +441,9 @@ development_status:
   43-5-responsive-accessibility-visual-consistency-closure: done
   epic-43-retrospective: done
 
-  # Epic 44 — Platform Production Operations & Support Center (planning only)
-  epic-44: backlog
-  44-1-platform-ops-http-gates-policy-recovery-rate-limits: backlog
+  # Epic 44 — Platform Production Operations & Support Center
+  epic-44: in-progress
+  44-1-platform-ops-http-gates-policy-recovery-rate-limits: review
   44-2-production-overview-source-backed-kpis: backlog
   44-3-authenticated-infrastructure-health-operations-shell: backlog
   44-4-outbox-notification-observability-read-only: backlog

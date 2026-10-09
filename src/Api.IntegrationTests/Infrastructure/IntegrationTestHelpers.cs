@@ -31,6 +31,31 @@ internal static class IntegrationTestHelpers
     }
 
     /// <summary>
+    /// Seed unique-constraint races are test-host bugs, not missing deps. Fail CI instead of skip.
+    /// </summary>
+    internal static void SkipIfUnavailableOrFailOnHostStartup(IntegrationTestWebApplicationFactory factory)
+    {
+        if (!factory.IsAvailable && IsHostStartupRace(factory.SkipReason))
+        {
+            throw new InvalidOperationException(factory.SkipReason);
+        }
+
+        SkipIfUnavailable(factory);
+    }
+
+    private static bool IsHostStartupRace(string? skipReason)
+    {
+        if (string.IsNullOrWhiteSpace(skipReason))
+        {
+            return false;
+        }
+
+        return skipReason.Contains("saving the entity changes", StringComparison.OrdinalIgnoreCase)
+            || skipReason.Contains("RoleNameIndex", StringComparison.OrdinalIgnoreCase)
+            || skipReason.Contains("23505", StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// HTTP-less scopes need Platform 0 bound so EF tenant query filters see default-tenant rows.
     /// </summary>
     internal static void BindDefaultTenant(IServiceProvider services)
@@ -264,6 +289,63 @@ internal static class IntegrationTestHelpers
     }
 
     /// <summary>
+    /// Creates an Identity user with the exclusive PlatformAdmin role (no tenant membership).
+    /// </summary>
+    internal static async Task<(ApplicationUser User, string Password)> CreatePlatformAdminUserAsync(
+        IServiceProvider services,
+        string email,
+        string password = "ChangeMe123!")
+    {
+        await using var scope = services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var user = new ApplicationUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+        };
+
+        var createResult = await userManager.CreateAsync(user, password);
+        if (!createResult.Succeeded)
+        {
+            throw new InvalidOperationException(
+                "Failed to create platform admin user: " +
+                string.Join("; ", createResult.Errors.Select(e => e.Description)));
+        }
+
+        var roleResult = await userManager.AddToRoleAsync(user, PlatformAdminSeeder.PlatformAdminRole);
+        if (!roleResult.Succeeded)
+        {
+            throw new InvalidOperationException(
+                "Failed to add PlatformAdmin role: " +
+                string.Join("; ", roleResult.Errors.Select(e => e.Description)));
+        }
+
+        return (user, password);
+    }
+
+    internal static async Task SetEmailConfirmedAsync(
+        IServiceProvider services,
+        Guid userId,
+        bool emailConfirmed)
+    {
+        await using var scope = services.CreateAsyncScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await userManager.FindByIdAsync(userId.ToString())
+            ?? throw new InvalidOperationException($"User {userId} was not found.");
+        user.EmailConfirmed = emailConfirmed;
+        var update = await userManager.UpdateAsync(user);
+        if (!update.Succeeded)
+        {
+            throw new InvalidOperationException(
+                "Failed to update EmailConfirmed: " +
+                string.Join("; ", update.Errors.Select(e => e.Description)));
+        }
+    }
+
+    /// <summary>
     /// Direct JWT mint for a tenant-scoped session (bypasses login Host binding when needed).
     /// </summary>
     internal static string MintTenantAccessToken(
@@ -275,6 +357,17 @@ internal static class IntegrationTestHelpers
         using var scope = services.CreateScope();
         var jwt = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
         var (accessToken, _) = jwt.CreateAccessToken(user, roles: [], tenantId, membershipRole);
+        return accessToken;
+    }
+
+    /// <summary>
+    /// Direct JWT mint for a PlatformAdmin-only session (no tenant_id).
+    /// </summary>
+    internal static string MintPlatformAccessToken(IServiceProvider services, ApplicationUser user)
+    {
+        using var scope = services.CreateScope();
+        var jwt = scope.ServiceProvider.GetRequiredService<IJwtTokenService>();
+        var (accessToken, _) = jwt.CreateAccessToken(user, [PlatformAdminSeeder.PlatformAdminRole]);
         return accessToken;
     }
 
