@@ -18,9 +18,38 @@ namespace Cohestra.Api.Controllers.V1;
 public sealed class PlatformOpsController(
     IPlatformTenantOpsService platformTenantOpsService,
     IPlatformOpsOverviewService overviewService,
+    IPlatformOpsHealthService healthService,
     IPlatformRecoveryRateLimiter recoveryRateLimiter,
     IOptions<PlatformRecoveryRateLimitOptions> recoveryRateLimitOptions) : ControllerBase
 {
+    [HttpGet("ops/health")]
+    [ProducesResponseType(typeof(PlatformOpsHealthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<PlatformOpsHealthResponse>> GetHealth(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var health = await healthService.GetAsync(cancellationToken);
+            return Ok(health);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            Response.ContentType = "application/problem+json";
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Health data unavailable",
+                Detail = "Authenticated health checks could not produce a result. Tenant directory remains available.",
+                Instance = HttpContext.Request.Path,
+            });
+        }
+    }
+
     [HttpGet("ops/overview")]
     [ProducesResponseType(typeof(PlatformOpsOverviewResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<PlatformOpsOverviewResponse>> GetOverview(

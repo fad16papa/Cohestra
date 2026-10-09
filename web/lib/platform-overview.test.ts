@@ -26,9 +26,9 @@ function overviewPayload(overrides: Record<string, unknown> = {}) {
     tenantStatusCounts: kpi([{ key: "Active", count: 1 }]),
     billingStatusCounts: kpi([{ key: "Active", count: 1 }]),
     openSupportCount: kpi(0, { source: "PostgreSQL support_issues" }),
-    stackHealth: kpi(null, {
-      source: "Not instrumented",
-      freshness: "missing_instrumentation",
+    stackHealth: kpi("Healthy", {
+      source: "Authenticated HealthCheckService (postgres, redis, default-tenant)",
+      freshness: "actual",
     }),
     ...overrides,
   };
@@ -55,20 +55,20 @@ describe("platform overview provenance", () => {
     expect(sumCounts([{ key: "Active", count: 2 }, { key: "Suspended", count: 0 }])).toBe(2);
   });
 
-  it("rejects fake health copy", () => {
+  it("rejects fake health copy in source text", () => {
     expect(isFakeHealthCopy("Instrumentation not available yet.")).toBe(false);
     expect(isFakeHealthCopy("Healthy")).toBe(true);
     expect(isFakeHealthCopy("100% operational")).toBe(true);
   });
 
-  it("parses empty named counts as actual zero", async () => {
+  it("parses empty named counts as actual zero with actual health", async () => {
     const overview = await parseOverview(
       overviewPayload({ tenantStatusCounts: kpi([]), billingStatusCounts: kpi([]) })
     );
     expect(overview.tenantStatusCounts.value).toEqual([]);
     expect(overview.openSupportCount.value).toBe(0);
-    expect(overview.stackHealth.freshness).toBe("missing_instrumentation");
-    expect(overview.stackHealth.value).toBeNull();
+    expect(overview.stackHealth.freshness).toBe("actual");
+    expect(overview.stackHealth.value).toBe("Healthy");
   });
 
   it("rejects malformed named counts instead of faking zero", async () => {
@@ -82,11 +82,21 @@ describe("platform overview provenance", () => {
     ).rejects.toThrow(/Invalid named count/);
   });
 
-  it("rejects fake or instrumented stack health", async () => {
+  it("rejects missing-instrumentation and fake-green stack health", async () => {
     await expect(
       parseOverview(
         overviewPayload({
-          stackHealth: kpi("Healthy", { source: "Redis", freshness: "actual" }),
+          stackHealth: kpi(null, {
+            source: "Not instrumented",
+            freshness: "missing_instrumentation",
+          }),
+        })
+      )
+    ).rejects.toThrow(/Invalid stack health KPI/);
+    await expect(
+      parseOverview(
+        overviewPayload({
+          stackHealth: kpi("Healthy", { source: "All systems OK", freshness: "actual" }),
         })
       )
     ).rejects.toThrow(/Invalid stack health KPI/);

@@ -14,9 +14,12 @@ import {
   PlatformDataTableRow,
 } from "@/components/platform/platform-data-table";
 import { PlatformOmniSearch } from "@/components/platform/platform-omni-search";
+import { PlatformDirectoryHealthBanner } from "@/components/platform/platform-directory-health-banner";
 import {
   createPlatformTenant,
+  getPlatformOpsHealth,
   listPlatformTenants,
+  type PlatformOpsHealth,
   type TenantListItem,
 } from "@/lib/platform-api";
 import {
@@ -51,6 +54,8 @@ export default function PlatformTenantDirectoryPage() {
   const [createComplimentary, setCreateComplimentary] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [health, setHealth] = useState<PlatformOpsHealth | null>(null);
+  const [healthUnavailable, setHealthUnavailable] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +97,28 @@ export default function PlatformTenantDirectoryPage() {
       cancelled = true;
     };
   }, [authFetch, page, query, statusFilter, billingFilter, hideLoadTest]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getPlatformOpsHealth(authFetch)
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
+        setHealth(result);
+        setHealthUnavailable(false);
+      })
+      .catch(() => {
+        if (cancelled) {
+          return;
+        }
+        setHealth(null);
+        setHealthUnavailable(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authFetch]);
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -164,6 +191,8 @@ export default function PlatformTenantDirectoryPage() {
           {showCreate ? "Cancel" : "Create tenant"}
         </button>
       </div>
+
+      <PlatformDirectoryHealthBanner health={health} unavailable={healthUnavailable} />
 
       <PlatformOmniSearch authFetch={authFetch} />
 

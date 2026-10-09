@@ -13,6 +13,8 @@ public static class PlatformKpiSources
     public const string Tenants = "PostgreSQL tenants";
     public const string SupportIssues = "PostgreSQL support_issues";
     public const string NotInstrumented = "Not instrumented";
+    public const string HealthChecks = "Authenticated HealthCheckService (postgres, redis, default-tenant)";
+    public const string HealthUnavailable = "Authenticated health request failed";
 }
 
 public sealed record PlatformKpi<T>(

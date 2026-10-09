@@ -2,7 +2,8 @@
 # last_updated: 2026-10-09
 # 44.1 done — merged PR #412 at fa68a424 / main ee71efbd; post-merge CI green
 # 44.2 done — merged PR #414 at 42504409 / main 4cc59432; post-merge CI green
-# epic 44 remains in-progress; 44.3 not started
+# 44.3 ready-for-dev — Authenticated infrastructure health and Operations shell
+# epic 44 remains in-progress; 44.4–44.9 not started
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 done; epic 43 done after cross-story close
@@ -447,7 +448,7 @@ development_status:
   epic-44: in-progress
   44-1-platform-ops-http-gates-policy-recovery-rate-limits: done
   44-2-production-overview-source-backed-kpis: done
-  44-3-authenticated-infrastructure-health-operations-shell: backlog
+  44-3-authenticated-infrastructure-health-operations-shell: review
   44-4-outbox-notification-observability-read-only: backlog
   44-5-additive-paddle-disposition-billing-diagnostics: backlog
   44-6-tenant-diagnostic-timeline: backlog

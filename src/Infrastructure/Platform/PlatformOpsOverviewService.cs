@@ -7,7 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cohestra.Infrastructure.Platform;
 
-public sealed class PlatformOpsOverviewService(CohestraDbContext dbContext) : IPlatformOpsOverviewService
+public sealed class PlatformOpsOverviewService(
+    CohestraDbContext dbContext,
+    IPlatformOpsHealthService healthService) : IPlatformOpsOverviewService
 {
     public async Task<PlatformOpsOverviewResponse> GetAsync(
         bool hideLoadTest,
@@ -40,6 +42,7 @@ public sealed class PlatformOpsOverviewService(CohestraDbContext dbContext) : IP
             .CountAsync(cancellationToken);
 
         var observedAt = DateTimeOffset.UtcNow;
+        var stackHealth = await ReadStackHealthAsync(cancellationToken);
 
         return new PlatformOpsOverviewResponse(
             new PlatformKpi<IReadOnlyList<PlatformNamedCount>>(
@@ -57,11 +60,32 @@ public sealed class PlatformOpsOverviewService(CohestraDbContext dbContext) : IP
                 PlatformKpiSources.SupportIssues,
                 observedAt,
                 PlatformKpiFreshness.Actual),
-            new PlatformKpi<string?>(
+            stackHealth);
+    }
+
+    private async Task<PlatformKpi<string?>> ReadStackHealthAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var health = await healthService.GetAsync(cancellationToken);
+            return new PlatformKpi<string?>(
+                health.OverallStatus,
+                PlatformKpiSources.HealthChecks,
+                health.ObservedAt,
+                PlatformKpiFreshness.Actual);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            return new PlatformKpi<string?>(
                 null,
-                PlatformKpiSources.NotInstrumented,
-                observedAt,
-                PlatformKpiFreshness.MissingInstrumentation));
+                PlatformKpiSources.HealthUnavailable,
+                DateTimeOffset.UtcNow,
+                PlatformKpiFreshness.Unavailable);
+        }
     }
 
     private static IReadOnlyList<PlatformNamedCount> OrderCounts(IEnumerable<PlatformNamedCount> counts) =>

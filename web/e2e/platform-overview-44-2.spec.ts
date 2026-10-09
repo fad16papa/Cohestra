@@ -49,11 +49,9 @@ test.describe("Story 44.2 — Production overview", () => {
     await expect(
       page.getByRole("navigation", { name: "Platform" }).getByRole("link", { name: "Tenants" })
     ).not.toHaveAttribute("aria-current", "page");
-    await expect(page.getByText("Missing instrumentation")).toBeVisible();
-    await expect(page.getByText("Instrumentation not available yet.")).toBeVisible();
     await expect(page.getByText("PostgreSQL tenants")).toHaveCount(2);
     await expect(page.getByText("Loading overview")).toHaveCount(0);
-    await expect(page.getByText(/\bHealthy\b/)).toHaveCount(0);
+    await expect(page.getByText(/does not prove/i)).toBeVisible();
     const axe = await analyzeAxe(page);
     const blocking = axe.violations.filter(
       (violation) => violation.impact === "serious" || violation.impact === "critical"
