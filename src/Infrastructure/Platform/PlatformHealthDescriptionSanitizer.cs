@@ -17,6 +17,10 @@ public static partial class PlatformHealthDescriptionSanitizer
         text = CredentialPair().Replace(text, "[redacted]");
         text = RedisUrl().Replace(text, "[redacted]");
         text = SecretToken().Replace(text, "[redacted]");
+        text = JwtToken().Replace(text, "[redacted]");
+        text = EmailAddress().Replace(text, "[redacted]");
+        text = StackFrame().Replace(text, string.Empty);
+        text = Regex.Replace(text, @"[ \t]+\n", "\n").Trim();
         if (text.Length > MaxLength)
         {
             text = text[..MaxLength];
@@ -33,4 +37,13 @@ public static partial class PlatformHealthDescriptionSanitizer
 
     [GeneratedRegex(@"(?i)\b(bearer|apikey|api[_-]?key|secret)(?:\s*[:=]\s*|\s+)\S+")]
     private static partial Regex SecretToken();
+
+    [GeneratedRegex(@"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")]
+    private static partial Regex JwtToken();
+
+    [GeneratedRegex(@"(?i)\b[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}\b")]
+    private static partial Regex EmailAddress();
+
+    [GeneratedRegex(@"(?m)^\s*at\s+.+$")]
+    private static partial Regex StackFrame();
 }

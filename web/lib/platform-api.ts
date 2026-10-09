@@ -268,6 +268,44 @@ export type PlatformOpsHealth = {
   notInProbe: PlatformHealthCheck[];
 };
 
+export const PLATFORM_OUTBOX_STATUSES = ["Pending", "Processing", "Completed", "Failed"] as const;
+
+export type PlatformOpsOutboxItem = {
+  id: string;
+  tenantId: string;
+  messageType: string;
+  status: string;
+  attemptCount: number;
+  createdAt: string;
+  nextAttemptAt: string;
+  processedAt: string | null;
+  claimedAt: string | null;
+  dispatchedAt: string | null;
+  lastErrorSanitized: string | null;
+};
+
+export type PlatformOpsOutboxList = {
+  items: PlatformOpsOutboxItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export type PlatformOpsOutboxSummary = {
+  countsByStatus: PlatformKpi<PlatformNamedCount[]>;
+  countsByMessageType: PlatformKpi<PlatformNamedCount[]>;
+};
+
+export type PlatformOpsOutboxListQuery = {
+  status?: string;
+  messageType?: string;
+  tenantId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+};
+
 function parseFreshness(raw: string | null): PlatformKpiFreshness {
   if (
     raw === "actual" ||
@@ -445,6 +483,139 @@ export function parsePlatformOpsHealth(rawJson: unknown): PlatformOpsHealth {
   }
 
   return { overallStatus, observedAt, checks, notInProbe };
+}
+
+const OUTBOX_ITEM_MAX_ERROR = 200;
+const OUTBOX_DEFAULT_PAGE_SIZE = 25;
+const OUTBOX_MAX_PAGE_SIZE = 50;
+
+function parseOutboxNamedCountKpi(raw: unknown): PlatformKpi<PlatformNamedCount[]> {
+  const record = parseKpiRecord(raw);
+  if (record.freshness !== "actual" && record.freshness !== "unavailable") {
+    throw new Error("Invalid outbox KPI freshness");
+  }
+  if (record.freshness === "unavailable") {
+    return {
+      value: [],
+      source: record.source as string,
+      observedAt: record.observedAt as string,
+      freshness: "unavailable",
+    };
+  }
+  return {
+    value: parseNamedCounts(record.value ?? record.Value),
+    source: record.source as string,
+    observedAt: record.observedAt as string,
+    freshness: "actual",
+  };
+}
+
+export function parsePlatformOpsOutboxSummary(rawJson: unknown): PlatformOpsOutboxSummary {
+  const raw = asRecord(rawJson);
+  return {
+    countsByStatus: parseOutboxNamedCountKpi(raw.countsByStatus ?? raw.CountsByStatus),
+    countsByMessageType: parseOutboxNamedCountKpi(raw.countsByMessageType ?? raw.CountsByMessageType),
+  };
+}
+
+export function parsePlatformOpsOutboxList(rawJson: unknown): PlatformOpsOutboxList {
+  const raw = asRecord(rawJson);
+  const itemsRaw = raw.items ?? raw.Items;
+  if (!Array.isArray(itemsRaw)) {
+    throw new Error("Invalid outbox list");
+  }
+  const page = pickNumber(raw, "page", "Page");
+  const pageSize = pickNumber(raw, "pageSize", "PageSize");
+  const totalCount = pickNumber(raw, "totalCount", "TotalCount");
+  if (page < 1 || pageSize < 1 || pageSize > OUTBOX_MAX_PAGE_SIZE || totalCount < 0) {
+    throw new Error("Invalid outbox pagination");
+  }
+  return {
+    items: itemsRaw.map((item) => parseOutboxItem(asRecord(item))),
+    page,
+    pageSize,
+    totalCount,
+  };
+}
+
+function parseOutboxItem(raw: Record<string, unknown>): PlatformOpsOutboxItem {
+  const id = pickString(raw, "id", "Id");
+  const tenantId = pickString(raw, "tenantId", "TenantId");
+  const messageType = pickString(raw, "messageType", "MessageType");
+  const status = pickString(raw, "status", "Status");
+  const createdAt = pickString(raw, "createdAt", "CreatedAt");
+  const nextAttemptAt = pickString(raw, "nextAttemptAt", "NextAttemptAt");
+  const attemptCount = pickNumber(raw, "attemptCount", "AttemptCount");
+  if (!id || !tenantId || !messageType || !status || !createdAt || !nextAttemptAt) {
+    throw new Error("Invalid outbox item");
+  }
+  if (attemptCount < 0) {
+    throw new Error("Invalid outbox item");
+  }
+  const lastErrorSanitized =
+    pickString(raw, "lastErrorSanitized", "LastErrorSanitized") ?? null;
+  if (lastErrorSanitized && lastErrorSanitized.length > OUTBOX_ITEM_MAX_ERROR) {
+    throw new Error("Invalid lastErrorSanitized");
+  }
+  return {
+    id,
+    tenantId,
+    messageType,
+    status,
+    attemptCount,
+    createdAt,
+    nextAttemptAt,
+    processedAt: pickString(raw, "processedAt", "ProcessedAt"),
+    claimedAt: pickString(raw, "claimedAt", "ClaimedAt"),
+    dispatchedAt: pickString(raw, "dispatchedAt", "DispatchedAt"),
+    lastErrorSanitized,
+  };
+}
+
+export async function getPlatformOpsOutboxSummary(
+  authFetch: AuthFetch
+): Promise<PlatformOpsOutboxSummary> {
+  const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/platform/ops/outbox/summary`);
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parsePlatformOpsOutboxSummary(await response.json());
+}
+
+export async function getPlatformOpsOutboxList(
+  authFetch: AuthFetch,
+  options: PlatformOpsOutboxListQuery = {}
+): Promise<PlatformOpsOutboxList> {
+  const params = new URLSearchParams();
+  if (options.status?.trim()) {
+    params.set("status", options.status.trim());
+  }
+  if (options.messageType?.trim()) {
+    params.set("messageType", options.messageType.trim());
+  }
+  if (options.tenantId?.trim()) {
+    params.set("tenantId", options.tenantId.trim());
+  }
+  if (options.from?.trim()) {
+    params.set("from", options.from.trim());
+  }
+  if (options.to?.trim()) {
+    params.set("to", options.to.trim());
+  }
+  params.set("page", String(Math.max(1, options.page ?? 1)));
+  const requestedSize = options.pageSize ?? OUTBOX_DEFAULT_PAGE_SIZE;
+  params.set(
+    "pageSize",
+    String(Math.min(OUTBOX_MAX_PAGE_SIZE, Math.max(1, requestedSize)))
+  );
+
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/ops/outbox?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parsePlatformOpsOutboxList(await response.json());
 }
 
 function parseHealthChecks(

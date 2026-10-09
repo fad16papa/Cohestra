@@ -40,7 +40,7 @@ describe("Story 44.3 Platform operations source contract", () => {
     expect(OPS).toContain("Not measured here");
     expect(OPS).toContain("Missing instrumentation");
     expect(OPS).toContain("Billing / Paddle");
-    expect(OPS).toContain("Outbox");
+    expect(OPS).toContain("PlatformOpsOutboxSection");
     expect(OPS).not.toContain("outbox_messages");
     expect(OPS).not.toContain("paddle_webhook");
     expect(OPS).not.toContain("setInterval");

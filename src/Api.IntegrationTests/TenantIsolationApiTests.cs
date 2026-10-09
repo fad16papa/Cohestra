@@ -7,6 +7,7 @@ using Cohestra.Contracts.Platform;
 using Cohestra.Contracts.Site;
 using Cohestra.Contracts.PublicDoor;
 using Cohestra.Domain.Activities;
+using Cohestra.Domain.Outbox;
 using Cohestra.Contracts.Activities;
 using Cohestra.Contracts.Intelligence;
 using Cohestra.Domain.Clients;
@@ -536,5 +537,71 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.All(
             health.NotInProbe,
             check => Assert.Equal(PlatformHealthStatuses.NotInProbe, check.Status));
+    }
+
+    [SkippableFact]
+    public async Task Platform_ops_outbox_tenantId_filter_returns_only_requested_tenant()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        var tenantAId = TenantIds.Default;
+        var markerA = $"TENANT_A_OUTBOX_{Guid.NewGuid():N}";
+        var markerB = $"TENANT_B_OUTBOX_{Guid.NewGuid():N}";
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            db.OutboxMessages.AddRange(
+                new OutboxMessage
+                {
+                    Id = Guid.CreateVersion7(),
+                    TenantId = tenantAId,
+                    MessageType = OutboxMessageTypes.CampaignRecipient,
+                    PayloadJson = $"{{\"marker\":\"{markerA}\"}}",
+                    Status = OutboxMessageStatus.Failed,
+                    AttemptCount = 3,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    NextAttemptAt = DateTimeOffset.UtcNow,
+                },
+                new OutboxMessage
+                {
+                    Id = Guid.CreateVersion7(),
+                    TenantId = tenantB.Id,
+                    MessageType = OutboxMessageTypes.CampaignRecipient,
+                    PayloadJson = $"{{\"marker\":\"{markerB}\"}}",
+                    Status = OutboxMessageStatus.Failed,
+                    AttemptCount = 3,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    NextAttemptAt = DateTimeOffset.UtcNow,
+                });
+            await db.SaveChangesAsync();
+        }
+
+        using var tenantAdmin = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            tenantAdmin,
+            await IntegrationTestHelpers.LoginAsOperatorAsync(tenantAdmin));
+        using var forbiddenSummary = await tenantAdmin.GetAsync("/api/v1/platform/ops/outbox/summary");
+        using var forbiddenList = await tenantAdmin.GetAsync($"/api/v1/platform/ops/outbox?tenantId={tenantAId}");
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenSummary.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenList.StatusCode);
+
+        using var platform = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            platform,
+            await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform));
+        using var filtered = await platform.GetAsync(
+            $"/api/v1/platform/ops/outbox?tenantId={tenantAId}&status=Failed&pageSize=50");
+        Assert.Equal(HttpStatusCode.OK, filtered.StatusCode);
+        var body = await filtered.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(markerB, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(tenantB.Id.ToString(), body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("payloadJson", body, StringComparison.OrdinalIgnoreCase);
+
+        var list = JsonSerializer.Deserialize<PlatformOpsOutboxListResponse>(body, IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(list);
+        Assert.Contains(list.Items, item => item.TenantId == tenantAId);
+        Assert.DoesNotContain(list.Items, item => item.TenantId == tenantB.Id);
     }
 }
