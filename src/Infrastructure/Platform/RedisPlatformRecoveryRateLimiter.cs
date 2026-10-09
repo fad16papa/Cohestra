@@ -39,7 +39,7 @@ public sealed class RedisPlatformRecoveryRateLimiter(
 
         var db = redis.GetDatabase();
         var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var windowMs = TimeSpan.FromMinutes(Math.Clamp(settings.WindowMinutes, 1, 1440)).TotalMilliseconds;
+        var windowMs = (long)TimeSpan.FromMinutes(Math.Clamp(settings.WindowMinutes, 1, 1440)).TotalMilliseconds;
         var key = BuildKey(actorUserId);
         var member = Guid.NewGuid().ToString("N");
 

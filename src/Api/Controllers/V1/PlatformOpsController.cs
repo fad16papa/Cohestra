@@ -257,9 +257,6 @@ public sealed class PlatformOpsController(
         problem.Extensions["errorCode"] = RateLimitErrorCodes.PlatformRecoveryRateLimited;
         problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
 
-        return new ObjectResult(problem)
-        {
-            StatusCode = StatusCodes.Status429TooManyRequests,
-        };
+        return StatusCode(StatusCodes.Status429TooManyRequests, problem);
     }
 }

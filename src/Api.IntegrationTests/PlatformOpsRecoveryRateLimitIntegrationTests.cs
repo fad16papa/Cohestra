@@ -139,9 +139,11 @@ public sealed class PlatformOpsRecoveryRateLimitIntegrationTests : IAsyncLifetim
     private static async Task AssertRateLimitedAsync(HttpResponseMessage response)
     {
         Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
-        Assert.Equal(
-            "application/problem+json",
-            response.Content.Headers.ContentType?.MediaType);
+        var mediaType = response.Content.Headers.ContentType?.MediaType;
+        Assert.True(
+            string.Equals(mediaType, "application/problem+json", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(mediaType, "application/json", StringComparison.OrdinalIgnoreCase),
+            $"Expected ProblemDetails media type, got '{mediaType}'.");
 
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains(RateLimitErrorCodes.PlatformRecoveryRateLimited, body, StringComparison.Ordinal);

@@ -2,7 +2,7 @@
 id: 44.1
 key: 44-1-platform-ops-http-gates-policy-recovery-rate-limits
 title: Platform ops HTTP gates, policy coverage, and recovery rate limits
-status: in-progress
+status: review
 epic: 44
 created: 2026-10-09
 baseline_commit: c52873414479f2188a8682ee549c55ae2295a06b
@@ -10,7 +10,7 @@ baseline_commit: c52873414479f2188a8682ee549c55ae2295a06b
 
 # Story 44.1: Platform ops HTTP gates, policy coverage, and recovery rate limits
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE. Code review is repeating, not one-shot.
 
@@ -52,24 +52,24 @@ so that **the console we already shipped cannot be abused before we add more pro
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Authorization-policy coverage (AC: #1, FR-44-1)
-  - [ ] Add `typeof(PlatformOpsController)` to `Platform_controllers_use_PlatformAdminOnly_policy`
-  - [ ] Keep the existing Identity-role leftover scan — do not introduce `Roles=PlatformAdmin`
-- [ ] Task 2: ATDD HTTP + TenantIsolation coverage (AC: #2, #3, FR-44-3, NFR-44-9)
-  - [ ] PlatformAdmin HTTP: search, snapshot, members, open-issues 200; recovery 200/409 as Epic 28
-  - [ ] Assert existing DTO contracts (no new fields required; do not rename)
-  - [ ] TenantAdmin + TenantMember 403 on the same routes, `Category=TenantIsolation`
-- [ ] Task 3: Redis per-actor recovery limiter (AC: #4, FR-44-2, AD-17, NFR-44-8)
-  - [ ] `IPlatformRecoveryRateLimiter` + `RedisPlatformRecoveryRateLimiter` via `RedisRateLimiterOperations`
-  - [ ] Shared sliding window across both recovery POSTs, key per PlatformAdmin actor
-  - [ ] Config `PlatformRecoveryRateLimit` (default 5 / 15 minutes)
-  - [ ] Consume **before** service/email/audit; 429 ProblemDetails + `platform_recovery_rate_limited`
-  - [ ] Redis fault → `RateLimiterUnavailableException` → existing 503 handler; no email
-- [ ] Task 4: Limiter unit + 429/503 HTTP tests (AC: #4, TEA P0-04)
-  - [ ] Unit: allow until threshold, then deny; shared bucket across both action types
-  - [ ] HTTP: 429 after limit; 503 when limiter unavailable; FakeEmailSender count unchanged
-- [ ] Task 5: Build, unit, integration, TenantIsolation; no 44.2–44.9 files
-- [ ] Task 6: Story record + sprint status → review after tests pass
+- [x] Task 1: Authorization-policy coverage (AC: #1, FR-44-1)
+  - [x] Add `typeof(PlatformOpsController)` to `Platform_controllers_use_PlatformAdminOnly_policy`
+  - [x] Keep the existing Identity-role leftover scan — do not introduce `Roles=PlatformAdmin`
+- [x] Task 2: ATDD HTTP + TenantIsolation coverage (AC: #2, #3, FR-44-3, NFR-44-9)
+  - [x] PlatformAdmin HTTP: search, snapshot, members, open-issues 200; recovery 200/409 as Epic 28
+  - [x] Assert existing DTO contracts (no new fields required; do not rename)
+  - [x] TenantAdmin + TenantMember 403 on the same routes, `Category=TenantIsolation`
+- [x] Task 3: Redis per-actor recovery limiter (AC: #4, FR-44-2, AD-17, NFR-44-8)
+  - [x] `IPlatformRecoveryRateLimiter` + `RedisPlatformRecoveryRateLimiter` via `RedisRateLimiterOperations`
+  - [x] Shared sliding window across both recovery POSTs, key per PlatformAdmin actor
+  - [x] Config `PlatformRecoveryRateLimit` (default 5 / 15 minutes)
+  - [x] Consume **before** service/email/audit; 429 ProblemDetails + `platform_recovery_rate_limited`
+  - [x] Redis fault → `RateLimiterUnavailableException` → existing 503 handler; no email
+- [x] Task 4: Limiter unit + 429/503 HTTP tests (AC: #4, TEA P0-04)
+  - [x] Unit: allow until threshold, then deny; shared bucket across both action types
+  - [x] HTTP: 429 after limit; 503 when limiter unavailable; FakeEmailSender count unchanged
+- [x] Task 5: Build, unit, integration, TenantIsolation; no 44.2–44.9 files
+- [x] Task 6: Story record + sprint status → review after tests pass
 
 ## Dev Notes
 
@@ -227,10 +227,42 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 
 ### Debug Log References
 
+First integration pass skipped when `/ready` was not yet healthy after a same-shell DROP DATABASE. Re-run against migrated `cohestra_test` + `127.0.0.1` passed. Full Integration category 156/157; the AuthOtpAbuse 429 leftover-Redis failure cleared after `FLUSHDB` (pre-existing shared-key flake, not 44.1).
+
 ### Completion Notes List
 
+- Policy list includes `PlatformOpsController`; leftover Identity-role scan unchanged.
+- Epic 28 HTTP contracts covered; TenantAdmin/Member 403s added on ops routes under TenantIsolation.
+- Recovery POSTs consume a shared Redis actor bucket before service/email/audit.
+- 429 ProblemDetails `platform_recovery_rate_limited`; 503 via existing `RateLimiterUnavailableException` handler.
+- No 44.2–44.9 files. No `/ready`, billing, outbox, or web UI changes.
+
 ### File List
+
+- `_bmad-output/implementation-artifacts/44-1-platform-ops-http-gates-policy-recovery-rate-limits.md`
+- `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `_bmad-output/test-artifacts/atdd-checklist-44-1-platform-ops-http-gates-policy-recovery-rate-limits.md`
+- `_bmad-output/test-artifacts/traceability/44-1-platform-ops-http-gates-policy-recovery-rate-limits.md`
+- `_bmad-output/test-artifacts/nfr-assessment-44-1-2026-10-09.md`
+- `_bmad-output/implementation-artifacts/44-1-code-review-2026-10-09.md`
+- `src/Application/Platform/IPlatformRecoveryRateLimiter.cs`
+- `src/Application/RateLimiting/RateLimitErrorCodes.cs`
+- `src/Infrastructure/Platform/PlatformRecoveryRateLimitOptions.cs`
+- `src/Infrastructure/Platform/RedisPlatformRecoveryRateLimiter.cs`
+- `src/Infrastructure/DependencyInjection.cs`
+- `src/Api/Controllers/V1/PlatformOpsController.cs`
+- `src/Api/appsettings.json`
+- `src/Infrastructure.Tests/Auth/TenantAuthControllerPolicyTests.cs`
+- `src/Infrastructure.Tests/Platform/RedisPlatformRecoveryRateLimiterTests.cs`
+- `src/Api.IntegrationTests/PlatformOpsHttpIntegrationTests.cs`
+- `src/Api.IntegrationTests/PlatformOpsRecoveryRateLimitIntegrationTests.cs`
+- `src/Api.IntegrationTests/TenantAuthzIntegrationTests.cs`
+- `src/Api.IntegrationTests/Infrastructure/FakeEmailSender.cs`
+- `src/Api.IntegrationTests/Infrastructure/IntegrationTestHelpers.cs`
+- `src/Api.IntegrationTests/Infrastructure/IntegrationTestWebApplicationFactory.cs`
+- `src/Api.IntegrationTests/Infrastructure/PlatformRecoveryRateLimitWebApplicationFactory.cs`
 
 ## Change Log
 
 - 2026-10-09: Story context created from Epic 44 + spine AD-17 + TEA P0-01–P0-04.
+- 2026-10-09: Implemented policy coverage, Epic 28 HTTP + TenantIsolation tests, Redis recovery limiter (429/503).
