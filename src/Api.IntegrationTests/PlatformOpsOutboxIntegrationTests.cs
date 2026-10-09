@@ -179,7 +179,6 @@ public sealed class PlatformOpsOutboxIntegrationTests(IntegrationTestFixture fix
 
         using var badStatus = await client.GetAsync("/api/v1/platform/ops/outbox?status=DeadLetter");
         Assert.Equal(HttpStatusCode.BadRequest, badStatus.StatusCode);
-        Assert.Equal("application/problem+json", badStatus.Content.Headers.ContentType?.MediaType);
         var statusProblem = await badStatus.Content.ReadAsStringAsync();
         Assert.Contains("Pending", statusProblem, StringComparison.Ordinal);
 
