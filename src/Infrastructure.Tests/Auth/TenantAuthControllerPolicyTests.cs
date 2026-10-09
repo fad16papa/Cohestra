@@ -88,6 +88,40 @@ public sealed class TenantAuthControllerPolicyTests
     }
 
     [Fact]
+    public void PlatformOps_outbox_summary_and_list_are_get_only_platform_admin()
+    {
+        var summary = typeof(PlatformOpsController).GetMethod(nameof(PlatformOpsController.GetOutboxSummary));
+        var list = typeof(PlatformOpsController).GetMethod(nameof(PlatformOpsController.ListOutbox));
+        Assert.NotNull(summary);
+        Assert.NotNull(list);
+        Assert.Equal("ops/outbox/summary", summary!.GetCustomAttribute<HttpGetAttribute>()!.Template);
+        Assert.Equal("ops/outbox", list!.GetCustomAttribute<HttpGetAttribute>()!.Template);
+        Assert.Empty(summary.GetCustomAttributes<AllowAnonymousAttribute>(inherit: true));
+        Assert.Empty(list.GetCustomAttributes<AllowAnonymousAttribute>(inherit: true));
+
+        var authorize = typeof(PlatformOpsController).GetCustomAttributes<AuthorizeAttribute>(inherit: true);
+        Assert.Contains(authorize, a => a.Policy == TenantAuthPolicies.PlatformAdminOnly);
+
+        var mutation = typeof(PlatformOpsController)
+            .GetMethods()
+            .Where(method => method.GetCustomAttributes(true).Any(attribute =>
+                attribute is HttpPostAttribute or HttpPutAttribute or HttpPatchAttribute or HttpDeleteAttribute))
+            .Where(method =>
+            {
+                var template = method.GetCustomAttribute<HttpPostAttribute>()?.Template
+                    ?? method.GetCustomAttribute<HttpPutAttribute>()?.Template
+                    ?? method.GetCustomAttribute<HttpPatchAttribute>()?.Template
+                    ?? method.GetCustomAttribute<HttpDeleteAttribute>()?.Template
+                    ?? string.Empty;
+                return template.Contains("outbox", StringComparison.OrdinalIgnoreCase)
+                    || method.Name.Contains("Outbox", StringComparison.Ordinal);
+            })
+            .Select(method => method.Name)
+            .ToArray();
+        Assert.Empty(mutation);
+    }
+
+    [Fact]
     public void Platform_controllers_use_PlatformAdminOnly_policy()
     {
         foreach (var type in new[]

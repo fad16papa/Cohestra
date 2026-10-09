@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
+import { PlatformOpsOutboxSection } from "@/components/platform/platform-ops-outbox";
 import { getPlatformOpsHealth, type PlatformOpsHealth } from "@/lib/platform-api";
 import {
   formatDurationMs,
@@ -67,8 +68,8 @@ export default function PlatformOperationsPage() {
         </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-[var(--plat-stone)]">
           Authenticated postgres, redis, and default-tenant health. This is not anonymous{" "}
-          <code className="font-mono text-[0.95em]">/ready</code>, and it does not measure outbox,
-          Paddle, email, or hosted jobs.
+          <code className="font-mono text-[0.95em]">/ready</code>. Health does not measure outbox,
+          Paddle, email, or hosted jobs. Outbox counts below are queue metadata, not delivery health.
         </p>
       </header>
 
@@ -176,22 +177,7 @@ export default function PlatformOperationsPage() {
         </p>
       </section>
 
-      <section
-        className="space-y-2 rounded-[10px] border border-[var(--plat-line)] bg-white/70 p-4 sm:p-5"
-        aria-labelledby="ops-outbox-heading"
-      >
-        <h2
-          id="ops-outbox-heading"
-          className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--plat-stone)]"
-        >
-          Outbox
-        </h2>
-        <p className="text-sm font-medium text-[var(--plat-ink)]">Missing instrumentation</p>
-        <p className="min-w-0 break-words text-sm leading-relaxed text-[var(--plat-stone)]">
-          Outbox and hosted-job counts are not measured on this page. This is not a healthy or
-          stuck-queue reading.
-        </p>
-      </section>
+      <PlatformOpsOutboxSection />
     </div>
   );
 }

@@ -19,6 +19,7 @@ public sealed class PlatformOpsController(
     IPlatformTenantOpsService platformTenantOpsService,
     IPlatformOpsOverviewService overviewService,
     IPlatformOpsHealthService healthService,
+    IPlatformOpsOutboxService outboxService,
     IPlatformRecoveryRateLimiter recoveryRateLimiter,
     IOptions<PlatformRecoveryRateLimitOptions> recoveryRateLimitOptions) : ControllerBase
 {
@@ -45,6 +46,77 @@ public sealed class PlatformOpsController(
                 Status = StatusCodes.Status503ServiceUnavailable,
                 Title = "Health data unavailable",
                 Detail = "Authenticated health checks could not produce a result. Tenant directory remains available.",
+                Instance = HttpContext.Request.Path,
+            });
+        }
+    }
+
+    [HttpGet("ops/outbox/summary")]
+    [ProducesResponseType(typeof(PlatformOpsOutboxSummaryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<PlatformOpsOutboxSummaryResponse>> GetOutboxSummary(
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var summary = await outboxService.GetSummaryAsync(cancellationToken);
+            return Ok(summary);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            Response.ContentType = "application/problem+json";
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Outbox data unavailable",
+                Detail = "Outbox summary could not be loaded. This is not a healthy or failed email status.",
+                Instance = HttpContext.Request.Path,
+            });
+        }
+    }
+
+    [HttpGet("ops/outbox")]
+    [ProducesResponseType(typeof(PlatformOpsOutboxListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<PlatformOpsOutboxListResponse>> ListOutbox(
+        [FromQuery] string? status,
+        [FromQuery] string? messageType,
+        [FromQuery] Guid? tenantId,
+        [FromQuery] DateTimeOffset? from,
+        [FromQuery] DateTimeOffset? to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var result = await outboxService.ListAsync(
+                new PlatformOpsOutboxListQuery(status, messageType, tenantId, from, to, page, pageSize),
+                cancellationToken);
+            if (!result.Succeeded)
+            {
+                return BadRequestProblem(result.Error ?? "Invalid outbox query.");
+            }
+
+            return Ok(result.Value);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            Response.ContentType = "application/problem+json";
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Outbox data unavailable",
+                Detail = "Outbox list could not be loaded. This is not a healthy or failed email status.",
                 Instance = HttpContext.Request.Path,
             });
         }
