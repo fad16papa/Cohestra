@@ -1,44 +1,19 @@
 using System.Net;
-using System.Net.Http.Json;
 using Cohestra.Api.IntegrationTests.Infrastructure;
 using Cohestra.Application.Email;
 using Cohestra.Application.RateLimiting;
-using Cohestra.Contracts.Platform;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.IntegrationTests;
 
 [Trait("Category", "Integration")]
-public sealed class PlatformOpsRecoveryRateLimitIntegrationTests : IAsyncLifetime
+public sealed class PlatformOpsRecoveryRateLimitIntegrationTests
 {
-    private PlatformRecoveryRateLimitWebApplicationFactory? _limitFactory;
-    private PlatformRecoveryLimiterUnavailableWebApplicationFactory? _unavailableFactory;
-
-    public async Task InitializeAsync()
-    {
-        _limitFactory = new PlatformRecoveryRateLimitWebApplicationFactory();
-        await _limitFactory.InitializeAsync();
-        _unavailableFactory = new PlatformRecoveryLimiterUnavailableWebApplicationFactory();
-        await _unavailableFactory.InitializeAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        if (_limitFactory is not null)
-        {
-            await _limitFactory.DisposeAsync();
-        }
-
-        if (_unavailableFactory is not null)
-        {
-            await _unavailableFactory.DisposeAsync();
-        }
-    }
-
     [SkippableFact]
     public async Task Recovery_posts_return_429_after_shared_actor_limit_without_sending_mail()
     {
-        var factory = _limitFactory ?? throw new InvalidOperationException("Limit factory not initialized.");
+        await using var factory = new PlatformRecoveryRateLimitWebApplicationFactory();
+        await factory.InitializeAsync();
         IntegrationTestHelpers.SkipIfUnavailable(factory);
 
         using var client = factory.CreateClient();
@@ -95,8 +70,8 @@ public sealed class PlatformOpsRecoveryRateLimitIntegrationTests : IAsyncLifetim
     [SkippableFact]
     public async Task Recovery_posts_return_503_when_limiter_cannot_reach_redis_without_sending_mail()
     {
-        var factory = _unavailableFactory
-            ?? throw new InvalidOperationException("Unavailable factory not initialized.");
+        await using var factory = new PlatformRecoveryLimiterUnavailableWebApplicationFactory();
+        await factory.InitializeAsync();
         IntegrationTestHelpers.SkipIfUnavailable(factory);
 
         using var client = factory.CreateClient();
