@@ -62,6 +62,6 @@ describe("Story 44.3 Platform operations source contract", () => {
     expect(BANNER).toContain("Infrastructure health is unavailable");
     expect(BANNER).toContain('role="alert"');
     expect(OVERVIEW).toContain("Unavailable");
-    expect(OVERVIEW).toContain("does not prove");
+    expect(OVERVIEW).toContain("stackHealthSummary");
   });
 });

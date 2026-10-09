@@ -105,7 +105,8 @@ describe("Story 43.4 Platform source contract", () => {
     expect(OVERVIEW).toContain("Could not load overview");
     expect(OVERVIEW).toContain("setOverview(null)");
     expect(OVERVIEW).toContain("break-words");
-    expect(OVERVIEW).toContain("does not prove");
+    expect(OVERVIEW).toContain("stackHealthSummary");
+    expect(OVERVIEW).toContain("not outbox, Paddle, or email");
     expect(OVERVIEW).not.toContain("/ready");
   });
 });

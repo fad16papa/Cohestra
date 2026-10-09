@@ -17,7 +17,11 @@ public sealed class PlatformHealthDescriptionSanitizerTests
         Assert.DoesNotContain("abc.def.ghi", sanitized, StringComparison.Ordinal);
         Assert.DoesNotContain("SG.leak", sanitized, StringComparison.Ordinal);
         Assert.DoesNotContain("db.internal", sanitized, StringComparison.Ordinal);
-        Assert.Contains("=***", sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("Host=", sanitized, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Password=", sanitized, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("redis://", sanitized, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Bearer ", sanitized, StringComparison.Ordinal);
+        Assert.Contains("[redacted]", sanitized, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -14,9 +14,9 @@ public static partial class PlatformHealthDescriptionSanitizer
         }
 
         var text = description.Trim();
-        text = CredentialPair().Replace(text, "$1=***");
-        text = RedisUrl().Replace(text, "redis://***");
-        text = SecretToken().Replace(text, "***");
+        text = CredentialPair().Replace(text, "[redacted]");
+        text = RedisUrl().Replace(text, "[redacted]");
+        text = SecretToken().Replace(text, "[redacted]");
         if (text.Length > MaxLength)
         {
             text = text[..MaxLength];
@@ -31,6 +31,6 @@ public static partial class PlatformHealthDescriptionSanitizer
     [GeneratedRegex(@"(?i)rediss?://[^\s]+")]
     private static partial Regex RedisUrl();
 
-    [GeneratedRegex(@"(?i)\b(bearer|apikey|api[_-]?key|secret)\s*[:=]\s*\S+")]
+    [GeneratedRegex(@"(?i)\b(bearer|apikey|api[_-]?key|secret)(?:\s*[:=]\s*|\s+)\S+")]
     private static partial Regex SecretToken();
 }
