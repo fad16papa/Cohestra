@@ -1,5 +1,6 @@
 import { fetchWithAuth } from "@/lib/auth-api";
 import { getPublicApiBaseUrl } from "@/lib/api";
+import { isFakeHealthCopy } from "@/lib/platform-overview";
 
 export type TenantListItem = {
   id: string;
@@ -220,6 +221,145 @@ export async function listPlatformTenants(
     page: pickNumber(raw, "page", "Page") || 1,
     pageSize: pickNumber(raw, "pageSize", "PageSize") || 25,
     totalCount: pickNumber(raw, "totalCount", "TotalCount"),
+  };
+}
+
+export type PlatformKpiFreshness =
+  | "actual"
+  | "missing_instrumentation"
+  | "unavailable"
+  | "stale";
+
+export type PlatformNamedCount = {
+  key: string;
+  count: number;
+};
+
+export type PlatformKpi<T> = {
+  value: T;
+  source: string;
+  observedAt: string;
+  freshness: PlatformKpiFreshness;
+};
+
+export type PlatformOpsOverview = {
+  tenantStatusCounts: PlatformKpi<PlatformNamedCount[]>;
+  billingStatusCounts: PlatformKpi<PlatformNamedCount[]>;
+  openSupportCount: PlatformKpi<number>;
+  stackHealth: PlatformKpi<string | null>;
+};
+
+function parseFreshness(raw: string | null): PlatformKpiFreshness {
+  if (
+    raw === "actual" ||
+    raw === "missing_instrumentation" ||
+    raw === "unavailable" ||
+    raw === "stale"
+  ) {
+    return raw;
+  }
+  throw new Error("Invalid KPI freshness");
+}
+
+function parseNamedCounts(raw: unknown): PlatformNamedCount[] {
+  if (!Array.isArray(raw)) {
+    throw new Error("Invalid named counts");
+  }
+  return raw.map((item) => {
+    const record = asRecord(item);
+    const key = pickString(record, "key", "Key");
+    const countRaw = record.count ?? record.Count;
+    if (
+      !key ||
+      typeof countRaw !== "number" ||
+      !Number.isInteger(countRaw) ||
+      countRaw < 0
+    ) {
+      throw new Error("Invalid named count");
+    }
+    return { key, count: countRaw };
+  });
+}
+
+function parseKpiRecord(raw: unknown): Record<string, unknown> {
+  const record = asRecord(raw);
+  const source = pickString(record, "source", "Source");
+  const observedAt = pickString(record, "observedAt", "ObservedAt");
+  const freshness = parseFreshness(pickString(record, "freshness", "Freshness"));
+  if (!source || !observedAt) {
+    throw new Error("Invalid KPI envelope");
+  }
+  return { ...record, source, observedAt, freshness };
+}
+
+export async function getPlatformOpsOverview(
+  authFetch: AuthFetch,
+  options: { hideLoadTest?: boolean } = {}
+): Promise<PlatformOpsOverview> {
+  const params = new URLSearchParams();
+  params.set("hideLoadTest", options.hideLoadTest === false ? "false" : "true");
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/ops/overview?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  const raw = asRecord(await response.json());
+  const tenantStatus = parseKpiRecord(raw.tenantStatusCounts ?? raw.TenantStatusCounts);
+  const billingStatus = parseKpiRecord(raw.billingStatusCounts ?? raw.BillingStatusCounts);
+  const openSupport = parseKpiRecord(raw.openSupportCount ?? raw.OpenSupportCount);
+  const stackHealth = parseKpiRecord(raw.stackHealth ?? raw.StackHealth);
+
+  if (tenantStatus.freshness !== "actual" || billingStatus.freshness !== "actual") {
+    throw new Error("Invalid tenant KPI freshness");
+  }
+  if (openSupport.freshness !== "actual") {
+    throw new Error("Invalid open support KPI");
+  }
+  if (stackHealth.freshness !== "missing_instrumentation") {
+    throw new Error("Invalid stack health KPI");
+  }
+
+  const openValue = openSupport.value ?? openSupport.Value;
+  if (typeof openValue !== "number" || !Number.isInteger(openValue) || openValue < 0) {
+    throw new Error("Invalid open support KPI");
+  }
+
+  const healthValue = stackHealth.value ?? stackHealth.Value;
+  if (healthValue != null && healthValue !== "") {
+    throw new Error("Invalid stack health KPI");
+  }
+  const healthSource = stackHealth.source as string;
+  if (isFakeHealthCopy(healthSource)) {
+    throw new Error("Invalid stack health KPI");
+  }
+
+  return {
+    tenantStatusCounts: {
+      value: parseNamedCounts(tenantStatus.value ?? tenantStatus.Value),
+      source: tenantStatus.source as string,
+      observedAt: tenantStatus.observedAt as string,
+      freshness: tenantStatus.freshness as PlatformKpiFreshness,
+    },
+    billingStatusCounts: {
+      value: parseNamedCounts(billingStatus.value ?? billingStatus.Value),
+      source: billingStatus.source as string,
+      observedAt: billingStatus.observedAt as string,
+      freshness: billingStatus.freshness as PlatformKpiFreshness,
+    },
+    openSupportCount: {
+      value: openValue,
+      source: openSupport.source as string,
+      observedAt: openSupport.observedAt as string,
+      freshness: openSupport.freshness as PlatformKpiFreshness,
+    },
+    stackHealth: {
+      value: null,
+      source: healthSource,
+      observedAt: stackHealth.observedAt as string,
+      freshness: "missing_instrumentation",
+    },
   };
 }
 

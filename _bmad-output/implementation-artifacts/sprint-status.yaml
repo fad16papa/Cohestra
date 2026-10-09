@@ -1,7 +1,7 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-09
 # 44.1 done — merged PR #412 at fa68a424 / main ee71efbd; post-merge CI green
-# epic 44 remains in-progress; 44.2 not started
+# 44.2 ready-for-dev — Production overview with source-backed KPIs
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 done; epic 43 done after cross-story close
@@ -445,7 +445,7 @@ development_status:
   # Epic 44 — Platform Production Operations & Support Center
   epic-44: in-progress
   44-1-platform-ops-http-gates-policy-recovery-rate-limits: done
-  44-2-production-overview-source-backed-kpis: backlog
+  44-2-production-overview-source-backed-kpis: review
   44-3-authenticated-infrastructure-health-operations-shell: backlog
   44-4-outbox-notification-observability-read-only: backlog
   44-5-additive-paddle-disposition-billing-diagnostics: backlog
