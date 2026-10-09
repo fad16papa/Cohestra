@@ -51,7 +51,7 @@ test.describe("Story 44.2 — Production overview", () => {
     ).not.toHaveAttribute("aria-current", "page");
     await expect(page.getByText("Missing instrumentation")).toBeVisible();
     await expect(page.getByText("Instrumentation not available yet.")).toBeVisible();
-    await expect(page.getByText("PostgreSQL tenants")).toBeVisible();
+    await expect(page.getByText("PostgreSQL tenants")).toHaveCount(2);
     await expect(page.getByText("Loading overview")).toHaveCount(0);
     await expect(page.getByText(/\bHealthy\b/)).toHaveCount(0);
     const axe = await analyzeAxe(page);
