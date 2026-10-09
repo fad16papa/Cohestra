@@ -445,7 +445,7 @@ development_status:
   # Epic 44 — Platform Production Operations & Support Center
   epic-44: in-progress
   44-1-platform-ops-http-gates-policy-recovery-rate-limits: done
-  44-2-production-overview-source-backed-kpis: in-progress
+  44-2-production-overview-source-backed-kpis: review
   44-3-authenticated-infrastructure-health-operations-shell: backlog
   44-4-outbox-notification-observability-read-only: backlog
   44-5-additive-paddle-disposition-billing-diagnostics: backlog

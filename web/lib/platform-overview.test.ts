@@ -1,11 +1,42 @@
 import { describe, expect, it } from "vitest";
 
+import { getPlatformOpsOverview } from "@/lib/platform-api";
 import {
   freshnessLabel,
   isFakeHealthCopy,
   observedLabel,
   sumCounts,
 } from "@/lib/platform-overview";
+
+function kpi(
+  value: unknown,
+  overrides: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    value,
+    source: "PostgreSQL tenants",
+    observedAt: new Date().toISOString(),
+    freshness: "actual",
+    ...overrides,
+  };
+}
+
+function overviewPayload(overrides: Record<string, unknown> = {}) {
+  return {
+    tenantStatusCounts: kpi([{ key: "Active", count: 1 }]),
+    billingStatusCounts: kpi([{ key: "Active", count: 1 }]),
+    openSupportCount: kpi(0, { source: "PostgreSQL support_issues" }),
+    stackHealth: kpi(null, {
+      source: "Not instrumented",
+      freshness: "missing_instrumentation",
+    }),
+    ...overrides,
+  };
+}
+
+async function parseOverview(body: unknown) {
+  return getPlatformOpsOverview(async () => new Response(JSON.stringify(body), { status: 200 }));
+}
 
 describe("platform overview provenance", () => {
   it("labels canonical freshness vocabulary", () => {
@@ -28,5 +59,36 @@ describe("platform overview provenance", () => {
     expect(isFakeHealthCopy("Instrumentation not available yet.")).toBe(false);
     expect(isFakeHealthCopy("Healthy")).toBe(true);
     expect(isFakeHealthCopy("100% operational")).toBe(true);
+  });
+
+  it("parses empty named counts as actual zero", async () => {
+    const overview = await parseOverview(
+      overviewPayload({ tenantStatusCounts: kpi([]), billingStatusCounts: kpi([]) })
+    );
+    expect(overview.tenantStatusCounts.value).toEqual([]);
+    expect(overview.openSupportCount.value).toBe(0);
+    expect(overview.stackHealth.freshness).toBe("missing_instrumentation");
+    expect(overview.stackHealth.value).toBeNull();
+  });
+
+  it("rejects malformed named counts instead of faking zero", async () => {
+    await expect(
+      parseOverview(overviewPayload({ tenantStatusCounts: kpi(null) }))
+    ).rejects.toThrow(/Invalid named counts/);
+    await expect(
+      parseOverview(
+        overviewPayload({ tenantStatusCounts: kpi([{ key: "Active" }]) })
+      )
+    ).rejects.toThrow(/Invalid named count/);
+  });
+
+  it("rejects fake or instrumented stack health", async () => {
+    await expect(
+      parseOverview(
+        overviewPayload({
+          stackHealth: kpi("Healthy", { source: "Redis", freshness: "actual" }),
+        })
+      )
+    ).rejects.toThrow(/Invalid stack health KPI/);
   });
 });

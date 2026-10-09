@@ -1,5 +1,6 @@
 import { fetchWithAuth } from "@/lib/auth-api";
 import { getPublicApiBaseUrl } from "@/lib/api";
+import { isFakeHealthCopy } from "@/lib/platform-overview";
 
 export type TenantListItem = {
   id: string;
@@ -262,15 +263,21 @@ function parseFreshness(raw: string | null): PlatformKpiFreshness {
 
 function parseNamedCounts(raw: unknown): PlatformNamedCount[] {
   if (!Array.isArray(raw)) {
-    return [];
+    throw new Error("Invalid named counts");
   }
   return raw.map((item) => {
     const record = asRecord(item);
     const key = pickString(record, "key", "Key");
-    if (!key) {
+    const countRaw = record.count ?? record.Count;
+    if (
+      !key ||
+      typeof countRaw !== "number" ||
+      !Number.isInteger(countRaw) ||
+      countRaw < 0
+    ) {
       throw new Error("Invalid named count");
     }
-    return { key, count: pickNumber(record, "count", "Count") };
+    return { key, count: countRaw };
   });
 }
 
@@ -304,12 +311,29 @@ export async function getPlatformOpsOverview(
   const openSupport = parseKpiRecord(raw.openSupportCount ?? raw.OpenSupportCount);
   const stackHealth = parseKpiRecord(raw.stackHealth ?? raw.StackHealth);
 
+  if (tenantStatus.freshness !== "actual" || billingStatus.freshness !== "actual") {
+    throw new Error("Invalid tenant KPI freshness");
+  }
+  if (openSupport.freshness !== "actual") {
+    throw new Error("Invalid open support KPI");
+  }
+  if (stackHealth.freshness !== "missing_instrumentation") {
+    throw new Error("Invalid stack health KPI");
+  }
+
   const openValue = openSupport.value ?? openSupport.Value;
-  if (typeof openValue !== "number" || !Number.isFinite(openValue)) {
+  if (typeof openValue !== "number" || !Number.isInteger(openValue) || openValue < 0) {
     throw new Error("Invalid open support KPI");
   }
 
   const healthValue = stackHealth.value ?? stackHealth.Value;
+  if (healthValue != null && healthValue !== "") {
+    throw new Error("Invalid stack health KPI");
+  }
+  const healthSource = stackHealth.source as string;
+  if (isFakeHealthCopy(healthSource)) {
+    throw new Error("Invalid stack health KPI");
+  }
 
   return {
     tenantStatusCounts: {
@@ -331,10 +355,10 @@ export async function getPlatformOpsOverview(
       freshness: openSupport.freshness as PlatformKpiFreshness,
     },
     stackHealth: {
-      value: typeof healthValue === "string" ? healthValue : null,
-      source: stackHealth.source as string,
+      value: null,
+      source: healthSource,
       observedAt: stackHealth.observedAt as string,
-      freshness: stackHealth.freshness as PlatformKpiFreshness,
+      freshness: "missing_instrumentation",
     },
   };
 }

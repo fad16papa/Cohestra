@@ -35,6 +35,7 @@ test.describe("Story 44.2 — Production overview", () => {
     const tenantSession = await loginOperatorSession(request);
     await seedOperatorAuthSession(page, tenantSession);
     await page.goto("/platform/overview", { waitUntil: "domcontentloaded" });
+    await expect(page).not.toHaveURL(/\/platform\/overview/);
     await expect(page.getByRole("heading", { name: "Overview", level: 1 })).toHaveCount(0);
 
     const session = await loginPlatformAdminSession(request);
@@ -68,11 +69,16 @@ test.describe("Story 44.2 — Production overview", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openPlatform(page, session, "/platform/overview");
     await expect(page.getByRole("heading", { name: "Overview", level: 1 })).toBeVisible();
+    await expect(page.getByRole("main")).toHaveCount(1);
     expect(await pageOverflows(page)).toBe(false);
     const menu = page.getByRole("button", { name: /open menu|close menu/i });
     const box = await menu.boundingBox();
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
     expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+    await menu.click();
+    await expect(
+      page.getByRole("navigation", { name: "Platform mobile" }).getByRole("link", { name: "Overview" })
+    ).toHaveAttribute("aria-current", "page");
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openPlatform(page, session, "/platform");
@@ -80,6 +86,12 @@ test.describe("Story 44.2 — Production overview", () => {
     await expect(
       page.getByRole("navigation", { name: "Platform" }).getByRole("link", { name: "Tenants" })
     ).toHaveAttribute("aria-current", "page");
+    expect(page.url()).not.toContain("/platform/overview");
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openPlatform(page, session, "/platform");
+    await expect(page.getByRole("heading", { name: "Tenant directory", level: 1 })).toBeVisible();
+    expect(await pageOverflows(page)).toBe(false);
     expect(page.url()).not.toContain("/platform/overview");
   });
 });

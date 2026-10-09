@@ -1,3 +1,7 @@
+## Deferred from: code review of 44-2-production-overview-source-backed-kpis.md (2026-10-09)
+
+- Platform header Support badge still uses `getPlatformSupportOpenCount` (fleet inbox, not hideLoadTest). Overview open-support KPI follows directory hideLoadTest. Do not change the inbox badge in 44.2.
+
 ## Deferred from: story 40.3 close on main `4509866c` (2026-10-04)
 
 PR #371 merged. PO accepted implementation HEAD `0ebbf03d`. Required main CI `37174648292` 5/5 success. Post-merge Vitest 29/29 and Playwright 36/36 passed. ACCEPTED/CLOSED. Epic 40 remains in-progress. Story 40.4 not started. Production DigitalOcean remains classification C.

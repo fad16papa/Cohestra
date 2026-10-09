@@ -2,7 +2,7 @@
 id: 44.2
 key: 44-2-production-overview-source-backed-kpis
 title: Production overview with source-backed KPIs
-status: in-progress
+status: review
 epic: 44
 created: 2026-10-09
 baseline_commit: e401d82427e183dfd650bead31cae45575c3ea1d
@@ -58,21 +58,32 @@ so that **I can see tenant and support pulse without treating missing instrument
 
 ## Tasks / Subtasks
 
-- [ ] Backend AD-13 DTO + aggregate query (AC: 3, 4)
+- [x] Backend AD-13 DTO + aggregate query (AC: 3, 4)
   - [ ] `PlatformKpi<T>` + overview response in Contracts
   - [ ] Shared hideLoadTest predicate reused by directory list
   - [ ] GroupBy Status / BillingStatus; Count open support; no N+1
   - [ ] Health KPI `missing_instrumentation`; do not call `/ready`
   - [ ] `PlatformAdminOnly` on existing `PlatformOpsController`
-- [ ] Frontend Overview + nav (AC: 1, 2, 5)
+- [x] Frontend Overview + nav (AC: 1, 2, 5)
   - [ ] `/platform/overview` in platform shell
   - [ ] Nav order Overview → Tenants → Support; aria-current
   - [ ] Visible provenance; loading/error/zero/missing states
-- [ ] Tests (AC: all)
-  - [ ] Policy, HTTP 200/403/401, hideLoadTest parity, provenance
-  - [ ] Vitest nav/loading/provenance/source contract
-  - [ ] Playwright 1440/390 Overview + directory regression
-  - [ ] 44.1 recovery/policy regression still present
+- [x] Tests (AC: all)
+  - [x] Policy, HTTP 200/403/401, hideLoadTest parity, provenance
+  - [x] Vitest nav/loading/provenance/source contract
+  - [x] Playwright 1440/390 Overview + directory regression
+  - [x] 44.1 recovery/policy regression still present
+
+### Review Findings
+
+Review HEAD `532d58df` vs `e401d824`. Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor (Grok 4.6). Owner loop authorized FIX of BLOCKER/MAJOR without per-finding confirmation.
+
+- [x] [Review][Patch] Malformed named-count `value` must error, not render as actual zero [`web/lib/platform-api.ts`]
+- [x] [Review][Patch] Reject fake/instrumented stack health in the client parser [`web/lib/platform-api.ts`]
+- [x] [Review][Patch] TenantAdmin Playwright must wait until `/platform/overview` is left [`web/e2e/platform-overview-44-2.spec.ts`]
+- [x] [Review][Patch] Invalidate in-flight overview fetches on retry/toggle [`web/app/(platform)/platform/overview/page.tsx`]
+- [x] [Review][Patch] Wrap provenance text; cover WaitingOnOperator; 390 directory/nav [`web/components/platform/platform-kpi-tile.tsx`, tests]
+- [x] [Review][Defer] Header support badge remains the unfiltered inbox count [`web/components/platform/platform-header.tsx`] — deferred, pre-existing inbox API; Overview KPI uses hideLoadTest parity by spec
 
 ## Dev Notes
 
@@ -164,3 +175,4 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 ## Change Log
 
 - 2026-10-09: Story context created from Epic 44, AD-13, TEA P0-05/P0-06, and 44.1 contracts.
+- 2026-10-09: Implemented overview API/UI; first review patched parser honesty, health rejection, fetch races, and test gaps.

@@ -24,6 +24,7 @@ public sealed class PlatformOpsOverviewServiceTests
             CreateTenant(loadId, "load-storm", TenantStatus.Suspended, BillingStatus.PastDue, now));
         db.SupportIssues.AddRange(
             CreateIssue(visibleId, "acme-club", SupportIssueStatus.Open, now),
+            CreateIssue(visibleId, "acme-club", SupportIssueStatus.WaitingOnOperator, now),
             CreateIssue(visibleId, "acme-club", SupportIssueStatus.Resolved, now),
             CreateIssue(loadId, "load-storm", SupportIssueStatus.Open, now),
             CreateIssue(TenantIds.Default, TenantIds.DefaultSlug, SupportIssueStatus.InProgress, now));
@@ -37,14 +38,14 @@ public sealed class PlatformOpsOverviewServiceTests
         Assert.Equal("Active", Assert.Single(hidden.TenantStatusCounts.Value!).Key);
         Assert.Equal(1, hidden.TenantStatusCounts.Value![0].Count);
         Assert.Equal("Active", Assert.Single(hidden.BillingStatusCounts.Value!).Key);
-        Assert.Equal(1, hidden.OpenSupportCount.Value);
+        Assert.Equal(2, hidden.OpenSupportCount.Value);
         Assert.Null(hidden.StackHealth.Value);
         Assert.Equal(PlatformKpiFreshness.MissingInstrumentation, hidden.StackHealth.Freshness);
         Assert.Equal(PlatformKpiSources.NotInstrumented, hidden.StackHealth.Source);
         Assert.DoesNotContain("Healthy", hidden.StackHealth.Source, StringComparison.OrdinalIgnoreCase);
 
         Assert.Equal(3, shown.TenantStatusCounts.Value!.Sum(row => row.Count));
-        Assert.Equal(3, shown.OpenSupportCount.Value);
+        Assert.Equal(4, shown.OpenSupportCount.Value);
         Assert.Contains(shown.TenantStatusCounts.Value!, row => row is { Key: "Suspended", Count: 1 });
         Assert.Contains(shown.BillingStatusCounts.Value!, row => row is { Key: "Free", Count: 1 });
         Assert.Contains(shown.BillingStatusCounts.Value!, row => row is { Key: "PastDue", Count: 1 });

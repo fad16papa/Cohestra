@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { PlatformKpiTile } from "@/components/platform/platform-kpi-tile";
@@ -20,23 +20,24 @@ export default function PlatformOverviewPage() {
   const [overview, setOverview] = useState<PlatformOpsOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestSeq = useRef(0);
 
   const load = useCallback(() => {
-    let cancelled = false;
+    const seq = ++requestSeq.current;
     setLoading(true);
     setError(null);
     setOverview(null);
 
     void getPlatformOpsOverview(authFetch, { hideLoadTest })
       .then((result) => {
-        if (cancelled) {
+        if (seq !== requestSeq.current) {
           return;
         }
         setOverview(result);
         setLoading(false);
       })
       .catch((err: unknown) => {
-        if (cancelled) {
+        if (seq !== requestSeq.current) {
           return;
         }
         setOverview(null);
@@ -47,13 +48,14 @@ export default function PlatformOverviewPage() {
         );
         setLoading(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [authFetch, hideLoadTest]);
 
-  useEffect(() => load(), [load]);
+  useEffect(() => {
+    load();
+    return () => {
+      requestSeq.current += 1;
+    };
+  }, [load]);
 
   const tenantTotal = overview ? sumCounts(overview.tenantStatusCounts.value) : null;
   const billingTotal = overview ? sumCounts(overview.billingStatusCounts.value) : null;
