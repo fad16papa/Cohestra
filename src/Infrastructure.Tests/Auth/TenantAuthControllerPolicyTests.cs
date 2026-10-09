@@ -114,11 +114,29 @@ public sealed class TenantAuthControllerPolicyTests
                     ?? method.GetCustomAttribute<HttpDeleteAttribute>()?.Template
                     ?? string.Empty;
                 return template.Contains("outbox", StringComparison.OrdinalIgnoreCase)
-                    || method.Name.Contains("Outbox", StringComparison.Ordinal);
+                    || template.Contains("paddle", StringComparison.OrdinalIgnoreCase)
+                    || method.Name.Contains("Outbox", StringComparison.Ordinal)
+                    || method.Name.Contains("Paddle", StringComparison.Ordinal);
             })
             .Select(method => method.Name)
             .ToArray();
         Assert.Empty(mutation);
+    }
+
+    [Fact]
+    public void PlatformOps_paddle_config_and_deliveries_are_get_only_platform_admin()
+    {
+        var config = typeof(PlatformOpsController).GetMethod(nameof(PlatformOpsController.GetPaddleConfig));
+        var list = typeof(PlatformOpsController).GetMethod(nameof(PlatformOpsController.ListPaddleDeliveries));
+        Assert.NotNull(config);
+        Assert.NotNull(list);
+        Assert.Equal("ops/paddle/config", config!.GetCustomAttribute<HttpGetAttribute>()!.Template);
+        Assert.Equal("ops/paddle/deliveries", list!.GetCustomAttribute<HttpGetAttribute>()!.Template);
+        Assert.Empty(config.GetCustomAttributes<AllowAnonymousAttribute>(inherit: true));
+        Assert.Empty(list.GetCustomAttributes<AllowAnonymousAttribute>(inherit: true));
+
+        var authorize = typeof(PlatformOpsController).GetCustomAttributes<AuthorizeAttribute>(inherit: true);
+        Assert.Contains(authorize, a => a.Policy == TenantAuthPolicies.PlatformAdminOnly);
     }
 
     [Fact]

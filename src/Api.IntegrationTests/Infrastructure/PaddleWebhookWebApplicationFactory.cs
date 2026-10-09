@@ -5,7 +5,7 @@ namespace Cohestra.Api.IntegrationTests.Infrastructure;
 /// <summary>
 /// Isolated host with sandbox Paddle webhook credentials. Does not mutate the shared collection factory.
 /// </summary>
-public sealed class PaddleWebhookWebApplicationFactory : IntegrationTestWebApplicationFactory
+public class PaddleWebhookWebApplicationFactory : IntegrationTestWebApplicationFactory
 {
     public const string WebhookSecret = "pdl_ntfset_integration_test";
 

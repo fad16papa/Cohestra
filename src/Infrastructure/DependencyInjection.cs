@@ -173,6 +173,7 @@ public static class DependencyInjection
         });
         services.AddScoped<IBillingService, PaddleBillingService>();
         services.AddScoped<IPaddleWebhookProcessor, PaddleWebhookProcessor>();
+        services.AddScoped<IPaddleWebhookDeliveryRecorder, PaddleWebhookDeliveryRecorder>();
         services.AddScoped<IPaddleCheckoutReturnResolver, PaddleCheckoutReturnResolver>();
         services.AddHostedService<BillingJobsHostedService>();
         services.Configure<FollowUpDigestOptions>(
@@ -264,6 +265,7 @@ public static class DependencyInjection
         services.AddScoped<IPlatformOpsOverviewService, PlatformOpsOverviewService>();
         services.AddScoped<IPlatformOpsHealthService, PlatformOpsHealthService>();
         services.AddScoped<IPlatformOpsOutboxService, PlatformOpsOutboxService>();
+        services.AddScoped<IPlatformOpsPaddleService, PlatformOpsPaddleService>();
         services.AddSingleton<ISupportSubmissionRateLimiter, RedisSupportSubmissionRateLimiter>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
         services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();

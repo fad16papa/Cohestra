@@ -11,6 +11,10 @@ const OPS = readFileSync(
   resolve(import.meta.dirname, "../app/(platform)/platform/ops/page.tsx"),
   "utf8"
 );
+const PADDLE = readFileSync(
+  resolve(import.meta.dirname, "../components/platform/platform-ops-paddle.tsx"),
+  "utf8"
+);
 const DIRECTORY = readFileSync(
   resolve(import.meta.dirname, "../app/(platform)/platform/page.tsx"),
   "utf8"
@@ -38,9 +42,10 @@ describe("Story 44.3 Platform operations source contract", () => {
     expect(OPS).toContain("Operations");
     expect(OPS).toContain("getPlatformOpsHealth");
     expect(OPS).toContain("Not measured here");
-    expect(OPS).toContain("Missing instrumentation");
-    expect(OPS).toContain("Billing / Paddle");
+    expect(OPS).toContain("PlatformOpsPaddleSection");
     expect(OPS).toContain("PlatformOpsOutboxSection");
+    expect(PADDLE).toContain("MISSING_INSTRUMENTATION_COPY");
+    expect(PADDLE).toContain("Billing / Paddle");
     expect(OPS).not.toContain("outbox_messages");
     expect(OPS).not.toContain("paddle_webhook");
     expect(OPS).not.toContain("setInterval");

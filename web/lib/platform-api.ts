@@ -582,6 +582,172 @@ export async function getPlatformOpsOutboxSummary(
   return parsePlatformOpsOutboxSummary(await response.json());
 }
 
+export const PLATFORM_PADDLE_DISPOSITIONS = [
+  "Processed",
+  "Duplicate",
+  "Ignored",
+  "Retryable",
+  "Rejected",
+] as const;
+
+export type PlatformOpsPaddleDisposition = (typeof PLATFORM_PADDLE_DISPOSITIONS)[number];
+
+export type PlatformOpsPaddleConfig = {
+  isConfigured: boolean;
+  environment: string;
+  allowLive: boolean;
+  apiHost: string;
+};
+
+export type PlatformOpsPaddleDeliveryItem = {
+  id: string;
+  eventId: string | null;
+  eventType: string | null;
+  disposition: string;
+  tenantId: string | null;
+  httpStatus: number;
+  detailSanitized: string | null;
+  observedAt: string;
+};
+
+export type PlatformOpsPaddleDeliveryList = {
+  items: PlatformOpsPaddleDeliveryItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export type PlatformOpsPaddleDeliveryListQuery = {
+  disposition?: string;
+  eventType?: string;
+  tenantId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+const PADDLE_DEFAULT_PAGE_SIZE = 25;
+const PADDLE_MAX_PAGE_SIZE = 50;
+const PADDLE_DETAIL_MAX = 200;
+
+export function parsePlatformOpsPaddleConfig(rawJson: unknown): PlatformOpsPaddleConfig {
+  const raw = asRecord(rawJson);
+  const environment = pickString(raw, "environment", "Environment");
+  const apiHost = pickString(raw, "apiHost", "ApiHost");
+  const isConfigured = raw.isConfigured ?? raw.IsConfigured;
+  const allowLive = raw.allowLive ?? raw.AllowLive;
+  if (
+    !environment ||
+    !apiHost ||
+    typeof isConfigured !== "boolean" ||
+    typeof allowLive !== "boolean"
+  ) {
+    throw new Error("Invalid paddle config");
+  }
+  if (
+    "apiKey" in raw ||
+    "ApiKey" in raw ||
+    "webhookSecret" in raw ||
+    "WebhookSecret" in raw ||
+    "clientToken" in raw ||
+    "ClientToken" in raw
+  ) {
+    throw new Error("Paddle config leaked a secret field");
+  }
+  return { isConfigured, environment, allowLive, apiHost };
+}
+
+export function parsePlatformOpsPaddleDeliveryList(rawJson: unknown): PlatformOpsPaddleDeliveryList {
+  const raw = asRecord(rawJson);
+  const itemsRaw = raw.items ?? raw.Items;
+  if (!Array.isArray(itemsRaw)) {
+    throw new Error("Invalid paddle delivery list");
+  }
+  const page = pickNumber(raw, "page", "Page");
+  const pageSize = pickNumber(raw, "pageSize", "PageSize");
+  const totalCount = pickNumber(raw, "totalCount", "TotalCount");
+  if (page < 1 || pageSize < 1 || pageSize > PADDLE_MAX_PAGE_SIZE || totalCount < 0) {
+    throw new Error("Invalid paddle delivery pagination");
+  }
+  return {
+    items: itemsRaw.map((item) => parsePaddleDeliveryItem(asRecord(item))),
+    page,
+    pageSize,
+    totalCount,
+  };
+}
+
+function parsePaddleDeliveryItem(raw: Record<string, unknown>): PlatformOpsPaddleDeliveryItem {
+  const id = pickString(raw, "id", "Id");
+  const disposition = pickString(raw, "disposition", "Disposition");
+  const observedAt = pickString(raw, "observedAt", "ObservedAt");
+  const httpStatus = pickNumber(raw, "httpStatus", "HttpStatus");
+  if (!id || !disposition || !observedAt) {
+    throw new Error("Invalid paddle delivery item");
+  }
+  const detailSanitized = pickString(raw, "detailSanitized", "DetailSanitized");
+  if (detailSanitized && detailSanitized.length > PADDLE_DETAIL_MAX) {
+    throw new Error("Invalid detailSanitized");
+  }
+  return {
+    id,
+    eventId: pickString(raw, "eventId", "EventId"),
+    eventType: pickString(raw, "eventType", "EventType"),
+    disposition,
+    tenantId: pickString(raw, "tenantId", "TenantId"),
+    httpStatus,
+    detailSanitized,
+    observedAt,
+  };
+}
+
+export async function getPlatformOpsPaddleConfig(
+  authFetch: AuthFetch
+): Promise<PlatformOpsPaddleConfig> {
+  const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/platform/ops/paddle/config`);
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parsePlatformOpsPaddleConfig(await response.json());
+}
+
+export async function getPlatformOpsPaddleDeliveries(
+  authFetch: AuthFetch,
+  options: PlatformOpsPaddleDeliveryListQuery = {}
+): Promise<PlatformOpsPaddleDeliveryList> {
+  const params = new URLSearchParams();
+  if (options.disposition?.trim()) {
+    params.set("disposition", options.disposition.trim());
+  }
+  if (options.eventType?.trim()) {
+    params.set("eventType", options.eventType.trim());
+  }
+  if (options.tenantId?.trim()) {
+    params.set("tenantId", options.tenantId.trim());
+  }
+  if (options.from?.trim()) {
+    params.set("from", options.from.trim());
+  }
+  if (options.to?.trim()) {
+    params.set("to", options.to.trim());
+  }
+  params.set("page", String(Math.max(1, options.page ?? 1)));
+  const requestedSize = options.pageSize ?? PADDLE_DEFAULT_PAGE_SIZE;
+  params.set(
+    "pageSize",
+    String(Math.min(PADDLE_MAX_PAGE_SIZE, Math.max(1, requestedSize)))
+  );
+
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/ops/paddle/deliveries?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parsePlatformOpsPaddleDeliveryList(await response.json());
+}
+
 export async function getPlatformOpsOutboxList(
   authFetch: AuthFetch,
   options: PlatformOpsOutboxListQuery = {}

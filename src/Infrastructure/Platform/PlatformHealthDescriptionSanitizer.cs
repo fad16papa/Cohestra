@@ -17,6 +17,7 @@ public static partial class PlatformHealthDescriptionSanitizer
         text = CredentialPair().Replace(text, "[redacted]");
         text = RedisUrl().Replace(text, "[redacted]");
         text = SecretToken().Replace(text, "[redacted]");
+        text = PaddleCredential().Replace(text, "[redacted]");
         text = JwtToken().Replace(text, "[redacted]");
         text = EmailAddress().Replace(text, "[redacted]");
         text = StackFrame().Replace(text, string.Empty);
@@ -37,6 +38,9 @@ public static partial class PlatformHealthDescriptionSanitizer
 
     [GeneratedRegex(@"(?i)\b(bearer|apikey|api[_-]?key|secret)(?:\s*[:=]\s*|\s+)\S+")]
     private static partial Regex SecretToken();
+
+    [GeneratedRegex(@"(?i)\b(webhooksecret|clienttoken|paddle-signature)\s*[=:]\s*\S+")]
+    private static partial Regex PaddleCredential();
 
     [GeneratedRegex(@"\beyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")]
     private static partial Regex JwtToken();

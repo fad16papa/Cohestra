@@ -12,6 +12,7 @@ using Cohestra.Contracts.Activities;
 using Cohestra.Contracts.Intelligence;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
+using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
@@ -602,6 +603,74 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var list = JsonSerializer.Deserialize<PlatformOpsOutboxListResponse>(body, IntegrationTestHelpers.JsonOptions);
         Assert.NotNull(list);
         Assert.Contains(list.Items, item => item.TenantId == tenantAId);
+        Assert.DoesNotContain(list.Items, item => item.TenantId == tenantB.Id);
+    }
+
+    [SkippableFact]
+    public async Task Platform_ops_paddle_deliveries_tenantId_filter_returns_only_requested_tenant()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        var tenantAId = TenantIds.Default;
+        var eventA = $"evt_a_{Guid.NewGuid():N}";
+        var eventB = $"evt_b_{Guid.NewGuid():N}";
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            db.PaddleWebhookDeliveries.AddRange(
+                new PaddleWebhookDelivery
+                {
+                    Id = Guid.CreateVersion7(),
+                    EventId = eventA,
+                    EventType = "transaction.completed",
+                    Disposition = PaddleWebhookDeliveryDisposition.Processed,
+                    TenantId = tenantAId,
+                    HttpStatus = 200,
+                    DetailSanitized = "Processed.",
+                    ObservedAt = DateTimeOffset.UtcNow,
+                },
+                new PaddleWebhookDelivery
+                {
+                    Id = Guid.CreateVersion7(),
+                    EventId = eventB,
+                    EventType = "transaction.completed",
+                    Disposition = PaddleWebhookDeliveryDisposition.Processed,
+                    TenantId = tenantB.Id,
+                    HttpStatus = 200,
+                    DetailSanitized = "Processed.",
+                    ObservedAt = DateTimeOffset.UtcNow,
+                });
+            await db.SaveChangesAsync();
+        }
+
+        using var tenantAdmin = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            tenantAdmin,
+            await IntegrationTestHelpers.LoginAsOperatorAsync(tenantAdmin));
+        using var forbiddenConfig = await tenantAdmin.GetAsync("/api/v1/platform/ops/paddle/config");
+        using var forbiddenList = await tenantAdmin.GetAsync(
+            $"/api/v1/platform/ops/paddle/deliveries?tenantId={tenantAId}");
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenConfig.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenList.StatusCode);
+
+        using var platform = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            platform,
+            await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform));
+        using var filtered = await platform.GetAsync(
+            $"/api/v1/platform/ops/paddle/deliveries?tenantId={tenantAId}&pageSize=50");
+        Assert.Equal(HttpStatusCode.OK, filtered.StatusCode);
+        var body = await filtered.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(eventB, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(tenantB.Id.ToString(), body, StringComparison.OrdinalIgnoreCase);
+
+        var list = JsonSerializer.Deserialize<PlatformOpsPaddleDeliveryListResponse>(
+            body,
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(list);
+        Assert.Contains(list.Items, item => item.TenantId == tenantAId && item.EventId == eventA);
         Assert.DoesNotContain(list.Items, item => item.TenantId == tenantB.Id);
     }
 }

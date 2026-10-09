@@ -20,7 +20,10 @@ public sealed record PaddleWebhookProcessResult(
     bool Processed,
     bool Duplicate,
     string Detail,
-    PaddleWebhookDisposition Disposition)
+    PaddleWebhookDisposition Disposition,
+    string? EventId = null,
+    string? EventType = null,
+    Guid? TenantId = null)
 {
     public static PaddleWebhookProcessResult ProcessedOk(string detail = "Processed.") =>
         new(true, false, detail, PaddleWebhookDisposition.Processed);

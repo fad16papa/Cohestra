@@ -98,6 +98,8 @@ public class CohestraDbContext : IdentityDbContext<ApplicationUser, IdentityRole
 
     public DbSet<PaddleWebhookEvent> PaddleWebhookEvents => Set<PaddleWebhookEvent>();
 
+    public DbSet<PaddleWebhookDelivery> PaddleWebhookDeliveries => Set<PaddleWebhookDelivery>();
+
     public DbSet<PaddleAdjustmentCursor> PaddleAdjustmentCursors => Set<PaddleAdjustmentCursor>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
