@@ -27,6 +27,10 @@ const OPS = readFileSync(
   resolve(import.meta.dirname, "../components/platform/platform-tenant-ops-panel.tsx"),
   "utf8"
 );
+const OVERVIEW = readFileSync(
+  resolve(import.meta.dirname, "../app/(platform)/platform/overview/page.tsx"),
+  "utf8"
+);
 const GLOBALS = readFileSync(resolve(import.meta.dirname, "../app/globals.css"), "utf8");
 
 describe("Story 43.4 Platform source contract", () => {
@@ -54,6 +58,11 @@ describe("Story 43.4 Platform source contract", () => {
     expect(HEADER).toContain("min-h-11 min-w-11");
     expect(HEADER).not.toContain("size-10");
     expect(HEADER).toContain("plat-header-muted");
+    expect(HEADER.indexOf('label: "Overview"')).toBeLessThan(HEADER.indexOf('label: "Tenants"'));
+    expect(HEADER.indexOf('label: "Tenants"')).toBeLessThan(HEADER.indexOf('label: "Support"'));
+    expect(HEADER).not.toContain("Operations");
+    expect(HEADER).not.toContain("Audits");
+    expect(HEADER).toContain('href === "/platform/overview"');
   });
 
   it("replaces window.confirm with AlertDialog on Archive and recovery", () => {
@@ -83,7 +92,21 @@ describe("Story 43.4 Platform source contract", () => {
   });
 
   it("does not add impersonation or tenant Admin route motion", () => {
-    expect(LAYOUT + HEADER + DIRECTORY + TENANT).not.toMatch(/impersonat/i);
-    expect(LAYOUT + HEADER).not.toContain("AdminRouteTransition");
+    expect(LAYOUT + HEADER + DIRECTORY + TENANT + OVERVIEW).not.toMatch(/impersonat/i);
+    expect(LAYOUT + HEADER + OVERVIEW).not.toContain("AdminRouteTransition");
+    expect(OVERVIEW).not.toContain("PlanBadge");
+    expect(OVERVIEW).not.toContain("/follow-up");
+    expect(OVERVIEW).toContain("Instrumentation not available yet");
+    expect(OVERVIEW).toContain("Loading overview");
+    expect(OVERVIEW).toContain('role="status"');
+    expect(OVERVIEW).toContain('role="alert"');
+    expect(OVERVIEW).toContain("No tenants in this view");
+    expect(OVERVIEW).toContain("No open support issues");
+    expect(OVERVIEW).toContain("Could not load overview");
+    expect(OVERVIEW).toContain("setOverview(null)");
+    expect(OVERVIEW).toContain("break-words");
+    expect(OVERVIEW).not.toMatch(/\bHealthy\b/);
+    expect(OVERVIEW).not.toContain("/ready");
+    expect(OVERVIEW).not.toContain("Operations");
   });
 });

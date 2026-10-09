@@ -9,6 +9,9 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { getPlatformSupportOpenCount } from "@/lib/platform-api";
 
 function isPlatformNavCurrent(href: string, pathname: string): boolean {
+  if (href === "/platform/overview") {
+    return pathname === "/platform/overview";
+  }
   if (href === "/platform") {
     return pathname === "/platform" || pathname.startsWith("/platform/tenants");
   }
@@ -43,6 +46,7 @@ export function PlatformHeader() {
   }, [authFetch]);
 
   const links = [
+    { href: "/platform/overview", label: "Overview" },
     { href: "/platform", label: "Tenants" },
     {
       href: "/platform/support",

@@ -100,6 +100,9 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var response = await client.GetAsync("/api/v1/platform/tenants");
         response.EnsureSuccessStatusCode();
+
+        using var overview = await client.GetAsync("/api/v1/platform/ops/overview");
+        overview.EnsureSuccessStatusCode();
     }
 
     private async Task<HttpClient> CreateTenantMemberClientAsync()
@@ -127,6 +130,9 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
         Guid tenantId,
         Guid memberUserId)
     {
+        using var overview = await client.GetAsync("/api/v1/platform/ops/overview");
+        await AssertForbiddenAsync(overview);
+
         using var search = await client.GetAsync("/api/v1/platform/search?q=ops");
         await AssertForbiddenAsync(search);
 

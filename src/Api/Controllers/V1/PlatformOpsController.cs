@@ -17,9 +17,20 @@ namespace Cohestra.Api.Controllers.V1;
 [Produces("application/json")]
 public sealed class PlatformOpsController(
     IPlatformTenantOpsService platformTenantOpsService,
+    IPlatformOpsOverviewService overviewService,
     IPlatformRecoveryRateLimiter recoveryRateLimiter,
     IOptions<PlatformRecoveryRateLimitOptions> recoveryRateLimitOptions) : ControllerBase
 {
+    [HttpGet("ops/overview")]
+    [ProducesResponseType(typeof(PlatformOpsOverviewResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PlatformOpsOverviewResponse>> GetOverview(
+        [FromQuery] bool hideLoadTest = true,
+        CancellationToken cancellationToken = default)
+    {
+        var overview = await overviewService.GetAsync(hideLoadTest, cancellationToken);
+        return Ok(overview);
+    }
+
     [HttpGet("search")]
     [ProducesResponseType(typeof(PlatformOmniSearchResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<PlatformOmniSearchResponse>> Search(

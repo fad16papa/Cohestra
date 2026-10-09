@@ -450,4 +450,44 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             brief!.Insights.SelectMany(insight => insight.Evidence),
             evidence => evidence.Value.Contains(foreignMarker, StringComparison.Ordinal));
     }
+
+    [SkippableFact]
+    public async Task Platform_overview_is_PlatformAdmin_only_and_returns_aggregates_without_secrets()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        using var tenantAdmin = Factory.CreateClient();
+        var tenantToken = await IntegrationTestHelpers.LoginAsOperatorAsync(tenantAdmin);
+        IntegrationTestHelpers.UseBearerToken(tenantAdmin, tenantToken);
+        using var forbidden = await tenantAdmin.GetAsync("/api/v1/platform/ops/overview");
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+        using var platform = Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform);
+        IntegrationTestHelpers.UseBearerToken(platform, platformToken);
+
+        var secretSlug = $"ovsec-{Guid.NewGuid():N}"[..12];
+        await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
+            platform,
+            "Overview Secret Org",
+            secretSlug,
+            $"admin-{secretSlug}@overview-secret.test");
+
+        using var ok = await platform.GetAsync("/api/v1/platform/ops/overview");
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var body = await ok.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(secretSlug, body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("@overview-secret.test", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("password", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("redis", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Bearer", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("eyJ", body, StringComparison.Ordinal);
+
+        var overview = JsonSerializer.Deserialize<PlatformOpsOverviewResponse>(
+            body,
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(overview);
+        Assert.Equal(PlatformKpiFreshness.MissingInstrumentation, overview.StackHealth.Freshness);
+        Assert.Null(overview.StackHealth.Value);
+    }
 }
