@@ -81,3 +81,36 @@ Smallest remaining 43.2: reuse ProductErrorState for role denial (keep 43.1 repl
 ## Recommended Next Steps
 
 Party → spec → implement that delta only.
+
+## Follow-up: 2026-10-09
+
+Owner re-authorized Story 43.2 as if not started. Evidence contradicts that premise.
+
+**Confirmed.** Story 43.2 already merged as PR #395 (`df42ea2e`) on accepted HEAD `1e469115`. Epic 43 later closed through 43.5. Current `origin/main` is `556f7192890dcc7589252f1e1bdf790710402a6f` and still contains the Team product outcome.
+
+### Delta vs this authorization
+
+| Concern | Class | Evidence |
+| --- | --- | --- |
+| `/settings/team` nested, 43.1 deep link/refresh/aria-current | ALREADY SATISFIED | 43.1 + Playwright 43.2 |
+| Member denied ≠ UpgradePanel | ALREADY SATISFIED | `settings-admin-only-gate.tsx` ProductErrorState |
+| Basic Admin plan lock / UpgradePanel | ALREADY SATISFIED | `invitesAllowed === false` |
+| Seat cap copy (revoke/remove/upgrade) | ALREADY SATISFIED | seat banner + `seat_cap_reached` |
+| AlertDialog not `window.confirm`; Cancel / Remove member / Revoke invite | ALREADY SATISFIED | Team page dialogs |
+| Server TenantAdminOnly; Member 403 | ALREADY SATISFIED | TeamController + integration |
+| Self-remove 400 | ALREADY SATISFIED | API + UI hide |
+| Last admin | ALREADY SATISFIED (HTTP) / service guard | Self-remove 400 is the reachable last-admin path; service Conflict if an outsider tries |
+| Local Member fixture | ALREADY SATISFIED | `px2-pro-member` e2e seeder |
+| Production Member seeder | OBSOLETE / ABSENT | Must stay absent |
+| New roles / impersonation / Billing 43.3 | OBSOLETE | Do not start |
+| Cancel restores focus to trigger | STILL MISSING → this increment | `finalFocus` not wired |
+| Last-admin service proof | STILL MISSING → this increment | no service test |
+| 390 Remove/Revoke ≥44px proof | STILL MISSING → this increment | e2e only asserted Send invite |
+
+### Party confirmation (John / Sally / Winston)
+
+Prior 2026-10-06 direction still holds. Smallest remaining change after PR #395 is completeness only: wire 38.6 `finalFocus`, prove last-admin at the service, prove 390 destructive targets. Do not reopen routing, RBAC, or 43.3.
+
+### Conclusion
+
+**Confidence:** High. Product outcome already shipped. Completeness increment is justified; a second 43.2 product rewrite is not.

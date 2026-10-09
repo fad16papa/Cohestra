@@ -93,6 +93,7 @@ test.describe("Story 43.2 — Team and permissions", () => {
       });
       await page.getByRole("alertdialog").getByRole("button", { name: "Cancel" }).click();
       await expect(page.getByRole("alertdialog")).toHaveCount(0);
+      await expect(remove).toBeFocused();
     }
 
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -107,6 +108,28 @@ test.describe("Story 43.2 — Team and permissions", () => {
     await expect(send).toBeVisible();
     const sendBox = await send.boundingBox();
     expect(sendBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+
+    const mobileInvite = `qa-43-2-390-${Date.now()}@example.com`;
+    await page.getByLabel("Email").fill(mobileInvite);
+    await send.click();
+    const revoke390 = page.locator("li").filter({ hasText: mobileInvite }).getByRole("button", {
+      name: "Revoke",
+    });
+    await expect(revoke390).toBeVisible();
+    expect((await revoke390.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+    await revoke390.click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Cancel" }).click();
+    await expect(page.getByRole("alertdialog")).toHaveCount(0);
+    await expect(revoke390).toBeFocused();
+    await revoke390.click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Revoke invite" }).click();
+    await expect(page.getByText(mobileInvite)).toHaveCount(0);
+
+    const remove390 = page.getByRole("button", { name: "Remove" }).first();
+    if (await remove390.count()) {
+      expect((await remove390.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44);
+    }
+
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth + 1
     );
