@@ -66,9 +66,9 @@ test.describe("Story 44.3 — Operations health shell", () => {
       page.getByRole("navigation", { name: "Platform" }).getByRole("link", { name: "Tenants" })
     ).not.toHaveAttribute("aria-current", "page");
     await expect(page.getByRole("heading", { name: "Health" })).toBeVisible();
-    await expect(page.getByText("postgres")).toBeVisible();
-    await expect(page.getByText("redis")).toBeVisible();
-    await expect(page.getByText("default-tenant")).toBeVisible();
+    await expect(page.getByText("postgres", { exact: true })).toBeVisible();
+    await expect(page.getByText("redis", { exact: true })).toBeVisible();
+    await expect(page.getByText("default-tenant", { exact: true })).toBeVisible();
     await expect(page.getByText("Not in this probe")).toHaveCount(4);
     await expect(page.getByText("Missing instrumentation")).toHaveCount(2);
     await expect(page.getByText(/does not prove/i)).toBeVisible();
@@ -127,7 +127,7 @@ test.describe("Story 44.3 — Operations health shell", () => {
       });
     });
     await openPlatform(page, session, "/platform/overview");
-    await expect(page.getByText("Unavailable")).toBeVisible();
+    await expect(page.getByText(/^Unavailable$/).first()).toBeVisible();
     await expect(page.getByText(/could not produce data/i)).toBeVisible();
     await page.unroute("**/api/v1/platform/ops/overview**");
 
@@ -143,16 +143,19 @@ test.describe("Story 44.3 — Operations health shell", () => {
     await expect(
       page.getByRole("navigation", { name: "Platform" }).getByRole("link", { name: "Tenants" })
     ).toHaveAttribute("aria-current", "page");
-    await expect(page.getByRole("alert")).toContainText("Infrastructure health is Degraded");
-    await expect(page.getByRole("alert")).toContainText("redis is Degraded");
-    await expect(page.getByRole("alert")).toContainText("/ready");
-    await expect(page.getByRole("alert")).toContainText("outbox");
+    const banner = page.getByRole("alert").filter({ hasText: "Infrastructure health is Degraded" });
+    await expect(banner).toBeVisible();
+    await expect(banner).toContainText("redis is Degraded");
+    await expect(banner).toContainText("/ready");
+    await expect(banner).toContainText("outbox");
     await expect(page.getByPlaceholder("Slug or organization name")).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
 
     await page.setViewportSize({ width: 390, height: 844 });
     await openPlatform(page, session, "/platform");
-    await expect(page.getByRole("alert")).toContainText("Degraded");
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Infrastructure health is Degraded" })
+    ).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
     await page.unroute("**/api/v1/platform/ops/health");
   });
