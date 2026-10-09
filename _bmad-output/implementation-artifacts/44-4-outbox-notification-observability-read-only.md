@@ -2,7 +2,7 @@
 id: 44.4
 key: 44-4-outbox-notification-observability-read-only
 title: Outbox and notification observability (read-only)
-status: review
+status: done
 epic: 44
 created: 2026-10-09
 baseline_commit: 6b1ccb988f8b828e68b16781688fef691fe63a01
@@ -10,7 +10,7 @@ baseline_commit: 6b1ccb988f8b828e68b16781688fef691fe63a01
 
 # Story 44.4: Outbox and notification observability (read-only)
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -153,8 +153,8 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 
 ### Completion Notes List
 
-- Draft PR only. Do not merge without owner authorization. 44.5–44.9 not started. DigitalOcean Deploy remains Epic 19.
-- OutboxProcessor, claim/retry/dead-letter, and 44.3 health `not_in_probe` for outbox were not changed.
+- Merged PR #418. Accepted implementation HEAD `aef6a9e9d2086f9c696645e01f82241717a08b07`. Main merge commit `1d9101d376f47f3cdd396eac42e3794e885d7f2a`. Exact-head CI `37939470427` green. Post-merge main CI `37942596168` green. Deploy remains pre-existing Epic 19 (`missing server host`). Story 44.5 not started.
+- Outbox APIs are PlatformAdminOnly and read-only. PayloadJson, customer bodies, and raw LastError are absent. lastErrorSanitized is redact-then-truncate ≤200. Pagination default 25 / max 50. Zero Failed does not mean email is healthy. 44.3 health still lists outbox as `not_in_probe`.
 
 ### File List
 
@@ -185,6 +185,7 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 - 2026-10-09: Story context from Epic 44, AD-13/15/18, TEA P0-09/10/11, P1-05/14.
 - 2026-10-09: Implemented read-only summary/list APIs, sanitizer reuse, Operations Outbox UI.
 - 2026-10-09: BMAD code review — no unresolved BLOCKER/MAJOR. Trace/NFR/checkpoint recorded.
+- 2026-10-09: Owner-authorized merge of PR #418 at accepted HEAD `aef6a9e9`. Story closed after post-merge main CI.
 
 ### Review Findings
 
