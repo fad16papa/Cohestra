@@ -2,7 +2,7 @@
 id: 44.2
 key: 44-2-production-overview-source-backed-kpis
 title: Production overview with source-backed KPIs
-status: review
+status: done
 epic: 44
 created: 2026-10-09
 baseline_commit: e401d82427e183dfd650bead31cae45575c3ea1d
@@ -10,7 +10,7 @@ baseline_commit: e401d82427e183dfd650bead31cae45575c3ea1d
 
 # Story 44.2: Production overview with source-backed KPIs
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE. Code review is repeating, not one-shot.
 
@@ -170,6 +170,9 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 
 ### Completion Notes List
 
+- Merged PR #414. Accepted implementation HEAD `425044091d5b14c84ce926a87bbc1f801c98f45e`. Main merge commit `4cc5943243663a1d4d5961c2cc1ba92bf2c531e5`. Post-merge CI `37927628590` green. Deploy remains pre-existing Epic 19 (`missing server host`). Story 44.3 not started.
+- Overview is PlatformAdmin-only with AD-13 provenance. Health is `missing_instrumentation`. `/platform` remains the tenant directory.
+
 ### File List
 
 See git diff vs `e401d824`. Includes Contracts KPI envelope, overview service/controller, `/platform/overview`, header nav, tests, ATDD/trace/NFR/review artifacts.
@@ -178,3 +181,4 @@ See git diff vs `e401d824`. Includes Contracts KPI envelope, overview service/co
 
 - 2026-10-09: Story context created from Epic 44, AD-13, TEA P0-05/P0-06, and 44.1 contracts.
 - 2026-10-09: Implemented overview API/UI; first review patched parser honesty, health rejection, fetch races, and test gaps.
+- 2026-10-09: Merged PR #414; post-merge CI green on `4cc59432`; story closed. 44.3 not started.
