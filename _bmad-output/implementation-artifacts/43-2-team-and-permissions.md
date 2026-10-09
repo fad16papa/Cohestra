@@ -2,17 +2,18 @@
 id: 43.2
 key: 43-2-team-and-permissions
 title: Team and permissions
-status: done
+status: in-progress
 epic: 43
 created: 2026-10-06
 baseline_commit: e4bb77c66d39a958dab300df80f5ebc460e6ccc0
 accepted_commit: 1e46911597ed7b8c55bf49a018998f33ffb9fa73
 implementation_merge: df42ea2ee9b27f6b31db5d4f829ef18b5ba9c50f
+completeness_baseline: 556f7192890dcc7589252f1e1bdf790710402a6f
 ---
 
 # Story 43.2: Team and permissions
 
-Status: done
+Status: in-progress (completeness increment on already-merged PR #395)
 
 DONE requires the Mandatory Code Review Loop on the final HEAD.
 
@@ -69,4 +70,15 @@ Story 43.2 DONE on accepted HEAD `1e469115` (PR #395 merge `df42ea2e`). Epic 43 
 
 ## Exact stop
 
-Story 43.2 DONE. Epic 43 stays in-progress. Do not create 43.3.
+Story 43.2 DONE on PR #395. Epic 43 later closed through 43.5. Do not create or reopen 43.3–43.5.
+
+## Completeness increment 2026-10-09
+
+Owner re-authorized 43.2. Delta audit: product outcome already on main. Remaining gaps only:
+
+- Wire AlertDialog `finalFocus` so Cancel returns focus to Remove/Revoke
+- Service tests for self-remove and last-admin Conflict
+- Playwright: Cancel focus restore; 390 Revoke/Remove ≥44px
+- Display `formatInviteRole` on Team lists (admin/member, no new roles)
+
+Do not reopen Settings routing. Do not add a production Member seeder.

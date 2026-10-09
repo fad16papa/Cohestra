@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { SettingsAdminOnlyGate } from "@/components/settings/settings-admin-only-gate";
@@ -25,6 +25,7 @@ import { Label } from "@/components/ui/label";
 import {
   createTeamInvite,
   fetchTeamOverview,
+  formatInviteRole,
   removeTeamMember,
   revokeTeamInvite,
   type TeamOverview,
@@ -59,6 +60,7 @@ function SettingsTeamAdminBody() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingTeamAction | null>(null);
   const [actionSubmitting, setActionSubmitting] = useState(false);
+  const restoreFocusRef = useRef<HTMLButtonElement | null>(null);
 
   const loadTeam = useCallback(async () => {
     setLoading(true);
@@ -188,14 +190,15 @@ function SettingsTeamAdminBody() {
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
-                      {member.role}
+                      {formatInviteRole(member.role)}
                     </span>
                     {canRemove ? (
                       <Button
                         type="button"
                         variant="ghost"
                         className={teamActionClassName}
-                        onClick={() => {
+                        onClick={(event) => {
+                          restoreFocusRef.current = event.currentTarget;
                           setActionError(null);
                           setPendingAction({
                             kind: "remove",
@@ -231,14 +234,16 @@ function SettingsTeamAdminBody() {
                   <div className="min-w-0">
                     <p className="break-all font-medium text-text-warm">{invite.email}</p>
                     <p className="text-text-muted-warm">
-                      {invite.role} · expires {new Date(invite.expiresAt).toLocaleDateString()}
+                      {formatInviteRole(invite.role)} · expires{" "}
+                      {new Date(invite.expiresAt).toLocaleDateString()}
                     </p>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     className={teamActionClassName}
-                    onClick={() => {
+                    onClick={(event) => {
+                      restoreFocusRef.current = event.currentTarget;
                       setActionError(null);
                       setPendingAction({
                         kind: "revoke",
@@ -337,7 +342,7 @@ function SettingsTeamAdminBody() {
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent finalFocus={restoreFocusRef}>
           <AlertDialogHeader>
             <AlertDialogTitle>
               {pendingAction?.kind === "revoke" ? "Revoke invite?" : "Remove team member?"}

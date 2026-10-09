@@ -8,6 +8,7 @@
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 done; epic 43 done after cross-story close
+# 2026-10-09 owner re-authorized 43.2; product already merged PR #395. Completeness increment only. Do not reopen 43.3–43.5.
 # epic 44 planning approved 2026-10-08 (PR #411); 44.1 ready-for-dev 2026-10-09
 # project: cohestra
 # project_key: NOKEY
@@ -439,7 +440,7 @@ development_status:
   # Epic 43 — System Areas and Product-Wide Closure
   epic-43: done
   43-1-settings-nested-routes: done
-  43-2-team-and-permissions: done
+  43-2-team-and-permissions: in-progress
   43-3-billing-presentation: done
   43-4-platform-administration: done
   43-5-responsive-accessibility-visual-consistency-closure: done

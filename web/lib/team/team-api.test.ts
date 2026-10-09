@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mapTeamProblemMessage } from "@/lib/team/team-api";
+import { formatInviteRole, mapTeamProblemMessage } from "@/lib/team/team-api";
 
 describe("mapTeamProblemMessage", () => {
   it("keeps role denial out of plan-lock copy", () => {
@@ -20,6 +20,11 @@ describe("mapTeamProblemMessage", () => {
     expect(mapTeamProblemMessage("member_remove_conflict", "ignored", "fallback")).toMatch(
       /at least one admin/i
     );
+  });
+
+  it("formats Tenant roles for operators without inventing new roles", () => {
+    expect(formatInviteRole("TenantAdmin")).toBe("admin");
+    expect(formatInviteRole("TenantMember")).toBe("member");
   });
 
   it("falls back to server detail for other codes", () => {
