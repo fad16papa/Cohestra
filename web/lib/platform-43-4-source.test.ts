@@ -59,10 +59,11 @@ describe("Story 43.4 Platform source contract", () => {
     expect(HEADER).not.toContain("size-10");
     expect(HEADER).toContain("plat-header-muted");
     expect(HEADER.indexOf('label: "Overview"')).toBeLessThan(HEADER.indexOf('label: "Tenants"'));
-    expect(HEADER.indexOf('label: "Tenants"')).toBeLessThan(HEADER.indexOf('label: "Support"'));
-    expect(HEADER).not.toContain("Operations");
+    expect(HEADER.indexOf('label: "Tenants"')).toBeLessThan(HEADER.indexOf('label: "Operations"'));
+    expect(HEADER.indexOf('label: "Operations"')).toBeLessThan(HEADER.indexOf('label: "Support"'));
     expect(HEADER).not.toContain("Audits");
     expect(HEADER).toContain('href === "/platform/overview"');
+    expect(HEADER).toContain('href === "/platform/ops"');
   });
 
   it("replaces window.confirm with AlertDialog on Archive and recovery", () => {
@@ -96,7 +97,6 @@ describe("Story 43.4 Platform source contract", () => {
     expect(LAYOUT + HEADER + OVERVIEW).not.toContain("AdminRouteTransition");
     expect(OVERVIEW).not.toContain("PlanBadge");
     expect(OVERVIEW).not.toContain("/follow-up");
-    expect(OVERVIEW).toContain("Instrumentation not available yet");
     expect(OVERVIEW).toContain("Loading overview");
     expect(OVERVIEW).toContain('role="status"');
     expect(OVERVIEW).toContain('role="alert"');
@@ -105,8 +105,7 @@ describe("Story 43.4 Platform source contract", () => {
     expect(OVERVIEW).toContain("Could not load overview");
     expect(OVERVIEW).toContain("setOverview(null)");
     expect(OVERVIEW).toContain("break-words");
-    expect(OVERVIEW).not.toMatch(/\bHealthy\b/);
+    expect(OVERVIEW).toContain("does not prove");
     expect(OVERVIEW).not.toContain("/ready");
-    expect(OVERVIEW).not.toContain("Operations");
   });
 });

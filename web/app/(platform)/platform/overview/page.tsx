@@ -12,6 +12,7 @@ import {
   describePlatformBillingStatus,
   describePlatformTenantStatus,
 } from "@/lib/platform-status-copy";
+import { healthStatusLabel, stackHealthSummary } from "@/lib/platform-health";
 import { sumCounts } from "@/lib/platform-overview";
 
 export default function PlatformOverviewPage() {
@@ -74,7 +75,8 @@ export default function PlatformOverviewPage() {
         </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-[var(--plat-stone)]">
           Fleet pulse from PostgreSQL. Each figure states its source and freshness.
-          Infrastructure health is not instrumented yet.
+          Infrastructure health is the authenticated postgres, redis, and default-tenant probe —
+          not outbox, Paddle, or email.
         </p>
       </header>
 
@@ -172,7 +174,24 @@ export default function PlatformOverviewPage() {
             observedAt={overview.stackHealth.observedAt}
             freshness={overview.stackHealth.freshness}
           >
-            <p>Instrumentation not available yet.</p>
+            {overview.stackHealth.freshness === "unavailable" ? (
+              <div className="space-y-2">
+                <p className="font-semibold">Unavailable</p>
+                <p className="text-sm leading-relaxed">
+                  The authenticated health request could not produce data. Tenant and support
+                  figures above are still from PostgreSQL. This is not a Healthy result.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="font-semibold">
+                  Status: {healthStatusLabel(overview.stackHealth.value ?? "")}
+                </p>
+                <p className="min-w-0 break-words text-sm leading-relaxed">
+                  {stackHealthSummary({ overallStatus: overview.stackHealth.value ?? "" })}
+                </p>
+              </div>
+            )}
           </PlatformKpiTile>
         </div>
       ) : null}

@@ -478,16 +478,63 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var body = await ok.Content.ReadAsStringAsync();
         Assert.DoesNotContain(secretSlug, body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("@overview-secret.test", body, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("password", body, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("redis", body, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("Bearer", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Password=", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("redis://", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("rediss://", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Bearer ", body, StringComparison.Ordinal);
         Assert.DoesNotContain("eyJ", body, StringComparison.Ordinal);
 
         var overview = JsonSerializer.Deserialize<PlatformOpsOverviewResponse>(
             body,
             IntegrationTestHelpers.JsonOptions);
         Assert.NotNull(overview);
-        Assert.Equal(PlatformKpiFreshness.MissingInstrumentation, overview.StackHealth.Freshness);
-        Assert.Null(overview.StackHealth.Value);
+        Assert.Equal(PlatformKpiFreshness.Actual, overview.StackHealth.Freshness);
+        Assert.Contains(
+            overview.StackHealth.Value,
+            new[]
+            {
+                PlatformHealthStatuses.Healthy,
+                PlatformHealthStatuses.Degraded,
+                PlatformHealthStatuses.Unhealthy,
+            });
+    }
+
+    [SkippableFact]
+    public async Task Platform_ops_health_is_PlatformAdmin_only_and_contains_no_secrets()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        using var tenantAdmin = Factory.CreateClient();
+        var tenantToken = await IntegrationTestHelpers.LoginAsOperatorAsync(tenantAdmin);
+        IntegrationTestHelpers.UseBearerToken(tenantAdmin, tenantToken);
+        using var forbidden = await tenantAdmin.GetAsync("/api/v1/platform/ops/health");
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+        using var platform = Factory.CreateClient();
+        var platformToken = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform);
+        IntegrationTestHelpers.UseBearerToken(platform, platformToken);
+        using var ok = await platform.GetAsync("/api/v1/platform/ops/health");
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var body = await ok.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Password=", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Host=", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Username=", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("redis://", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("rediss://", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Bearer ", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("ApiKey", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("StackTrace", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("eyJ", body, StringComparison.Ordinal);
+
+        var health = JsonSerializer.Deserialize<PlatformOpsHealthResponse>(
+            body,
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(health);
+        Assert.Contains(health.Checks, check => check.Name == "postgres");
+        Assert.Contains(health.Checks, check => check.Name == "redis");
+        Assert.Contains(health.Checks, check => check.Name == "default-tenant");
+        Assert.All(
+            health.NotInProbe,
+            check => Assert.Equal(PlatformHealthStatuses.NotInProbe, check.Status));
     }
 }

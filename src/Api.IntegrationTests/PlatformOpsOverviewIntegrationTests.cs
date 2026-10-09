@@ -55,14 +55,22 @@ public sealed class PlatformOpsOverviewIntegrationTests(IntegrationTestFixture f
         Assert.Equal(directory.TotalCount, overview.TenantStatusCounts.Value!.Sum(row => row.Count));
         Assert.Equal(PlatformKpiFreshness.Actual, overview.OpenSupportCount.Freshness);
         Assert.Equal(PlatformKpiSources.SupportIssues, overview.OpenSupportCount.Source);
-        Assert.Null(overview.StackHealth.Value);
-        Assert.Equal(PlatformKpiFreshness.MissingInstrumentation, overview.StackHealth.Freshness);
-        Assert.Equal(PlatformKpiSources.NotInstrumented, overview.StackHealth.Source);
+        Assert.Equal(PlatformKpiFreshness.Actual, overview.StackHealth.Freshness);
+        Assert.Equal(PlatformKpiSources.HealthChecks, overview.StackHealth.Source);
+        Assert.Contains(
+            overview.StackHealth.Value,
+            new[]
+            {
+                PlatformHealthStatuses.Healthy,
+                PlatformHealthStatuses.Degraded,
+                PlatformHealthStatuses.Unhealthy,
+            });
         Assert.True(overview.TenantStatusCounts.ObservedAt.UtcDateTime <= DateTime.UtcNow.AddMinutes(1));
         Assert.Equal(TimeSpan.Zero, overview.TenantStatusCounts.ObservedAt.Offset);
         Assert.DoesNotContain(visibleSlug, body, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("\"Healthy\"", body, StringComparison.Ordinal);
         Assert.DoesNotContain("green", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Password=", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("redis://", body, StringComparison.OrdinalIgnoreCase);
 
         using var shown = await client.GetAsync("/api/v1/platform/ops/overview?hideLoadTest=false");
         shown.EnsureSuccessStatusCode();

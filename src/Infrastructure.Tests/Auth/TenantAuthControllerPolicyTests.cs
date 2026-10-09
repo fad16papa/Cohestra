@@ -75,6 +75,19 @@ public sealed class TenantAuthControllerPolicyTests
     }
 
     [Fact]
+    public void PlatformOps_health_is_get_on_ops_health_and_platform_admin_only()
+    {
+        var method = typeof(PlatformOpsController).GetMethod(nameof(PlatformOpsController.GetHealth));
+        Assert.NotNull(method);
+        var httpGet = method!.GetCustomAttribute<HttpGetAttribute>();
+        Assert.NotNull(httpGet);
+        Assert.Equal("ops/health", httpGet!.Template);
+        var authorize = typeof(PlatformOpsController).GetCustomAttributes<AuthorizeAttribute>(inherit: true);
+        Assert.Contains(authorize, a => a.Policy == TenantAuthPolicies.PlatformAdminOnly);
+        Assert.Empty(method!.GetCustomAttributes<AllowAnonymousAttribute>(inherit: true));
+    }
+
+    [Fact]
     public void Platform_controllers_use_PlatformAdminOnly_policy()
     {
         foreach (var type in new[]

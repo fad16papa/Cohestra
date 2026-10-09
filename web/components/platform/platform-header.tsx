@@ -15,6 +15,9 @@ function isPlatformNavCurrent(href: string, pathname: string): boolean {
   if (href === "/platform") {
     return pathname === "/platform" || pathname.startsWith("/platform/tenants");
   }
+  if (href === "/platform/ops") {
+    return pathname === "/platform/ops" || pathname.startsWith("/platform/ops/");
+  }
   if (href === "/platform/support") {
     return pathname === "/platform/support" || pathname.startsWith("/platform/support/");
   }
@@ -48,6 +51,7 @@ export function PlatformHeader() {
   const links = [
     { href: "/platform/overview", label: "Overview" },
     { href: "/platform", label: "Tenants" },
+    { href: "/platform/ops", label: "Operations" },
     {
       href: "/platform/support",
       label: "Support",

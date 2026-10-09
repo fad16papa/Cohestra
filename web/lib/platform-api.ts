@@ -249,6 +249,25 @@ export type PlatformOpsOverview = {
   stackHealth: PlatformKpi<string | null>;
 };
 
+export const PLATFORM_HEALTH_STATUSES = ["Healthy", "Degraded", "Unhealthy"] as const;
+export const PLATFORM_NOT_IN_PROBE_STATUS = "not_in_probe";
+
+export type PlatformMeasuredHealthStatus = (typeof PLATFORM_HEALTH_STATUSES)[number];
+
+export type PlatformHealthCheck = {
+  name: string;
+  status: string;
+  durationMs: number | null;
+  description: string | null;
+};
+
+export type PlatformOpsHealth = {
+  overallStatus: PlatformMeasuredHealthStatus;
+  observedAt: string;
+  checks: PlatformHealthCheck[];
+  notInProbe: PlatformHealthCheck[];
+};
+
 function parseFreshness(raw: string | null): PlatformKpiFreshness {
   if (
     raw === "actual" ||
@@ -317,23 +336,17 @@ export async function getPlatformOpsOverview(
   if (openSupport.freshness !== "actual") {
     throw new Error("Invalid open support KPI");
   }
-  if (stackHealth.freshness !== "missing_instrumentation") {
-    throw new Error("Invalid stack health KPI");
-  }
 
   const openValue = openSupport.value ?? openSupport.Value;
   if (typeof openValue !== "number" || !Number.isInteger(openValue) || openValue < 0) {
     throw new Error("Invalid open support KPI");
   }
 
-  const healthValue = stackHealth.value ?? stackHealth.Value;
-  if (healthValue != null && healthValue !== "") {
-    throw new Error("Invalid stack health KPI");
-  }
   const healthSource = stackHealth.source as string;
   if (isFakeHealthCopy(healthSource)) {
     throw new Error("Invalid stack health KPI");
   }
+  const stackHealthKpi = parseStackHealthKpi(stackHealth, healthSource);
 
   return {
     tenantStatusCounts: {
@@ -354,13 +367,127 @@ export async function getPlatformOpsOverview(
       observedAt: openSupport.observedAt as string,
       freshness: openSupport.freshness as PlatformKpiFreshness,
     },
-    stackHealth: {
+    stackHealth: stackHealthKpi,
+  };
+}
+
+function parseStackHealthKpi(
+  stackHealth: Record<string, unknown>,
+  healthSource: string
+): PlatformKpi<string | null> {
+  const freshness = stackHealth.freshness as PlatformKpiFreshness;
+  const healthValue = stackHealth.value ?? stackHealth.Value ?? null;
+  if (freshness === "actual") {
+    if (
+      healthValue !== "Healthy" &&
+      healthValue !== "Degraded" &&
+      healthValue !== "Unhealthy"
+    ) {
+      throw new Error("Invalid stack health KPI");
+    }
+    return {
+      value: healthValue,
+      source: healthSource,
+      observedAt: stackHealth.observedAt as string,
+      freshness: "actual",
+    };
+  }
+  if (freshness === "unavailable") {
+    if (healthValue != null && healthValue !== "") {
+      throw new Error("Invalid stack health KPI");
+    }
+    return {
       value: null,
       source: healthSource,
       observedAt: stackHealth.observedAt as string,
-      freshness: "missing_instrumentation",
-    },
-  };
+      freshness: "unavailable",
+    };
+  }
+  throw new Error("Invalid stack health KPI");
+}
+
+export async function getPlatformOpsHealth(authFetch: AuthFetch): Promise<PlatformOpsHealth> {
+  const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/platform/ops/health`);
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parsePlatformOpsHealth(await response.json());
+}
+
+export function parsePlatformOpsHealth(rawJson: unknown): PlatformOpsHealth {
+  const raw = asRecord(rawJson);
+  const overallStatus = pickString(raw, "overallStatus", "OverallStatus");
+  const observedAt = pickString(raw, "observedAt", "ObservedAt");
+  if (
+    overallStatus !== "Healthy" &&
+    overallStatus !== "Degraded" &&
+    overallStatus !== "Unhealthy"
+  ) {
+    throw new Error("Invalid health overall status");
+  }
+  if (!observedAt) {
+    throw new Error("Invalid health observedAt");
+  }
+
+  const checks = parseHealthChecks(raw.checks ?? raw.Checks, { allowNotInProbe: false });
+  const notInProbe = parseHealthChecks(raw.notInProbe ?? raw.NotInProbe, {
+    allowNotInProbe: true,
+  });
+  if (notInProbe.some((check) => check.status !== PLATFORM_NOT_IN_PROBE_STATUS)) {
+    throw new Error("Invalid not-in-probe status");
+  }
+  if (
+    notInProbe.some((check) =>
+      /\b(healthy|ok|active|operational|unavailable)\b/i.test(check.status)
+    )
+  ) {
+    throw new Error("Invalid not-in-probe status");
+  }
+
+  return { overallStatus, observedAt, checks, notInProbe };
+}
+
+function parseHealthChecks(
+  raw: unknown,
+  options: { allowNotInProbe: boolean }
+): PlatformHealthCheck[] {
+  if (!Array.isArray(raw)) {
+    throw new Error("Invalid health checks");
+  }
+  return raw.map((item) => {
+    const record = asRecord(item);
+    const name = pickString(record, "name", "Name");
+    const status = pickString(record, "status", "Status");
+    const descriptionRaw = record.description ?? record.Description;
+    if (!name || !status) {
+      throw new Error("Invalid health check");
+    }
+    const allowed: string[] = options.allowNotInProbe
+      ? [PLATFORM_NOT_IN_PROBE_STATUS]
+      : [...PLATFORM_HEALTH_STATUSES];
+    if (!allowed.includes(status)) {
+      throw new Error("Invalid health check status");
+    }
+    const durationRaw = record.durationMs ?? record.DurationMs;
+    let durationMs: number | null = null;
+    if (durationRaw != null && durationRaw !== "") {
+      if (typeof durationRaw !== "number" || !Number.isFinite(durationRaw) || durationRaw < 0) {
+        throw new Error("Invalid health duration");
+      }
+      durationMs = durationRaw;
+    }
+    if (options.allowNotInProbe) {
+      durationMs = null;
+    }
+    const description =
+      typeof descriptionRaw === "string" && descriptionRaw.trim().length > 0
+        ? descriptionRaw
+        : null;
+    if (description && /(Password=|Host=|redis:\/\/|rediss:\/\/|Bearer |ApiKey|StackTrace)/i.test(description)) {
+      throw new Error("Invalid health description");
+    }
+    return { name, status, durationMs, description };
+  });
 }
 
 export async function getPlatformTenant(

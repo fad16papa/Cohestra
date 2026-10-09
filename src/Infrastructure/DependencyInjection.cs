@@ -262,6 +262,7 @@ public static class DependencyInjection
         services.AddScoped<IPlatformSupportReportService, PlatformSupportReportService>();
         services.AddScoped<IPlatformTenantOpsService, PlatformTenantOpsService>();
         services.AddScoped<IPlatformOpsOverviewService, PlatformOpsOverviewService>();
+        services.AddScoped<IPlatformOpsHealthService, PlatformOpsHealthService>();
         services.AddSingleton<ISupportSubmissionRateLimiter, RedisSupportSubmissionRateLimiter>();
         services.AddSingleton<IPublicRegistrationRateLimiter, RedisPublicRegistrationRateLimiter>();
         services.AddSingleton<IPublicSignupRateLimiter, RedisPublicSignupRateLimiter>();
