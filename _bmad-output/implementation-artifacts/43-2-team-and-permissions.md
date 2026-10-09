@@ -2,18 +2,19 @@
 id: 43.2
 key: 43-2-team-and-permissions
 title: Team and permissions
-status: in-progress
+status: done
 epic: 43
 created: 2026-10-06
 baseline_commit: e4bb77c66d39a958dab300df80f5ebc460e6ccc0
-accepted_commit: 1e46911597ed7b8c55bf49a018998f33ffb9fa73
+accepted_commit: 62f8f4968c1e80d7a9381568cde7cdd42bb9d309
 implementation_merge: df42ea2ee9b27f6b31db5d4f829ef18b5ba9c50f
 completeness_baseline: 556f7192890dcc7589252f1e1bdf790710402a6f
+completeness_merge: 234fd1524b49c3206d886b0b4364d9efefd0984c
 ---
 
 # Story 43.2: Team and permissions
 
-Status: in-progress (completeness increment on already-merged PR #395)
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD.
 
@@ -82,3 +83,7 @@ Owner re-authorized 43.2. Delta audit: product outcome already on main. Remainin
 - Display `formatInviteRole` on Team lists (admin/member, no new roles)
 
 Do not reopen Settings routing. Do not add a production Member seeder.
+
+## Close 2026-10-09
+
+Completeness increment merged PR #421 at accepted HEAD `62f8f496` / main `234fd152`. Exact-head CI `38004240518` green. Original product merge remains PR #395. Epic 43 stays closed through 43.5. Stories 43.3–43.5 were not started by this run.
