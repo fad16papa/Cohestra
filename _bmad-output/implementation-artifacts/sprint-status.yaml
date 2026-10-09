@@ -3,7 +3,8 @@
 # 44.1 done — merged PR #412 at fa68a424 / main ee71efbd; post-merge CI green
 # 44.2 done — merged PR #414 at 42504409 / main 4cc59432; post-merge CI green
 # 44.3 done — merged PR #416 at 03580b49 / main 65e68eed; post-merge CI green
-# epic 44 remains in-progress; 44.4–44.9 not started
+# 44.4 done — merged PR #418 at aef6a9e9 / main 1d9101d3; post-merge CI green
+# epic 44 remains in-progress; 44.5–44.9 not started
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 done; epic 43 done after cross-story close
@@ -449,7 +450,7 @@ development_status:
   44-1-platform-ops-http-gates-policy-recovery-rate-limits: done
   44-2-production-overview-source-backed-kpis: done
   44-3-authenticated-infrastructure-health-operations-shell: done
-  44-4-outbox-notification-observability-read-only: review
+  44-4-outbox-notification-observability-read-only: done
   44-5-additive-paddle-disposition-billing-diagnostics: backlog
   44-6-tenant-diagnostic-timeline: backlog
   44-7-platform-wide-searchable-audits: backlog
