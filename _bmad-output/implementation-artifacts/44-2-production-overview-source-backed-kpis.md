@@ -10,7 +10,7 @@ baseline_commit: e401d82427e183dfd650bead31cae45575c3ea1d
 
 # Story 44.2: Production overview with source-backed KPIs
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE. Code review is repeating, not one-shot.
 
@@ -171,6 +171,8 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 ### Completion Notes List
 
 ### File List
+
+See git diff vs `e401d824`. Includes Contracts KPI envelope, overview service/controller, `/platform/overview`, header nav, tests, ATDD/trace/NFR/review artifacts.
 
 ## Change Log
 
