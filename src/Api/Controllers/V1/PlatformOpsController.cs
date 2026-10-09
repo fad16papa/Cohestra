@@ -1,10 +1,13 @@
 using System.Security.Claims;
 using Cohestra.Application.Platform;
+using Cohestra.Application.RateLimiting;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Platform;
 using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Platform;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Cohestra.Api.Controllers.V1;
 
@@ -12,7 +15,10 @@ namespace Cohestra.Api.Controllers.V1;
 [Route("api/v1/platform")]
 [Authorize(Policy = TenantAuthPolicies.PlatformAdminOnly)]
 [Produces("application/json")]
-public sealed class PlatformOpsController(IPlatformTenantOpsService platformTenantOpsService) : ControllerBase
+public sealed class PlatformOpsController(
+    IPlatformTenantOpsService platformTenantOpsService,
+    IPlatformRecoveryRateLimiter recoveryRateLimiter,
+    IOptions<PlatformRecoveryRateLimitOptions> recoveryRateLimitOptions) : ControllerBase
 {
     [HttpGet("search")]
     [ProducesResponseType(typeof(PlatformOmniSearchResponse), StatusCodes.Status200OK)]
@@ -60,6 +66,8 @@ public sealed class PlatformOpsController(IPlatformTenantOpsService platformTena
     [HttpPost("tenants/{tenantId:guid}/members/{memberUserId:guid}/send-password-reset")]
     [ProducesResponseType(typeof(PlatformRecoveryActionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
     public async Task<ActionResult<PlatformRecoveryActionResponse>> SendPasswordReset(
         Guid tenantId,
         Guid memberUserId,
@@ -68,6 +76,11 @@ public sealed class PlatformOpsController(IPlatformTenantOpsService platformTena
         if (!TryGetActor(out var actorUserId, out var actorEmail))
         {
             return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        if (!await recoveryRateLimiter.TryConsumeAsync(actorUserId, cancellationToken))
+        {
+            return RateLimitedProblem();
         }
 
         var result = await platformTenantOpsService.SendPasswordResetAsync(
@@ -83,6 +96,8 @@ public sealed class PlatformOpsController(IPlatformTenantOpsService platformTena
     [ProducesResponseType(typeof(PlatformRecoveryActionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
     public async Task<ActionResult<PlatformRecoveryActionResponse>> ResendEmailVerification(
         Guid tenantId,
         Guid memberUserId,
@@ -91,6 +106,11 @@ public sealed class PlatformOpsController(IPlatformTenantOpsService platformTena
         if (!TryGetActor(out var actorUserId, out var actorEmail))
         {
             return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        if (!await recoveryRateLimiter.TryConsumeAsync(actorUserId, cancellationToken))
+        {
+            return RateLimitedProblem();
         }
 
         var result = await platformTenantOpsService.ResendEmailVerificationAsync(
@@ -219,5 +239,27 @@ public sealed class PlatformOpsController(IPlatformTenantOpsService platformTena
             Detail = detail,
             Instance = HttpContext.Request.Path,
         });
+    }
+
+    private ObjectResult RateLimitedProblem()
+    {
+        Response.ContentType = "application/problem+json";
+        var limits = recoveryRateLimitOptions.Value;
+        var windowMinutes = Math.Clamp(limits.WindowMinutes, 1, 1440);
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status429TooManyRequests,
+            Title = "Too many recovery requests",
+            Detail =
+                $"You can send up to {limits.MaxActionsPerWindow} recovery emails per {windowMinutes} minutes. Please wait before trying again.",
+            Instance = HttpContext.Request.Path,
+        };
+        problem.Extensions["errorCode"] = RateLimitErrorCodes.PlatformRecoveryRateLimited;
+        problem.Extensions["traceId"] = HttpContext.TraceIdentifier;
+
+        return new ObjectResult(problem)
+        {
+            StatusCode = StatusCodes.Status429TooManyRequests,
+        };
     }
 }

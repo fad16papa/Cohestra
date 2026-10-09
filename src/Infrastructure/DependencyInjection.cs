@@ -123,6 +123,8 @@ public static class DependencyInjection
         services.Configure<SupportSettings>(configuration.GetSection(SupportSettings.SectionName));
         services.Configure<SupportSubmissionRateLimitOptions>(
             configuration.GetSection(SupportSubmissionRateLimitOptions.SectionName));
+        services.Configure<PlatformRecoveryRateLimitOptions>(
+            configuration.GetSection(PlatformRecoveryRateLimitOptions.SectionName));
 
         services.AddHttpClient(nameof(GoogleRecaptchaVerifier));
 
@@ -266,6 +268,7 @@ public static class DependencyInjection
         services.AddSingleton<IPublicSignupResendRateLimiter, RedisPublicSignupResendRateLimiter>();
         services.AddSingleton<IAuthOtpVerifyRateLimiter, RedisAuthOtpVerifyRateLimiter>();
         services.AddSingleton<IAuthResendOtpRateLimiter, RedisAuthResendOtpRateLimiter>();
+        services.AddSingleton<IPlatformRecoveryRateLimiter, RedisPlatformRecoveryRateLimiter>();
         services.AddSingleton<IRegistrationIdempotencyStore, RedisRegistrationIdempotencyStore>();
         services.AddSingleton<RedisPublicActivityCache>();
         services.AddSingleton<RedisPublishedSiteCache>();

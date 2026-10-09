@@ -73,6 +73,7 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var response = await client.GetAsync("/api/v1/platform/tenants");
         await AssertForbiddenAsync(response);
+        await AssertPlatformOpsForbiddenAsync(client, TenantIds.Default, Guid.NewGuid());
     }
 
     [SkippableFact]
@@ -85,6 +86,7 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var response = await client.GetAsync("/api/v1/platform/tenants");
         await AssertForbiddenAsync(response);
+        await AssertPlatformOpsForbiddenAsync(client, TenantIds.Default, Guid.NewGuid());
     }
 
     [SkippableFact]
@@ -118,6 +120,34 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
         IntegrationTestHelpers.UseTenantHost(client, TenantIds.DefaultSlug);
         IntegrationTestHelpers.UseBearerToken(client, token);
         return client;
+    }
+
+    private static async Task AssertPlatformOpsForbiddenAsync(
+        HttpClient client,
+        Guid tenantId,
+        Guid memberUserId)
+    {
+        using var search = await client.GetAsync("/api/v1/platform/search?q=ops");
+        await AssertForbiddenAsync(search);
+
+        using var snapshot = await client.GetAsync($"/api/v1/platform/tenants/{tenantId}/snapshot");
+        await AssertForbiddenAsync(snapshot);
+
+        using var members = await client.GetAsync($"/api/v1/platform/tenants/{tenantId}/members");
+        await AssertForbiddenAsync(members);
+
+        using var issues = await client.GetAsync($"/api/v1/platform/tenants/{tenantId}/open-issues");
+        await AssertForbiddenAsync(issues);
+
+        using var reset = await client.PostAsync(
+            $"/api/v1/platform/tenants/{tenantId}/members/{memberUserId}/send-password-reset",
+            content: null);
+        await AssertForbiddenAsync(reset);
+
+        using var resend = await client.PostAsync(
+            $"/api/v1/platform/tenants/{tenantId}/members/{memberUserId}/resend-email-verification",
+            content: null);
+        await AssertForbiddenAsync(resend);
     }
 
     private static async Task AssertForbiddenAsync(HttpResponseMessage response)
