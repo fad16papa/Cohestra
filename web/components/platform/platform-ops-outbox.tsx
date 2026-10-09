@@ -24,6 +24,7 @@ import {
   formatOutboxTimestamp,
   NO_FAILED_OUTBOX_CAVEAT,
   NO_FAILED_OUTBOX_COPY,
+  toCreatedAtFilterIso,
 } from "@/lib/platform-outbox";
 
 export function PlatformOpsOutboxSection() {
@@ -55,8 +56,8 @@ export function PlatformOpsOutboxSection() {
       setSummary(null);
       setList(null);
 
-      const fromIso = applied.from ? new Date(applied.from).toISOString() : undefined;
-      const toIso = applied.to ? new Date(applied.to).toISOString() : undefined;
+      const fromIso = applied.from ? toCreatedAtFilterIso(applied.from) : undefined;
+      const toIso = applied.to ? toCreatedAtFilterIso(applied.to) : undefined;
 
       void Promise.all([
         getPlatformOpsOutboxSummary(authFetch),

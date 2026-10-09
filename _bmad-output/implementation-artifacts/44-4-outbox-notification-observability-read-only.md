@@ -2,7 +2,7 @@
 id: 44.4
 key: 44-4-outbox-notification-observability-read-only
 title: Outbox and notification observability (read-only)
-status: ready-for-dev
+status: review
 epic: 44
 created: 2026-10-09
 baseline_commit: 6b1ccb988f8b828e68b16781688fef691fe63a01
@@ -10,7 +10,7 @@ baseline_commit: 6b1ccb988f8b828e68b16781688fef691fe63a01
 
 # Story 44.4: Outbox and notification observability (read-only)
 
-Status: ready-for-dev
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -60,14 +60,14 @@ so that **I can see stuck notification mail without reading customer email bodie
 
 ## Tasks / Subtasks
 
-- [ ] Safe DTOs + shared sanitizer reuse (AC: 2)
-  - [ ] Allow-listed list DTO; never serialize `OutboxMessage`
-  - [ ] Reuse `PlatformHealthDescriptionSanitizer` (redact first, max 200); extend JWT/email/stack redaction in that one primitive
-- [ ] Summary + list services with aggregation, AsNoTracking, filters before pagination (AC: 1–3)
-- [ ] PlatformAdminOnly endpoints on `PlatformOpsController` (AC: 1–2, 4)
-- [ ] Operations Outbox section on existing `/platform/ops` (AC: 4–5)
-- [ ] Unit, integration, TenantIsolation, frontend, Playwright (AC: all)
-- [ ] BMAD code-review loop on final HEAD; trace; NFR; checkpoint (AC: all)
+- [x] Safe DTOs + shared sanitizer reuse (AC: 2)
+  - [x] Allow-listed list DTO; never serialize `OutboxMessage`
+  - [x] Reuse `PlatformHealthDescriptionSanitizer` (redact first, max 200); extend JWT/email/stack redaction in that one primitive
+- [x] Summary + list services with aggregation, AsNoTracking, filters before pagination (AC: 1–3)
+- [x] PlatformAdminOnly endpoints on `PlatformOpsController` (AC: 1–2, 4)
+- [x] Operations Outbox section on existing `/platform/ops` (AC: 4–5)
+- [x] Unit, integration, TenantIsolation, frontend, Playwright (AC: all)
+- [x] BMAD code-review loop on final HEAD; trace; NFR; checkpoint (AC: all)
 
 ## Dev Notes
 
@@ -153,8 +153,39 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 
 ### Completion Notes List
 
+- Draft PR only. Do not merge without owner authorization. 44.5–44.9 not started. DigitalOcean Deploy remains Epic 19.
+- OutboxProcessor, claim/retry/dead-letter, and 44.3 health `not_in_probe` for outbox were not changed.
+
 ### File List
+
+- src/Contracts/Platform/PlatformOutboxContracts.cs
+- src/Application/Platform/IPlatformOpsOutboxService.cs
+- src/Infrastructure/Platform/PlatformOpsOutboxService.cs
+- src/Infrastructure/Platform/PlatformHealthDescriptionSanitizer.cs
+- src/Infrastructure/DependencyInjection.cs
+- src/Api/Controllers/V1/PlatformOpsController.cs
+- src/Infrastructure.Tests/Platform/PlatformHealthDescriptionSanitizerTests.cs
+- src/Infrastructure.Tests/Platform/PlatformOpsOutboxServiceTests.cs
+- src/Infrastructure.Tests/Auth/TenantAuthControllerPolicyTests.cs
+- src/Api.IntegrationTests/PlatformOpsOutboxIntegrationTests.cs
+- src/Api.IntegrationTests/TenantAuthzIntegrationTests.cs
+- src/Api.IntegrationTests/TenantIsolationApiTests.cs
+- web/lib/platform-api.ts
+- web/lib/platform-outbox.ts
+- web/lib/platform-outbox.test.ts
+- web/lib/platform-44-4-source.test.ts
+- web/lib/platform-44-3-source.test.ts
+- web/components/platform/platform-ops-outbox.tsx
+- web/app/(platform)/platform/ops/page.tsx
+- web/e2e/platform-ops-44-4.spec.ts
+- web/e2e/platform-ops-44-3.spec.ts
 
 ## Change Log
 
-- 2026-10-09: Story context from Epic 44, AD-13/15/18, TEA P0-09/10/11, P1-05/14, and 44.3 Operations shell.
+- 2026-10-09: Story context from Epic 44, AD-13/15/18, TEA P0-09/10/11, P1-05/14.
+- 2026-10-09: Implemented read-only summary/list APIs, sanitizer reuse, Operations Outbox UI.
+- 2026-10-09: BMAD code review — no unresolved BLOCKER/MAJOR. Trace/NFR/checkpoint recorded.
+
+### Review Findings
+
+See `44-4-code-review-2026-10-09.md`. No unresolved BLOCKER or MAJOR.

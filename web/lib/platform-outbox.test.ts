@@ -10,6 +10,7 @@ import {
   NO_FAILED_OUTBOX_CAVEAT,
   NO_FAILED_OUTBOX_COPY,
   OUTBOX_MUTATION_LABELS,
+  toCreatedAtFilterIso,
 } from "@/lib/platform-outbox";
 
 const observedAt = "2026-10-09T12:00:00Z";
@@ -110,6 +111,11 @@ describe("Story 44.4 outbox parsers", () => {
         totalCount: 1,
       })
     ).toThrow(/lastErrorSanitized/);
+  });
+
+  it("treats datetime-local filters as UTC CreatedAt", () => {
+    expect(toCreatedAtFilterIso("2026-03-15T12:00")).toBe("2026-03-15T12:00:00.000Z");
+    expect(toCreatedAtFilterIso("2026-03-15T12:00:00Z")).toBe("2026-03-15T12:00:00.000Z");
   });
 
   it("keeps empty-failed copy truthful and lists no mutation verbs", () => {

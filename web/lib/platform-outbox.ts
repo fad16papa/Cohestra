@@ -31,3 +31,23 @@ export function formatOutboxTimestamp(value: string | null): string {
   }
   return new Date(parsed).toISOString().replace(".000", "");
 }
+
+/** datetime-local values are treated as UTC CreatedAt filters, not the browser timezone. */
+export function toCreatedAtFilterIso(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  if (/Z$|[+-]\d{2}:\d{2}$/.test(trimmed)) {
+    const parsed = Date.parse(trimmed);
+    return Number.isFinite(parsed) ? new Date(parsed).toISOString() : undefined;
+  }
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) {
+    return new Date(`${trimmed}:00.000Z`).toISOString();
+  }
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(trimmed)) {
+    return new Date(`${trimmed}.000Z`).toISOString();
+  }
+  const parsed = Date.parse(trimmed);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : undefined;
+}

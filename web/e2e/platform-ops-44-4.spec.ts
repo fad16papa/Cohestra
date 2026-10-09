@@ -108,6 +108,10 @@ test.describe("Story 44.4 — Operations outbox", () => {
     await expect(page.getByRole("heading", { name: "Outbox" })).toBeVisible();
     await expect(page.getByText("No failed outbox jobs are recorded.")).toBeVisible();
     await expect(page.getByText(/does not mean email is healthy/i)).toBeVisible();
+    await page.screenshot({
+      path: "../_bmad-output/planning-artifacts/evidence/px2-44-4/viewports/ops-outbox-empty-1440.png",
+      fullPage: true,
+    });
     await expect(page.getByText("Jobs by status")).toBeVisible();
     await expect(page.getByRole("button", { name: "Requeue" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Replay" })).toHaveCount(0);
@@ -128,6 +132,10 @@ test.describe("Story 44.4 — Operations outbox", () => {
     await openPlatform(page, session, "/platform/ops");
     await expect(page.getByText("No failed outbox jobs are recorded.")).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
+    await page.screenshot({
+      path: "../_bmad-output/planning-artifacts/evidence/px2-44-4/viewports/ops-outbox-empty-390.png",
+      fullPage: true,
+    });
 
     await page.unroute("**/api/v1/platform/ops/outbox/summary");
     await page.unroute("**/api/v1/platform/ops/outbox?**");
@@ -165,8 +173,12 @@ test.describe("Story 44.4 — Operations outbox", () => {
     await openPlatform(page, session, "/platform/ops");
     await expect(page.getByRole("table")).toBeVisible();
     await expect(page.getByText("Failed", { exact: true }).first()).toBeVisible();
-    await expect(page.getByText("campaign.recipient")).toBeVisible();
+    await expect(page.getByRole("table").getByText("campaign.recipient")).toBeVisible();
     await expect(page.getByText("[redacted] smtp timeout")).toBeVisible();
+    await page.screenshot({
+      path: "../_bmad-output/planning-artifacts/evidence/px2-44-4/viewports/ops-outbox-failed-1440.png",
+      fullPage: true,
+    });
     await expect(page.getByText("CUSTOMER_BODY")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Requeue" })).toHaveCount(0);
     expect(await pageOverflows(page)).toBe(false);
@@ -180,6 +192,10 @@ test.describe("Story 44.4 — Operations outbox", () => {
     await openPlatform(page, session, "/platform/ops");
     await expect(page.getByRole("table")).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
+    await page.screenshot({
+      path: "../_bmad-output/planning-artifacts/evidence/px2-44-4/viewports/ops-outbox-failed-390.png",
+      fullPage: true,
+    });
 
     await page.unroute("**/api/v1/platform/ops/outbox/summary");
     await page.unroute("**/api/v1/platform/ops/outbox?**");
