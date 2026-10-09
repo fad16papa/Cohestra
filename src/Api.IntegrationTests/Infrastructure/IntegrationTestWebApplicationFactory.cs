@@ -13,6 +13,12 @@ namespace Cohestra.Api.IntegrationTests.Infrastructure;
 
 public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Program>
 {
+    /// <summary>
+    /// Host startup runs EF migrations and Identity role/user seed. Parallel
+    /// factories on a fresh database race <c>RoleNameIndex</c> and skip the suite.
+    /// </summary>
+    private static readonly SemaphoreSlim StartupGate = new(1, 1);
+
     public bool IsAvailable { get; private set; }
 
     public string? SkipReason { get; private set; }
@@ -86,6 +92,7 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
 
     public async Task InitializeAsync()
     {
+        await StartupGate.WaitAsync();
         try
         {
             var client = CreateClient();
@@ -104,6 +111,10 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         {
             IsAvailable = false;
             SkipReason = $"Integration dependencies unavailable: {ex.Message}";
+        }
+        finally
+        {
+            StartupGate.Release();
         }
     }
 

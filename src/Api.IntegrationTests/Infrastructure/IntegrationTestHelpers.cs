@@ -31,6 +31,31 @@ internal static class IntegrationTestHelpers
     }
 
     /// <summary>
+    /// Seed unique-constraint races are test-host bugs, not missing deps. Fail CI instead of skip.
+    /// </summary>
+    internal static void SkipIfUnavailableOrFailOnHostStartup(IntegrationTestWebApplicationFactory factory)
+    {
+        if (!factory.IsAvailable && IsHostStartupRace(factory.SkipReason))
+        {
+            throw new InvalidOperationException(factory.SkipReason);
+        }
+
+        SkipIfUnavailable(factory);
+    }
+
+    private static bool IsHostStartupRace(string? skipReason)
+    {
+        if (string.IsNullOrWhiteSpace(skipReason))
+        {
+            return false;
+        }
+
+        return skipReason.Contains("saving the entity changes", StringComparison.OrdinalIgnoreCase)
+            || skipReason.Contains("RoleNameIndex", StringComparison.OrdinalIgnoreCase)
+            || skipReason.Contains("23505", StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// HTTP-less scopes need Platform 0 bound so EF tenant query filters see default-tenant rows.
     /// </summary>
     internal static void BindDefaultTenant(IServiceProvider services)

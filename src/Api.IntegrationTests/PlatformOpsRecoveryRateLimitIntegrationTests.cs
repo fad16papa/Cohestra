@@ -14,7 +14,7 @@ public sealed class PlatformOpsRecoveryRateLimitIntegrationTests
     {
         await using var factory = new PlatformRecoveryRateLimitWebApplicationFactory();
         await factory.InitializeAsync();
-        IntegrationTestHelpers.SkipIfUnavailable(factory);
+        IntegrationTestHelpers.SkipIfUnavailableOrFailOnHostStartup(factory);
 
         using var client = factory.CreateClient();
         var (actor, _) = await IntegrationTestHelpers.CreatePlatformAdminUserAsync(
@@ -72,7 +72,7 @@ public sealed class PlatformOpsRecoveryRateLimitIntegrationTests
     {
         await using var factory = new PlatformRecoveryLimiterUnavailableWebApplicationFactory();
         await factory.InitializeAsync();
-        IntegrationTestHelpers.SkipIfUnavailable(factory);
+        IntegrationTestHelpers.SkipIfUnavailableOrFailOnHostStartup(factory);
 
         using var client = factory.CreateClient();
         var token = await IntegrationTestHelpers.LoginAsPlatformAdminAsync(client);

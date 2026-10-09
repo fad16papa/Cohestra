@@ -229,6 +229,8 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 
 First integration pass skipped when `/ready` was not yet healthy after a same-shell DROP DATABASE. Re-run against migrated `cohestra_test` + `127.0.0.1` passed. Full Integration category 156/157; the AuthOtpAbuse 429 leftover-Redis failure cleared after `FLUSHDB` (pre-existing shared-key flake, not 44.1).
 
+CI HEAD `06ebdd0b` skipped 429/503 (and 146 collection tests) because dedicated recovery hosts started in parallel with the shared fixture and raced Identity `RoleNameIndex` seed. Factory startup is now serialized; seed-race skip reasons fail the recovery tests instead of skipping.
+
 ### Completion Notes List
 
 - Policy list includes `PlatformOpsController`; leftover Identity-role scan unchanged.
