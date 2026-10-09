@@ -18,4 +18,4 @@ Overall: PASS for story scope. Not production-ready (NFR-44-10).
 | NFR-44-10 Independence | PASS | Epic 19 remains the production/UAT gate. This NFR audit does not claim production cutover. |
 | Epic 19 separation | PASS | No deploy/credential/`/ready` changes |
 
-Residual: live Playwright 390/1440 and Axe require `E2E_LIVE_STACK=1`. Header Support badge still uses unfiltered inbox count (deferred).
+Residual: Header Support badge still uses unfiltered inbox count (deferred). Live Playwright passed locally; required GitHub CI on exact HEAD is still the merge gate.
