@@ -2,7 +2,7 @@
 id: 44.3
 key: 44-3-authenticated-infrastructure-health-operations-shell
 title: Authenticated infrastructure health and Operations shell
-status: review
+status: done
 epic: 44
 created: 2026-10-09
 baseline_commit: 2b4371d6ff4a07255c9de3e954e6ccc4cad4d38c
@@ -10,7 +10,7 @@ baseline_commit: 2b4371d6ff4a07255c9de3e954e6ccc4cad4d38c
 
 # Story 44.3: Authenticated infrastructure health and Operations shell
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -96,6 +96,9 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 ### Debug Log References
 
 ### Completion Notes List
+
+- Merged PR #416. Accepted implementation HEAD `03580b4995a0834263fa38a6a4281c0c58cf6a6b`. Main merge commit `65e68eed8e7883508b81709c978eada520f65379`. Post-merge CI `37934972975` green. Deploy remains pre-existing Epic 19 (`missing server host`). Story 44.4 not started.
+- Anonymous `/ready` remains postgres/redis/default-tenant only. Authenticated health is `GET /api/v1/platform/ops/health` (PlatformAdminOnly). Outbox/Paddle/SendGrid/hosted jobs stay `not_in_probe`.
 
 ### File List
 
