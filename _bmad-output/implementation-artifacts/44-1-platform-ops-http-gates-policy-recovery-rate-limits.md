@@ -2,7 +2,7 @@
 id: 44.1
 key: 44-1-platform-ops-http-gates-policy-recovery-rate-limits
 title: Platform ops HTTP gates, policy coverage, and recovery rate limits
-status: review
+status: done
 epic: 44
 created: 2026-10-09
 baseline_commit: c52873414479f2188a8682ee549c55ae2295a06b
@@ -10,7 +10,7 @@ baseline_commit: c52873414479f2188a8682ee549c55ae2295a06b
 
 # Story 44.1: Platform ops HTTP gates, policy coverage, and recovery rate limits
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE. Code review is repeating, not one-shot.
 
@@ -237,6 +237,7 @@ CI HEAD `06ebdd0b` skipped 429/503 (and 146 collection tests) because dedicated 
 - Epic 28 HTTP contracts covered; TenantAdmin/Member 403s added on ops routes under TenantIsolation.
 - Recovery POSTs consume a shared Redis actor bucket before service/email/audit.
 - 429 ProblemDetails `platform_recovery_rate_limited`; 503 via existing `RateLimiterUnavailableException` handler.
+- Merged PR #412. Accepted implementation HEAD `fa68a424`. Main merge commit `ee71efbd`. Post-merge CI `37920989543` green. Deploy remains pre-existing Epic 19 (`missing server host`). Story 44.2 not started.
 - No 44.2–44.9 files. No `/ready`, billing, outbox, or web UI changes.
 
 ### File List
@@ -268,3 +269,4 @@ CI HEAD `06ebdd0b` skipped 429/503 (and 146 collection tests) because dedicated 
 
 - 2026-10-09: Story context created from Epic 44 + spine AD-17 + TEA P0-01–P0-04.
 - 2026-10-09: Implemented policy coverage, Epic 28 HTTP + TenantIsolation tests, Redis recovery limiter (429/503).
+- 2026-10-09: Merged PR #412; post-merge CI green on `ee71efbd`; story closed. 44.2 not started.
