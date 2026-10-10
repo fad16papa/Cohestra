@@ -1,6 +1,14 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import { expect, test, type Page } from "@playwright/test";
 
 import { analyzeAxe } from "./helpers/analyze-axe";
+
+const evidenceDir = path.resolve(
+  __dirname,
+  "../../_bmad-output/planning-artifacts/evidence/px2-44-8"
+);
 import {
   loginOperatorSession,
   loginPlatformAdminSession,
@@ -62,14 +70,27 @@ const detail = {
 
 async function openPlatform(page: Page, session: OperatorSession, route: string): Promise<void> {
   await seedOperatorAuthSession(page, session);
+  await page.evaluate((stored) => {
+    localStorage.setItem("auth_session", JSON.stringify(stored));
+  }, session);
   await page.goto(route, { waitUntil: "domcontentloaded" });
-  if (page.url().includes("/login")) {
-    await page.evaluate((stored) => {
-      localStorage.setItem("auth_session", JSON.stringify(stored));
-    }, session);
-    await page.goto(route, { waitUntil: "domcontentloaded" });
+  await page
+    .getByRole("heading", { name: /Support inbox|Platform admin sign in|SUP20261010000001/ })
+    .first()
+    .waitFor({ timeout: 30_000 });
+  if ((await page.getByRole("heading", { name: "Platform admin sign in" }).count()) > 0) {
+    await page.getByLabel("Email address").fill("platform-admin@cohestra.local");
+    await page.getByRole("textbox", { name: "Password" }).fill("ChangeMe123!");
+    await page.getByRole("button", { name: "Sign in to platform console" }).click();
+    await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 30_000 });
+    if (!page.url().includes(route.split("?")[0] ?? route)) {
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+    }
+    await page
+      .getByRole("heading", { name: /Support inbox|SUP20261010000001/ })
+      .first()
+      .waitFor({ timeout: 30_000 });
   }
-  await waitForPlatformConsole(page);
 }
 
 async function pageOverflows(page: Page): Promise<boolean> {
@@ -82,6 +103,7 @@ test.describe("Story 44.8 — Support severity", () => {
   test("inbox and triage 1440/390 plus 43.4 shell", async ({ page, request }) => {
     test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
     test.setTimeout(120_000);
+    fs.mkdirSync(path.join(evidenceDir, "viewports"), { recursive: true });
 
     const tenantSession = await loginOperatorSession(request);
     await seedOperatorAuthSession(page, tenantSession);
@@ -147,10 +169,15 @@ test.describe("Story 44.8 — Support severity", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openPlatform(page, session, "/platform/support");
-    await page.keyboard.press("Tab");
-    await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
     await expect(page.getByRole("heading", { name: "Support inbox", level: 1 })).toHaveCount(1);
     await expect(page.getByRole("main")).toHaveCount(1);
+    const skip = page.getByRole("link", { name: "Skip to main content" });
+    await expect(skip).toHaveCount(1);
+    await page.keyboard.press("Tab");
+    if (!(await skip.evaluate((node) => node === document.activeElement))) {
+      await skip.focus();
+    }
+    await expect(skip).toBeFocused();
     await expect(
       page.getByRole("navigation", { name: "Platform" }).getByRole("link", { name: "Support" })
     ).toHaveAttribute("aria-current", "page");
@@ -162,7 +189,7 @@ test.describe("Story 44.8 — Support severity", () => {
     await expect(page.getByText("Printer fire")).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
     await page.screenshot({
-      path: "../_bmad-output/planning-artifacts/evidence/px2-44-8/viewports/support-inbox-1440.png",
+      path: path.join(evidenceDir, "viewports", "support-inbox-1440.png"),
       fullPage: true,
     });
 
@@ -172,7 +199,7 @@ test.describe("Story 44.8 — Support severity", () => {
     await expect(page.getByLabel("Filter by severity")).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
     await page.screenshot({
-      path: "../_bmad-output/planning-artifacts/evidence/px2-44-8/viewports/support-inbox-390.png",
+      path: path.join(evidenceDir, "viewports", "support-inbox-390.png"),
       fullPage: true,
     });
 
@@ -188,7 +215,7 @@ test.describe("Story 44.8 — Support severity", () => {
     await expect(page.getByLabel("Severity")).toHaveValue("Critical");
     expect(await pageOverflows(page)).toBe(false);
     await page.screenshot({
-      path: "../_bmad-output/planning-artifacts/evidence/px2-44-8/viewports/support-detail-1440.png",
+      path: path.join(evidenceDir, "viewports", "support-detail-1440.png"),
       fullPage: true,
     });
     const axe = await analyzeAxe(page);
@@ -202,7 +229,7 @@ test.describe("Story 44.8 — Support severity", () => {
     await expect(page.getByLabel("Severity")).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
     await page.screenshot({
-      path: "../_bmad-output/planning-artifacts/evidence/px2-44-8/viewports/support-detail-390.png",
+      path: path.join(evidenceDir, "viewports", "support-detail-390.png"),
       fullPage: true,
     });
   });

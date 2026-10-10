@@ -110,9 +110,11 @@ public sealed class PlatformSupportSeverityIntegrationTests(IntegrationTestFixtu
                 .Where(row => row.TenantId == tenant.Id && row.Action == PlatformAuditAction.SupportIssueSeverityChanged)
                 .ToListAsync();
             Assert.Single(audits);
-            Assert.Contains("\"previousSeverity\":\"Unspecified\"", audits[0].DetailsJson);
-            Assert.Contains("\"newSeverity\":\"High\"", audits[0].DetailsJson);
-            Assert.Contains($"\"issueNumber\":\"{issueNumber}\"", audits[0].DetailsJson);
+            using var details = JsonDocument.Parse(audits[0].DetailsJson ?? "{}");
+            Assert.Equal(issueNumber, details.RootElement.GetProperty("issueNumber").GetString());
+            Assert.Equal("Unspecified", details.RootElement.GetProperty("previousSeverity").GetString());
+            Assert.Equal("High", details.RootElement.GetProperty("newSeverity").GetString());
+            Assert.Equal(3, details.RootElement.EnumerateObject().Count());
             Assert.DoesNotContain("The printer is on fire", audits[0].DetailsJson ?? "");
         }
 

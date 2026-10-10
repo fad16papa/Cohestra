@@ -2,7 +2,7 @@
 id: 44.8
 key: 44-8-support-severity
 title: Support Severity
-status: in-progress
+status: review
 epic: 44
 created: 2026-10-10
 baseline_commit: 5891492e9a06aa27bd16bbdcd98583bba79a028c
@@ -10,7 +10,7 @@ baseline_commit: 5891492e9a06aa27bd16bbdcd98583bba79a028c
 
 # Story 44.8: Support Severity (no Incident entity)
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD.
 
@@ -93,11 +93,11 @@ Add `SupportIssueSeverityChanged` to the locked audit action allow-list (API enu
 
 ## Tasks / Subtasks
 
-- [ ] Story + parser/index/UpdatedAt lock
-- [ ] Domain + migration
-- [ ] List/PATCH/audit API
-- [ ] Inbox + detail UI + 44.7 action list
-- [ ] Tests + review + draft PR
+- [x] Story + parser/index/UpdatedAt lock
+- [x] Domain + migration
+- [x] List/PATCH/audit API
+- [x] Inbox + detail UI + 44.7 action list
+- [x] Tests + review + draft PR
 
 ### Agent Model Used
 
