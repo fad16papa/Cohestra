@@ -98,20 +98,20 @@ export function ProductDocsImage({ block }: { block: DocsImageBlock }) {
           />
         </span>
       </button>
-      <figcaption className="border-t border-line px-4 py-3 text-sm leading-relaxed text-stone">
+      <figcaption className="border-t border-line px-4 py-3 text-sm leading-relaxed text-text-muted">
         {block.caption}
       </figcaption>
 
       {open ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={titleId}
           onClick={() => setOpen(false)}
         >
           <div
             ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
             className={cn(
               "relative max-h-[92vh] w-full max-w-5xl overflow-auto rounded-[16px] bg-paper p-3 shadow-xl",
               "motion-reduce:transition-none"

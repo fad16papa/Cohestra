@@ -2,7 +2,7 @@
 title: 'Documentation 2.0 — truthful tenant user guide'
 type: 'feature'
 created: '2026-10-10'
-status: 'in-progress'
+status: 'ready-for-review'
 baseline_commit: 'e6f6a9b1411c607d5f6cab4ea1f12a8fb5ed8596'
 context: []
 ---

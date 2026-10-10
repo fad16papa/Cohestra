@@ -187,7 +187,7 @@ export function ProductDocsPage() {
             <div>
               <p className="text-section text-gold">{PRODUCT_DOCS_EYEBROW}</p>
               <h1 className="text-marketing-section mt-2 text-ink">{PRODUCT_DOCS_TITLE}</h1>
-              <p className="mt-3 max-w-2xl text-base leading-relaxed text-stone">
+              <p className="mt-3 max-w-2xl text-base leading-relaxed text-text-muted">
                 {PRODUCT_DOCS_INTRO} This is the official Cohestra user manual.
               </p>
             </div>
@@ -204,7 +204,7 @@ export function ProductDocsPage() {
                 )}
               >
                 <p className="font-semibold text-ink">{path.title}</p>
-                <p className="mt-1 text-sm leading-relaxed text-stone">{path.detail}</p>
+                <p className="mt-1 text-sm leading-relaxed text-text-muted">{path.detail}</p>
               </a>
             ))}
           </div>
@@ -222,7 +222,7 @@ export function ProductDocsPage() {
                 <a
                   key={`mobile-${section.id}`}
                   href={`#${section.id}`}
-                  className="block py-1 text-sm text-stone hover:text-ink"
+                  className="block py-1 text-sm text-text-muted hover:text-ink"
                 >
                   {section.title}
                 </a>
@@ -231,7 +231,7 @@ export function ProductDocsPage() {
           </details>
           <label className="relative block">
             <Search
-              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-muted"
               aria-hidden
             />
             <input
@@ -240,7 +240,7 @@ export function ProductDocsPage() {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search the manual"
               aria-label="Search the Document"
-              className="h-10 w-full rounded-xl border-0 bg-muted/55 pr-3 pl-9 text-sm text-ink outline-none ring-0 placeholder:text-stone focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-lagoon/30"
+              className="h-10 w-full rounded-xl border-0 bg-muted/55 pr-3 pl-9 text-sm text-ink outline-none ring-0 placeholder:text-text-muted focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-lagoon/30"
             />
           </label>
 
@@ -253,7 +253,7 @@ export function ProductDocsPage() {
 
               return (
                 <div key={group.id}>
-                  <p className="text-[11px] font-semibold tracking-[0.14em] text-gold uppercase">
+                  <p className="text-[11px] font-semibold tracking-[0.14em] text-text-accent uppercase">
                     {group.label}
                   </p>
                   <ol className="mt-2 space-y-0.5">
@@ -266,7 +266,7 @@ export function ProductDocsPage() {
                             "block rounded-lg px-2.5 py-1.5 text-sm leading-snug",
                             activeId === section.id
                               ? "bg-lagoon/10 font-medium text-lagoon-deep"
-                              : "text-stone hover:bg-muted/60 hover:text-ink"
+                              : "text-text-muted hover:bg-muted/60 hover:text-ink"
                           )}
                         >
                           {section.title}
@@ -282,7 +282,7 @@ export function ProductDocsPage() {
 
         <article className="min-w-0 flex-1">
           {visibleSections.length === 0 ? (
-            <p className="text-sm text-stone">
+            <p className="text-sm text-text-muted">
               No chapters match that search. Try “Follow-up”, “Form Studio”, or “Analytics”.
             </p>
           ) : (
@@ -292,7 +292,7 @@ export function ProductDocsPage() {
                   <h2 className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-[-0.03em] text-ink sm:text-[1.75rem]">
                     {section.title}
                   </h2>
-                  <div className="mt-5 space-y-4 text-[0.95rem] leading-relaxed text-stone">
+                  <div className="mt-5 space-y-4 text-[0.95rem] leading-relaxed text-text-muted">
                     {section.blocks.map((block, blockIndex) => (
                       <DocsBlockView
                         key={`${section.id}-${block.type}-${blockIndex}`}

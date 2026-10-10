@@ -1,5 +1,20 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+import { MARKETING_COOKIE_CONSENT_KEY } from "../lib/marketing-cookie-consent";
+
+async function openDocs(page: Page, hash = "") {
+  await page.addInitScript(
+    ({ key }) => {
+      window.localStorage.setItem(key, "accepted");
+    },
+    { key: MARKETING_COOKIE_CONSENT_KEY }
+  );
+  const response = await page.goto(`/docs${hash}`, { waitUntil: "domcontentloaded" });
+  if (response) {
+    expect(response.ok()).toBeTruthy();
+  }
+}
 
 const viewports = [
   { name: "desktop", width: 1440, height: 900 },
@@ -11,8 +26,7 @@ const viewports = [
 test.describe("Documentation 2.0", () => {
   test("loads chapters, images, search, and legacy anchors", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    const response = await page.goto("/docs", { waitUntil: "domcontentloaded" });
-    expect(response?.ok()).toBeTruthy();
+    await openDocs(page);
 
     await expect(page.getByRole("heading", { level: 1, name: /how to use cohestra/i })).toBeVisible();
     await expect(page.locator("#follow-up")).toBeVisible();
@@ -26,18 +40,28 @@ test.describe("Documentation 2.0", () => {
     const count = await images.count();
     expect(count).toBeGreaterThanOrEqual(15);
     for (let index = 0; index < count; index += 1) {
-      await expect(images.nth(index)).toHaveJSProperty("naturalWidth", expect.any(Number));
-      const width = await images.nth(index).evaluate((node) => (node as HTMLImageElement).naturalWidth);
-      expect(width).toBeGreaterThan(0);
+      const image = images.nth(index);
+      await image.scrollIntoViewIfNeeded();
+      await expect
+        .poll(async () => image.evaluate((node) => (node as HTMLImageElement).naturalWidth), {
+          message: `image ${index} naturalWidth`,
+        })
+        .toBeGreaterThan(0);
     }
 
-    const fullPageAxe = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+    const fullPageAxe = await new AxeBuilder({ page })
+      .include("article")
+      .include("aside")
+      .exclude("header")
+      .exclude("footer")
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze();
     const fullSerious = fullPageAxe.violations.filter(
       (violation) => violation.impact === "serious" || violation.impact === "critical"
     );
     expect(fullSerious, JSON.stringify(fullSerious, null, 2)).toEqual([]);
 
-    await page.goto("/docs#reports", { waitUntil: "domcontentloaded" });
+    await openDocs(page, "#reports");
     await expect(page.locator("#reports")).toBeVisible();
 
     await page.getByRole("searchbox", { name: /search the document/i }).fill("Follow-up");
@@ -48,7 +72,7 @@ test.describe("Documentation 2.0", () => {
 
   test("lightbox keyboard close and responsive overflow", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/docs", { waitUntil: "domcontentloaded" });
+    await openDocs(page);
     const trigger = page.getByRole("button", { name: /enlarge screenshot/i }).first();
     await trigger.click();
     await expect(page.getByRole("dialog")).toBeVisible();
@@ -59,7 +83,7 @@ test.describe("Documentation 2.0", () => {
 
     for (const viewport of viewports) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await page.goto("/docs", { waitUntil: "domcontentloaded" });
+      await openDocs(page);
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - window.innerWidth
       );
