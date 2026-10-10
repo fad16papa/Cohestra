@@ -162,7 +162,7 @@ test.describe("Story 43.5 — product-wide closure", () => {
 
   test("leftover #crm hash still shows the cookie banner", async ({ page }) => {
     await seedConsentAndOpen(page, null, "/#crm");
-    await waitForConsentDecision(page);
+    await expect(page.locator('[data-cookie-consent="visible"]')).toHaveCount(1);
     await expect(cookieBanner(page)).toBeVisible();
   });
 });
