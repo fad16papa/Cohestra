@@ -45,7 +45,7 @@ TenantCreated, TenantSuspended, TenantReactivated, TenantArchived, Complimentary
 
 | Filter | Semantics |
 |---|---|
-| `action` | Exact current enum name. `Enum.TryParse` ignoreCase + `IsDefined`. Invalid → **400**. Empty = no filter. |
+| `action` | Exact current enum **name** (case-insensitive). Numeric aliases (`0`, `1`) → **400**. Invalid → **400**. Empty = no filter. |
 | `tenantId` | Exact GUID. Invalid GUID → model-binding 400. Empty = no filter. |
 | `actorEmail` | Trimmed, **case-insensitive exact match** on persisted `ActorEmail`. Empty/whitespace = no filter. Null historical emails never match a provided email. Same for list and export. |
 | `from` / `to` | `DateTimeOffset` on `CreatedAt`, **inclusive**. `from > to` → **400** (never swap). |
@@ -81,6 +81,16 @@ Order (list and export): `CreatedAt DESC`, `Id DESC`.
 - [x] Search + export API
 - [x] Audits UI + nav
 - [x] Tests + review + draft PR
+
+### Review Findings (HEAD `3a72c054` layers)
+
+- [x] [Review][Patch] Numeric `action` aliases (`0`/`1`) accepted by Enum.TryParse — require exact enum name
+- [x] [Review][Patch] CSV formula prefix missed leading LF
+- [x] [Review][Patch] CSV EscapeField did not quote `;`
+- [x] [Review][Patch] Out-of-range page used the "no audits exist" empty copy
+- [x] [Review][Patch] Policy unit list omitted `PlatformAuditsController`
+- [x] [Review][Dismiss] ActorEmail ToLower vs ToLowerInvariant — ASCII operator emails; EF translates `ToLower()`
+- [x] [Review][Dismiss] UI download filename omits UTC date — API Content-Disposition is authoritative
 
 ## Dev Notes
 

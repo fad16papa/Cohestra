@@ -19,7 +19,7 @@ public static class PlatformAuditCsv
         }
 
         var first = value[0];
-        if (first is '=' or '+' or '-' or '@' or '\t' or '\r')
+        if (first is '=' or '+' or '-' or '@' or '\t' or '\r' or '\n')
         {
             return "'" + value;
         }
@@ -30,7 +30,8 @@ public static class PlatformAuditCsv
     public static string EscapeField(string? value)
     {
         var text = value ?? string.Empty;
-        if (text.Contains('"') || text.Contains(',') || text.Contains('\n') || text.Contains('\r'))
+        if (text.Contains('"') || text.Contains(',') || text.Contains(';')
+            || text.Contains('\n') || text.Contains('\r'))
         {
             return "\"" + text.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
         }

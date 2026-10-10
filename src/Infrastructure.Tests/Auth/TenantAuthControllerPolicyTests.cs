@@ -149,6 +149,7 @@ public sealed class TenantAuthControllerPolicyTests
                      typeof(PlatformSupportIssuesController),
                      typeof(PlatformSupportReportsController),
                      typeof(PlatformOpsController),
+                     typeof(PlatformAuditsController),
                  })
         {
             var authorize = type.GetCustomAttributes<AuthorizeAttribute>(inherit: true).ToArray();

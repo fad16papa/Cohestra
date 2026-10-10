@@ -56,6 +56,11 @@ public sealed class PlatformAuditSearchIntegrationTests(IntegrationTestFixture f
         using var invalid = await platform.GetAsync("/api/v1/platform/audits?action=MagicAdminOverride");
         Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
 
+        using var numericAlias = await platform.GetAsync("/api/v1/platform/audits?action=0");
+        Assert.Equal(HttpStatusCode.BadRequest, numericAlias.StatusCode);
+        using var numericExport = await platform.GetAsync("/api/v1/platform/audits/export?action=1");
+        Assert.Equal(HttpStatusCode.BadRequest, numericExport.StatusCode);
+
         using var inverted = await platform.GetAsync(
             $"/api/v1/platform/audits?from={Uri.EscapeDataString(inside.ToString("O"))}&to={Uri.EscapeDataString(inside.AddHours(-2).ToString("O"))}");
         Assert.Equal(HttpStatusCode.BadRequest, inverted.StatusCode);

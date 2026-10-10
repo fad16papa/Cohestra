@@ -74,8 +74,11 @@ public sealed class PlatformAuditSearchService(CohestraDbContext dbContext) : IP
         PlatformAuditAction? action = null;
         if (!string.IsNullOrWhiteSpace(query.Action))
         {
-            if (!Enum.TryParse<PlatformAuditAction>(query.Action.Trim(), ignoreCase: true, out var parsed)
-                || !Enum.IsDefined(parsed))
+            var rawAction = query.Action.Trim();
+            // Name-only: Enum.TryParse accepts "0"/"1" aliases; those are not current enum names.
+            if (!Enum.TryParse<PlatformAuditAction>(rawAction, ignoreCase: true, out var parsed)
+                || !Enum.IsDefined(parsed)
+                || !string.Equals(parsed.ToString(), rawAction, StringComparison.OrdinalIgnoreCase))
             {
                 error = "action must be a current PlatformAuditAction value.";
                 return false;

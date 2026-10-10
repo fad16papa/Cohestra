@@ -290,7 +290,7 @@ function PlatformAuditsPage() {
         </p>
       ) : items.length === 0 ? (
         <p role="status" className="text-sm text-[var(--plat-stone)]">
-          {filtered
+          {filtered || page > 1
             ? "No audit entries match these filters."
             : "No platform audit entries are recorded."}
         </p>

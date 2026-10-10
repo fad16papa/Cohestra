@@ -42,6 +42,22 @@ public sealed class PlatformAuditSearchServiceTests
         Assert.Equal(50, normalized.PageSize);
     }
 
+    [Theory]
+    [InlineData("0")]
+    [InlineData("00")]
+    [InlineData("1")]
+    [InlineData("8")]
+    [InlineData("99")]
+    [InlineData("-1")]
+    public void TryNormalize_rejects_numeric_action_aliases(string action)
+    {
+        Assert.False(PlatformAuditSearchService.TryNormalize(
+            new PlatformAuditSearchQuery(action, null, null, null, null),
+            out _,
+            out var error));
+        Assert.Contains("action", error, StringComparison.OrdinalIgnoreCase);
+    }
+
     [Fact]
     public void TryNormalize_does_not_invent_severity_action()
     {

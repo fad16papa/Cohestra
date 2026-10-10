@@ -11,6 +11,7 @@ public sealed class PlatformAuditCsvTests
     [InlineData("-1+1", "'-1+1")]
     [InlineData("@cmd", "'@cmd")]
     [InlineData("\tformula", "'\tformula")]
+    [InlineData("\n=2+2", "'\n=2+2")]
     [InlineData("normal", "normal")]
     [InlineData("", "")]
     public void SanitizeFormula_prefixes_spreadsheet_risk(string input, string expected)
@@ -24,6 +25,7 @@ public sealed class PlatformAuditCsvTests
         Assert.Equal("\"a,b\"", PlatformAuditCsv.EscapeField("a,b"));
         Assert.Equal("\"say \"\"hi\"\"\"", PlatformAuditCsv.EscapeField("say \"hi\""));
         Assert.Equal("\"line\r\nbreak\"", PlatformAuditCsv.EscapeField("line\r\nbreak"));
+        Assert.Equal("\"ok;=cmd\"", PlatformAuditCsv.EscapeField("ok;=cmd"));
     }
 
     [Fact]
