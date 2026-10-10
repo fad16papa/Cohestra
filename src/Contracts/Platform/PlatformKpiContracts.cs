@@ -15,6 +15,10 @@ public static class PlatformKpiSources
     public const string NotInstrumented = "Not instrumented";
     public const string HealthChecks = "Authenticated HealthCheckService (postgres, redis, default-tenant)";
     public const string HealthUnavailable = "Authenticated health request failed";
+    public const string GitSha = "GIT_SHA";
+    public const string GitShaMalformed = "GIT_SHA malformed";
+    public const string HostEnvironment = "IHostEnvironment.EnvironmentName";
+    public const string ApiContract = "API contract v1";
 }
 
 public sealed record PlatformKpi<T>(
@@ -30,3 +34,8 @@ public sealed record PlatformOpsOverviewResponse(
     PlatformKpi<IReadOnlyList<PlatformNamedCount>> BillingStatusCounts,
     PlatformKpi<int> OpenSupportCount,
     PlatformKpi<string?> StackHealth);
+
+public sealed record PlatformOpsVersionResponse(
+    PlatformKpi<string?> GitSha,
+    PlatformKpi<string> EnvironmentName,
+    PlatformKpi<string> ApiVersion);

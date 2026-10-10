@@ -485,6 +485,73 @@ function parseStackHealthKpi(
   throw new Error("Invalid stack health KPI");
 }
 
+export type PlatformOpsVersion = {
+  gitSha: PlatformKpi<string | null>;
+  environmentName: PlatformKpi<string>;
+  apiVersion: PlatformKpi<string>;
+};
+
+const FULL_GIT_SHA = /^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/;
+
+export async function getPlatformOpsVersion(authFetch: AuthFetch): Promise<PlatformOpsVersion> {
+  const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/platform/ops/version`);
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parsePlatformOpsVersion(await response.json());
+}
+
+export function parsePlatformOpsVersion(rawJson: unknown): PlatformOpsVersion {
+  const raw = asRecord(rawJson);
+  const gitSha = parseKpiRecord(raw.gitSha ?? raw.GitSha);
+  const environmentName = parseKpiRecord(raw.environmentName ?? raw.EnvironmentName);
+  const apiVersion = parseKpiRecord(raw.apiVersion ?? raw.ApiVersion);
+
+  const gitValueRaw = gitSha.value ?? gitSha.Value;
+  const gitValue = gitValueRaw == null || gitValueRaw === "" ? null : String(gitValueRaw);
+  if (gitSha.freshness === "actual") {
+    if (!gitValue || !FULL_GIT_SHA.test(gitValue)) {
+      throw new Error("Invalid instrumented Git SHA");
+    }
+  } else if (gitSha.freshness === "missing_instrumentation" || gitSha.freshness === "unavailable") {
+    if (gitValue) {
+      throw new Error("Non-instrumented Git SHA must be empty");
+    }
+  } else {
+    throw new Error("Invalid Git SHA freshness");
+  }
+
+  const environment = pickString(environmentName, "value", "Value");
+  const version = pickString(apiVersion, "value", "Value");
+  if (!environment || environmentName.freshness !== "actual") {
+    throw new Error("Invalid environmentName KPI");
+  }
+  if (version !== "v1" || apiVersion.freshness !== "actual") {
+    throw new Error("Invalid apiVersion KPI");
+  }
+
+  return {
+    gitSha: {
+      value: gitSha.freshness === "actual" ? gitValue : null,
+      source: gitSha.source as string,
+      observedAt: gitSha.observedAt as string,
+      freshness: gitSha.freshness as PlatformKpiFreshness,
+    },
+    environmentName: {
+      value: environment,
+      source: environmentName.source as string,
+      observedAt: environmentName.observedAt as string,
+      freshness: "actual",
+    },
+    apiVersion: {
+      value: "v1",
+      source: apiVersion.source as string,
+      observedAt: apiVersion.observedAt as string,
+      freshness: "actual",
+    },
+  };
+}
+
 export async function getPlatformOpsHealth(authFetch: AuthFetch): Promise<PlatformOpsHealth> {
   const response = await authFetch(`${getPublicApiBaseUrl()}/api/v1/platform/ops/health`);
   if (!response.ok) {
