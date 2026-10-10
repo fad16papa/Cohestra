@@ -76,6 +76,21 @@ This probe does **not** close 19.1 or 19.2.
 - Shared existing-app certificate expired (new vs Oct 8).
 - 19.3 and 19.5 story files now exist.
 
+## Follow-up in this PR (same day)
+
+- `19-4-paddle-billing-uat-on-droplet.md` numbered blockers 1–7 restored (addendum folded into item 1; no blocker text dropped).
+- `epic-19-shared-tls-recovery-2026-10-10.md` — existing-site HTTP-01 renew vs UAT DNS-01 wildcard.
+- `epic-19-acceptance-matrix-19-1-19-2-2026-10-10.md`.
+
+## 19.3 / 19.5 AC check vs `epics-cohestra-enterprise.md`
+
+| Story | Planning ACs | Story file |
+|-------|--------------|------------|
+| 19.3 | Enabled + keys; `NEXT_PUBLIC_*`; rebuild web; widget; signup+OTP; checklist §3 | All present. Extra: invalid token, rate limits, isolation, no UAT bypass |
+| 19.5 | Basic+Pro; seven §7 flows; SendGrid or defer; Operator+PM sign-off | All present. Extra: `/analytics` canonical; no fabricated signatures |
+
+Tracker statuses unchanged: 19.1 `in-progress`, 19.2 `review`, 19.3–19.5 `ready-for-dev`, epic `in-progress`.
+
 ## Production
 
 **NO-GO.** Do not activate live Paddle. Do not deploy production.

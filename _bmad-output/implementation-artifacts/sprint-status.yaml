@@ -278,6 +278,8 @@ development_status:
   # PR #404 MERGED 2026-10-08 at 69814fc3 (ancestor of main). Public UAT SHA still unproven.
   # 19.3 + 19.5 story files created. Shared-app cert thesocialcollectivesg.com expired 2026-10-01.
   # Evidence: epic-19-reconciliation-2026-10-10.md. Production NO-GO. No UAT deploy this run.
+  # 2026-10-10 follow-up: 19.4 numbered list repaired; TLS recovery + 19.1/19.2 matrix added.
+  # Shared-app cert still expired. No nginx/cert/DNS mutation. Stories not closed.
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
   # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.
   # Isolation review on 95e5bd0 found BLOCKER/MAJOR; patches applied, story stays in-progress.
