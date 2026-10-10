@@ -80,4 +80,4 @@ context: []
 - Playwright leftover `#crm` cookie banner -- pass
 - Manual + Playwright screenshots 1440 / 768 / 390 -- Cinema gone, overflow 0, Features flows into How it works
 
-HEAD: `34dfb922` plus cookie-hash cleanup commit. PR: https://github.com/fad16papa/Cohestra/pull/435 (draft). Do not merge without owner auth.
+HEAD: `cf306288`. PR: https://github.com/fad16papa/Cohestra/pull/435 (draft). Do not merge without owner auth.
