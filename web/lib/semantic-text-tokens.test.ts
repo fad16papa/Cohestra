@@ -30,8 +30,7 @@ describe("semantic text tokens", () => {
     expect(light["--text-muted-warm"]).toBe("var(--text-muted)");
     expect(light["--text-muted"]).not.toBe("var(--stone)");
     expect(light["--text-muted"]).not.toBe("var(--stone-cinema)");
-    expect(dark["--muted-foreground"]).toBe("var(--text-muted)");
-    expect(dark["--text-muted-warm"]).toBe("var(--text-muted)");
+    expect(dark).toEqual({});
     expect(light["--text-disabled"]).toBe("var(--stone)");
   });
 
@@ -46,7 +45,6 @@ describe("semantic text tokens", () => {
 
   it("maps input borders to the control token", () => {
     expect(light["--input"]).toBe("var(--border-control)");
-    expect(dark["--input"]).toBe("var(--border-control)");
   });
 
   it.each(CONTRAST_PAIRS)(
@@ -64,20 +62,11 @@ describe("semantic text tokens", () => {
     expect(resolveColor("--text-accent", light)).not.toBe(resolveColor("--gold", light));
   });
 
-  it("keeps dark primary as fill-only and uses text-link for dark text", () => {
-    expect(resolveColor("--primary", dark)).toBe("#0f7369");
-    expect(resolveColor("--lagoon", dark)).toBe("#12877d");
-    expect(resolveColor("--text-link", dark)).toBe("#159a90");
+  it("does not ship a reachable dark application token skin", () => {
+    expect(css).not.toMatch(/^\.dark\s*\{/m);
+    expect(dark).toEqual({});
+    expect(CONTRAST_PAIRS.every((pair) => pair.theme === "light")).toBe(true);
     expect(resolveColor("--text-warning", light)).toBe("#8a5c00");
-    expect(
-      contrastRatio(resolveColor("--primary", dark), resolveColor("--paper", dark))
-    ).toBeLessThan(4.5);
-    expect(
-      contrastRatio(resolveColor("--text-on-lagoon", dark), resolveColor("--primary", dark))
-    ).toBeGreaterThanOrEqual(4.5);
-    expect(
-      contrastRatio(resolveColor("--text-link", dark), resolveColor("--paper-warm", dark))
-    ).toBeGreaterThanOrEqual(4.5);
   });
 
   it("does not use dark primary overlays or accent gradients for selected/on-accent text", () => {
@@ -194,9 +183,9 @@ describe("focus-ring composite contract", () => {
     }
   });
 
-  it("accepts opaque --ring against paper and cards in light and dark", () => {
+  it("accepts opaque --ring against paper and cards on the light surface", () => {
     const opaque = rows.filter((row) => row.alpha === 1);
-    expect(opaque).toHaveLength(4);
+    expect(opaque).toHaveLength(2);
     for (const row of opaque) {
       expect(row.pass, `${row.label} ${row.composited} on ${row.background} ${row.ratio}`).toBe(
         true

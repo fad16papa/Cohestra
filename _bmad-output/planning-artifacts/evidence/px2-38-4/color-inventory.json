@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T14:56:41.609Z",
+  "generated": "2026-10-10T04:46:10.365Z",
   "story": "38.4",
   "rows": [
     {
@@ -112,7 +112,7 @@
     },
     {
       "file": "components/activities/form-template-picker.tsx",
-      "line": 78,
+      "line": 81,
       "kind": "gold-token",
       "snippet": "blocked ? \"bg-destructive\" : percent >= 80 ? \"bg-gold\" : \"bg-primary\"",
       "disposition": "decorative",
@@ -148,7 +148,7 @@
     },
     {
       "file": "components/billing/checkout-page-content.tsx",
-      "line": 614,
+      "line": 620,
       "kind": "tailwind-palette-text",
       "snippet": "<p className=\"font-medium text-amber-900 dark:text-amber-100\">",
       "disposition": "passing-intentionally-retained",
@@ -157,7 +157,7 @@
     },
     {
       "file": "components/billing/checkout-page-content.tsx",
-      "line": 617,
+      "line": 623,
       "kind": "tailwind-palette-text",
       "snippet": "<ul className=\"list-disc space-y-1 pl-5 text-amber-900/90 dark:text-amber-100/90\">",
       "disposition": "passing-intentionally-retained",
@@ -165,26 +165,8 @@
       "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
     },
     {
-      "file": "components/billing/in-app-billing-panel.tsx",
-      "line": 342,
-      "kind": "tailwind-palette-text",
-      "snippet": "<p className=\"mt-2 text-amber-800 dark:text-amber-200\">",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
-    },
-    {
-      "file": "components/billing/in-app-billing-panel.tsx",
-      "line": 356,
-      "kind": "tailwind-palette-text",
-      "snippet": "<p className=\"text-amber-800 dark:text-amber-200\">",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Warning chrome on Tailwind amber. Prefer --text-warning / --surface-warning. Retained when the pair is not a proven WCAG fail."
-    },
-    {
       "file": "components/billing/paddle-return-page-content.tsx",
-      "line": 200,
+      "line": 204,
       "kind": "opacity-text",
       "snippet": "<p className=\"mt-3 text-sm leading-6 text-ink/70\">",
       "disposition": "passing-intentionally-retained",
@@ -193,7 +175,7 @@
     },
     {
       "file": "components/billing/paddle-return-page-content.tsx",
-      "line": 225,
+      "line": 229,
       "kind": "opacity-text",
       "snippet": "<p className=\"mt-3 text-sm leading-6 text-ink/70\">",
       "disposition": "passing-intentionally-retained",
@@ -202,16 +184,16 @@
     },
     {
       "file": "components/campaigns/email-preview-dialog.tsx",
-      "line": 36,
+      "line": 53,
       "kind": "tailwind-palette-text",
-      "snippet": "className=\"mx-auto max-w-xl text-sm leading-relaxed [&_a]:text-blue-700 [&_a]:underline [&_img]:my-3 [&_img]:max-h-80 [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5\"",
+      "snippet": "className=\"mx-auto max-w-full text-sm leading-relaxed break-words [&_a]:text-blue-700 [&_a]:underline [&_img]:my-3 [&_img]:max-h-80 [&_img]:max-w-full [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl",
       "disposition": "outside-38-4",
       "ownerStory": "email-html-facsimile",
       "note": "Campaign HTML preview mimics email client link color."
     },
     {
       "file": "components/campaigns/segment-picker.tsx",
-      "line": 318,
+      "line": 327,
       "kind": "opacity-text",
       "snippet": "<Users className=\"mx-auto size-8 text-text-muted-warm/70\" aria-hidden />",
       "disposition": "passing-intentionally-retained",
@@ -220,7 +202,7 @@
     },
     {
       "file": "components/dashboard/activity-calendar-popout.tsx",
-      "line": 399,
+      "line": 423,
       "kind": "tailwind-palette-text",
       "snippet": "className=\"size-3 text-amber-600 dark:text-amber-400\"",
       "disposition": "passing-intentionally-retained",
@@ -229,7 +211,7 @@
     },
     {
       "file": "components/dashboard/activity-calendar-popout.tsx",
-      "line": 423,
+      "line": 447,
       "kind": "tailwind-palette-text",
       "snippet": "<p className=\"font-medium text-amber-800 dark:text-amber-200\">",
       "disposition": "passing-intentionally-retained",
@@ -238,7 +220,7 @@
     },
     {
       "file": "components/dashboard/activity-calendar-popout.tsx",
-      "line": 362,
+      "line": 386,
       "kind": "opacity-text",
       "snippet": "inMonth ? \"text-text-warm\" : \"text-text-muted-warm/50\",",
       "disposition": "passing-intentionally-retained",
@@ -268,6 +250,15 @@
       "line": 64,
       "kind": "gold-token",
       "snippet": "\"bg-gold/15 text-text-accent ring-gold/30\",",
+      "disposition": "decorative",
+      "ownerStory": "38.4",
+      "note": "Palette --gold / gold-soft atmosphere or fill."
+    },
+    {
+      "file": "components/settings/settings-billing-page-content.tsx",
+      "line": 77,
+      "kind": "gold-token",
+      "snippet": "className=\"rounded-xl border border-gold/40 bg-gold/5 px-4 py-3 text-sm text-text-warm\"",
       "disposition": "decorative",
       "ownerStory": "38.4",
       "note": "Palette --gold / gold-soft atmosphere or fill."
@@ -343,15 +334,6 @@
       "disposition": "decorative",
       "ownerStory": "38.4",
       "note": "Palette --gold / gold-soft atmosphere or fill."
-    },
-    {
-      "file": "components/website/website-section-fields.tsx",
-      "line": 883,
-      "kind": "opacity-text",
-      "snippet": "\"flex shrink-0 touch-none select-none rounded-lg px-1.5 py-2 text-text-muted-warm/70 transition-colors\",",
-      "disposition": "passing-intentionally-retained",
-      "ownerStory": "38.4",
-      "note": "Opacity utility recorded; contrast must still pass via the resolved token."
     }
   ],
   "unresolved": []

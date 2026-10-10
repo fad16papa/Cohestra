@@ -91,7 +91,7 @@ test.describe("light-only application appearance", () => {
     }
   });
 
-  test("forgot-password and public register have no theme control", async ({ page }) => {
+  test("forgot-password and signup have no theme control", async ({ page }) => {
     await page.emulateMedia({ colorScheme: "dark" });
     await seedDarkStorage(page);
     await page.setViewportSize({ width: 1440, height: 900 });
