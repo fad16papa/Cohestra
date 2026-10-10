@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { PlatformTenantOpsPanel } from "@/components/platform/platform-tenant-ops-panel";
+import { PlatformTenantTimeline } from "@/components/platform/platform-tenant-timeline";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
   AlertDialog,
@@ -507,6 +508,8 @@ export default function PlatformTenantDetailPage() {
           </p>
         )}
       </section>
+
+      <PlatformTenantTimeline tenantId={tenant.id} authFetch={authFetch} />
 
       <section className="space-y-4">
         <h2

@@ -53,6 +53,39 @@ export type TenantDetailResponse = {
   recentAudits: PlatformAuditEntry[];
 };
 
+export const PLATFORM_TIMELINE_TYPES = [
+  "audit",
+  "support",
+  "outbox",
+  "paddle",
+  "billing_snapshot",
+] as const;
+
+export type PlatformTenantTimelineType = (typeof PLATFORM_TIMELINE_TYPES)[number];
+
+export type PlatformTenantTimelineItem = {
+  id: string;
+  type: PlatformTenantTimelineType;
+  timestamp: string;
+  provenance: string;
+  summary: string;
+  metadata: Record<string, string | null>;
+};
+
+export type PlatformTenantTimelineSource = {
+  source: string;
+  state: "present" | "empty" | "missing_instrumentation";
+  itemCount: number;
+};
+
+export type PlatformTenantTimelineResponse = {
+  tenantId: string;
+  observedAt: string;
+  hasHistoricalEvents: boolean;
+  items: PlatformTenantTimelineItem[];
+  sources: PlatformTenantTimelineSource[];
+};
+
 type AuthFetch = (input: string, init?: RequestInit) => Promise<Response>;
 
 async function parseProblemDetail(response: Response): Promise<string> {
@@ -846,6 +879,83 @@ export async function getPlatformTenant(
     recentAudits: Array.isArray(auditsRaw)
       ? auditsRaw.map((entry) => parseAudit(asRecord(entry)))
       : [],
+  };
+}
+
+export async function getPlatformTenantTimeline(
+  authFetch: AuthFetch,
+  tenantId: string
+): Promise<PlatformTenantTimelineResponse> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/tenants/${tenantId}/timeline`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return parseTimeline(asRecord(await response.json()));
+}
+
+function parseTimeline(raw: Record<string, unknown>): PlatformTenantTimelineResponse {
+  const tenantId = pickString(raw, "tenantId", "TenantId");
+  const observedAt = pickString(raw, "observedAt", "ObservedAt");
+  if (!tenantId || !observedAt) {
+    throw new Error("Invalid tenant timeline");
+  }
+  const itemsRaw = raw.items ?? raw.Items;
+  const sourcesRaw = raw.sources ?? raw.Sources;
+  return {
+    tenantId,
+    observedAt,
+    hasHistoricalEvents: pickBoolean(raw, "hasHistoricalEvents", "HasHistoricalEvents"),
+    items: Array.isArray(itemsRaw) ? itemsRaw.map((item) => parseTimelineItem(asRecord(item))) : [],
+    sources: Array.isArray(sourcesRaw)
+      ? sourcesRaw.map((source) => parseTimelineSource(asRecord(source)))
+      : [],
+  };
+}
+
+function parseTimelineItem(raw: Record<string, unknown>): PlatformTenantTimelineItem {
+  const id = pickString(raw, "id", "Id");
+  const type = pickString(raw, "type", "Type");
+  const timestamp = pickString(raw, "timestamp", "Timestamp");
+  const provenance = pickString(raw, "provenance", "Provenance");
+  const summary = pickString(raw, "summary", "Summary");
+  if (!id || !type || !timestamp || !provenance || !summary) {
+    throw new Error("Invalid timeline item");
+  }
+  if (!PLATFORM_TIMELINE_TYPES.includes(type as PlatformTenantTimelineType)) {
+    throw new Error("Invalid timeline type");
+  }
+  const metadataRaw = raw.metadata ?? raw.Metadata;
+  const metadata: Record<string, string | null> = {};
+  if (metadataRaw && typeof metadataRaw === "object" && !Array.isArray(metadataRaw)) {
+    for (const [key, value] of Object.entries(metadataRaw as Record<string, unknown>)) {
+      metadata[key] = typeof value === "string" ? value : value == null ? null : String(value);
+    }
+  }
+  return {
+    id,
+    type: type as PlatformTenantTimelineType,
+    timestamp,
+    provenance,
+    summary,
+    metadata,
+  };
+}
+
+function parseTimelineSource(raw: Record<string, unknown>): PlatformTenantTimelineSource {
+  const source = pickString(raw, "source", "Source");
+  const state = pickString(raw, "state", "State");
+  if (!source || !state) {
+    throw new Error("Invalid timeline source");
+  }
+  if (state !== "present" && state !== "empty" && state !== "missing_instrumentation") {
+    throw new Error("Invalid timeline source state");
+  }
+  return {
+    source,
+    state,
+    itemCount: pickNumber(raw, "itemCount", "ItemCount"),
   };
 }
 

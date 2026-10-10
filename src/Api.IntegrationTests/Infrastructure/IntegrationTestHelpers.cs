@@ -106,6 +106,35 @@ internal static class IntegrationTestHelpers
     }
 
     /// <summary>
+    /// Temporarily ignores plan-limit read-only so isolation write probes can reach
+    /// 404/200 instead of leftover OverPlanLimits 403 from earlier Integration tests
+    /// that share the CI Postgres. Restores the previous complimentary flag.
+    /// </summary>
+    internal static async Task<bool> SetDefaultTenantComplimentaryAsync(
+        IServiceProvider services,
+        bool complimentary)
+    {
+        await using var scope = services.CreateAsyncScope();
+        BindDefaultTenant(scope.ServiceProvider);
+
+        var dbContext = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == TenantIds.Default)
+            ?? throw new InvalidOperationException("Default tenant not found.");
+
+        var previous = tenant.IsComplimentary;
+        if (tenant.IsComplimentary == complimentary)
+        {
+            return previous;
+        }
+
+        tenant.IsComplimentary = complimentary;
+        tenant.UpdatedAt = DateTimeOffset.UtcNow;
+        await dbContext.SaveChangesAsync();
+        return previous;
+    }
+
+    /// <summary>
     /// Removes saved form templates for the default tenant so plan-limit tests start from zero usage.
     /// </summary>
     internal static async Task ClearDefaultTenantFormTemplatesAsync(IServiceProvider services)

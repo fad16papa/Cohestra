@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Cohestra.Application.Platform;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Platform;
 using Cohestra.Infrastructure.Auth;
@@ -14,7 +15,9 @@ namespace Cohestra.Api.Controllers.V1;
 [Route("api/v1/platform/tenants")]
 [Authorize(Policy = TenantAuthPolicies.PlatformAdminOnly)]
 [Produces("application/json")]
-public sealed class PlatformTenantsController(IPlatformTenantService platformTenantService) : ControllerBase
+public sealed class PlatformTenantsController(
+    IPlatformTenantService platformTenantService,
+    IPlatformTenantTimelineService timelineService) : ControllerBase
 {
     /// <summary>Paginated tenant directory with aggregate activity/client counts (no PII export).</summary>
     [HttpGet]
@@ -60,6 +63,50 @@ public sealed class PlatformTenantsController(IPlatformTenantService platformTen
             PlatformTenantError.NotFound => NotFoundProblem(result.Detail ?? "Tenant not found."),
             _ => BadRequestProblem(result.Detail ?? "Request failed."),
         };
+    }
+
+    /// <summary>
+    /// Read-only diagnostic timeline for one tenant (FR-44-12). Correlates audits, support
+    /// milestones, outbox summaries, Paddle deliveries, and the current billing snapshot.
+    /// </summary>
+    [HttpGet("{tenantId:guid}/timeline")]
+    [ProducesResponseType(typeof(PlatformTenantTimelineResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<PlatformTenantTimelineResponse>> GetTimeline(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await timelineService.GetAsync(tenantId, cancellationToken);
+            if (result.Succeeded && result.Value is not null)
+            {
+                return Ok(result.Value);
+            }
+
+            return result.Error switch
+            {
+                PlatformTenantError.NotFound => NotFoundProblem(result.Detail ?? "Tenant not found."),
+                _ => BadRequestProblem(result.Detail ?? "Request failed."),
+            };
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            Response.ContentType = "application/problem+json";
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Timeline data unavailable",
+                Detail = "The diagnostic timeline could not be loaded. Other tenant detail remains available.",
+                Instance = HttpContext.Request.Path,
+            });
+        }
     }
 
     /// <summary>Provision a tenant workspace (Status=Active). Does not create tenant memberships.</summary>
