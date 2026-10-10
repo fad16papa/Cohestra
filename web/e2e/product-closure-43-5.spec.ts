@@ -160,9 +160,9 @@ test.describe("Story 43.5 — product-wide closure", () => {
     await expect(cookieBanner(page)).toHaveCount(0);
   });
 
-  test("Cinema #crm hides the cookie banner", async ({ page }) => {
+  test("leftover #crm hash still shows the cookie banner", async ({ page }) => {
     await seedConsentAndOpen(page, null, "/#crm");
     await waitForConsentDecision(page);
-    await expect(cookieBanner(page)).toHaveCount(0);
+    await expect(cookieBanner(page)).toBeVisible();
   });
 });

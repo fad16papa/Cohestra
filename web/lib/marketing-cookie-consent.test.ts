@@ -34,9 +34,9 @@ describe("marketing cookie consent contract", () => {
     expect(isKnownConsentValue("legacy-yes")).toBe(false);
   });
 
-  it("never shows over Live Proof Cinema", () => {
-    expect(shouldShowMarketingCookieBanner(null, "#crm")).toBe(false);
-    expect(shouldShowMarketingCookieBanner("", "#crm")).toBe(false);
+  it("does not hide the banner for a leftover #crm hash", () => {
+    expect(shouldShowMarketingCookieBanner(null, "#crm")).toBe(true);
+    expect(shouldShowMarketingCookieBanner("", "#crm")).toBe(true);
   });
 
   it("maps preferences to accepted only when optional analytics is on", () => {
