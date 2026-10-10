@@ -1,5 +1,9 @@
 # Architecture — Light-only application appearance
 
+> **SUPERSEDED.** Global deletion of next-themes is no longer the product contract.
+> See `sprint-change-proposal-2026-10-10-platform-admin-light-only.md` and the updated SPEC.
+> Historical artifact — do not implement this document.
+
 Date: 2026-10-10
 Workflow: bmad-architecture (Winston)
 Model: Cursor Grok 4.6

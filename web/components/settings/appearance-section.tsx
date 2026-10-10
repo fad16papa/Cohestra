@@ -1,0 +1,80 @@
+"use client";
+
+import { useState } from "react";
+
+import {
+  themeOptionLabels,
+  themePreferences,
+  type ThemePreference,
+} from "@/components/theme/theme-config";
+import { usePersistedThemePreference } from "@/components/theme/use-persisted-theme-preference";
+import { cn } from "@/lib/utils";
+
+const appearanceHelperText: Record<ThemePreference, string> = {
+  light: "Always use light appearance.",
+  dark: "Always use dark appearance.",
+  system: "Match your device settings.",
+};
+
+export function AppearanceSection({ embedded = false }: { embedded?: boolean }) {
+  const { selected, persistThemePreference, isSaving } =
+    usePersistedThemePreference();
+  const [error, setError] = useState<string | null>(null);
+
+  async function selectPreference(next: ThemePreference) {
+    setError(null);
+    const result = await persistThemePreference(next);
+    if (!result.ok) {
+      setError(result.message);
+    }
+  }
+
+  return (
+    <section className="space-y-4">
+      {!embedded ? (
+        <p className="text-sm text-text-muted-warm">
+          Changes sync with the top-bar theme control instantly.
+        </p>
+      ) : null}
+
+      <div
+        role="radiogroup"
+        aria-label="Appearance preference"
+        className="inline-flex w-full max-w-lg flex-col gap-2 rounded-xl border border-border-warm bg-muted/20 p-1 sm:flex-row"
+      >
+        {themePreferences.map((option) => {
+          const isActive = selected === option;
+
+          return (
+            <button
+              key={option}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              disabled={isSaving && !isActive}
+              onClick={() => void selectPreference(option)}
+              className={cn(
+                "flex-1 rounded-md px-3 py-2 text-sm font-medium motion-local outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50",
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-foreground hover:bg-muted"
+              )}
+            >
+              {themeOptionLabels[option]}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="text-sm text-text-muted-warm">
+        {appearanceHelperText[selected]}
+      </p>
+
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  );
+}

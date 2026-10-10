@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-10T04:46:10.578Z",
+  "generated": "2026-09-29T14:56:41.582Z",
   "requirement": "Visible focus indicator ≥3:1 against adjacent after alpha compositing",
   "rows": [
     {
@@ -21,6 +21,28 @@
       "background": "#f3f5f7",
       "composited": "#adcccb",
       "ratio": 1.57,
+      "threshold": 3,
+      "pass": false
+    },
+    {
+      "label": "ring/30 on --paper (dark)",
+      "theme": "dark",
+      "alpha": 0.3,
+      "ring": "#159a90",
+      "background": "#070d12",
+      "composited": "#0b3738",
+      "ratio": 1.5,
+      "threshold": 3,
+      "pass": false
+    },
+    {
+      "label": "ring/30 on --paper-warm (dark)",
+      "theme": "dark",
+      "alpha": 0.3,
+      "ring": "#159a90",
+      "background": "#141c24",
+      "composited": "#144244",
+      "ratio": 1.55,
       "threshold": 3,
       "pass": false
     },
@@ -47,6 +69,28 @@
       "pass": false
     },
     {
+      "label": "ring/50 on --paper (dark)",
+      "theme": "dark",
+      "alpha": 0.5,
+      "ring": "#159a90",
+      "background": "#070d12",
+      "composited": "#0e5451",
+      "ratio": 2.24,
+      "threshold": 3,
+      "pass": false
+    },
+    {
+      "label": "ring/50 on --paper-warm (dark)",
+      "theme": "dark",
+      "alpha": 0.5,
+      "ring": "#159a90",
+      "background": "#141c24",
+      "composited": "#155b5a",
+      "ratio": 2.19,
+      "threshold": 3,
+      "pass": false
+    },
+    {
       "label": "ring/100 on --paper (light)",
       "theme": "light",
       "alpha": 1,
@@ -65,6 +109,28 @@
       "background": "#f3f5f7",
       "composited": "#0b6b63",
       "ratio": 5.83,
+      "threshold": 3,
+      "pass": true
+    },
+    {
+      "label": "ring/100 on --paper (dark)",
+      "theme": "dark",
+      "alpha": 1,
+      "ring": "#159a90",
+      "background": "#070d12",
+      "composited": "#159a90",
+      "ratio": 5.63,
+      "threshold": 3,
+      "pass": true
+    },
+    {
+      "label": "ring/100 on --paper-warm (dark)",
+      "theme": "dark",
+      "alpha": 1,
+      "ring": "#159a90",
+      "background": "#141c24",
+      "composited": "#159a90",
+      "ratio": 4.96,
       "threshold": 3,
       "pass": true
     }

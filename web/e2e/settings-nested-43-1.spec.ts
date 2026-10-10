@@ -63,10 +63,11 @@ test.describe("Story 43.1 — Settings nested routes", () => {
     });
 
     await openAuthed(page, session, "/settings/appearance");
-    await expect(page).toHaveURL(/\/settings\/profile(?:\?|$)/);
-    await expect(page.getByRole("heading", { name: "Your account", level: 1 })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Appearance", level: 1 })).toHaveCount(0);
-    await expect(settingsRail(page).getByRole("link", { name: "Appearance" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Appearance", level: 1 })).toBeVisible();
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await waitForOperatorWorkspace(page);
+    await expect(page).toHaveURL(/\/settings\/appearance(?:\?|$)/);
+    await expect(page.getByRole("heading", { name: "Appearance", level: 1 })).toBeVisible();
 
     await openAuthed(page, session, "/settings?section=team");
     await expect(page).toHaveURL(/\/settings\/team(?:\?|$)/);
@@ -82,10 +83,9 @@ test.describe("Story 43.1 — Settings nested routes", () => {
     await expect(page.getByRole("heading", { name: "Your account", level: 1 })).toBeVisible();
 
     await openAuthed(page, session, "/settings?activeId=appearance");
-    await expect(page).toHaveURL(/\/settings\/profile(?:\?|$)/);
-    await expect(page.getByRole("heading", { name: "Your account", level: 1 })).toBeVisible();
+    await expect(page).toHaveURL(/\/settings\/appearance(?:\?|$)/);
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "settings-profile-from-legacy-appearance-1440.png"),
+      path: path.join(evidenceDir, "viewports", "settings-appearance-1440.png"),
       fullPage: true,
     });
 
@@ -142,16 +142,16 @@ test.describe("Story 43.1 — Settings nested routes", () => {
       fullPage: true,
     });
     await openAuthed(page, session, "/settings/appearance");
-    await expect(page).toHaveURL(/\/settings\/profile(?:\?|$)/);
     const chips = page.getByRole("navigation", { name: "Settings sections" }).locator("visible=true");
-    await expect(chips.getByRole("link", { name: "Appearance" })).toHaveCount(0);
-    await expect(chips.getByRole("link", { name: "Your account" })).toBeVisible();
+    await expect(chips.getByRole("link", { name: "Appearance" })).toBeVisible();
+    const appearanceChip = await chips.getByRole("link", { name: "Appearance" }).boundingBox();
+    expect(appearanceChip?.height ?? 0).toBeGreaterThanOrEqual(44);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth > window.innerWidth + 1
     );
     expect(overflow).toBe(false);
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "settings-profile-from-legacy-appearance-390.png"),
+      path: path.join(evidenceDir, "viewports", "settings-appearance-390.png"),
       fullPage: true,
     });
 

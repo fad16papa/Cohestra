@@ -107,8 +107,8 @@ test("login CTA uses primary fill, not decorative dark lagoon", async ({ page })
     document.documentElement.classList.add("dark");
   });
   await page.reload({ waitUntil: "domcontentloaded" });
-  await expect(page.locator("html")).not.toHaveClass(/dark/);
-  const afterDarkStorage = await submit.evaluate((el) => {
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  const dark = await submit.evaluate((el) => {
     const styles = getComputedStyle(el);
     const root = getComputedStyle(document.documentElement);
     return {
@@ -118,9 +118,9 @@ test("login CTA uses primary fill, not decorative dark lagoon", async ({ page })
       lagoon: root.getPropertyValue("--lagoon").trim(),
     };
   });
-  expect(afterDarkStorage.primary).toBe("#043532");
-  expect(afterDarkStorage.lagoon).toBe("#0b6b63");
-  expect(contrast(afterDarkStorage.color, afterDarkStorage.background)).toBeGreaterThanOrEqual(4.5);
+  expect(dark.primary).toBe("#0f7369");
+  expect(dark.lagoon).toBe("#12877d");
+  expect(contrast(dark.color, dark.background)).toBeGreaterThanOrEqual(4.5);
 });
 
 test("login email field exposes an opaque focus ring", async ({ page }) => {
@@ -178,9 +178,9 @@ test("login viewports capture required evidence", async ({ page }) => {
     window.localStorage.setItem("cohestra-theme-operator", "dark");
   });
   await page.goto("/login", { waitUntil: "domcontentloaded" });
-  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  await expect(page.locator("html")).toHaveClass(/dark/);
   await page.screenshot({
-    path: path.join(evidenceDir, "login-1440x900-dark-storage-ignored.png"),
+    path: path.join(evidenceDir, "login-1440x900-dark.png"),
     fullPage: true,
   });
 });

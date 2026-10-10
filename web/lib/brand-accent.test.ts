@@ -27,16 +27,20 @@ function contrast(a: string, b: string): number {
 
 describe("brand accent overlay contrast", () => {
   it.each([...brandAccentPresets.map((preset) => preset.hex), "#c45c26", "#0d9488"])(
-    "keeps %s primary fill ≥4.5:1 with its foreground on the light surface",
+    "keeps %s primary fill ≥4.5:1 with its foreground in light and dark",
     (hex) => {
-      const style = buildBrandAccentStyle(hex);
-      expect(style).toBeDefined();
-      const vars = style as Record<string, string>;
-      const primary = String(vars["--primary"]);
-      const foreground = String(vars["--primary-foreground"]);
-      const ring = String(vars["--ring"]);
-      expect(contrast(foreground, primary), hex).toBeGreaterThanOrEqual(8);
-      expect(ring).toBe(primary);
+      for (const isDark of [false, true]) {
+        const style = buildBrandAccentStyle(hex, isDark);
+        expect(style).toBeDefined();
+        const vars = style as Record<string, string>;
+        const primary = String(vars["--primary"]);
+        const foreground = String(vars["--primary-foreground"]);
+        const ring = String(vars["--ring"]);
+        expect(contrast(foreground, primary), `${hex} ${isDark ? "dark" : "light"}`).toBeGreaterThanOrEqual(
+          8
+        );
+        expect(ring).toBe(primary);
+      }
     }
   );
 });

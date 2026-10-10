@@ -129,7 +129,7 @@ export const WebsiteBrandingSection = forwardRef<
     accentColor.trim() && isValidBrandAccentColor(accentColor)
       ? normalizeBrandAccentColor(accentColor)
       : null;
-  const previewStyle = buildBrandAccentStyle(previewAccent);
+  const previewStyle = buildBrandAccentStyle(previewAccent, false);
   const activePreset = presetIdForColor(
     isValidBrandAccentColor(accentColor) ? accentColor : draft.accentColor
   );

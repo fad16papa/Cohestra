@@ -6,7 +6,6 @@ import {
   SETTINGS_PATH,
   SETTINGS_PLAN_PATH,
   SETTINGS_PROFILE_PATH,
-  SETTINGS_SUPPORT_PATH,
   SETTINGS_TEAM_PATH,
 } from "@/lib/admin-canonical-routes";
 import {
@@ -22,7 +21,7 @@ describe("settings nested routes", () => {
   it("maps current section ids to nested paths", () => {
     expect(settingsPathForSectionId("settings-plan")).toBe(SETTINGS_PLAN_PATH);
     expect(settingsPathForSectionId("settings-account")).toBe(SETTINGS_PROFILE_PATH);
-    expect(settingsPathForSectionId("settings-support")).toBe(SETTINGS_SUPPORT_PATH);
+    expect(settingsPathForSectionId("settings-appearance")).toBe(SETTINGS_APPEARANCE_PATH);
     expect(getSettingsRouteMeta("/settings/team")?.label).toBe("Team");
     expect(getSettingsRouteMeta("/settings/billing")?.label).toBe("Billing");
     expect(getSettingsRouteMeta("/settings/profile")?.label).toBe("Your account");
@@ -64,17 +63,14 @@ describe("settings nested routes", () => {
         new URLSearchParams("section=appearance"),
         true
       )
-    ).toBe(SETTINGS_PROFILE_PATH);
+    ).toBe(SETTINGS_APPEARANCE_PATH);
     expect(
       resolveSettingsSearchRedirect(
         SETTINGS_PATH,
         new URLSearchParams("activeId=appearance&utm=1"),
         false
       )
-    ).toBe(`${SETTINGS_PROFILE_PATH}?utm=1`);
-    expect(
-      resolveSettingsSearchRedirect(SETTINGS_APPEARANCE_PATH, new URLSearchParams(), true)
-    ).toBe(SETTINGS_PROFILE_PATH);
+    ).toBe(`${SETTINGS_APPEARANCE_PATH}?utm=1`);
     expect(
       resolveSettingsSearchRedirect(
         SETTINGS_BILLING_PATH,

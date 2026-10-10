@@ -1,5 +1,9 @@
 # Sprint Change Proposal — Cohestra light-only appearance
 
+> **SUPERSEDED** by `sprint-change-proposal-2026-10-10-platform-admin-light-only.md`.
+> Previous correction (global Cohestra light-only) is no longer the product contract.
+> Historical artifact — do not implement this document.
+
 Date: 2026-10-10
 Workflow: bmad-correct-course + bmad-sprint-status
 Model: Cursor Grok 4.6

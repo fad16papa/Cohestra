@@ -154,9 +154,15 @@ async function overlayRole(overlay: Locator): Promise<string> {
   return (await overlay.getAttribute("role")) ?? "";
 }
 
-async function assertLightAppearance(page: Page): Promise<void> {
-  await expect(page.getByRole("button", { name: /appearance:/i })).toHaveCount(0);
-  await expect(page.locator("html")).not.toHaveClass(/dark/);
+async function setAppearance(page: Page, preference: "light" | "dark"): Promise<void> {
+  await page.getByRole("button", { name: /appearance:/i }).click();
+  await page.getByRole("radio", { name: new RegExp(`^${preference}$`, "i") }).click();
+  await page.keyboard.press("Escape");
+  if (preference === "dark") {
+    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
+  } else {
+    await expect(page.locator("html")).not.toHaveClass(/dark/, { timeout: 15_000 });
+  }
 }
 
 async function screenshotPage(page: Page, name: string): Promise<void> {
@@ -249,11 +255,12 @@ test.describe("Story 38.6 — shared overlay contract", () => {
       axe: "pass",
     });
 
-    await assertLightAppearance(page);
+    await setAppearance(page, "dark");
     await search.click();
     await expect(palette).toBeVisible();
-    await screenshotOverlay(page, palette, "palette-light-1440x900.png");
+    await screenshotOverlay(page, palette, "palette-dark-1440x900.png");
     await page.keyboard.press("Escape");
+    await setAppearance(page, "light");
 
     await page.emulateMedia({ forcedColors: "active" });
     await search.click();

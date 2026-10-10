@@ -671,11 +671,13 @@ Use CSV in Excel or Google Sheets for deeper analysis.
 
 ## Settings
 
-![Settings — brand accent, password, email delivery](./screenshots/24-settings.png)
+![Settings — appearance, brand accent, password, email delivery](./screenshots/24-settings.png)
 
 Open **Settings** from the account menu.
 
-Cohestra has one application appearance: light. There is no Light / Dark / System control.
+### Appearance
+
+Choose **Light**, **Dark**, or **System**. Same as the top bar theme toggle; preference is saved to your profile.
 
 ### Brand accent
 

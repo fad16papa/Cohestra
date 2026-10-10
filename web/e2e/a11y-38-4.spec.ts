@@ -337,19 +337,23 @@ test("authenticated axe, forced-colors, dark, Basic Website, and client profile"
     await expect(page.getByText(/good (morning|afternoon|evening)/i)).toBeVisible({
       timeout: 30_000,
     });
-    await expect(page.getByRole("button", { name: /appearance:/i })).toHaveCount(0);
-    await expect(page.locator("html")).not.toHaveClass(/dark/);
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^dark$/i }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "dashboard-1440x900-light.png"),
+      path: path.join(evidenceDir, "viewports", "dashboard-1440x900-dark.png"),
       fullPage: true,
     });
     await open("/reports");
-    await expect(page.locator("html")).not.toHaveClass(/dark/);
+    await expect(page.locator("html")).toHaveClass(/dark/);
     await waitForReportsContent(page);
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "reports-1440x900-light.png"),
+      path: path.join(evidenceDir, "viewports", "reports-1440x900-dark.png"),
       fullPage: true,
     });
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^light$/i }).click();
+    await expect(page.locator("html")).not.toHaveClass(/dark/, { timeout: 15_000 });
   } catch (error) {
     gaps.push(`dark-product: ${error instanceof Error ? error.message : String(error)}`);
   }

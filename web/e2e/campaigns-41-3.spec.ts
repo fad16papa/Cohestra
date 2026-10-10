@@ -562,14 +562,20 @@ test.describe("Story 41.3 — Campaigns room", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await assertAxe(page, "campaigns list light");
 
-    await expect(page.getByRole("button", { name: /appearance:/i })).toHaveCount(0);
-    await expect(page.locator("html")).not.toHaveClass(/dark/);
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^dark$/i }).click();
+    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("radio", { name: /^dark$/i })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Campaigns", level: 1 })).toBeVisible();
-    await assertAxe(page, "campaigns list light-only");
+    await assertAxe(page, "campaigns list dark");
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "list-light-1440.png"),
+      path: path.join(evidenceDir, "viewports", "list-dark-1440.png"),
       fullPage: true,
     });
+    await page.getByRole("button", { name: /appearance:/i }).click();
+    await page.getByRole("radio", { name: /^light$/i }).click();
+    await page.keyboard.press("Escape");
 
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.reload({ waitUntil: "domcontentloaded" });

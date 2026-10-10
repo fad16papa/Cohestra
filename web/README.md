@@ -4,14 +4,16 @@ Brand colors and typography are defined in `styles/brand-tokens.css` (sourced fr
 
 - Use semantic Tailwind classes (`bg-primary`, `bg-status-new`, `text-text-warm`, etc.)
 - Do not hard-code hex values in components — CSS variables only
-- Cohestra has one application appearance: light. Historical `.dark` token blocks are unreachable.
+- Dark mode tokens are in `.dark` (see Theme system below)
 
-## Application appearance
+## Theme system
 
-- Light only. There is no Light / Dark / System control and no ThemeToggle.
-- A blocking inline script in `app/layout.tsx` forces `color-scheme: light` and removes `.dark` on first paint.
-- Old `theme` / `cohestra-theme-operator` / `cohestra-theme-public-session` values and profile `themePreference` do not change the skin.
-- Brand accent remains a workspace setting. Public routes use `PublicFormLayout` — see `/register/[slug]`.
+- Tenant/operator and public surfaces: **Light / Dark / System** via **next-themes**, class-based dark mode on `<html>`
+- Blocking inline script in `app/layout.tsx` `<head>` prevents flash of wrong theme
+- Operator preference is stored in `cohestra-theme-operator` and the profile `themePreference`
+- Public surfaces use a per-tab session key (`cohestra-theme-public-session`)
+- ThemeToggle lives in the admin top bar, Settings → Appearance, and public/auth shells
+- **PlatformAdmin exception:** `/platform` and `/platform/**` (including `/platform/login`) are a route override to light only. Visiting PlatformAdmin must not write `themePreference` or operator/public storage.
 
 ## Authentication
 
@@ -20,7 +22,7 @@ Brand colors and typography are defined in `styles/brand-tokens.css` (sourced fr
 - Admin routes under `app/(admin)/` redirect to `/login` when unauthenticated
 - Use `useAuth().authFetch()` for authenticated API calls; expired sessions redirect to login with toast
 - Dev operator: `operator@cohestra.local` / `ChangeMe123!`
-- `PATCH /api/v1/admin/me/appearance` still updates brand accent. Stored `themePreference` is compatibility-only and does not change appearance.
+- Settings → Appearance saves to operator profile via `PATCH /api/v1/admin/me/appearance`; `ThemePreferenceSync` applies profile theme after login
 
 
 ## Getting Started

@@ -76,6 +76,11 @@ function sectionTips(activeId: SettingsNavKey | null): { title: string; body: st
         title: "Support ID",
         body: "Save your SUP issue number from the confirmation screen — it matches email subjects for faster replies.",
       };
+    case "settings-appearance":
+      return {
+        title: "Theme sync",
+        body: "Appearance preference syncs with the sun/moon toggle in the top bar on every page.",
+      };
     case "settings-team":
       return {
         title: "Seats",

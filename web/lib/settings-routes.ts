@@ -41,6 +41,7 @@ const SECTION_PATHS: Record<SettingsSectionId, string> = {
   "settings-domain": SETTINGS_DOMAIN_PATH,
   "settings-account": SETTINGS_PROFILE_PATH,
   "settings-support": SETTINGS_SUPPORT_PATH,
+  "settings-appearance": SETTINGS_APPEARANCE_PATH,
 };
 
 const TEAM_META: SettingsRouteMeta = {
@@ -80,8 +81,8 @@ const LEGACY_SECTION_ALIASES: Record<string, string> = {
   profile: SETTINGS_PROFILE_PATH,
   support: SETTINGS_SUPPORT_PATH,
   "settings-support": SETTINGS_SUPPORT_PATH,
-  appearance: SETTINGS_PROFILE_PATH,
-  "settings-appearance": SETTINGS_PROFILE_PATH,
+  appearance: SETTINGS_APPEARANCE_PATH,
+  "settings-appearance": SETTINGS_APPEARANCE_PATH,
   team: SETTINGS_TEAM_PATH,
   billing: SETTINGS_BILLING_PATH,
 };
@@ -205,10 +206,6 @@ export function resolveSettingsSearchRedirect(
       return null;
     }
     return pathWithQuery(getDefaultSettingsPath(isTenantAdmin), restQuery);
-  }
-
-  if (normalized === SETTINGS_APPEARANCE_PATH) {
-    return pathWithQuery(SETTINGS_PROFILE_PATH, restQuery);
   }
 
   return null;

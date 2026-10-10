@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { PlatformByline } from "@/components/layouts/platform-byline";
 import { MarketingWordmark } from "@/components/marketing/marketing-shell";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import type { PublishedSiteBranding } from "@/lib/site-seo-metadata";
 import { PLATFORM_LOGO_PATH } from "@/lib/brand-assets";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ type AuthFlowShellProps = {
   footer?: React.ReactNode;
   className?: string;
   siteBranding?: PublishedSiteBranding | null;
+  showAppearanceToggle?: boolean;
 };
 
 export function AuthFlowShell({
@@ -24,6 +26,7 @@ export function AuthFlowShell({
   footer,
   className,
   siteBranding = null,
+  showAppearanceToggle = true,
 }: AuthFlowShellProps) {
   const tenantName = siteBranding?.siteName?.trim();
   const logoUrl = siteBranding?.logoUrl ?? PLATFORM_LOGO_PATH;
@@ -31,7 +34,7 @@ export function AuthFlowShell({
 
   return (
     <div className="flex min-h-dvh flex-col bg-paper text-ink">
-      <header className="flex items-center gap-4 border-b border-line/80 px-5 py-4 sm:px-8">
+      <header className="flex items-center justify-between gap-4 border-b border-line/80 px-5 py-4 sm:px-8">
         {isTenantBranded ? (
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[10px] border border-line bg-paper-warm p-1.5">
@@ -52,6 +55,9 @@ export function AuthFlowShell({
         ) : (
           <MarketingWordmark />
         )}
+        {showAppearanceToggle ? (
+          <ThemeToggle variant="public" className="min-h-10 shrink-0 px-3" />
+        ) : null}
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-5 py-10 sm:px-8">
@@ -66,7 +72,7 @@ export function AuthFlowShell({
             </p>
           </div>
 
-          <div className="rounded-[16px] border border-line bg-paper p-6 shadow-[0_20px_40px_rgba(7,13,18,0.05)] sm:p-8">
+          <div className="rounded-[16px] border border-line bg-paper p-6 shadow-[0_20px_40px_rgba(7,13,18,0.05)] dark:shadow-[0_24px_48px_rgba(0,0,0,0.35)] sm:p-8">
             {children}
           </div>
 

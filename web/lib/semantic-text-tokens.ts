@@ -48,9 +48,27 @@ export const CONTRAST_PAIRS: ContrastPair[] = [
   { token: "--border-control on card", foreground: "--border-control", background: "--paper-warm", threshold: 3, intended: "input outline on cards", prohibited: "decorative --line", theme: "light" },
   { token: "--ring", foreground: "--ring", background: "--paper", threshold: 3, intended: "focus indicator", prohibited: "translucent ring-ring/30", theme: "light" },
   { token: "--ring on card", foreground: "--ring", background: "--paper-warm", threshold: 3, intended: "focus indicator on cards", prohibited: "translucent ring-ring/30", theme: "light" },
+  { token: "--ring (dark)", foreground: "--ring", background: "--paper", threshold: 3, intended: "dark focus indicator", prohibited: "translucent ring-ring/30", theme: "dark" },
+  { token: "--ring (dark card)", foreground: "--ring", background: "--paper-warm", threshold: 3, intended: "dark focus on cards", prohibited: "translucent ring-ring/30", theme: "dark" },
   { token: "--text on surface-danger", foreground: "--text", background: "--surface-danger", threshold: 4.5, intended: "toast error body", prohibited: "danger as long body on tint", theme: "light" },
   { token: "--text on surface-success", foreground: "--text", background: "--surface-success", threshold: 4.5, intended: "toast success body", prohibited: "success as long body when pair fails", theme: "light" },
   { token: "--text-muted on surface-success", foreground: "--text-muted", background: "--surface-success", threshold: 4.5, intended: "toast dismiss on success tint", prohibited: "disabled-as-metadata", theme: "light" },
+  { token: "--text (dark)", foreground: "--text", background: "--paper", threshold: 4.5, intended: "dark body", prohibited: "decorative atmosphere", theme: "dark" },
+  { token: "--text-muted (dark)", foreground: "--text-muted", background: "--paper", threshold: 4.5, intended: "dark helper", prohibited: "disabled-as-metadata", theme: "dark" },
+  { token: "--text-muted (dark card)", foreground: "--text-muted", background: "--paper-warm", threshold: 4.5, intended: "dark helper on cards", prohibited: "disabled-as-metadata", theme: "dark" },
+  { token: "--text-link (dark)", foreground: "--text-link", background: "--paper", threshold: 4.5, intended: "dark links", prohibited: "using dark --lagoon as body link", theme: "dark" },
+  { token: "--text-link (dark card)", foreground: "--text-link", background: "--paper-warm", threshold: 4.5, intended: "dark links on cards", prohibited: "using dark --lagoon as body link", theme: "dark" },
+  { token: "--text-on-lagoon (dark primary)", foreground: "--text-on-lagoon", background: "--primary", threshold: 4.5, intended: "dark primary button", prohibited: "white on #12877d", theme: "dark" },
+  { token: "--text-danger (dark)", foreground: "--text-danger", background: "--paper", threshold: 4.5, intended: "dark error eyebrow", prohibited: "raw red", theme: "dark" },
+  { token: "--text-danger (dark surface)", foreground: "--text-danger", background: "--surface-danger", threshold: 4.5, intended: "dark error toast eyebrow", prohibited: "long body when pair fails", theme: "dark" },
+  { token: "--text-warning (dark)", foreground: "--text-warning", background: "--paper", threshold: 4.5, intended: "dark warning eyebrow", prohibited: "light --warn on dark paper", theme: "dark" },
+  { token: "--text-success (dark)", foreground: "--text-success", background: "--paper", threshold: 4.5, intended: "dark success eyebrow", prohibited: "raw emerald", theme: "dark" },
+  { token: "--text-success (dark surface graphic)", foreground: "--text-success", background: "--surface-success", threshold: 3, intended: "success toast icon (graphic)", prohibited: "12px success label on dark tint", theme: "dark" },
+  { token: "--text-accent (dark)", foreground: "--text-accent", background: "--paper", threshold: 4.5, intended: "dark gold-as-small-text", prohibited: "raw --gold helper", theme: "dark" },
+  { token: "--border-control (dark)", foreground: "--border-control", background: "--paper", threshold: 3, intended: "dark input outline", prohibited: "decorative --line", theme: "dark" },
+  { token: "--text on dark surface-danger", foreground: "--text", background: "--surface-danger", threshold: 4.5, intended: "dark toast error body", prohibited: "danger as long body", theme: "dark" },
+  { token: "--text on dark surface-success", foreground: "--text", background: "--surface-success", threshold: 4.5, intended: "dark toast success body", prohibited: "success as long body when pair fails", theme: "dark" },
+  { token: "--text-muted on dark surface-success", foreground: "--text-muted", background: "--surface-success", threshold: 4.5, intended: "dark toast dismiss", prohibited: "disabled-as-metadata", theme: "dark" },
 ];
 
 export const MIGRATED_PRODUCT_FILES = [
@@ -262,7 +280,7 @@ export function buildCompositeRingRows(
 ): CompositeRingRow[] {
   const rows: CompositeRingRow[] = [];
   for (const alpha of [0.3, 0.5, 1] as const) {
-    for (const theme of ["light"] as const) {
+    for (const theme of ["light", "dark"] as const) {
       const vars = theme === "light" ? light : dark;
       for (const backgroundToken of ["--paper", "--paper-warm"] as const) {
         const ring = resolveColor("--ring", vars);
@@ -316,7 +334,7 @@ function parseDeclarations(block: string): Record<string, string> {
 export function parseBrandTokens(css: string): { light: Record<string, string>; dark: Record<string, string> } {
   return {
     light: parseDeclarations(extractBlock(css, ":root")),
-    dark: {},
+    dark: parseDeclarations(extractBlock(css, ".dark")),
   };
 }
 

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { buildBrandAccentStyle } from "@/lib/brand-accent";
@@ -57,6 +58,7 @@ function applyAccentVars(target: HTMLElement, style: Record<string, string>) {
 export function BrandAccentSync() {
   const pathname = usePathname();
   const { profile, status } = useAuth();
+  const { resolvedTheme } = useTheme();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -68,7 +70,11 @@ export function BrandAccentSync() {
       return;
     }
 
-    const style = buildBrandAccentStyle(profile?.brandAccentColor ?? null);
+    // Apply accent-tier CSS vars on admin routes only. Public pages keep default tokens.
+    const style = buildBrandAccentStyle(
+      profile?.brandAccentColor ?? null,
+      resolvedTheme === "dark"
+    );
 
     if (!style) {
       clearAccentVars(root);
@@ -76,7 +82,7 @@ export function BrandAccentSync() {
     }
 
     applyAccentVars(root, style as Record<string, string>);
-  }, [pathname, profile?.brandAccentColor, status]);
+  }, [pathname, profile?.brandAccentColor, resolvedTheme, status]);
 
   return null;
 }

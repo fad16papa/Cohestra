@@ -481,13 +481,10 @@ test.describe("Story 42.3 — Form Studio touch and builder controls", () => {
     await expect(page.locator("h1")).toHaveCount(1);
     await expect(page.getByRole("heading", { name: "Form builder", level: 2 })).toHaveCount(1);
 
-    await page.emulateMedia({ colorScheme: "dark" });
-    await expect(page.locator("html")).not.toHaveClass(/dark/);
+    await page.evaluate(() => document.documentElement.classList.add("dark"));
     await expect(nameHandle).toBeVisible();
-    await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "prefers-dark-ignored-1440.png"),
-    });
-    await page.emulateMedia({ colorScheme: "light" });
+    await page.screenshot({ path: path.join(evidenceDir, "viewports", "dark-1440.png") });
+    await page.evaluate(() => document.documentElement.classList.remove("dark"));
     await page.emulateMedia({ forcedColors: "active" });
     await expect(nameHandle).toBeVisible();
     await page.screenshot({

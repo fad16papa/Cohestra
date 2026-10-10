@@ -8,6 +8,7 @@ import {
   OPERATOR_THEME_STORAGE_KEY,
   PUBLIC_THEME_SESSION_KEY,
   THEME_STORAGE_KEY,
+  isPlatformLightOnlyPath,
   normalizeThemePreference,
   themeInitScript,
 } from "@/components/theme/theme-config";
@@ -19,57 +20,182 @@ function read(rel: string): string {
   return readFileSync(resolve(webRoot, rel), "utf8");
 }
 
-function runInitScript(htmlClass = "dark", colorScheme = "dark") {
+const PLATFORM_PATHS = [
+  "/platform",
+  "/platform/login",
+  "/platform/overview",
+  "/platform/tenants",
+  "/platform/tenants/abc",
+  "/platform/ops",
+  "/platform/support",
+  "/platform/support/1",
+  "/platform/audits",
+  "/platform/future-surface",
+] as const;
+
+const NON_PLATFORM_PATHS = [
+  "/login",
+  "/forgot-password",
+  "/reset-password",
+  "/signup",
+  "/register",
+  "/register/demo-marina-social-meetup",
+  "/dashboard",
+  "/settings/appearance",
+  "/invite/accept",
+  "/",
+] as const;
+
+type InitOptions = {
+  pathname: string;
+  htmlClass?: string;
+  colorScheme?: string;
+  prefersDark?: boolean;
+  operatorTheme?: string | null;
+  publicTheme?: string | null;
+};
+
+function runInitScript(options: InitOptions) {
+  const classSet = new Set((options.htmlClass ?? "").split(/\s+/).filter(Boolean));
+  const added: string[] = [];
   const removed: string[] = [];
   const root = {
     classList: {
+      add(name: string) {
+        added.push(name);
+        classSet.add(name);
+      },
       remove(name: string) {
         removed.push(name);
+        classSet.delete(name);
       },
       contains(name: string) {
-        return name === "dark" && !removed.includes("dark") && htmlClass.split(/\s+/).includes("dark");
+        return classSet.has(name);
       },
     },
-    style: { colorScheme },
+    style: { colorScheme: options.colorScheme ?? "dark" },
   };
-  const fn = new Function("document", themeInitScript);
-  fn({ documentElement: root });
-  return { root, removed };
+  const operator = options.operatorTheme ?? null;
+  const publicTheme = options.publicTheme ?? null;
+  const fn = new Function(
+    "document",
+    "location",
+    "window",
+    "localStorage",
+    "sessionStorage",
+    themeInitScript
+  );
+  fn(
+    { documentElement: root },
+    { pathname: options.pathname },
+    { matchMedia: () => ({ matches: Boolean(options.prefersDark) }) },
+    {
+      getItem(key: string) {
+        if (key === OPERATOR_THEME_STORAGE_KEY || key === "theme") {
+          return operator;
+        }
+        return null;
+      },
+    },
+    {
+      getItem() {
+        return publicTheme;
+      },
+    }
+  );
+  return { root, added, removed };
 }
 
-describe("light-only application appearance", () => {
-  it("forces light on first paint and never reads storage or prefers-color-scheme", () => {
-    expect(themeInitScript).not.toMatch(/localStorage|sessionStorage|matchMedia|prefers-color-scheme/);
-    expect(themeInitScript).toContain('classList.remove("dark")');
-    expect(themeInitScript).toContain('colorScheme="light"');
-
-    const { root, removed } = runInitScript("dark", "dark");
-    expect(removed).toContain("dark");
-    expect(root.classList.contains("dark")).toBe(false);
-    expect(root.style.colorScheme).toBe("light");
+describe("PlatformAdmin light-only route helper", () => {
+  it("locks /platform and every /platform/** path", () => {
+    for (const pathname of PLATFORM_PATHS) {
+      expect(isPlatformLightOnlyPath(pathname), pathname).toBe(true);
+      expect(themeInitScript).toContain("isPlatformPath");
+    }
   });
 
-  it("treats historical preference values as compatibility-only", () => {
+  it("does not lock tenant, public, or auth paths", () => {
+    for (const pathname of NON_PLATFORM_PATHS) {
+      expect(isPlatformLightOnlyPath(pathname), pathname).toBe(false);
+    }
+    expect(isPlatformLightOnlyPath(null)).toBe(false);
+    expect(isPlatformLightOnlyPath("")).toBe(false);
+    expect(isPlatformLightOnlyPath("/platformlogin")).toBe(false);
+  });
+});
+
+describe("PlatformAdmin first-paint lock", () => {
+  it("forces light on Platform before storage or OS dark can apply", () => {
+    for (const pathname of ["/platform/login", "/platform/overview", "/platform"]) {
+      const { root, removed, added } = runInitScript({
+        pathname,
+        htmlClass: "dark",
+        colorScheme: "dark",
+        prefersDark: true,
+        operatorTheme: "dark",
+        publicTheme: "dark",
+      });
+      expect(added, pathname).not.toContain("dark");
+      expect(removed, pathname).toContain("dark");
+      expect(root.classList.contains("dark"), pathname).toBe(false);
+      expect(root.style.colorScheme, pathname).toBe("light");
+    }
+  });
+
+  it("preserves existing tenant/public resolution off Platform", () => {
+    const tenantDark = runInitScript({
+      pathname: "/dashboard",
+      htmlClass: "",
+      colorScheme: "light",
+      prefersDark: false,
+      operatorTheme: "dark",
+    });
+    expect(tenantDark.added).toContain("dark");
+    expect(tenantDark.root.style.colorScheme).toBe("dark");
+
+    const tenantLight = runInitScript({
+      pathname: "/dashboard",
+      htmlClass: "dark",
+      colorScheme: "dark",
+      prefersDark: true,
+      operatorTheme: "light",
+    });
+    expect(tenantLight.removed).toContain("dark");
+    expect(tenantLight.root.style.colorScheme).toBe("light");
+
+    const tenantSystemDark = runInitScript({
+      pathname: "/dashboard",
+      htmlClass: "",
+      prefersDark: true,
+      operatorTheme: "system",
+    });
+    expect(tenantSystemDark.added).toContain("dark");
+    expect(tenantSystemDark.root.style.colorScheme).toBe("dark");
+
+    const loginPublicDark = runInitScript({
+      pathname: "/login",
+      htmlClass: "",
+      prefersDark: false,
+      publicTheme: "dark",
+    });
+    expect(loginPublicDark.added).toContain("dark");
+    expect(loginPublicDark.root.style.colorScheme).toBe("dark");
+  });
+});
+
+describe("tenant theme architecture remains supported", () => {
+  it("keeps Light / Dark / System preference values", () => {
     expect(normalizeThemePreference("dark")).toBe("dark");
     expect(normalizeThemePreference("system")).toBe("system");
     expect(normalizeThemePreference("light")).toBe("light");
-    expect(normalizeThemePreference("nope")).toBe("light");
+    expect(normalizeThemePreference("nope")).toBe("system");
     expect(THEME_STORAGE_KEY).toBe("theme");
     expect(OPERATOR_THEME_STORAGE_KEY).toBe("cohestra-theme-operator");
     expect(PUBLIC_THEME_SESSION_KEY).toBe("cohestra-theme-public-session");
   });
 
-  it("computes brand accent against the light surface without a dark branch", () => {
-    const source = read("lib/brand-accent.ts");
-    expect(source).not.toMatch(/resolvedTheme/);
-    expect(source).not.toMatch(/===\s*["']dark["']/);
-    const style = buildBrandAccentStyle("#2d6a4f");
-    expect(style).toBeDefined();
-    expect((style as Record<string, string>)["--primary-foreground"]).toBe("#ffffff");
-  });
-
-  it("removes theme-mode runtime and ThemeToggle consumers", () => {
-    const gone = [
+  it("keeps theme runtime, ThemeToggle consumers, and next-themes", () => {
+    const required = [
       "components/theme/theme-toggle.tsx",
       "components/theme/theme-provider.tsx",
       "components/theme/theme-preference-sync.tsx",
@@ -79,60 +205,65 @@ describe("light-only application appearance", () => {
       "components/settings/appearance-section.tsx",
       "lib/public-theme-storage.ts",
     ];
-    for (const rel of gone) {
-      expect(existsSync(resolve(webRoot, rel)), rel).toBe(false);
+    for (const rel of required) {
+      expect(existsSync(resolve(webRoot, rel)), rel).toBe(true);
     }
 
-    const consumers = [
-      "components/layouts/admin-top-bar.tsx",
-      "components/auth/auth-flow-shell.tsx",
-      "components/layouts/public-form-layout.tsx",
-      "components/marketing/site-page-renderer.tsx",
-      "app/layout.tsx",
-    ];
-    for (const rel of consumers) {
-      const source = read(rel);
-      expect(source, rel).not.toMatch(/ThemeToggle|ThemeProvider|ThemePreferenceSync|next-themes|useTheme/);
-    }
-
-    const pkg = read("package.json");
-    expect(pkg).not.toMatch(/next-themes/);
-
-    const layout = read("app/layout.tsx");
-    expect(layout).toContain('style={{ colorScheme: "light" }}');
-    expect(layout).toContain('<meta name="color-scheme" content="light" />');
-    expect(layout).toContain("ThemeScript");
-    expect(layout).toContain("BrandAccentSync");
-
-    const site = read("components/marketing/site-page-renderer.tsx");
-    expect(site).toContain("{cinemaFold ? (");
-    expect(site).not.toMatch(/ThemeToggle/);
+    expect(read("components/layouts/admin-top-bar.tsx")).toMatch(/ThemeToggle/);
+    expect(read("components/layouts/public-form-layout.tsx")).toMatch(/ThemeToggle/);
+    expect(read("components/marketing/site-page-renderer.tsx")).toMatch(/ThemeToggle/);
+    expect(read("components/auth/auth-flow-shell.tsx")).toMatch(/ThemeToggle/);
+    expect(read("components/auth/auth-flow-shell.tsx")).toMatch(/showAppearanceToggle = true/);
+    expect(read("components/auth/platform-login-page-client.tsx")).toContain(
+      "showAppearanceToggle={false}"
+    );
+    expect(read("app/layout.tsx")).toMatch(/ThemeProvider|ThemePreferenceSync|ThemeScript/);
+    expect(read("package.json")).toMatch(/next-themes/);
+    expect(read("app/layout.tsx")).not.toContain('style={{ colorScheme: "light" }}');
+    expect(read("app/layout.tsx")).not.toContain('<meta name="color-scheme" content="light" />');
   });
 
-  it("removes Settings Appearance and keeps Brand Accent plus Form Studio design", () => {
-    expect(settingsSections.some((section) => section.id === "settings-account")).toBe(true);
-    expect(settingsSections.some((section) => section.id === "settings-support")).toBe(true);
-    expect(settingsSections.some((section) => section.id === "settings-brand")).toBe(true);
+  it("keeps Settings Appearance and theme-aware brand accent", () => {
+    expect(settingsSections.some((section) => section.id === "settings-appearance")).toBe(true);
     expect(settingsSections.some((section) => /appearance/i.test(section.id + section.label))).toBe(
-      false
+      true
     );
 
     const tokens = read("styles/brand-tokens.css");
-    expect(tokens).not.toMatch(/^\.dark\s*\{/m);
-    expect(tokens).not.toMatch(/invert surface\/text tokens/);
+    expect(tokens).toMatch(/^\.dark\s*\{/m);
 
-    expect(existsSync(resolve(webRoot, "components/activities/form-composition-builder.tsx"))).toBe(
-      true
+    const source = read("lib/brand-accent.ts");
+    expect(source).toMatch(/isDark/);
+    const light = buildBrandAccentStyle("#2d6a4f", false);
+    const dark = buildBrandAccentStyle("#2d6a4f", true);
+    expect(light).toBeDefined();
+    expect(dark).toBeDefined();
+    expect((light as Record<string, string>)["--primary"]).not.toBe(
+      (dark as Record<string, string>)["--primary"]
     );
-    expect(existsSync(resolve(webRoot, "components/activities/activity-design-tab.tsx"))).toBe(true);
-    expect(existsSync(resolve(webRoot, "lib/registration-experience.ts"))).toBe(true);
   });
 
-  it("aliases Platform semantic tokens to the light global system", () => {
+  it("aliases Platform semantic tokens to the global system and skips preference sync on Platform", () => {
     const source = read("app/(platform)/layout.tsx");
     expect(source).toContain('"--plat-ink": "var(--ink)"');
     expect(source).toContain('"--plat-paper": "var(--paper)"');
     expect(source).toContain('"--plat-paper-warm": "var(--paper-warm)"');
     expect(source).not.toMatch(/#070d12|#141c24/);
+
+    const sync = read("components/theme/theme-preference-sync.tsx");
+    expect(sync).toMatch(/isPlatformLightOnlyPath/);
+    expect(sync).toMatch(/return;/);
+
+    const provider = read("components/theme/theme-provider.tsx");
+    expect(provider).toMatch(/forcedTheme/);
+    expect(provider).toMatch(/isPlatformLightOnlyPath/);
+  });
+
+  it("keeps Form Studio design modules", () => {
+    expect(existsSync(resolve(webRoot, "components/activities/form-composition-builder.tsx"))).toBe(
+      true
+    );
+    expect(existsSync(resolve(webRoot, "components/activities/activity-design-tab.tsx"))).toBe(true);
+    expect(existsSync(resolve(webRoot, "lib/registration-experience.ts"))).toBe(true);
   });
 });

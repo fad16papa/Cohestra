@@ -4,6 +4,7 @@ import {
   Frame,
   Globe,
   LifeBuoy,
+  Palette,
   Settings2,
   Sparkles,
   User,
@@ -17,7 +18,8 @@ export type SettingsSectionId =
   | "settings-embed"
   | "settings-domain"
   | "settings-account"
-  | "settings-support";
+  | "settings-support"
+  | "settings-appearance";
 
 export type SettingsSectionGroup = "workspace" | "personal";
 
@@ -97,6 +99,13 @@ export const settingsSections: SettingsSectionMeta[] = [
     description: "Contact Creativorare and track requests.",
     group: "personal",
     icon: LifeBuoy,
+  },
+  {
+    id: "settings-appearance",
+    label: "Appearance",
+    description: "Light, dark, or system theme.",
+    group: "personal",
+    icon: Palette,
   },
 ];
 
