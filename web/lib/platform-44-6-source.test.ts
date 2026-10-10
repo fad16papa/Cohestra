@@ -73,21 +73,25 @@ describe("Story 44.6 tenant timeline source contract", () => {
         { source: "paddle_webhook_deliveries", state: "missing_instrumentation", itemCount: 0 },
       ],
     };
-    const ok = await getPlatformTenantTimeline(async () =>
-      new Response(JSON.stringify(payload), { status: 200 })
+    const tenantId = payload.tenantId;
+    const ok = await getPlatformTenantTimeline(
+      async () => new Response(JSON.stringify(payload), { status: 200 }),
+      tenantId
     );
     expect(ok.items[0]?.type).toBe("audit");
     expect(ok.sources[0]?.state).toBe("missing_instrumentation");
 
     await expect(
-      getPlatformTenantTimeline(async () =>
-        new Response(
-          JSON.stringify({
-            ...payload,
-            items: [{ ...payload.items[0], type: "secret_dump" }],
-          }),
-          { status: 200 }
-        )
+      getPlatformTenantTimeline(
+        async () =>
+          new Response(
+            JSON.stringify({
+              ...payload,
+              items: [{ ...payload.items[0], type: "secret_dump" }],
+            }),
+            { status: 200 }
+          ),
+        tenantId
       )
     ).rejects.toThrow(/timeline type/i);
   });
