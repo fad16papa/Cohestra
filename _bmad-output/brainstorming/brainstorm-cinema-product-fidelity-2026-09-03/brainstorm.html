@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cinema Fidelity — Postcard vs Product Window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ink: #1a2420;
+    --ink-soft: #3d4a44;
+    --lagoon: #0d8a7c;
+    --lagoon-bright: #14b8a6;
+    --lagoon-glow: rgba(13, 138, 124, 0.22);
+    --coral: #e85d4c;
+    --amber: #d4a017;
+    --stage: #1e2824;
+    --stage-deep: #121916;
+    --paper: #e8ece8;
+    --paper-bright: #f4f7f4;
+    --postcard: #c5b8a4;
+    --wire: #8a9a92;
+    --frame: #fafcfb;
+    --hairline: rgba(26, 36, 32, 0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+    background: var(--stage-deep);
+    color: var(--paper-bright);
+    line-height: 1.45;
+    overflow-x: hidden;
+  }
+
+  /* grain overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .serif { font-family: "Instrument Serif", Georgia, serif; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  /* ——— HERO ——— */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    position: relative;
+    padding: 3rem 1.5rem 4rem;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 40%, rgba(13, 138, 124, 0.18), transparent 55%),
+      radial-gradient(ellipse 50% 40% at 20% 80%, rgba(232, 93, 76, 0.08), transparent 50%),
+      linear-gradient(165deg, var(--stage) 0%, var(--stage-deep) 100%);
+  }
+
+  .hero-stamp {
+    position: absolute;
+    top: 1.75rem;
+    left: 1.75rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--lagoon-bright);
+    border: 1px solid var(--lagoon);
+    padding: 0.35rem 0.75rem;
+    opacity: 0;
+    animation: fadeUp 0.8s 0.2s ease forwards;
+  }
+
+  .hero-inner {
+    max-width: 920px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .brand {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: clamp(3.5rem, 12vw, 7.5rem);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 0.92;
+    color: var(--paper-bright);
+    opacity: 0;
+    animation: fadeUp 0.9s 0.35s ease forwards;
+  }
+
+  .brand em {
+    font-style: italic;
+    color: var(--lagoon-bright);
+  }
+
+  .hero-sub {
+    margin-top: 1.5rem;
+    font-size: clamp(1rem, 2.2vw, 1.25rem);
+    color: var(--wire);
+    max-width: 28em;
+    margin-inline: auto;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.55s ease forwards;
+  }
+
+  .hero-cta {
+    margin-top: 2.5rem;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 0.9s 0.75s ease forwards;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.25rem;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s, color 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--lagoon);
+    color: var(--paper-bright);
+  }
+  .btn-primary:hover { background: var(--lagoon-bright); transform: translateY(-2px); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--paper);
+    border: 1px solid var(--hairline);
+    border-color: rgba(244, 247, 244, 0.25);
+  }
+  .btn-ghost:hover { border-color: var(--lagoon-bright); color: var(--lagoon-bright); }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--wire);
+    opacity: 0;
+    animation: fadeUp 1s 1.2s ease forwards, bob 2.4s 2s ease-in-out infinite;
+  }
+
+  /* ——— DIAGNOSIS: POSTCARD VS WINDOW ——— */
+  .duel {
+    padding: 5rem 1.5rem 6rem;
+    background:
+      linear-gradient(180deg, var(--stage-deep), #1a221e 40%, #243029);
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--lagoon-bright);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-lede {
+    color: var(--wire);
+    max-width: 36em;
+    margin-bottom: 3rem;
+    font-size: 1.05rem;
+  }
+
+  .duel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    align-items: stretch;
+  }
+
+  @media (max-width: 800px) {
+    .duel-grid { grid-template-columns: 1fr; }
+  }
+
+  .card-panel {
+    position: relative;
+    border-radius: 4px;
+    padding: 1.5rem;
+    min-height: 420px;
+    overflow: hidden;
+  }
+
+  /* POSTCARD side — cheap wireframe */
+  .postcard {
+    background:
+      repeating-linear-gradient(
+        -12deg,
+        transparent,
+        transparent 11px,
+        rgba(0,0,0,0.03) 11px,
+        rgba(0,0,0,0.03) 12px
+      ),
+      linear-gradient(145deg, #d4c8b4, #b8ab96);
+    color: var(--ink);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(0,0,0,0.08);
+    transform: rotate(-1.5deg);
+    transition: transform 0.4s ease;
+  }
+  .postcard:hover { transform: rotate(-0.5deg) scale(1.01); }
+
+  .postcard .stamp-corner {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 52px;
+    height: 64px;
+    border: 2px dashed rgba(26, 36, 32, 0.35);
+    display: grid;
+    place-items: center;
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(26, 36, 32, 0.45);
+    transform: rotate(8deg);
+  }
+
+  .postcard h3 {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: 1.75rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .postcard .tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--coral);
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+  }
+
+  .wire-ui {
+    border: 1.5px dashed var(--wire);
+    background: rgba(255,255,255,0.35);
+    padding: 0.85rem;
+    margin-top: 1rem;
+    position: relative;
+  }
+
+  .wire-ui::before {
+    content: "01";
+    position: absolute;
+    top: -0.4em;
+    left: 0.5rem;
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: 3.5rem;
+    color: rgba(26, 36, 32, 0.12);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .wire-row {
+    height: 10px;
+    background: rgba(26, 36, 32, 0.12);
+    margin-bottom: 8px;
+    border-radius: 2px;
+  }
+  .wire-row.short { width: 55%; }
+  .wire-row.med { width: 78%; }
+
+  .wire-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #a8c4b8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    color: #fff;
+    margin-right: 4px;
+  }
+
+  .wire-pills {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .wire-pill {
+    font-size: 0.6rem;
+    padding: 0.25rem 0.55rem;
+    background: rgba(26,36,32,0.08);
+    border-radius: 999px;
+    color: var(--ink-soft);
+  }
+
+  .wire-caption {
+    margin-top: 1.25rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-family: "Instrument Serif", Georgia, serif;
+  }
+
+  .fail-list {
+    list-style: none;
+    margin-top: 1rem;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+  }
+  .fail-list li {
+    padding: 0.3rem 0;
+    padding-left: 1.1rem;
+    position: relative;
+  }
+  .fail-list li::before {
+    content: "×";
+    position: absolute;
+    left: 0;
+    color: var(--coral);
+    font-weight: 700;
+  }
+
+  /* PRODUCT WINDOW side */
+  .product {
+    background: var(--stage);
+    color: var(--paper-bright);
+    box-shadow:
+      0 0 0 1px rgba(20, 184, 166, 0.25),
+      0 30px 60px rgba(0,0,0,0.5),
+      0 0 80px var(--lagoon-glow);
+    transform: rotate(1deg);
+    transition: transform 0.4s ease;
+  }
+  .product:hover { transform: rotate(0.3deg) scale(1.01); }
+
+  .product .tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--lagoon-bright);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .product h3 {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .browser {
+    background: var(--frame);
+    color: var(--ink);
+    border-radius: 8px 8px 4px 4px;
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+  }
+
+  .browser-bar {
+    background: #e2e8e4;
+    padding: 0.5rem 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid rgba(26,36,32,0.08);
+  }
+
+  .url-bar {
+    flex: 1;
+    background: #fff;
+    border-radius: 4px;
+    padding: 0.35rem 0.65rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .url-bar .lock {
+    width: 8px;
+    height: 10px;
+    border: 1.5px solid var(--lagoon);
+    border-radius: 2px 2px 0 0;
+    position: relative;
+  }
+  .url-bar .lock::after {
+    content: "";
+    position: absolute;
+    bottom: -3px;
+    left: -1.5px;
+    width: 8px;
+    height: 5px;
+    background: var(--lagoon);
+    border-radius: 1px;
+  }
+
+  .app-chrome {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    min-height: 200px;
+  }
+
+  .ghost-side {
+    background: #1a2420;
+    padding: 0.5rem 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: center;
+  }
+  .ghost-side span {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+  }
+  .ghost-side span.active {
+    background: var(--lagoon);
+    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.4);
+  }
+
+  .app-body {
+    padding: 0.65rem;
+    background: var(--paper-bright);
+  }
+
+  .in-frame-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.55rem;
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 0.4rem;
+  }
+  .in-frame-tabs button {
+    font: inherit;
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.45rem;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: default;
+    border-radius: 3px;
+  }
+  .in-frame-tabs button.on {
+    background: var(--lagoon-glow);
+    color: var(--lagoon);
+  }
+
+  .dense-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .drow {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.35rem;
+    font-size: 0.62rem;
+    border-radius: 3px;
+    background: #fff;
+    border: 1px solid transparent;
+  }
+  .drow.selected {
+    border-color: var(--lagoon);
+    box-shadow: 0 0 0 2px var(--lagoon-glow);
+    background: #f0faf8;
+  }
+  .drow .av {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5a9e8e, #2d6b5f);
+    flex-shrink: 0;
+  }
+  .drow .av.s2 { background: linear-gradient(135deg, #c4a35a, #8a6b2e); }
+  .drow .av.s3 { background: linear-gradient(135deg, #7a8fb0, #3d5270); }
+  .drow .av.s4 { background: linear-gradient(135deg, #b07a7a, #703d3d); }
+  .drow .name { font-weight: 600; color: var(--ink); }
+  .drow .meta { color: var(--wire); margin-left: auto; font-family: "IBM Plex Mono", monospace; font-size: 0.55rem; }
+
+  .product-caption {
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--wire);
+    font-family: "Instrument Serif", Georgia, serif;
+    font-style: italic;
+  }
+
+  /* ——— COMBO E→A ——— */
+  .combo {
+    padding: 5rem 1.5rem 6rem;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 0%, rgba(13, 138, 124, 0.12), transparent 60%),
+      var(--stage-deep);
+    position: relative;
+  }
+
+  .combo-wrap {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .combo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: linear-gradient(90deg, var(--lagoon), #0a6b60);
+    color: #fff;
+    padding: 0.6rem 1.25rem;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px var(--lagoon-glow);
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .combo-badge.visible {
+    animation: stampIn 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+  }
+
+  .combo-arrow {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.4rem;
+    opacity: 0.9;
+  }
+
+  .combo-path {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    align-items: stretch;
+    margin-top: 2rem;
+  }
+
+  @media (max-width: 700px) {
+    .combo-path { grid-template-columns: 1fr; }
+    .combo-path .path-join { display: none; }
+  }
+
+  .path-card {
+    background: rgba(244, 247, 244, 0.04);
+    border: 1px solid rgba(244, 247, 244, 0.1);
+    padding: 1.5rem;
+    border-radius: 4px;
+  }
+
+  .path-card h4 {
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.5rem;
+  }
+
+  .path-card .name {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .path-card ul {
+    list-style: none;
+    font-size: 0.85rem;
+    color: var(--wire);
+  }
+  .path-card ul li {
+    padding: 0.35rem 0;
+    padding-left: 1rem;
+    position: relative;
+  }
+  .path-card ul li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: var(--lagoon-bright);
+  }
+
+  .path-join {
+    display: grid;
+    place-items: center;
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: 2.5rem;
+    font-style: italic;
+    color: var(--lagoon-bright);
+  }
+
+  .fusion-note {
+    margin-top: 2rem;
+    padding: 1.25rem 1.5rem;
+    border-left: 3px solid var(--lagoon);
+    background: rgba(13, 138, 124, 0.08);
+    font-size: 1rem;
+    color: var(--paper);
+  }
+  .fusion-note strong {
+    color: var(--lagoon-bright);
+    font-weight: 600;
+  }
+
+  /* ——— P0 / P1 ——— */
+  .priorities {
+    padding: 5rem 1.5rem 6rem;
+    background: #243029;
+  }
+
+  .pri-wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .pri-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-top: 2.5rem;
+  }
+
+  @media (max-width: 700px) {
+    .pri-grid { grid-template-columns: 1fr; }
+  }
+
+  .pri-col {
+    position: relative;
+    padding: 1.75rem;
+    border-radius: 4px;
+  }
+
+  .pri-col.p0 {
+    background: linear-gradient(160deg, #2a1f1c, #1e2824);
+    border: 1px solid rgba(232, 93, 76, 0.35);
+    box-shadow: 0 0 40px rgba(232, 93, 76, 0.08);
+  }
+
+  .pri-col.p1 {
+    background: linear-gradient(160deg, #1c2a28, #1e2824);
+    border: 1px solid rgba(20, 184, 166, 0.3);
+    box-shadow: 0 0 40px var(--lagoon-glow);
+  }
+
+  .pri-mark {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    margin-bottom: 0.75rem;
+  }
+  .p0 .pri-mark { color: var(--coral); }
+  .p1 .pri-mark { color: var(--lagoon-bright); }
+
+  .pri-col h3 {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: 1.65rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .pri-items {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .pri-items li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    font-size: 0.9rem;
+    color: var(--paper);
+  }
+
+  .pri-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.7rem;
+    color: var(--wire);
+    padding-top: 0.15rem;
+  }
+
+  .pri-items li em {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-style: italic;
+    color: var(--lagoon-bright);
+  }
+
+  /* ——— ROOT + HANDOFF ——— */
+  .closing {
+    padding: 5rem 1.5rem 7rem;
+    background:
+      linear-gradient(180deg, #243029, var(--stage-deep));
+    text-align: center;
+  }
+
+  .closing-inner {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .closing blockquote {
+    font-family: "Instrument Serif", Georgia, serif;
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-style: italic;
+    line-height: 1.3;
+    color: var(--paper-bright);
+    margin-bottom: 1.5rem;
+  }
+
+  .closing .root {
+    font-size: 0.95rem;
+    color: var(--wire);
+    margin-bottom: 2.5rem;
+  }
+
+  .handoff {
+    display: inline-block;
+    border: 1px solid rgba(244, 247, 244, 0.2);
+    padding: 1.25rem 1.75rem;
+    text-align: left;
+    font-size: 0.85rem;
+    color: var(--paper);
+  }
+  .handoff .mono {
+    color: var(--lagoon-bright);
+    font-size: 0.75rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .footer {
+    margin-top: 4rem;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--wire);
+  }
+
+  /* ——— MOTION ——— */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes bob {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(6px); }
+  }
+
+  @keyframes stampIn {
+    0% { opacity: 0; transform: translateY(12px) scale(0.92) rotate(-3deg); }
+    70% { transform: translateY(-2px) scale(1.04) rotate(1deg); }
+    100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .reveal.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* density meter interactive */
+  .meter {
+    margin-top: 2.5rem;
+    max-width: 1000px;
+    margin-inline: auto;
+    padding: 1.25rem 1.5rem;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(244,247,244,0.08);
+    border-radius: 4px;
+  }
+  .meter-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--wire);
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .meter-track {
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--coral), var(--amber), var(--lagoon-bright));
+    border-radius: 4px;
+    transition: width 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .meter.in .meter-fill { width: 92%; }
+  .meter-ends {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--wire);
+  }
+  .meter-ends span:last-child { color: var(--lagoon-bright); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-stamp mono">Keepsake · 2026-09-03</div>
+  <div class="hero-inner">
+    <h1 class="brand">Cohestra<br /><em>Cinema</em></h1>
+    <p class="hero-sub">A brainstorm keepsake: why <span class="mono">/#crm</span> still reads as a postcard wireframe — and the path to a real product window.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#combo">COMBO E→A</a>
+      <a class="btn btn-ghost" href="#priorities">P0 / P1</a>
+    </div>
+  </div>
+  <div class="scroll-hint mono">Scroll the stage</div>
+</header>
+
+<section class="duel" id="duel">
+  <div style="max-width:1100px;margin:0 auto 0;">
+    <p class="section-label reveal">Failure analysis</p>
+    <h2 class="section-title reveal">Postcard vs product window</h2>
+    <p class="section-lede reveal">Same DemoClub data. Two readings. One feels like a pitch deck glued to paper. The other feels like you opened the app.</p>
+  </div>
+
+  <div class="duel-grid">
+    <article class="card-panel postcard reveal">
+      <div class="stamp-corner mono">CHEAP</div>
+      <span class="tag">What ships today</span>
+      <h3>Orphaned fragment</h3>
+      <div class="wire-ui">
+        <div style="display:flex;align-items:center;margin-bottom:0.6rem;">
+          <span class="wire-avatar">E</span>
+          <span class="wire-avatar" style="background:#c4a882">S</span>
+          <span class="wire-avatar" style="background:#8a9eb8">J</span>
+        </div>
+        <div class="wire-row med"></div>
+        <div class="wire-row"></div>
+        <div class="wire-row short"></div>
+        <div class="wire-pills">
+          <span class="wire-pill">✓ Feature A</span>
+          <span class="wire-pill">✓ Feature B</span>
+          <span class="wire-pill">CHAPTER 2 OF 6</span>
+        </div>
+      </div>
+      <p class="wire-caption">“SCROLL TO CONTINUE” graffiti · mint gradient · checklist brochure</p>
+      <ul class="fail-list">
+        <li>No URL bar — cropped widgets on paper-warm</li>
+        <li>Chapter pedagogy screams pitch deck</li>
+        <li>Sparse density = wireframe atmosphere</li>
+        <li>Seek pills float as marketing tabs</li>
+      </ul>
+    </article>
+
+    <article class="card-panel product reveal">
+      <span class="tag">Where we’re going</span>
+      <h3>Inhabited window</h3>
+      <div class="browser">
+        <div class="browser-bar">
+          <div class="url-bar">
+            <span class="lock"></span>
+            <span>riverside-rec.cohestra.app/clients</span>
+          </div>
+        </div>
+        <div class="app-chrome">
+          <aside class="ghost-side" aria-hidden="true">
+            <span></span><span class="active"></span><span></span><span></span>
+          </aside>
+          <div class="app-body">
+            <div class="in-frame-tabs">
+              <button class="on" type="button">Clients</button>
+              <button type="button">Follow-up</button>
+              <button type="button">Dashboard</button>
+              <button type="button">Campaigns</button>
+            </div>
+            <div class="dense-rows">
+              <div class="drow selected"><span class="av"></span><span class="name">Elena Voss</span><span class="meta">2d ago</span></div>
+              <div class="drow"><span class="av s2"></span><span class="name">Sam Okonkwo</span><span class="meta">3d ago</span></div>
+              <div class="drow"><span class="av s3"></span><span class="name">Jordan Lee</span><span class="meta">5d ago</span></div>
+              <div class="drow"><span class="av s4"></span><span class="name">Priya Nair</span><span class="meta">1w ago</span></div>
+              <div class="drow"><span class="av"></span><span class="name">Marcus Chen</span><span class="meta">1w ago</span></div>
+              <div class="drow"><span class="av s2"></span><span class="name">Aisha Rahman</span><span class="meta">2w ago</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="product-caption">Feeling → Scene → Proof · ProductFrame · denser than brochure</p>
+    </article>
+  </div>
+
+  <div class="meter reveal" id="fidelity-meter">
+    <div class="meter-label">
+      <span>Fidelity axis</span>
+      <span class="mono" id="meter-pct">0%</span>
+    </div>
+    <div class="meter-track"><div class="meter-fill" id="meter-fill"></div></div>
+    <div class="meter-ends">
+      <span>Postcard wireframe</span>
+      <span>Apple-pin product window</span>
+    </div>
+  </div>
+</section>
+
+<section class="combo" id="combo">
+  <div class="combo-wrap">
+    <p class="section-label reveal">Chosen direction</p>
+    <div class="combo-badge reveal" id="combo-badge">
+      COMBO E <span class="combo-arrow">→</span> A
+    </div>
+    <h2 class="section-title reveal">Anti-cheap emergency,<br />then Apple Real</h2>
+    <p class="section-lede reveal">Morphological Analysis locked the fusion: kill the loudest cheap signals first, then raise density and craft to Apple/Linear fidelity.</p>
+
+    <div class="combo-path">
+      <div class="path-card reveal">
+        <h4>Start — Combo E</h4>
+        <div class="name">Anti-cheap emergency</div>
+        <ul>
+          <li>Browser chrome on every room</li>
+          <li>Denser mounts now</li>
+          <li>Kill chapter chrome NOW</li>
+          <li>Local hero photo (or omit Website)</li>
+          <li>Move seek pills inside the frame</li>
+        </ul>
+      </div>
+      <div class="path-join reveal">→</div>
+      <div class="path-card reveal">
+        <h4>Arrive — Combo A</h4>
+        <div class="name">Apple Real</div>
+        <ul>
+          <li>Admin-parity density</li>
+          <li>Feeling → Scene → Proof copy</li>
+          <li>Synthetic portraits</li>
+          <li>Pin-scrub + in-frame tabs</li>
+          <li>Zero pedagogy graffiti</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="fusion-note reveal">
+      <strong>Root cause:</strong> unfinished Live Proof Cinema contract — chapter pedagogy still ships; mounts are orphaned sparse fragments without ProductFrame. DemoClub data alone did not buy fidelity.
+    </p>
+  </div>
+</section>
+
+<section class="priorities" id="priorities">
+  <div class="pri-wrap">
+    <p class="section-label reveal">Encode these first</p>
+    <h2 class="section-title reveal">P0 stamps trust.<br />P1 fills the frame.</h2>
+    <p class="section-lede reveal">Visual fidelity is an acceptance criterion. If Admin reads cheap, the story fails — even when DemoClub invariants pass.</p>
+
+    <div class="pri-grid">
+      <div class="pri-col p0 reveal">
+        <div class="pri-mark">P0 · NON-NEGOTIABLE</div>
+        <h3>Kill graffiti. Frame the product.</h3>
+        <ul class="pri-items">
+          <li>
+            <span class="pri-num">01</span>
+            <span>Remove all chapter pedagogy — watermarks, <em>CHAPTER N OF 6</em>, SCROLL TO CONTINUE. Feeling titles only.</span>
+          </li>
+          <li>
+            <span class="pri-num">02</span>
+            <span>Mandatory <em>ProductFrame</em> + URL bar (<span class="mono" style="color:var(--lagoon-bright);font-size:0.8em">riverside-rec.cohestra.app/…</span>) on every room.</span>
+          </li>
+          <li>
+            <span class="pri-num">03</span>
+            <span>Replace checklist stack with Feeling → Scene → Proof. Shrink copy; stage ~65–70%.</span>
+          </li>
+          <li>
+            <span class="pri-num">04</span>
+            <span>Layered elevation: stage / frame / panel / chip. Product window brighter than stage.</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="pri-col p1 reveal">
+        <div class="pri-mark">P1 · RAISE THE CRAFT</div>
+        <h3>Density, faces, in-frame nav.</h3>
+        <ul class="pri-items">
+          <li>
+            <span class="pri-num">01</span>
+            <span>Admin-parity density quotas — cinema-dense tokens, not empty-state spacing.</span>
+          </li>
+          <li>
+            <span class="pri-num">02</span>
+            <span>Synthetic portraits (Elena / Sam / Jordan / Priya) + local <em>riverside-hero.webp</em>. Omit Website until photo exists.</span>
+          </li>
+          <li>
+            <span class="pri-num">03</span>
+            <span>Seek pills become in-frame module switcher inside ProductFrame top bar.</span>
+          </li>
+          <li>
+            <span class="pri-num">04</span>
+            <span>Paint selected row / hover / focus statically. Climax rooms get richer chrome.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="closing-inner">
+    <blockquote class="reveal">“Boringly like <span class="mono" style="font-style:normal;font-size:0.85em">/clients</span> = trustworthy.”</blockquote>
+    <p class="root reveal">Reorder Epic 33: <strong style="color:var(--lagoon-bright);font-weight:600">33.2 → 33.3 first</strong> (kill-chapter, then ProductFrame). Data fills the frame — it does not invent the frame.</p>
+    <div class="handoff reveal">
+      <span class="mono">HANDOFF → bmad-ux Update</span>
+      Spec: <span class="mono">ux-cohestra-2026-09-01</span><br />
+      Direction: COMBO E→A · Visual fidelity ACs · Stage, not magazine.
+    </div>
+    <p class="footer reveal">Brainstorm keepsake · Cinema product fidelity · Cohestra</p>
+  </div>
+</section>
+
+<script>
+(function () {
+  const reveals = document.querySelectorAll(".reveal");
+  const meter = document.getElementById("fidelity-meter");
+  const meterPct = document.getElementById("meter-pct");
+  const comboBadge = document.getElementById("combo-badge");
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add("in");
+        if (e.target === meter) {
+          meter.classList.add("in");
+          let n = 0;
+          const t = setInterval(() => {
+            n += 4;
+            if (n >= 92) { n = 92; clearInterval(t); }
+            meterPct.textContent = n + "%";
+          }, 40);
+        }
+        if (e.target === comboBadge || e.target.id === "combo-badge") {
+          comboBadge.classList.add("visible");
+        }
+        io.unobserve(e.target);
+      });
+    },
+    { threshold: 0.18, rootMargin: "0px 0px -40px 0px" }
+  );
+
+  reveals.forEach((el) => io.observe(el));
+  if (comboBadge) io.observe(comboBadge);
+  if (meter) io.observe(meter);
+
+  // Subtle parallax on duel cards
+  const postcard = document.querySelector(".postcard");
+  const product = document.querySelector(".product");
+  if (postcard && product && window.matchMedia("(pointer:fine)").matches) {
+    document.querySelector(".duel").addEventListener("mousemove", (ev) => {
+      const r = ev.currentTarget.getBoundingClientRect();
+      const x = (ev.clientX - r.left) / r.width - 0.5;
+      const y = (ev.clientY - r.top) / r.height - 0.5;
+      postcard.style.transform = `rotate(${-1.5 + x * 2}deg) translate(${x * -6}px, ${y * -4}px)`;
+      product.style.transform = `rotate(${1 + x * -1.5}deg) translate(${x * 8}px, ${y * 5}px)`;
+    });
+  }
+})();
+</script>
+</body>
+</html>
