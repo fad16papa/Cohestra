@@ -2,15 +2,18 @@
 id: 44.7
 key: 44-7-platform-wide-searchable-audits
 title: Platform-wide Searchable Audits
-status: review
+status: done
 epic: 44
 created: 2026-10-10
 baseline_commit: b85bb026afa8b30dbdff81452caf473e84059a81
+accepted_commit: ac15a79a1fba9aa3346f5978884b7f5a25a3f419
+accepted_current_head: 048a22a76c4c7894f8cefaf7f7f85152daa03b35
+implementation_merge: 520189f6087e2071b15587a15b239b4425371fe9
 ---
 
 # Story 44.7: Platform-wide Searchable Audits
 
-Status: in-progress
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -110,6 +113,17 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 - Local integration: PlatformAuditSearch + TenantAuthz + isolation audit test
 - Frontend vitest 44.3/44.6/44.7/43.4 source contracts
 - Playwright `platform-ops-44-7` with `E2E_LIVE_STACK=1`
+
+### Completion Notes List
+
+- Additive `GET /api/v1/platform/audits` and `GET /api/v1/platform/audits/export` (PlatformAdminOnly). TenantAdmin/TenantMember 403. Anonymous 401.
+- Allow-list DTO/CSV only: id, actorUserId, actorEmail, tenantId, action, reason, createdAt. DetailsJson omitted (sentinel absent JSON+CSV).
+- Filters: action name-only (numeric `0`/`1` → 400), tenantId exact GUID, actorEmail case-insensitive exact, from/to inclusive UTC; from>to → 400. Shared normalizer for list and export.
+- Pagination default 25 / max 50. Order CreatedAt DESC, Id DESC.
+- Export Take(5001); >5000 → 400. Formula prefix `= + - @` / tab / CR / LF; `;` quoted. Filename UTC date only.
+- `/platform/audits` + Audits nav aria-current. `/platform` remains tenant directory. Tenant detail Recent audit and Timeline preserved. No self-audit on GET.
+- 44.8–44.9 not started.
+- Merged PR #426. Accepted implementation/test HEAD `ac15a79a1fba9aa3346f5978884b7f5a25a3f419`. Accepted current HEAD `048a22a76c4c7894f8cefaf7f7f85152daa03b35` (docs pin only). Main merge `520189f6087e2071b15587a15b239b4425371fe9`. Exact-head CI `38017899545` green. Post-merge main CI `38018600033` green. Deploy remains pre-existing Epic 19. Epic 44 stays in-progress. Stories 44.8–44.9 remain backlog.
 
 ## Exclusions
 
