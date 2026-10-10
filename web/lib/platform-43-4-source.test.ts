@@ -61,7 +61,7 @@ describe("Story 43.4 Platform source contract", () => {
     expect(HEADER.indexOf('label: "Overview"')).toBeLessThan(HEADER.indexOf('label: "Tenants"'));
     expect(HEADER.indexOf('label: "Tenants"')).toBeLessThan(HEADER.indexOf('label: "Operations"'));
     expect(HEADER.indexOf('label: "Operations"')).toBeLessThan(HEADER.indexOf('label: "Support"'));
-    expect(HEADER).not.toContain("Audits");
+    expect(HEADER.indexOf('label: "Support"')).toBeLessThan(HEADER.indexOf('label: "Audits"'));
     expect(HEADER).toContain('href === "/platform/overview"');
     expect(HEADER).toContain('href === "/platform/ops"');
   });

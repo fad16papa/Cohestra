@@ -190,6 +190,14 @@ function parseTenant(raw: Record<string, unknown>): TenantResponse {
 }
 
 function parseAudit(raw: Record<string, unknown>): PlatformAuditEntry {
+  if (
+    raw.detailsJson !== undefined ||
+    raw.DetailsJson !== undefined ||
+    raw.details !== undefined ||
+    raw.Details !== undefined
+  ) {
+    throw new Error("Audit payload leaked DetailsJson");
+  }
   const id = pickString(raw, "id", "Id");
   const actorUserId = pickString(raw, "actorUserId", "ActorUserId");
   const tenantId = pickString(raw, "tenantId", "TenantId");
@@ -858,6 +866,98 @@ function parseHealthChecks(
     }
     return { name, status, durationMs, description };
   });
+}
+
+export const PLATFORM_AUDIT_ACTIONS = [
+  "TenantCreated",
+  "TenantSuspended",
+  "TenantReactivated",
+  "TenantArchived",
+  "ComplimentarySet",
+  "ComplimentaryCleared",
+  "SupportIssueReplyAdded",
+  "PasswordResetSent",
+  "EmailVerificationResent",
+] as const;
+
+export type PlatformAuditListResponse = {
+  items: PlatformAuditEntry[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+};
+
+export type PlatformAuditSearchFilters = {
+  action?: string;
+  tenantId?: string;
+  actorEmail?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
+};
+
+function appendAuditFilters(params: URLSearchParams, filters: PlatformAuditSearchFilters) {
+  if (filters.action?.trim()) {
+    params.set("action", filters.action.trim());
+  }
+  if (filters.tenantId?.trim()) {
+    params.set("tenantId", filters.tenantId.trim());
+  }
+  if (filters.actorEmail?.trim()) {
+    params.set("actorEmail", filters.actorEmail.trim());
+  }
+  if (filters.from?.trim()) {
+    params.set("from", filters.from.trim());
+  }
+  if (filters.to?.trim()) {
+    params.set("to", filters.to.trim());
+  }
+}
+
+export async function listPlatformAudits(
+  authFetch: AuthFetch,
+  filters: PlatformAuditSearchFilters = {}
+): Promise<PlatformAuditListResponse> {
+  const params = new URLSearchParams();
+  appendAuditFilters(params, filters);
+  params.set("page", String(filters.page ?? 1));
+  params.set("pageSize", String(filters.pageSize ?? 25));
+
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/audits?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+
+  const raw = asRecord(await response.json());
+  const itemsRaw = raw.items ?? raw.Items;
+  const items = Array.isArray(itemsRaw)
+    ? itemsRaw.map((item) => parseAudit(asRecord(item)))
+    : [];
+
+  return {
+    items,
+    page: pickNumber(raw, "page", "Page") || 1,
+    pageSize: pickNumber(raw, "pageSize", "PageSize") || 25,
+    totalCount: pickNumber(raw, "totalCount", "TotalCount"),
+  };
+}
+
+export async function exportPlatformAudits(
+  authFetch: AuthFetch,
+  filters: PlatformAuditSearchFilters = {}
+): Promise<Blob> {
+  const params = new URLSearchParams();
+  appendAuditFilters(params, filters);
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/audits/export?${params.toString()}`
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  return response.blob();
 }
 
 export async function getPlatformTenant(

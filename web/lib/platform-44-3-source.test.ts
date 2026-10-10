@@ -29,10 +29,9 @@ const BANNER = readFileSync(
 );
 
 describe("Story 44.3 Platform operations source contract", () => {
-  it("adds Operations nav without Audits and without redirecting directory", () => {
+  it("adds Operations nav without redirecting directory", () => {
     expect(HEADER).toContain('href: "/platform/ops"');
     expect(HEADER).toContain('label: "Operations"');
-    expect(HEADER).not.toContain("Audits");
     expect(DIRECTORY).not.toContain('router.replace("/platform/ops")');
     expect(OVERVIEW).not.toContain('router.replace("/platform/ops")');
   });

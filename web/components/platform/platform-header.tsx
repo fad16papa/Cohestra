@@ -21,6 +21,9 @@ function isPlatformNavCurrent(href: string, pathname: string): boolean {
   if (href === "/platform/support") {
     return pathname === "/platform/support" || pathname.startsWith("/platform/support/");
   }
+  if (href === "/platform/audits") {
+    return pathname === "/platform/audits" || pathname.startsWith("/platform/audits/");
+  }
   return pathname === href;
 }
 
@@ -57,6 +60,7 @@ export function PlatformHeader() {
       label: "Support",
       badge: supportOpenCount && supportOpenCount > 0 ? supportOpenCount : null,
     },
+    { href: "/platform/audits", label: "Audits" },
   ];
 
   return (
