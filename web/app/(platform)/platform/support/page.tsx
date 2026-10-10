@@ -15,6 +15,7 @@ import {
 import { PlatformOmniSearch } from "@/components/platform/platform-omni-search";
 import {
   listPlatformSupportIssues,
+  PLATFORM_SUPPORT_SEVERITIES,
   PLATFORM_SUPPORT_STATUSES,
   type PlatformSupportIssueListItem,
 } from "@/lib/platform-api";
@@ -24,6 +25,7 @@ export default function PlatformSupportInboxPage() {
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [severityFilter, setSeverityFilter] = useState("");
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<PlatformSupportIssueListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -40,6 +42,7 @@ export default function PlatformSupportInboxPage() {
     void listPlatformSupportIssues(authFetch, {
       search: query,
       status: statusFilter || undefined,
+      severity: severityFilter || undefined,
       page,
       pageSize: 25,
     })
@@ -65,7 +68,7 @@ export default function PlatformSupportInboxPage() {
         setTotalCount(0);
         setLoading(false);
       });
-  }, [authFetch, page, query, statusFilter]);
+  }, [authFetch, page, query, statusFilter, severityFilter]);
 
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,6 +79,11 @@ export default function PlatformSupportInboxPage() {
   function handleStatusChange(event: React.ChangeEvent<HTMLSelectElement>) {
     setPage(1);
     setStatusFilter(event.target.value);
+  }
+
+  function handleSeverityChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    setPage(1);
+    setSeverityFilter(event.target.value);
   }
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -132,6 +140,22 @@ export default function PlatformSupportInboxPage() {
             </option>
           ))}
         </select>
+        <label className="sr-only" htmlFor="support-severity">
+          Filter by severity
+        </label>
+        <select
+          id="support-severity"
+          value={severityFilter}
+          onChange={handleSeverityChange}
+          className="min-h-11 rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
+        >
+          <option value="">All severities</option>
+          {PLATFORM_SUPPORT_SEVERITIES.map((severity) => (
+            <option key={severity} value={severity}>
+              {severity}
+            </option>
+          ))}
+        </select>
         <button
           type="submit"
           className="min-h-11 rounded-[10px] bg-[var(--plat-lagoon)] px-5 text-sm font-semibold text-[var(--plat-lagoon-fg)] transition-colors hover:bg-[#08554F]"
@@ -156,13 +180,16 @@ export default function PlatformSupportInboxPage() {
             <PlatformDataTableHeaderCell>Operator</PlatformDataTableHeaderCell>
             <PlatformDataTableHeaderCell>Subject</PlatformDataTableHeaderCell>
             <PlatformDataTableHeaderCell>Status</PlatformDataTableHeaderCell>
+            <PlatformDataTableHeaderCell>Severity</PlatformDataTableHeaderCell>
             <PlatformDataTableHeaderCell className="pr-0">Created</PlatformDataTableHeaderCell>
           </PlatformDataTableHead>
           <PlatformDataTableBody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-[var(--plat-stone)]">
-                  No support issues match this search.
+                <td colSpan={7} className="py-8 text-[var(--plat-stone)]">
+                  {severityFilter
+                    ? `No support issues match these filters.`
+                    : "No support issues match this search."}
                 </td>
               </tr>
             ) : (
@@ -184,6 +211,9 @@ export default function PlatformSupportInboxPage() {
                   </PlatformDataTableCell>
                   <PlatformDataTableCell>{issue.subject}</PlatformDataTableCell>
                   <PlatformDataTableCell>{formatStatusLabel(issue.status)}</PlatformDataTableCell>
+                  <PlatformDataTableCell>
+                    <span className={severityClass(issue.severity)}>{issue.severity}</span>
+                  </PlatformDataTableCell>
                   <PlatformDataTableCell className="tabular-nums pr-0 text-[var(--plat-stone)]">
                     {formatDate(issue.createdAt)}
                   </PlatformDataTableCell>
@@ -232,4 +262,15 @@ function formatDate(value: string): string {
 
 function formatStatusLabel(status: string): string {
   return status.replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
+function severityClass(severity: string): string {
+  switch (severity) {
+    case "Critical":
+      return "font-semibold text-[var(--plat-danger)]";
+    case "High":
+      return "font-semibold text-[var(--plat-ink)]";
+    default:
+      return "text-[var(--plat-ink-soft)]";
+  }
 }

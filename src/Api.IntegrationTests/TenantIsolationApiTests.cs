@@ -16,6 +16,7 @@ using Cohestra.Domain.Billing;
 using Cohestra.Domain.Support;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Cohestra.Api.IntegrationTests;
@@ -965,5 +966,79 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var bodyB = await forB.Content.ReadAsStringAsync();
         Assert.Contains(markerB, bodyB, StringComparison.Ordinal);
         Assert.DoesNotContain(markerA, bodyB, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task Platform_severity_patch_is_scoped_to_issue_tenant()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        var tenantAId = TenantIds.Default;
+        Guid issueAId;
+        Guid issueBId;
+        var now = DateTimeOffset.UtcNow;
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var issueA = new SupportIssue
+            {
+                Id = Guid.CreateVersion7(),
+                TenantId = tenantAId,
+                IssueNumber = $"SUP{DateTime.UtcNow:yyyyMMdd}{Random.Shared.Next(10000, 99999)}",
+                SubmittedByUserId = Guid.CreateVersion7(),
+                Subject = "A",
+                Description = "A body",
+                OperatorEmail = "a@example.com",
+                OperatorDisplayName = "A",
+                TenantSlug = "default",
+                TenantName = "Default",
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+            var issueB = new SupportIssue
+            {
+                Id = Guid.CreateVersion7(),
+                TenantId = tenantB.Id,
+                IssueNumber = $"SUP{DateTime.UtcNow:yyyyMMdd}{Random.Shared.Next(10000, 99999)}",
+                SubmittedByUserId = Guid.CreateVersion7(),
+                Subject = "B",
+                Description = "B body",
+                OperatorEmail = "b@example.com",
+                OperatorDisplayName = "B",
+                TenantSlug = tenantB.Slug,
+                TenantName = tenantB.Name,
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+            db.SupportIssues.AddRange(issueA, issueB);
+            await db.SaveChangesAsync();
+            issueAId = issueA.Id;
+            issueBId = issueB.Id;
+        }
+
+        using var platform = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            platform,
+            await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform));
+        using var patched = await platform.PatchAsync(
+            $"/api/v1/platform/support-issues/{issueAId}",
+            JsonContent.Create(new { severity = "Critical" }));
+        Assert.Equal(HttpStatusCode.OK, patched.StatusCode);
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var a = await db.IgnoreTenantFilters<SupportIssue>().SingleAsync(item => item.Id == issueAId);
+            var b = await db.IgnoreTenantFilters<SupportIssue>().SingleAsync(item => item.Id == issueBId);
+            Assert.Equal(SupportIssueSeverity.Critical, a.Severity);
+            Assert.Equal(SupportIssueSeverity.Unspecified, b.Severity);
+            var audits = await db.PlatformAuditLogs
+                .Where(row => row.Action == PlatformAuditAction.SupportIssueSeverityChanged)
+                .ToListAsync();
+            Assert.Contains(audits, row => row.TenantId == tenantAId);
+            Assert.DoesNotContain(audits, row => row.TenantId == tenantB.Id);
+        }
     }
 }

@@ -878,6 +878,7 @@ export const PLATFORM_AUDIT_ACTIONS = [
   "SupportIssueReplyAdded",
   "PasswordResetSent",
   "EmailVerificationResent",
+  "SupportIssueSeverityChanged",
 ] as const;
 
 export type PlatformAuditListResponse = {
@@ -1136,6 +1137,7 @@ export type PlatformSupportIssueListItem = {
   operatorEmail: string;
   subject: string;
   status: string;
+  severity: string;
   createdAt: string;
 };
 
@@ -1447,6 +1449,7 @@ export type PlatformSupportIssueDetail = {
   subject: string;
   description: string;
   status: string;
+  severity: string;
   userAgent: string | null;
   internalNote: string | null;
   createdAt: string;
@@ -1482,6 +1485,14 @@ export const PLATFORM_SUPPORT_STATUSES = [
   "Closed",
 ] as const;
 
+export const PLATFORM_SUPPORT_SEVERITIES = [
+  "Unspecified",
+  "Low",
+  "Medium",
+  "High",
+  "Critical",
+] as const;
+
 function parseSupportListItem(raw: Record<string, unknown>): PlatformSupportIssueListItem {
   const id = pickString(raw, "id", "Id");
   const issueNumber = pickString(raw, "issueNumber", "IssueNumber");
@@ -1489,11 +1500,15 @@ function parseSupportListItem(raw: Record<string, unknown>): PlatformSupportIssu
   const operatorEmail = pickString(raw, "operatorEmail", "OperatorEmail");
   const subject = pickString(raw, "subject", "Subject");
   const status = pickString(raw, "status", "Status");
+  const severity = pickString(raw, "severity", "Severity");
   const createdAt = pickString(raw, "createdAt", "CreatedAt");
-  if (!id || !issueNumber || !tenantSlug || !operatorEmail || !subject || !status || !createdAt) {
+  if (!id || !issueNumber || !tenantSlug || !operatorEmail || !subject || !status || !severity || !createdAt) {
     throw new Error("Invalid support issue list item");
   }
-  return { id, issueNumber, tenantSlug, operatorEmail, subject, status, createdAt };
+  if (!PLATFORM_SUPPORT_SEVERITIES.includes(severity as (typeof PLATFORM_SUPPORT_SEVERITIES)[number])) {
+    throw new Error("Invalid support issue severity");
+  }
+  return { id, issueNumber, tenantSlug, operatorEmail, subject, status, severity, createdAt };
 }
 
 function parseSupportAttachment(raw: Record<string, unknown>): PlatformSupportAttachment {
@@ -1525,6 +1540,7 @@ function parseSupportDetail(raw: Record<string, unknown>): PlatformSupportIssueD
   const subject = pickString(raw, "subject", "Subject");
   const description = pickString(raw, "description", "Description");
   const status = pickString(raw, "status", "Status");
+  const severity = pickString(raw, "severity", "Severity");
   const createdAt = pickString(raw, "createdAt", "CreatedAt");
   const updatedAt = pickString(raw, "updatedAt", "UpdatedAt");
   if (
@@ -1539,10 +1555,14 @@ function parseSupportDetail(raw: Record<string, unknown>): PlatformSupportIssueD
     !subject ||
     !description ||
     !status ||
+    !severity ||
     !createdAt ||
     !updatedAt
   ) {
     throw new Error("Invalid support issue detail");
+  }
+  if (!PLATFORM_SUPPORT_SEVERITIES.includes(severity as (typeof PLATFORM_SUPPORT_SEVERITIES)[number])) {
+    throw new Error("Invalid support issue severity");
   }
 
   const attachmentsRaw = raw.attachments ?? raw.Attachments;
@@ -1559,6 +1579,7 @@ function parseSupportDetail(raw: Record<string, unknown>): PlatformSupportIssueD
     subject,
     description,
     status,
+    severity,
     userAgent: pickString(raw, "userAgent", "UserAgent"),
     internalNote: pickString(raw, "internalNote", "InternalNote"),
     createdAt,
@@ -1654,7 +1675,7 @@ function buildSupportReportParams(options: {
 
 export async function listPlatformSupportIssues(
   authFetch: AuthFetch,
-  options: { search?: string; status?: string; page?: number; pageSize?: number } = {}
+  options: { search?: string; status?: string; severity?: string; page?: number; pageSize?: number } = {}
 ): Promise<PlatformSupportIssueListResponse> {
   const params = new URLSearchParams();
   if (options.search?.trim()) {
@@ -1662,6 +1683,9 @@ export async function listPlatformSupportIssues(
   }
   if (options.status?.trim()) {
     params.set("status", options.status.trim());
+  }
+  if (options.severity?.trim()) {
+    params.set("severity", options.severity.trim());
   }
   params.set("page", String(options.page ?? 1));
   params.set("pageSize", String(options.pageSize ?? 25));
@@ -1701,7 +1725,7 @@ export async function getPlatformSupportIssue(
 export async function updatePlatformSupportIssue(
   authFetch: AuthFetch,
   issueId: string,
-  body: { status?: string; internalNote?: string | null }
+  body: { status?: string; internalNote?: string | null; severity?: string }
 ): Promise<PlatformSupportIssueDetail> {
   const response = await authFetch(
     `${getPublicApiBaseUrl()}/api/v1/platform/support-issues/${issueId}`,
@@ -1711,6 +1735,7 @@ export async function updatePlatformSupportIssue(
       body: JSON.stringify({
         status: body.status,
         internalNote: body.internalNote,
+        severity: body.severity,
       }),
     }
   );

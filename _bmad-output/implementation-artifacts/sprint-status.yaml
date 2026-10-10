@@ -7,7 +7,7 @@
 # 44.5 done — merged PR #420 at 8e33695d / main 41fa809e; post-merge CI green
 # 44.6 done — merged PR #424 at 6060062d / main 8d71dff5; post-merge CI green
 # 44.7 done — merged PR #426 at 048a22a7 / main 520189f6; post-merge CI green
-# epic 44 remains in-progress; 44.8–44.9 not started
+# epic 44 remains in-progress; 44.8 in-progress; 44.9 not started
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 done; epic 43 done after cross-story close
@@ -458,7 +458,7 @@ development_status:
   44-5-additive-paddle-disposition-billing-diagnostics: done
   44-6-tenant-diagnostic-timeline: done
   44-7-platform-wide-searchable-audits: done
-  44-8-support-severity: backlog
+  44-8-support-severity: in-progress
   44-9-deployment-version-health-read-only: backlog
   epic-44-retrospective: optional
 

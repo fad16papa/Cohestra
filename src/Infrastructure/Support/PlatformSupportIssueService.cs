@@ -25,6 +25,7 @@ public sealed class PlatformSupportIssueService(
     public async Task<PlatformSupportIssueListResponse> ListAsync(
         string? search,
         string? status,
+        string? severity,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default)
@@ -66,6 +67,16 @@ public sealed class PlatformSupportIssueService(
             query = query.Where(issue => issue.Status == parsedStatus);
         }
 
+        if (!string.IsNullOrWhiteSpace(severity))
+        {
+            if (!SupportIssueSeverityParser.TryParse(severity, out var parsedSeverity))
+            {
+                throw new ArgumentException("severity must be a current SupportIssueSeverity name.");
+            }
+
+            query = query.Where(issue => issue.Severity == parsedSeverity);
+        }
+
         var totalCount = await query.CountAsync(cancellationToken);
 
         var items = await query
@@ -80,6 +91,7 @@ public sealed class PlatformSupportIssueService(
                 issue.OperatorEmail,
                 issue.Subject,
                 issue.Status.ToString(),
+                issue.Severity.ToString(),
                 issue.CreatedAt))
             .ToListAsync(cancellationToken);
 
@@ -106,6 +118,8 @@ public sealed class PlatformSupportIssueService(
     public async Task<PlatformSupportIssueDetailResponse?> UpdateAsync(
         Guid id,
         UpdatePlatformSupportIssueRequest request,
+        Guid actorUserId,
+        string? actorEmail,
         CancellationToken cancellationToken = default)
     {
         var issue = await dbContext.IgnoreTenantFilters<SupportIssue>()
@@ -120,7 +134,8 @@ public sealed class PlatformSupportIssueService(
 
         var statusChanged = false;
         var noteChanged = false;
-        SupportIssueStatus? previousStatus = issue.Status;
+        var severityChanged = false;
+        SupportIssueSeverity? previousSeverity = null;
 
         if (!string.IsNullOrWhiteSpace(request.Status))
         {
@@ -152,11 +167,51 @@ public sealed class PlatformSupportIssueService(
             }
         }
 
-        if (statusChanged || noteChanged)
+        if (request.Severity is not null)
         {
-            if (statusChanged)
+            if (string.IsNullOrWhiteSpace(request.Severity)
+                || !SupportIssueSeverityParser.TryParse(request.Severity, out var parsedSeverity))
+            {
+                throw new ArgumentException("severity must be a current SupportIssueSeverity name.");
+            }
+
+            if (issue.Severity != parsedSeverity)
+            {
+                previousSeverity = issue.Severity;
+                issue.Severity = parsedSeverity;
+                severityChanged = true;
+            }
+        }
+
+        if (statusChanged || noteChanged || severityChanged)
+        {
+            if (statusChanged || severityChanged)
             {
                 issue.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+
+            if (severityChanged)
+            {
+                if (actorUserId == Guid.Empty)
+                {
+                    throw new ArgumentException("Authenticated user id is missing.");
+                }
+
+                dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
+                {
+                    Id = Guid.CreateVersion7(),
+                    ActorUserId = actorUserId,
+                    ActorEmail = actorEmail,
+                    TenantId = issue.TenantId,
+                    Action = PlatformAuditAction.SupportIssueSeverityChanged,
+                    DetailsJson = JsonSerializer.Serialize(new
+                    {
+                        issueNumber = issue.IssueNumber,
+                        previousSeverity = previousSeverity!.Value.ToString(),
+                        newSeverity = issue.Severity.ToString(),
+                    }),
+                    CreatedAt = DateTimeOffset.UtcNow,
+                });
             }
 
             if (statusChanged && ShouldEmailFilerOnStatus(issue.Status))
@@ -321,6 +376,7 @@ public sealed class PlatformSupportIssueService(
             issue.Subject,
             issue.Description,
             issue.Status.ToString(),
+            issue.Severity.ToString(),
             issue.UserAgent,
             issue.InternalNote,
             issue.CreatedAt,
