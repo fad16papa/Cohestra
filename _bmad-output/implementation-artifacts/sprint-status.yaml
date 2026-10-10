@@ -10,7 +10,8 @@
 # 44.8 done — merged PR #428 at 142ea248 / main ca801778; post-merge CI green
 # 44.9 done — merged PR #430 at 31da0413 / main 41282944; post-merge CI green
 # platform-admin-light-only correction done — merged PR #431 at d9c413ba / main 4d058ebf; post-merge CI 38032215748 green
-# epic 44 remains in-progress; owner-authorized epic close / retrospective is the next step
+# epic 44 done — 44.1–44.9 + light-only correction; final main baseline 368d48e0; retrospective done 2026-10-10
+# Epic 19 remains in-progress and separate. Production deploy was not performed.
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 done; epic 43 done after cross-story close
@@ -453,7 +454,7 @@ development_status:
   epic-43-retrospective: done
 
   # Epic 44 — Platform Production Operations & Support Center
-  epic-44: in-progress
+  epic-44: done
   44-1-platform-ops-http-gates-policy-recovery-rate-limits: done
   44-2-production-overview-source-backed-kpis: done
   44-3-authenticated-infrastructure-health-operations-shell: done
@@ -463,7 +464,7 @@ development_status:
   44-7-platform-wide-searchable-audits: done
   44-8-support-severity: done
   44-9-deployment-version-health-read-only: done
-  epic-44-retrospective: optional
+  epic-44-retrospective: done
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done
@@ -827,4 +828,28 @@ action_items:
   - epic: 25
     action: "Close draft PR #202 (superseded by epic-25-retro-2026-08-21.md)"
     owner: Dev
+    status: open
+  - epic: 44
+    action: "Decide whether failed-outbox requeue is ever allowed after production use of 44.4"
+    owner: Product
+    status: open
+  - epic: 44
+    action: "Standalone Incident entity remains deferred; severity only unless a future support epic is authorized"
+    owner: Product
+    status: open
+  - epic: 44
+    action: "Serilog / OpenTelemetry pipeline remains a future observability epic candidate"
+    owner: Architect
+    status: open
+  - epic: 44
+    action: "Production usage review of Overview / Operations / Audits after operators use the console"
+    owner: Operator
+    status: open
+  - epic: 44
+    action: "UAT, droplet access, and live Paddle cutover remain Epic 19 — do not treat Epic 44 done as production ready"
+    owner: Operator
+    status: open
+  - epic: 44
+    action: "Keep PlatformAdmin light-only frozen as a route override; do not reopen a global appearance lock"
+    owner: Product
     status: open
