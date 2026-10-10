@@ -2,15 +2,17 @@
 id: 44.5
 key: 44-5-additive-paddle-disposition-billing-diagnostics
 title: Additive Paddle disposition logging and billing diagnostics
-status: review
+status: done
 epic: 44
 created: 2026-10-09
 baseline_commit: 556f7192890dcc7589252f1e1bdf790710402a6f
+accepted_commit: 8e33695d2ba69c53a0b7a020db9a3d74da5a7db4
+implementation_merge: 41fa809edf276454e93984c59287d251dad6ca40
 ---
 
 # Story 44.5: Additive Paddle disposition logging and billing diagnostics
 
-Status: review
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -117,6 +119,7 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 - Delivery DTO allow-list only. Empty table copy is missing instrumentation, not Paddle down / billing healthy. Paddle remains `not_in_probe` on 44.3 health.
 - Retention: rejected ≤14d + 10k FIFO; others ≤90d; global 50k FIFO. Ledger never pruned.
 - 44.6–44.9 not started. STOP before merge.
+- Merged PR #420. Accepted implementation HEAD `8e33695d2ba69c53a0b7a020db9a3d74da5a7db4`. Main merge `41fa809edf276454e93984c59287d251dad6ca40`. Exact-head CI `37951523002` green. Post-merge main CI `38011549129` green. Deploy remains pre-existing Epic 19. Epic 44 stays in-progress. Stories 44.6–44.9 not started.
 
 ### File List
 
@@ -174,6 +177,7 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 - 2026-10-09: Story context from Epic 44, AD-16/15/18, TEA P0-12–15, P1-06/13.
 - 2026-10-09: Implemented additive disposition table, isolated recorder, PlatformAdmin config/deliveries APIs, Operations Billing UI.
 - 2026-10-09: BMAD code review — no unresolved BLOCKER/MAJOR. Trace/NFR/checkpoint recorded. Draft PR only; STOP before merge.
+- 2026-10-10: Owner-authorized merge of PR #420 at accepted HEAD `8e33695d`. Story closed after post-merge main CI.
 
 ### Review Findings
 
