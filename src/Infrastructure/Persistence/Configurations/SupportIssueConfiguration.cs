@@ -44,6 +44,11 @@ internal sealed class SupportIssueConfiguration : IEntityTypeConfiguration<Suppo
             .HasMaxLength(32)
             .IsRequired();
 
+        builder.Property(issue => issue.Severity)
+            .HasConversion<string>()
+            .HasMaxLength(32)
+            .IsRequired();
+
         builder.Property(issue => issue.OperatorEmail)
             .HasMaxLength(320)
             .IsRequired();

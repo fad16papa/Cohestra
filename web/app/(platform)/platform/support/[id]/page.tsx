@@ -12,6 +12,7 @@ import {
   getPlatformSupportIssue,
   getPlatformTenantSnapshot,
   platformSupportAttachmentUrl,
+  PLATFORM_SUPPORT_SEVERITIES,
   PLATFORM_SUPPORT_STATUSES,
   updatePlatformSupportIssue,
   type PlatformSupportIssueDetail,
@@ -27,6 +28,7 @@ export default function PlatformSupportDetailPage() {
   const [snapshot, setSnapshot] = useState<PlatformTenantSnapshot | null>(null);
   const [snapshotError, setSnapshotError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
+  const [severity, setSeverity] = useState("");
   const [internalNote, setInternalNote] = useState("");
   const [replyBody, setReplyBody] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +49,7 @@ export default function PlatformSupportDetailPage() {
       }
       setIssue(detail);
       setStatus(detail.status);
+      setSeverity(detail.severity);
       setInternalNote(detail.internalNote ?? "");
       try {
         const snap = await getPlatformTenantSnapshot(authFetch, detail.tenantId);
@@ -98,17 +101,20 @@ export default function PlatformSupportDetailPage() {
 
     try {
       const statusChanged = status !== issue.status;
+      const severityChanged = severity !== issue.severity;
       const noteChanged = internalNote !== (issue.internalNote ?? "");
-      if (!statusChanged && !noteChanged) {
+      if (!statusChanged && !noteChanged && !severityChanged) {
         return;
       }
 
       const updated = await updatePlatformSupportIssue(authFetch, issueId, {
         status: statusChanged ? status : undefined,
         internalNote: noteChanged ? internalNote : undefined,
+        severity: severityChanged ? severity : undefined,
       });
       setIssue(updated);
       setStatus(updated.status);
+      setSeverity(updated.severity);
       setInternalNote(updated.internalNote ?? "");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Could not save changes.");
@@ -341,6 +347,23 @@ export default function PlatformSupportDetailPage() {
                   {PLATFORM_SUPPORT_STATUSES.map((option) => (
                     <option key={option} value={option}>
                       {formatStatusLabel(option)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="support-severity" className="text-sm text-[var(--plat-stone)]">
+                  Severity
+                </label>
+                <select
+                  id="support-severity"
+                  value={severity}
+                  onChange={(event) => setSeverity(event.target.value)}
+                  className="mt-1 min-h-11 w-full rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
+                >
+                  {PLATFORM_SUPPORT_SEVERITIES.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
                     </option>
                   ))}
                 </select>

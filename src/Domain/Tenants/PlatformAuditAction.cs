@@ -11,4 +11,5 @@ public enum PlatformAuditAction
     SupportIssueReplyAdded = 6,
     PasswordResetSent = 7,
     EmailVerificationResent = 8,
+    SupportIssueSeverityChanged = 9,
 }

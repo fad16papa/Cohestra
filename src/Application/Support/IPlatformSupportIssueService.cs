@@ -7,6 +7,7 @@ public interface IPlatformSupportIssueService
     Task<PlatformSupportIssueListResponse> ListAsync(
         string? search,
         string? status,
+        string? severity,
         int page,
         int pageSize,
         CancellationToken cancellationToken = default);
@@ -18,6 +19,8 @@ public interface IPlatformSupportIssueService
     Task<PlatformSupportIssueDetailResponse?> UpdateAsync(
         Guid id,
         UpdatePlatformSupportIssueRequest request,
+        Guid actorUserId,
+        string? actorEmail,
         CancellationToken cancellationToken = default);
 
     Task<PlatformSupportIssueDetailResponse?> AddReplyAsync(

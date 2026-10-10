@@ -18,6 +18,8 @@ public sealed class SupportIssue : ITenantScoped
 
     public SupportIssueStatus Status { get; set; } = SupportIssueStatus.Open;
 
+    public SupportIssueSeverity Severity { get; set; } = SupportIssueSeverity.Unspecified;
+
     public string OperatorEmail { get; set; } = string.Empty;
 
     public string OperatorDisplayName { get; set; } = string.Empty;

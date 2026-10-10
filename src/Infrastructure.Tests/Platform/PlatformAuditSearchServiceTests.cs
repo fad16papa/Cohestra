@@ -59,12 +59,13 @@ public sealed class PlatformAuditSearchServiceTests
     }
 
     [Fact]
-    public void TryNormalize_does_not_invent_severity_action()
+    public void TryNormalize_accepts_severity_changed_action()
     {
-        Assert.False(PlatformAuditSearchService.TryNormalize(
+        Assert.True(PlatformAuditSearchService.TryNormalize(
             new PlatformAuditSearchQuery("SupportIssueSeverityChanged", null, null, null, null),
-            out _,
+            out var normalized,
             out _));
+        Assert.Equal(PlatformAuditAction.SupportIssueSeverityChanged, normalized.Action);
     }
 
     [Fact]

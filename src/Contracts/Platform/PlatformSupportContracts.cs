@@ -7,6 +7,7 @@ public sealed record PlatformSupportIssueListItemResponse(
     string OperatorEmail,
     string Subject,
     string Status,
+    string Severity,
     DateTimeOffset CreatedAt);
 
 public sealed record PlatformSupportIssueListResponse(
@@ -34,6 +35,7 @@ public sealed record PlatformSupportIssueDetailResponse(
     string Subject,
     string Description,
     string Status,
+    string Severity,
     string? UserAgent,
     string? InternalNote,
     DateTimeOffset CreatedAt,
@@ -43,7 +45,8 @@ public sealed record PlatformSupportIssueDetailResponse(
 
 public sealed record UpdatePlatformSupportIssueRequest(
     string? Status,
-    string? InternalNote);
+    string? InternalNote,
+    string? Severity = null);
 
 public sealed record PlatformSupportReportQuery(
     string Preset,

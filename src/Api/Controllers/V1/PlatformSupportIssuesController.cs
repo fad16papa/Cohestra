@@ -20,6 +20,7 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
     public async Task<ActionResult<PlatformSupportIssueListResponse>> List(
         [FromQuery] string? search,
         [FromQuery] string? status,
+        [FromQuery] string? severity,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 25,
         CancellationToken cancellationToken = default)
@@ -29,6 +30,7 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
             var result = await platformSupportIssueService.ListAsync(
                 search,
                 status,
+                severity,
                 page,
                 pageSize,
                 cancellationToken);
@@ -67,9 +69,9 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
             return BadRequestProblem("Request body is required.");
         }
 
-        if (request.Status is null && request.InternalNote is null)
+        if (request.Status is null && request.InternalNote is null && request.Severity is null)
         {
-            return BadRequestProblem("Provide status and/or internalNote to update.");
+            return BadRequestProblem("Provide status, internalNote, and/or severity to update.");
         }
 
         if (request.Status is not null && string.IsNullOrWhiteSpace(request.Status))
@@ -77,9 +79,24 @@ public sealed class PlatformSupportIssuesController(IPlatformSupportIssueService
             return BadRequestProblem("Status cannot be empty.");
         }
 
+        if (request.Severity is not null && string.IsNullOrWhiteSpace(request.Severity))
+        {
+            return BadRequestProblem("severity must be a current SupportIssueSeverity name.");
+        }
+
+        if (!TryGetActor(out var actorUserId, out var actorEmail))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
         try
         {
-            var result = await platformSupportIssueService.UpdateAsync(id, request, cancellationToken);
+            var result = await platformSupportIssueService.UpdateAsync(
+                id,
+                request,
+                actorUserId,
+                actorEmail,
+                cancellationToken);
             return result is null ? NotFoundProblem("Support issue not found.") : Ok(result);
         }
         catch (ArgumentException ex)

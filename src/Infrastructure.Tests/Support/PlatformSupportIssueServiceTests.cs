@@ -26,11 +26,11 @@ public sealed class PlatformSupportIssueServiceTests
 
         var service = CreateService(db);
 
-        var byEmail = await service.ListAsync("bob@", status: null, page: 1, pageSize: 25);
+        var byEmail = await service.ListAsync("bob@", status: null, severity: null, page: 1, pageSize: 25);
         Assert.Single(byEmail.Items);
         Assert.Equal("SUP20260816000002", byEmail.Items[0].IssueNumber);
 
-        var byStatus = await service.ListAsync(null, "Resolved", page: 1, pageSize: 25);
+        var byStatus = await service.ListAsync(null, "Resolved", null, page: 1, pageSize: 25);
         Assert.Single(byStatus.Items);
         Assert.Equal("beta", byStatus.Items[0].TenantSlug);
     }
@@ -54,7 +54,9 @@ public sealed class PlatformSupportIssueServiceTests
         var service = CreateService(db);
         var updated = await service.UpdateAsync(
             issue.Id,
-            new UpdatePlatformSupportIssueRequest("InProgress", "Needs billing check"));
+            new UpdatePlatformSupportIssueRequest("InProgress", "Needs billing check"),
+            Guid.CreateVersion7(),
+            "ops@example.com");
 
         Assert.NotNull(updated);
         Assert.Equal("InProgress", updated!.Status);
@@ -86,13 +88,123 @@ public sealed class PlatformSupportIssueServiceTests
         var service = CreateService(db);
         var updated = await service.UpdateAsync(
             issue.Id,
-            new UpdatePlatformSupportIssueRequest(null, "Follow up next week"));
+            new UpdatePlatformSupportIssueRequest(null, "Follow up next week"),
+            Guid.CreateVersion7(),
+            "ops@example.com");
 
         Assert.NotNull(updated);
         Assert.Equal("Follow up next week", updated!.InternalNote);
 
         var persisted = await db.IgnoreTenantFilters<SupportIssue>().SingleAsync(item => item.Id == issue.Id);
         Assert.Equal(originalUpdatedAt, persisted.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task ListAsync_filters_severity_and_rejects_numeric_alias()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.CreateVersion7();
+        var now = DateTimeOffset.UtcNow;
+        var high = CreateIssue(tenantId, "SUP20261010000001", "high", "high@example.com", SupportIssueStatus.Open, now);
+        high.Severity = SupportIssueSeverity.High;
+        var low = CreateIssue(tenantId, "SUP20261010000002", "low", "low@example.com", SupportIssueStatus.Open, now.AddMinutes(-1));
+        low.Severity = SupportIssueSeverity.Low;
+        db.SupportIssues.AddRange(high, low);
+        await db.SaveChangesAsync();
+
+        var service = CreateService(db);
+        var listed = await service.ListAsync(null, null, "high", 1, 25);
+        Assert.Single(listed.Items);
+        Assert.Equal("High", listed.Items[0].Severity);
+        Assert.Equal("SUP20261010000001", listed.Items[0].IssueNumber);
+
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => service.ListAsync(null, null, "0", 1, 25));
+        Assert.Contains("severity", ex.Message, StringComparison.OrdinalIgnoreCase);
+        await Assert.ThrowsAsync<ArgumentException>(() => service.ListAsync(null, null, "Emergency", 1, 25));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_severity_only_writes_audit_and_skips_status_email()
+    {
+        await using var db = CreateDb();
+        var publisher = new RecordingOutboxPublisher();
+        var tenantId = Guid.CreateVersion7();
+        var now = DateTimeOffset.UtcNow;
+        var issue = CreateIssue(tenantId, "SUP20261010000003", "sev", "filer@example.com", SupportIssueStatus.Open, now);
+        db.SupportIssues.Add(issue);
+        await db.SaveChangesAsync();
+
+        var actorId = Guid.CreateVersion7();
+        var service = CreateService(db, publisher);
+        var updated = await service.UpdateAsync(
+            issue.Id,
+            new UpdatePlatformSupportIssueRequest(null, null, "Critical"),
+            actorId,
+            "platform@cohestra.local");
+
+        Assert.Equal("Critical", updated!.Severity);
+        Assert.Equal("Open", updated.Status);
+        Assert.True(updated.UpdatedAt > now);
+
+        var persisted = await db.IgnoreTenantFilters<SupportIssue>().SingleAsync(item => item.Id == issue.Id);
+        Assert.Equal(SupportIssueSeverity.Critical, persisted.Severity);
+
+        var audit = Assert.Single(db.PlatformAuditLogs);
+        Assert.Equal(PlatformAuditAction.SupportIssueSeverityChanged, audit.Action);
+        Assert.Equal(actorId, audit.ActorUserId);
+        Assert.Equal("platform@cohestra.local", audit.ActorEmail);
+        Assert.Equal(tenantId, audit.TenantId);
+        Assert.Contains("\"issueNumber\":\"SUP20261010000003\"", audit.DetailsJson);
+        Assert.Contains("\"previousSeverity\":\"Unspecified\"", audit.DetailsJson);
+        Assert.Contains("\"newSeverity\":\"Critical\"", audit.DetailsJson);
+        Assert.DoesNotContain("filer@example.com", audit.DetailsJson);
+        Assert.DoesNotContain("Something broke", audit.DetailsJson);
+        Assert.Empty(publisher.Types);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_same_severity_writes_no_audit()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.CreateVersion7();
+        var issue = CreateIssue(tenantId, "SUP20261010000004", "same", "same@example.com", SupportIssueStatus.Open, DateTimeOffset.UtcNow);
+        issue.Severity = SupportIssueSeverity.High;
+        db.SupportIssues.Add(issue);
+        await db.SaveChangesAsync();
+
+        var service = CreateService(db);
+        await service.UpdateAsync(
+            issue.Id,
+            new UpdatePlatformSupportIssueRequest(null, null, "High"),
+            Guid.CreateVersion7(),
+            "ops@example.com");
+
+        Assert.Empty(db.PlatformAuditLogs);
+        Assert.Equal(SupportIssueSeverity.High, (await db.IgnoreTenantFilters<SupportIssue>().SingleAsync()).Severity);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_combined_status_and_severity_emails_only_for_status()
+    {
+        await using var db = CreateDb();
+        var publisher = new RecordingOutboxPublisher();
+        var tenantId = Guid.CreateVersion7();
+        var issue = CreateIssue(tenantId, "SUP20261010000005", "combo", "combo@example.com", SupportIssueStatus.Open, DateTimeOffset.UtcNow);
+        db.SupportIssues.Add(issue);
+        await db.SaveChangesAsync();
+
+        var service = CreateService(db, publisher);
+        var updated = await service.UpdateAsync(
+            issue.Id,
+            new UpdatePlatformSupportIssueRequest("Resolved", null, "High"),
+            Guid.CreateVersion7(),
+            "ops@example.com");
+
+        Assert.Equal("Resolved", updated!.Status);
+        Assert.Equal("High", updated.Severity);
+        Assert.Single(publisher.Types);
+        Assert.Contains("status", publisher.Types[0], StringComparison.OrdinalIgnoreCase);
+        Assert.Single(db.PlatformAuditLogs.Where(row => row.Action == PlatformAuditAction.SupportIssueSeverityChanged));
     }
 
     private static SupportIssue CreateIssue(
@@ -120,17 +232,20 @@ public sealed class PlatformSupportIssueServiceTests
             UpdatedAt = createdAt,
         };
 
-    private static PlatformSupportIssueService CreateService(CohestraDbContext db)
+    private static PlatformSupportIssueService CreateService(CohestraDbContext db, IOutboxPublisher? publisher = null)
     {
         var attachmentService = new SupportAttachmentService(
             Options.Create(new SupportSettings { AttachmentStoragePath = Path.GetTempPath() }));
-        return new PlatformSupportIssueService(db, attachmentService, new NoOpOutboxPublisher());
+        return new PlatformSupportIssueService(db, attachmentService, publisher ?? new RecordingOutboxPublisher());
     }
 
-    private sealed class NoOpOutboxPublisher : IOutboxPublisher
+    private sealed class RecordingOutboxPublisher : IOutboxPublisher
     {
+        public List<string> Types { get; } = [];
+
         public void Enqueue(Guid tenantId, string messageType, string payloadJson, string? dedupeKey = null, DateTimeOffset? nextAttemptAt = null)
         {
+            Types.Add(messageType);
         }
     }
 
