@@ -69,6 +69,13 @@ test.describe("Story 44.7 — Platform-wide searchable audits", () => {
     await expect(page.getByRole("heading", { name: "Audits", level: 1 })).toHaveCount(0);
 
     const session = await loginPlatformAdminSession(request);
+    await page.route("**/api/v1/platform/audits/export**", async (route) => {
+      await route.fulfill({
+        status: 400,
+        contentType: "application/problem+json",
+        body: JSON.stringify({ detail: "Export exceeds 5000 rows. Narrow the filters." }),
+      });
+    });
     await page.route("**/api/v1/platform/audits?**", async (route) => {
       if (route.request().url().includes("/export")) {
         await route.fulfill({
@@ -85,6 +92,14 @@ test.describe("Story 44.7 — Platform-wide searchable audits", () => {
       });
     });
     await page.route("**/api/v1/platform/audits", async (route) => {
+      if (route.request().url().includes("/export")) {
+        await route.fulfill({
+          status: 400,
+          contentType: "application/problem+json",
+          body: JSON.stringify({ detail: "Export exceeds 5000 rows. Narrow the filters." }),
+        });
+        return;
+      }
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -94,6 +109,11 @@ test.describe("Story 44.7 — Platform-wide searchable audits", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openPlatform(page, session, "/platform/audits");
+    await page.keyboard.press("Tab");
+    const skip = page.getByRole("link", { name: "Skip to main content" });
+    await expect(skip).toBeFocused();
+    await skip.press("Enter");
+    await expect(page.locator("#main-content")).toBeFocused();
     await expect(page.getByRole("heading", { name: "Audits", level: 1 })).toHaveCount(1);
     await expect(page.getByRole("main")).toHaveCount(1);
     await expect(
@@ -103,18 +123,14 @@ test.describe("Story 44.7 — Platform-wide searchable audits", () => {
       page.getByRole("navigation", { name: "Platform" }).getByRole("link", { name: "Tenants" })
     ).not.toHaveAttribute("aria-current", "page");
     await expect(page.getByRole("heading", { name: "Overview", level: 1 })).toHaveCount(0);
-    await expect(page.getByText("TenantSuspended")).toBeVisible();
-    await expect(page.getByText("Unknown actor email")).toBeVisible();
+    await expect(page.getByRole("cell", { name: "TenantSuspended" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "ToS review" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: /Unknown actor email/ })).toBeVisible();
     await expect(page.getByText("AUDIT_DETAILS_SECRET_44_7")).toHaveCount(0);
     await expect(page.getByLabel("Action")).toBeVisible();
     await expect(page.getByRole("button", { name: "Export CSV" })).toBeVisible();
     await page.getByRole("button", { name: "Export CSV" }).click();
-    await expect(page.getByText("Export exceeds 5000 rows")).toBeVisible();
-    await page.keyboard.press("Tab");
-    const skip = page.getByRole("link", { name: "Skip to main content" });
-    await expect(skip).toBeFocused();
-    await skip.press("Enter");
-    await expect(page.locator("#main-content")).toBeFocused();
+    await expect(page.getByRole("alert").filter({ hasText: "Export exceeds 5000 rows" })).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
     await page.screenshot({
       path: "../_bmad-output/planning-artifacts/evidence/px2-44-7/viewports/audits-populated-1440.png",
@@ -129,7 +145,7 @@ test.describe("Story 44.7 — Platform-wide searchable audits", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openPlatform(page, session, "/platform/audits");
     await expect(page.getByRole("heading", { name: "Audits", level: 1 })).toBeVisible();
-    await expect(page.getByText("TenantSuspended")).toBeVisible();
+    await expect(page.locator("ol").getByText("ToS review")).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);
     await page.screenshot({
       path: "../_bmad-output/planning-artifacts/evidence/px2-44-7/viewports/audits-populated-390.png",
