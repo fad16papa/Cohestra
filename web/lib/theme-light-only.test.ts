@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-import { JSDOM } from "jsdom";
 import { describe, expect, it } from "vitest";
 
 import { settingsSections } from "@/components/settings/settings-sections";
@@ -20,13 +19,22 @@ function read(rel: string): string {
   return readFileSync(resolve(webRoot, rel), "utf8");
 }
 
-function runInitScript(htmlClass = "dark", colorScheme = "dark"): HTMLElement {
-  const dom = new JSDOM(`<!DOCTYPE html><html class="${htmlClass}"></html>`);
-  const root = dom.window.document.documentElement;
-  root.style.colorScheme = colorScheme;
+function runInitScript(htmlClass = "dark", colorScheme = "dark") {
+  const removed: string[] = [];
+  const root = {
+    classList: {
+      remove(name: string) {
+        removed.push(name);
+      },
+      contains(name: string) {
+        return name === "dark" && !removed.includes("dark") && htmlClass.split(/\s+/).includes("dark");
+      },
+    },
+    style: { colorScheme },
+  };
   const fn = new Function("document", themeInitScript);
-  fn(dom.window.document);
-  return root;
+  fn({ documentElement: root });
+  return { root, removed };
 }
 
 describe("light-only application appearance", () => {
@@ -35,7 +43,8 @@ describe("light-only application appearance", () => {
     expect(themeInitScript).toContain('classList.remove("dark")');
     expect(themeInitScript).toContain('colorScheme="light"');
 
-    const root = runInitScript("dark", "dark");
+    const { root, removed } = runInitScript("dark", "dark");
+    expect(removed).toContain("dark");
     expect(root.classList.contains("dark")).toBe(false);
     expect(root.style.colorScheme).toBe("light");
   });
