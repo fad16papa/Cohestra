@@ -1,7 +1,7 @@
 # Trace — PlatformAdmin light-only appearance
 
 Date: 2026-10-10
-HEAD: rebased onto `1872baa6`; see PR #431 current SHA
+HEAD: 35993391746519fca0e18670ae9567ae58a6a907
 Spec: `_bmad-output/planning-artifacts/specs/spec-light-only-appearance/SPEC.md`
 
 | AC | Test / evidence | Result |
