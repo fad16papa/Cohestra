@@ -45,7 +45,7 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
         var (tenantA, tenantB) = await CreatePairAsync();
-        await SeedBothAsync(tenantA.Id, tenantB.Id);
+        var seeded = await SeedBothAsync(tenantA.Id, tenantB.Id);
 
         using var client = Factory.CreateClient();
         IntegrationTestHelpers.UseBearerToken(client, await IntegrationTestHelpers.LoginAsPlatformAdminAsync(client));
@@ -74,7 +74,8 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
             pair.First.Timestamp > pair.Second.Timestamp
             || (pair.First.Timestamp == pair.Second.Timestamp
                 && string.CompareOrdinal(pair.First.Type, pair.Second.Type) <= 0)));
-        Assert.DoesNotContain(timeline.Items, item => item.Summary.Contains("SUP-B", StringComparison.Ordinal));
+        Assert.DoesNotContain(timeline.Items, item => item.Summary.Contains(seeded.IssueB, StringComparison.Ordinal));
+        Assert.Contains(timeline.Items, item => item.Summary.Contains(seeded.IssueA, StringComparison.Ordinal));
         Assert.Equal(
             tenantA.Plan,
             timeline.Items.Single(item => item.Type == PlatformTenantTimelineTypes.BillingSnapshot).Metadata["plan"]);
@@ -190,7 +191,7 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
         return (tenantA, tenantB);
     }
 
-    private async Task SeedBothAsync(Guid tenantA, Guid tenantB)
+    private async Task<(string IssueA, string IssueB)> SeedBothAsync(Guid tenantA, Guid tenantB)
     {
         var now = DateTimeOffset.UtcNow;
         await using var scope = Factory.Services.CreateAsyncScope();
@@ -204,7 +205,7 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
                 TenantId = tenantA,
                 Action = PlatformAuditAction.TenantSuspended,
                 Reason = "ToS review",
-                DetailsJson = AuditSecret,
+                DetailsJson = $"{{\"secret\":\"{AuditSecret}\"}}",
                 CreatedAt = now.AddMinutes(-1),
             },
             new PlatformAuditLog
@@ -215,14 +216,16 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
                 TenantId = tenantB,
                 Action = PlatformAuditAction.TenantSuspended,
                 Reason = "foreign",
-                DetailsJson = AuditSecret,
+                DetailsJson = $"{{\"secret\":\"{AuditSecret}\"}}",
                 CreatedAt = now,
             });
+        var issueANumber = $"A{Guid.NewGuid():N}"[..17];
+        var issueBNumber = $"B{Guid.NewGuid():N}"[..17];
         var issueA = new SupportIssue
         {
             Id = Guid.CreateVersion7(),
             TenantId = tenantA,
-            IssueNumber = "SUP-A-446",
+            IssueNumber = issueANumber,
             SubmittedByUserId = Guid.CreateVersion7(),
             Subject = SupportSecret,
             Description = SupportSecret,
@@ -239,7 +242,7 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
         {
             Id = Guid.CreateVersion7(),
             TenantId = tenantB,
-            IssueNumber = "SUP-B-446",
+            IssueNumber = issueBNumber,
             SubmittedByUserId = Guid.CreateVersion7(),
             Subject = SupportSecret,
             Description = SupportSecret,
@@ -323,5 +326,6 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
                 ObservedAt = now,
             });
         await db.SaveChangesAsync();
+        return (issueANumber, issueBNumber);
     }
 }

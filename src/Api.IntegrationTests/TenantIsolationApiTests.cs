@@ -684,10 +684,13 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var tenantAId = TenantIds.Default;
         const string markerA = "TENANT_A_TIMELINE_44_6";
         const string markerB = "TENANT_B_TIMELINE_44_6";
-        const string auditSecret = "AUDIT_DETAILS_SECRET_44_6";
-        const string outboxSecret = "OUTBOX_PAYLOAD_SECRET_44_6";
-        const string supportSecret = "SUPPORT_BODY_SECRET_44_6";
-        const string paddleSecret = "PADDLE_SECRET_44_6";
+        var stamp = Guid.NewGuid().ToString("N")[..8];
+        var auditSecret = $"AUDIT_DETAILS_SECRET_44_6_{stamp}";
+        var outboxSecret = $"OUTBOX_PAYLOAD_SECRET_44_6_{stamp}";
+        var supportSecret = $"SUPPORT_BODY_SECRET_44_6_{stamp}";
+        var paddleSecret = $"PADDLE_SECRET_44_6_{stamp}";
+        var issueANumber = $"A{Guid.NewGuid():N}"[..17];
+        var issueBNumber = $"B{Guid.NewGuid():N}"[..17];
         var now = DateTimeOffset.UtcNow;
 
         await using (var scope = Factory.Services.CreateAsyncScope())
@@ -701,7 +704,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
                     TenantId = tenantAId,
                     Action = PlatformAuditAction.TenantCreated,
                     Reason = markerA,
-                    DetailsJson = auditSecret,
+                    DetailsJson = $"{{\"secret\":\"{auditSecret}\"}}",
                     CreatedAt = now,
                 },
                 new PlatformAuditLog
@@ -711,7 +714,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
                     TenantId = tenantB.Id,
                     Action = PlatformAuditAction.TenantCreated,
                     Reason = markerB,
-                    DetailsJson = auditSecret,
+                    DetailsJson = $"{{\"secret\":\"{auditSecret}\"}}",
                     CreatedAt = now,
                 });
             db.SupportIssues.AddRange(
@@ -719,7 +722,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
                 {
                     Id = Guid.CreateVersion7(),
                     TenantId = tenantAId,
-                    IssueNumber = "SUP-ISO-A",
+                    IssueNumber = issueANumber,
                     SubmittedByUserId = Guid.CreateVersion7(),
                     Subject = supportSecret,
                     Description = supportSecret,
@@ -734,7 +737,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
                 {
                     Id = Guid.CreateVersion7(),
                     TenantId = tenantB.Id,
-                    IssueNumber = "SUP-ISO-B",
+                    IssueNumber = issueBNumber,
                     SubmittedByUserId = Guid.CreateVersion7(),
                     Subject = supportSecret,
                     Description = supportSecret,
@@ -755,7 +758,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
                     Status = OutboxMessageStatus.Failed,
                     CreatedAt = now,
                     NextAttemptAt = now,
-                    LastError = outboxSecret,
+                    LastError = $"Password={outboxSecret}",
                 },
                 new OutboxMessage
                 {
@@ -766,7 +769,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
                     Status = OutboxMessageStatus.Failed,
                     CreatedAt = now,
                     NextAttemptAt = now,
-                    LastError = outboxSecret,
+                    LastError = $"Password={outboxSecret}",
                 });
             db.PaddleWebhookDeliveries.AddRange(
                 new PaddleWebhookDelivery
@@ -822,7 +825,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         var bodyA = await forA.Content.ReadAsStringAsync();
         Assert.DoesNotContain(markerB, bodyA, StringComparison.Ordinal);
         Assert.DoesNotContain(tenantB.Id.ToString(), bodyA, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("SUP-ISO-B", bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain(issueBNumber, bodyA, StringComparison.Ordinal);
         Assert.DoesNotContain("evt-iso-b", bodyA, StringComparison.Ordinal);
         Assert.DoesNotContain("evt-iso-null", bodyA, StringComparison.Ordinal);
         Assert.DoesNotContain(auditSecret, bodyA, StringComparison.Ordinal);
@@ -843,7 +846,7 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.Equal(HttpStatusCode.OK, forB.StatusCode);
         var bodyB = await forB.Content.ReadAsStringAsync();
         Assert.DoesNotContain(markerA, bodyB, StringComparison.Ordinal);
-        Assert.DoesNotContain("SUP-ISO-A", bodyB, StringComparison.Ordinal);
+        Assert.DoesNotContain(issueANumber, bodyB, StringComparison.Ordinal);
         Assert.DoesNotContain("evt-iso-a", bodyB, StringComparison.Ordinal);
         var timelineB = JsonSerializer.Deserialize<PlatformTenantTimelineResponse>(
             bodyB,

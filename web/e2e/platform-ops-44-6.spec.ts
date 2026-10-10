@@ -214,13 +214,13 @@ test.describe("Story 44.6 — Tenant diagnostic timeline", () => {
     await openPlatform(page, session, ROUTE);
     await expect(page.getByRole("heading", { name: "timeline-demo", level: 1 })).toHaveCount(1);
     await expect(page.getByRole("main")).toHaveCount(1);
-    await expect(page.getByRole("heading", { name: "Timeline" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Timeline", exact: true, level: 2 })).toBeVisible();
     await expect(page.getByText("Platform audit TenantSuspended")).toBeVisible();
     await expect(page.getByText("Support issue SUP-123 opened")).toBeVisible();
     await expect(page.getByText("Outbox campaign.recipient is Failed")).toBeVisible();
     await expect(page.getByText("Paddle transaction.completed Processed")).toBeVisible();
     await expect(page.getByText("Source: platform_audit_logs")).toBeVisible();
-    await expect(page.getByText("Current billing snapshot")).toBeVisible();
+    await expect(page.getByText("Current billing snapshot: Core / Active / Free")).toBeVisible();
     await expect(page.getByRole("heading", { name: "Lifecycle" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Recent audit" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Send password reset" })).toBeVisible();
@@ -246,7 +246,7 @@ test.describe("Story 44.6 — Tenant diagnostic timeline", () => {
 
     await page.setViewportSize({ width: 390, height: 844 });
     await openPlatform(page, session, ROUTE);
-    await expect(page.getByRole("heading", { name: "Timeline" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Timeline", exact: true, level: 2 })).toBeVisible();
     await expect(page.getByText("Support issue SUP-123 opened")).toBeVisible();
     await expect(page.getByRole("button", { name: "Send password reset" })).toBeVisible();
     expect(await pageOverflows(page)).toBe(false);

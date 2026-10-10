@@ -2,7 +2,7 @@
 id: 44.6
 key: 44-6-tenant-diagnostic-timeline
 title: Tenant Diagnostic Timeline
-status: in-progress
+status: review
 epic: 44
 created: 2026-10-10
 baseline_commit: 7f11f02f49b8bcf40d9dd68831c9e1cd94578968
@@ -81,12 +81,12 @@ Partial failure: all sources are PostgreSQL on one `CohestraDbContext`. Canonica
 
 ## Tasks / Subtasks
 
-- [ ] Canonical timeline DTO + composer (AC: 3–4)
-- [ ] `GET .../timeline` PlatformAdminOnly + 404/503 (AC: 1, 6)
-- [ ] Bounded per-source queries + deterministic merge (AC: 3)
-- [ ] Additive Timeline on tenant detail; keep recent audit (AC: 5)
-- [ ] Unit, integration, TenantIsolation, frontend, Playwright (AC: all)
-- [ ] BMAD code-review loop on final HEAD; trace; NFR; checkpoint (AC: all)
+- [x] Canonical timeline DTO + composer (AC: 3–4)
+- [x] `GET .../timeline` PlatformAdminOnly + 404/503 (AC: 1, 6)
+- [x] Bounded per-source queries + deterministic merge (AC: 3)
+- [x] Additive Timeline on tenant detail; keep recent audit (AC: 5)
+- [x] Unit, integration, TenantIsolation, frontend, Playwright (AC: all)
+- [x] BMAD code-review loop on final HEAD; trace; NFR; checkpoint (AC: all)
 
 ## Dev Notes
 
@@ -121,6 +121,41 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 
 ### Debug Log References
 
+- Local unit: 1044 pass (`Category!=Integration`)
+- Local integration: 186 pass on fresh `cohestra_test` (`CI=true`)
+- Playwright `platform-ops-44-6` plus 44.4/44.5 regression with `E2E_LIVE_STACK=1` (API :8080, web :3000)
+
 ### Completion Notes List
 
+- Additive `GET /api/v1/platform/tenants/{tenantId}/timeline` (PlatformAdminOnly). Unknown tenant 404. Query failure 503. TenantAdmin/TenantMember 403. Anonymous 401.
+- Sources: audits (no DetailsJson), support opened + reply recorded only, outbox 44.4 summaries, Paddle deliveries with TenantId == requested (null excluded), current billing snapshot at observedAt.
+- Per-source Take(25), merge cap 50, newest-first then type then id.
+- Paddle empty = missing_instrumentation. Other historical empties = empty. No synthetic events.
+- Tenant detail Timeline is additive. Snapshot, lifecycle, complimentary, recent audit, recovery remain.
+- 44.7–44.9 not started. STOP before merge.
+
 ### File List
+
+- src/Contracts/Platform/PlatformTenantTimelineContracts.cs
+- src/Application/Platform/IPlatformTenantTimelineService.cs
+- src/Infrastructure/Platform/PlatformTenantTimelineComposer.cs
+- src/Infrastructure/Platform/PlatformTenantTimelineService.cs
+- src/Infrastructure/DependencyInjection.cs
+- src/Api/Controllers/V1/PlatformTenantsController.cs
+- src/Infrastructure.Tests/Platform/PlatformTenantTimelineComposerTests.cs
+- src/Infrastructure.Tests/Platform/PlatformTenantTimelineServiceTests.cs
+- src/Api.IntegrationTests/PlatformTenantTimelineIntegrationTests.cs
+- src/Api.IntegrationTests/TenantIsolationApiTests.cs
+- src/Api.IntegrationTests/TenantAuthzIntegrationTests.cs
+- web/lib/platform-api.ts
+- web/components/platform/platform-tenant-timeline.tsx
+- web/app/(platform)/platform/tenants/[id]/page.tsx
+- web/lib/platform-44-6-source.test.ts
+- web/e2e/platform-ops-44-6.spec.ts
+- _bmad-output/implementation-artifacts/44-6-tenant-diagnostic-timeline.md
+- _bmad-output/test-artifacts/atdd-checklist-44-6-tenant-diagnostic-timeline.md
+- _bmad-output/implementation-artifacts/44-6-code-review-2026-10-10.md
+- _bmad-output/test-artifacts/traceability/44-6-tenant-diagnostic-timeline.md
+- _bmad-output/test-artifacts/nfr-assessment-44-6-2026-10-10.md
+- _bmad-output/test-artifacts/checkpoint-44-6-tenant-timeline.md
+

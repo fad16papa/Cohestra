@@ -454,7 +454,7 @@ development_status:
   44-3-authenticated-infrastructure-health-operations-shell: done
   44-4-outbox-notification-observability-read-only: done
   44-5-additive-paddle-disposition-billing-diagnostics: done
-  44-6-tenant-diagnostic-timeline: in-progress
+  44-6-tenant-diagnostic-timeline: review
   44-7-platform-wide-searchable-audits: backlog
   44-8-support-severity: backlog
   44-9-deployment-version-health-read-only: backlog
