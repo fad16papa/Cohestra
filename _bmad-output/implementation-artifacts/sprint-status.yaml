@@ -8,7 +8,7 @@
 # 44.6 done — merged PR #424 at 6060062d / main 8d71dff5; post-merge CI green
 # 44.7 done — merged PR #426 at 048a22a7 / main 520189f6; post-merge CI green
 # 44.8 done — merged PR #428 at 142ea248 / main ca801778; post-merge CI green
-# epic 44 remains in-progress; 44.9 in-progress
+# epic 44 remains in-progress; 44.9 review (implementation PR, not closed)
 # story 43.4 done; 43.1–43.4 done; epic 43 in-progress; 42.x done
 # owner slice registration-responsive-tenant-website done (PR #388)
 # 43.5 done; epic 43 done after cross-story close
@@ -460,7 +460,7 @@ development_status:
   44-6-tenant-diagnostic-timeline: done
   44-7-platform-wide-searchable-audits: done
   44-8-support-severity: done
-  44-9-deployment-version-health-read-only: in-progress
+  44-9-deployment-version-health-read-only: review
   epic-44-retrospective: optional
 
   # Owner product slice (not Epic 42.4 / not Epic 43)

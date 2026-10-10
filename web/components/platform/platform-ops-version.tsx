@@ -94,22 +94,24 @@ function VersionDetails({ version }: { version: PlatformOpsVersion }) {
           <dt className="text-[var(--plat-stone)]">Git SHA</dt>
           <dd className="mt-1 min-w-0 break-all text-[var(--plat-ink)]">
             {sha.freshness === "actual" && sha.value ? (
-              <span title={sha.value}>{shortSha}</span>
+              <>
+                <span title={sha.value}>{shortSha}</span>
+                <span className="mt-1 block min-w-0 break-all font-mono text-xs text-[var(--plat-stone)]">
+                  {sha.value}
+                </span>
+              </>
             ) : sha.freshness === "missing_instrumentation" ? (
-              <span>Missing instrumentation</span>
+              <>
+                <span>Missing instrumentation</span>
+                <span className="mt-1 block min-w-0 break-words text-xs leading-relaxed text-[var(--plat-stone)]">
+                  The deployed commit is not currently instrumented. This is not a health status
+                  and is not a substitute build id.
+                </span>
+              </>
             ) : (
               <span>Unavailable</span>
             )}
           </dd>
-          {sha.freshness === "actual" && sha.value ? (
-            <p className="mt-1 min-w-0 break-all font-mono text-xs text-[var(--plat-stone)]">{sha.value}</p>
-          ) : null}
-          {sha.freshness === "missing_instrumentation" ? (
-            <p className="mt-1 min-w-0 break-words text-xs leading-relaxed text-[var(--plat-stone)]">
-              The deployed commit is not currently instrumented. This is not a health status
-              and is not a substitute build id.
-            </p>
-          ) : null}
         </div>
         <div>
           <dt className="text-[var(--plat-stone)]">Environment</dt>

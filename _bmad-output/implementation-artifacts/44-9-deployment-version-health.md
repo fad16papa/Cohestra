@@ -2,7 +2,7 @@
 id: 44.9
 key: 44-9-deployment-version-health-read-only
 title: Deployment Version Health
-status: in-progress
+status: review
 epic: 44
 created: 2026-10-10
 baseline_commit: 3fc6151517a4cd15a83e2d5c47a845c08b3b38a7
@@ -10,7 +10,7 @@ baseline_commit: 3fc6151517a4cd15a83e2d5c47a845c08b3b38a7
 
 # Story 44.9: Deployment Version Health (read-only)
 
-Status: in-progress
+Status: review
 
 DONE requires the Mandatory Code Review Loop on the final HEAD. Epic 44 stays in-progress in this story PR.
 
@@ -71,7 +71,7 @@ so that **I can identify what build is serving Cohestra without SSH and without 
 - [x] Version service + endpoint
 - [x] Deploy/compose injection
 - [x] Overview + Operations UI
-- [ ] Tests + review + draft PR
+- [x] Tests + review + draft PR
 
 ### Agent Model Used
 
