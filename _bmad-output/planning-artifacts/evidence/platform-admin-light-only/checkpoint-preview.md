@@ -1,20 +1,22 @@
-# Checkpoint preview — PlatformAdmin light-only
+# Checkpoint preview — PlatformAdmin light-only after 44.9 rebase
 
 Date: 2026-10-10
 Workflow: bmad-checkpoint-preview
 Model: Cursor Grok 4.6
 PR: #431
-Supersedes: `evidence/light-only-appearance/checkpoint-preview.md`
+Main: `1872baa60a687af762d1d157414cf7439f04dde7`
 
-| Question | Expected | Actual | Evidence |
-|---|---|---|---|
-| Is PlatformAdmin always light? | YES | YES | ThemeScript + `forcedTheme="light"`; Overview/ops/support/login screenshots |
-| Can OS dark mode make PlatformAdmin dark? | NO | NO | Playwright `emulateMedia({ colorScheme: "dark" })` + light root |
-| Can a stored tenant dark preference make PlatformAdmin dark? | NO | NO | `cohestra-theme-operator=dark` still yields Platform light |
-| Does visiting PlatformAdmin erase the tenant's selected theme? | NO | NO | Return to dashboard stays dark; no PATCH `themePreference=light` |
-| Can tenant/admin users still select Light/Dark/System? | YES | YES | Admin ThemeToggle + Settings radios |
-| Does Settings → Appearance still exist for tenant/admin? | YES | YES | `/settings/appearance` screenshot |
-| Do public registration and tenant websites retain existing theme behavior? | YES | YES | Registration dark + ThemeToggle; website ThemeToggle |
-| Is the owner-reported Platform Overview dark UI fixed? | YES | YES | 1440/390 Overview: light paper, white cards, ink header — no charcoal shell |
+| Question | Expected | Actual |
+|---|---|---|
+| Is PlatformAdmin always light? | YES | YES |
+| Can OS dark mode make PlatformAdmin dark? | NO | NO |
+| Can a stored tenant dark preference make PlatformAdmin dark? | NO | NO |
+| Does visiting PlatformAdmin erase the tenant's selected theme? | NO | NO |
+| Can tenant/admin users still select Light/Dark/System? | YES | YES |
+| Does Settings → Appearance still exist? | YES | YES |
+| Do public registration and tenant websites retain theme behavior? | YES | YES |
+| Is the owner-reported Platform Overview dark UI fixed? | YES | YES |
+| Are 44.9 Version surfaces (actual/missing/error) light? | YES | YES |
+| Does a long SHA overflow at 390? | NO | NO |
 
-Verdict: CHECKPOINT PASS. Exact-head CI still required. STOP before merge.
+Verdict: CHECKPOINT PASS. Exact-head CI required. STOP before merge.

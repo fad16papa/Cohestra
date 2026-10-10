@@ -1,7 +1,7 @@
 # Trace — PlatformAdmin light-only appearance
 
 Date: 2026-10-10
-HEAD: fa356f3faf49c1230cf96485dbf05fbaca957ec1
+HEAD: rebased onto `1872baa6`; see PR #431 current SHA
 Spec: `_bmad-output/planning-artifacts/specs/spec-light-only-appearance/SPEC.md`
 
 | AC | Test / evidence | Result |
@@ -20,5 +20,7 @@ Spec: `_bmad-output/planning-artifacts/specs/spec-light-only-appearance/SPEC.md`
 | L Tenant website theme preserved | `tenant-website-1440.png` | PASS |
 | Route transition dark → Platform light → dark | e2e F–J; no PATCH light | PASS |
 | Platform Overview owner regression | `platform-overview-*-prefers-dark.png` | PASS |
+| 44.9 Version actual/missing/error stay light | `platform-*-version-*-prefers-dark.png` | PASS |
+| 44.9 long SHA no 390 overflow | version-actual-390 e2e | PASS |
 
 Gate: PASS. STOP before merge.

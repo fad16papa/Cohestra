@@ -1,52 +1,36 @@
-# BMAD code review — PlatformAdmin light-only appearance
+# BMAD code review — PlatformAdmin light-only after Story 44.9 rebase
 
 Date: 2026-10-10
-HEAD: fa356f3faf49c1230cf96485dbf05fbaca957ec1
+HEAD: pending-this-commit
 Reviewer: Cursor Grok 4.6
 Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor
 PR: https://github.com/fad16papa/Cohestra/pull/431
-Frozen: PR #430 not modified
-Supersedes: review of global light-only HEAD `d1540d1e`
+Main baseline: `1872baa60a687af762d1d157414cf7439f04dde7`
+Supersedes: review of `dd60845e` (old baseline `3fc61515`). That approval is not merge evidence.
 
-Mandatory Code Review Loop is in force. This review targets the PlatformAdmin-only implementation, not the superseded global lock.
+Mandatory Code Review Loop is in force. Review the current implementation HEAD only.
 
 ## Verdict
 
-PASS after in-loop patch of the first-paint race Blind Hunter + Edge Case Hunter raised.
+PASS. Rebase onto Story 44.9 / tracker-close main introduced no Platform dark leak and no tenant theme deletion. Version UI uses `--plat-*` aliases that resolve from the locked light token set.
 
 ## Findings
 
 | ID | Severity | Source | Finding | Disposition |
 |---|---|---|---|---|
-| R1 | MAJOR | blind+edge | next-themes body script can re-apply stored/OS dark if SSR `forcedTheme` is missing | PATCHED — trailing `<ThemeScript />` after ThemeProvider + `useLayoutEffect` Platform lock |
-| R2 | MINOR | blind | SPA navigation onto `/platform/**` is not locked before paint by ThemeScript | PATCHED — `useLayoutEffect` removes `html.dark` and sets `color-scheme: light` when entering Platform |
-| R3 | MINOR | blind | ThemeToggle hide is a Platform login prop, not a path lock | DISMISS — owner asked for explicit `showAppearanceToggle={false}` on Platform login, not pathname hacks in generic UI |
-| R4 | NIT | blind | `isPlatformLightOnlyPath` is duplicated inside ThemeScript | DISMISS — inline script cannot import; unit tests keep predicates aligned |
+| R1 | — | all | No new BLOCKER/MAJOR on the rebased HEAD | — |
 
-Acceptance Auditor: NO FINDINGS. Kernel items PASS.
+Targeted hunt after rebase:
 
-## Targeted hunt
-
-- Platform still inheriting dark mode: **no** — ThemeScript + `forcedTheme="light"` + live Overview under OS/stored dark
-- First-paint dark flash: **no** — head script, trailing script, e2e `__sawHtmlDark === false`
-- `/platform/login` ThemeToggle: **no** — `showAppearanceToggle={false}`; screenshot has no control
-- Platform visit overwriting tenant preference: **no** — sync skips Platform; e2e storage stays `dark`; no appearance PATCH to light
-- Tenant dark removed: **no** — dashboard dark screenshot
-- Settings Appearance missing: **no** — Light/Dark/System radios restored
-- Tenant ThemeToggle missing: **no**
-- Public registration ThemeToggle missing: **no**
-- Tenant website theme missing: **no**
-- Brand Accent dark damaged: **no** — `isDark` branch + unit matrix restored
-- Global `color-scheme: light` on `html`: **no**
-- Global `html.dark` prohibited: **no** — legitimate on tenant
-- next-themes removed: **no**
-- Platform override leaking to tenant routes: **no**
-- Leaving Platform stuck light: **no** — route-transition e2e
-- Story 44.x functional regression: **no** — ops/support/overview still load
+- Platform Overview/Operations Version actual/missing/error under OS+stored dark: **light**
+- Long SHA at 390: wraps, no overflow
+- `html.dark` on Platform: **absent**
+- Tenant Light/Dark/System, Settings Appearance, ThemeToggle, registration, website: **preserved**
+- Visiting Platform does not PATCH `themePreference=light`
+- Story 44.9 endpoint/public `/system/info`/`/ready`: **unchanged**
+- Epic 44 remains in-progress
 
 ## Clean review
 
 Unresolved BLOCKER: 0
 Unresolved MAJOR: 0
-Dismissed: 2
-Patched in this HEAD: 2

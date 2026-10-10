@@ -301,7 +301,7 @@ test.describe("PlatformAdmin light-only + tenant theme preservation", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/platform/overview", { waitUntil: "domcontentloaded" });
     await waitForPlatformConsole(page);
-    await expect(page.getByText("Missing instrumentation")).toBeVisible();
+    await expect(page.getByText("Missing instrumentation").first()).toBeVisible();
     await assertLightRoot(page);
     await page.screenshot({
       path: path.join(evidenceDir, "platform-overview-version-missing-1440-prefers-dark.png"),
