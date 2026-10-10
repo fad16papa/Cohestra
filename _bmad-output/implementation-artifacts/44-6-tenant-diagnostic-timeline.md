@@ -2,15 +2,18 @@
 id: 44.6
 key: 44-6-tenant-diagnostic-timeline
 title: Tenant Diagnostic Timeline
-status: review
+status: done
 epic: 44
 created: 2026-10-10
 baseline_commit: 7f11f02f49b8bcf40d9dd68831c9e1cd94578968
+accepted_commit: 523bad3ba5cc708508106d24679f7ece252a2492
+accepted_current_head: 6060062d771140368ca6e621d1a4a3601f389a85
+implementation_merge: 8d71dff567e94f9c576e0531be1ec48a7972bc78
 ---
 
 # Story 44.6: Tenant Diagnostic Timeline
 
-Status: in-progress
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT/UX ACCEPTANCE → CLOSE.
 
@@ -132,7 +135,8 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 - Per-source Take(25), merge cap 50, newest-first then type then id.
 - Paddle empty = missing_instrumentation. Other historical empties = empty. No synthetic events.
 - Tenant detail Timeline is additive. Snapshot, lifecycle, complimentary, recent audit, recovery remain.
-- 44.7–44.9 not started. STOP before merge.
+- 44.7–44.9 not started.
+- Merged PR #424. Accepted implementation/test HEAD `523bad3ba5cc708508106d24679f7ece252a2492`. Accepted current HEAD `6060062d771140368ca6e621d1a4a3601f389a85` (docs pin only). Main merge `8d71dff567e94f9c576e0531be1ec48a7972bc78`. Exact-head CI `38014609421` green. Post-merge main CI `38015270850` green. Deploy remains pre-existing Epic 19. Epic 44 stays in-progress. Stories 44.7–44.9 not started.
 
 ### File List
 
