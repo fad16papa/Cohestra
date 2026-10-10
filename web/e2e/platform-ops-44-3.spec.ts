@@ -70,7 +70,8 @@ test.describe("Story 44.3 — Operations health shell", () => {
     await expect(page.getByText("redis", { exact: true })).toBeVisible();
     await expect(page.getByText("default-tenant", { exact: true })).toBeVisible();
     await expect(page.getByText("Not in this probe")).toHaveCount(4);
-    await expect(page.getByText("Missing instrumentation")).toHaveCount(1);
+    await expect(page.getByRole("heading", { name: "Billing / Paddle" })).toBeVisible();
+    await expect(page.getByText(/not a Paddle health check/i)).toBeVisible();
     await expect(page.getByText(/does not prove/i)).toBeVisible();
     await expect(page.getByText("ms").first()).toBeVisible();
     const axe = await analyzeAxe(page);

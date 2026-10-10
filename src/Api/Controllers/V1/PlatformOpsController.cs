@@ -20,6 +20,7 @@ public sealed class PlatformOpsController(
     IPlatformOpsOverviewService overviewService,
     IPlatformOpsHealthService healthService,
     IPlatformOpsOutboxService outboxService,
+    IPlatformOpsPaddleService paddleService,
     IPlatformRecoveryRateLimiter recoveryRateLimiter,
     IOptions<PlatformRecoveryRateLimitOptions> recoveryRateLimitOptions) : ControllerBase
 {
@@ -117,6 +118,56 @@ public sealed class PlatformOpsController(
                 Status = StatusCodes.Status503ServiceUnavailable,
                 Title = "Outbox data unavailable",
                 Detail = "Outbox list could not be loaded. This is not a healthy or failed email status.",
+                Instance = HttpContext.Request.Path,
+            });
+        }
+    }
+
+    [HttpGet("ops/paddle/config")]
+    [ProducesResponseType(typeof(PlatformOpsPaddleConfigResponse), StatusCodes.Status200OK)]
+    public ActionResult<PlatformOpsPaddleConfigResponse> GetPaddleConfig()
+    {
+        return Ok(paddleService.GetConfig());
+    }
+
+    [HttpGet("ops/paddle/deliveries")]
+    [ProducesResponseType(typeof(PlatformOpsPaddleDeliveryListResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<PlatformOpsPaddleDeliveryListResponse>> ListPaddleDeliveries(
+        [FromQuery] string? disposition,
+        [FromQuery] string? eventType,
+        [FromQuery] Guid? tenantId,
+        [FromQuery] DateTimeOffset? from,
+        [FromQuery] DateTimeOffset? to,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var result = await paddleService.ListDeliveriesAsync(
+                new PlatformOpsPaddleDeliveryListQuery(disposition, eventType, tenantId, from, to, page, pageSize),
+                cancellationToken);
+            if (!result.Succeeded)
+            {
+                return BadRequestProblem(result.Error ?? "Invalid paddle delivery query.");
+            }
+
+            return Ok(result.Value);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception)
+        {
+            Response.ContentType = "application/problem+json";
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Paddle delivery data unavailable",
+                Detail = "Paddle deliveries could not be loaded. This is not a Paddle health status.",
                 Instance = HttpContext.Request.Path,
             });
         }

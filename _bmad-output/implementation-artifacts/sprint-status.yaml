@@ -452,7 +452,7 @@ development_status:
   44-2-production-overview-source-backed-kpis: done
   44-3-authenticated-infrastructure-health-operations-shell: done
   44-4-outbox-notification-observability-read-only: done
-  44-5-additive-paddle-disposition-billing-diagnostics: backlog
+  44-5-additive-paddle-disposition-billing-diagnostics: review
   44-6-tenant-diagnostic-timeline: backlog
   44-7-platform-wide-searchable-audits: backlog
   44-8-support-severity: backlog

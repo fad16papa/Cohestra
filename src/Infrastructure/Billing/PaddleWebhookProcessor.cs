@@ -57,7 +57,10 @@ internal sealed class PaddleWebhookProcessor(
         var eventType = notification?.EventType ?? string.Empty;
         if (string.IsNullOrWhiteSpace(eventId))
         {
-            return PaddleWebhookProcessResult.Invalid("Missing event id.");
+            return PaddleWebhookProcessResult.Invalid("Missing event id.") with
+            {
+                EventType = string.IsNullOrWhiteSpace(eventType) ? null : eventType,
+            };
         }
 
         var existing = await dbContext.PaddleWebhookEvents
@@ -65,12 +68,20 @@ internal sealed class PaddleWebhookProcessor(
             .FirstOrDefaultAsync(e => e.EventId == eventId, cancellationToken);
         if (existing is not null)
         {
-            return PaddleWebhookProcessResult.DuplicateEvent();
+            return PaddleWebhookProcessResult.DuplicateEvent() with
+            {
+                EventId = eventId,
+                EventType = eventType,
+            };
         }
 
         if (!TrackedEventTypes.Contains(eventType))
         {
-            return PaddleWebhookProcessResult.Ignored("Ignored event type.");
+            return PaddleWebhookProcessResult.Ignored("Ignored event type.") with
+            {
+                EventId = eventId,
+                EventType = eventType,
+            };
         }
 
         var handled = eventType.ToLowerInvariant() switch
@@ -87,7 +98,12 @@ internal sealed class PaddleWebhookProcessor(
 
         if (!handled)
         {
-            return PaddleWebhookProcessResult.Retry("Handler failed.");
+            return PaddleWebhookProcessResult.Retry("Handler failed.") with
+            {
+                EventId = eventId,
+                EventType = eventType,
+                TenantId = TrackedTenantId(),
+            };
         }
 
         dbContext.PaddleWebhookEvents.Add(new PaddleWebhookEvent
@@ -107,11 +123,20 @@ internal sealed class PaddleWebhookProcessor(
             if (IsWebhookEventIdConstraint(constraint))
             {
                 logger.LogInformation(ex, "Concurrent webhook delivery for event {EventId}", eventId);
-                return PaddleWebhookProcessResult.DuplicateEvent();
+                return PaddleWebhookProcessResult.DuplicateEvent() with
+                {
+                    EventId = eventId,
+                    EventType = eventType,
+                };
             }
 
             logger.LogInformation(ex, "Concurrent adjustment cursor write for event {EventId}", eventId);
-            return PaddleWebhookProcessResult.Retry("Concurrent adjustment update.");
+            return PaddleWebhookProcessResult.Retry("Concurrent adjustment update.") with
+            {
+                EventId = eventId,
+                EventType = eventType,
+                TenantId = TrackedTenantId(),
+            };
         }
 
         var tenantId = dbContext.ChangeTracker.Entries<Tenant>()
@@ -136,7 +161,20 @@ internal sealed class PaddleWebhookProcessor(
             }
         }
 
-        return PaddleWebhookProcessResult.ProcessedOk();
+        return PaddleWebhookProcessResult.ProcessedOk() with
+        {
+            EventId = eventId,
+            EventType = eventType,
+            TenantId = TrackedTenantId(),
+        };
+    }
+
+    private Guid? TrackedTenantId()
+    {
+        var tenantId = dbContext.ChangeTracker.Entries<Tenant>()
+            .Select(entry => entry.Entity.Id)
+            .FirstOrDefault();
+        return tenantId == Guid.Empty ? null : tenantId;
     }
 
     private async Task<bool> HandleTransactionCompletedAsync(

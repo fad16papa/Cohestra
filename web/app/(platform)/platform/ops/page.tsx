@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { PlatformOpsOutboxSection } from "@/components/platform/platform-ops-outbox";
+import { PlatformOpsPaddleSection } from "@/components/platform/platform-ops-paddle";
 import { getPlatformOpsHealth, type PlatformOpsHealth } from "@/lib/platform-api";
 import {
   formatDurationMs,
@@ -160,22 +161,7 @@ export default function PlatformOperationsPage() {
         ) : null}
       </section>
 
-      <section
-        className="space-y-2 rounded-[10px] border border-[var(--plat-line)] bg-white/70 p-4 sm:p-5"
-        aria-labelledby="ops-billing-heading"
-      >
-        <h2
-          id="ops-billing-heading"
-          className="text-sm font-semibold uppercase tracking-[0.12em] text-[var(--plat-stone)]"
-        >
-          Billing / Paddle
-        </h2>
-        <p className="text-sm font-medium text-[var(--plat-ink)]">Missing instrumentation</p>
-        <p className="min-w-0 break-words text-sm leading-relaxed text-[var(--plat-stone)]">
-          Paddle webhook diagnostics are not measured on this page. This is not a healthy, failed,
-          or unavailable billing status.
-        </p>
-      </section>
+      <PlatformOpsPaddleSection />
 
       <PlatformOpsOutboxSection />
     </div>

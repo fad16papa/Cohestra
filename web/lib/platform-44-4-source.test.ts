@@ -37,10 +37,9 @@ describe("Story 44.4 Operations outbox source contract", () => {
     }
   });
 
-  it("does not treat zero Failed as health and leaves Billing uninstrumented", () => {
+  it("does not treat zero Failed as health and leaves outbox read-only", () => {
     expect(OUTBOX).toContain("not email health");
-    expect(OPS).toContain("Missing instrumentation");
-    expect(OPS).toContain("Billing / Paddle");
+    expect(OPS).toContain("PlatformOpsPaddleSection");
     expect(HEALTH).toContain("does not prove outbox");
     expect(OUTBOX).not.toContain("paddle_webhook");
     expect(OUTBOX).not.toContain("PayloadJson");

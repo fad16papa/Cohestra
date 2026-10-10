@@ -23,11 +23,18 @@ public sealed class PaddleWebhookIntegrationTests(PaddleWebhookIntegrationFixtur
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
         using var client = Factory.CreateClient();
+        var started = DateTimeOffset.UtcNow.AddSeconds(-2);
         using var response = await client.PostAsync(
             "/api/v1/system/paddle/webhook",
             new StringContent("{}", Encoding.UTF8, "application/json"));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertDeliveryAsync(
+            started,
+            PaddleWebhookDeliveryDisposition.Rejected,
+            400,
+            eventId: null,
+            forbidden: ["{", "WebhookSecret", "pdl_ntfset"]);
     }
 
     [SkippableFact]
@@ -42,8 +49,17 @@ public sealed class PaddleWebhookIntegrationTests(PaddleWebhookIntegrationFixtur
         };
         request.Headers.TryAddWithoutValidation("Paddle-Signature", "ts=1;h1=deadbeef");
 
+        var started = DateTimeOffset.UtcNow.AddSeconds(-2);
         using var response = await client.SendAsync(request);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var row = await AssertDeliveryAsync(
+            started,
+            PaddleWebhookDeliveryDisposition.Rejected,
+            400,
+            eventId: null,
+            forbidden: ["evt_bad", "deadbeef", "WebhookSecret", "pdl_ntfset", "at "]);
+        Assert.Null(row.EventType);
+        Assert.True((row.DetailSanitized?.Length ?? 0) <= 200);
     }
 
     [SkippableFact]
@@ -73,6 +89,14 @@ public sealed class PaddleWebhookIntegrationTests(PaddleWebhookIntegrationFixtur
         Assert.Equal(BillingStatus.PastDue, updated.BillingStatus);
         Assert.NotNull(updated.DelinquencyStartedAt);
         Assert.Equal(1, await db.PaddleWebhookEvents.CountAsync(item => item.EventId == eventId));
+        Assert.Equal(
+            1,
+            await db.PaddleWebhookDeliveries.CountAsync(item =>
+                item.EventId == eventId && item.Disposition == PaddleWebhookDeliveryDisposition.Processed));
+        Assert.Equal(
+            1,
+            await db.PaddleWebhookDeliveries.CountAsync(item =>
+                item.EventId == eventId && item.Disposition == PaddleWebhookDeliveryDisposition.Duplicate));
     }
 
     [SkippableFact]
@@ -99,6 +123,10 @@ public sealed class PaddleWebhookIntegrationTests(PaddleWebhookIntegrationFixtur
         await using var scope = Factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
         Assert.Equal(0, await db.PaddleWebhookEvents.CountAsync(item => item.EventId == eventId));
+        Assert.Equal(
+            1,
+            await db.PaddleWebhookDeliveries.CountAsync(item =>
+                item.EventId == eventId && item.Disposition == PaddleWebhookDeliveryDisposition.Retryable && item.HttpStatus == 503));
     }
 
     [SkippableFact]
@@ -169,8 +197,94 @@ public sealed class PaddleWebhookIntegrationTests(PaddleWebhookIntegrationFixtur
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
         using var client = Factory.CreateClient();
+        var started = DateTimeOffset.UtcNow.AddSeconds(-2);
         using var response = await PostSignedAsync(client, """{"event_type":"subscription.updated","data":{}}""");
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertDeliveryAsync(
+            started,
+            PaddleWebhookDeliveryDisposition.Rejected,
+            400,
+            eventId: null,
+            forbidden: ["subscription.updated"]);
+    }
+
+    [SkippableFact]
+    public async Task Webhook_malformed_json_stays_400_without_raw_body()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        const string malformed = """{"event_id":"evt_bad_json", "email":"victim-44-5@example.com",""";
+        var started = DateTimeOffset.UtcNow.AddSeconds(-2);
+        using var client = Factory.CreateClient();
+        using var response = await PostSignedAsync(client, malformed);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertDeliveryAsync(
+            started,
+            PaddleWebhookDeliveryDisposition.Rejected,
+            400,
+            eventId: null,
+            forbidden: ["evt_bad_json", "victim-44-5@example.com", "{"]);
+    }
+
+    [SkippableFact]
+    public async Task Webhook_ignored_event_is_200_and_records_ignored_without_ledger()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        var eventId = $"evt_ign_{Guid.NewGuid():N}";
+        var body = $$"""
+            {
+              "event_id": "{{eventId}}",
+              "event_type": "address.updated",
+              "data": { "id": "add_{{eventId}}" }
+            }
+            """;
+
+        using var client = Factory.CreateClient();
+        using var response = await PostSignedAsync(client, body);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        Assert.Equal(0, await db.PaddleWebhookEvents.CountAsync(item => item.EventId == eventId));
+        var row = Assert.Single(await db.PaddleWebhookDeliveries
+            .Where(item => item.EventId == eventId)
+            .ToListAsync());
+        Assert.Equal(PaddleWebhookDeliveryDisposition.Ignored, row.Disposition);
+        Assert.Equal(200, row.HttpStatus);
+    }
+
+    [SkippableFact]
+    public async Task Webhook_sentinel_payload_is_not_persisted_on_diagnostic_row()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        const string email = "victim-44-5@example.com";
+        const string bodySentinel = "CUSTOMER_BODY_SENTINEL_44_5";
+        const string jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload445.signature445";
+        var eventId = $"evt_sen_{Guid.NewGuid():N}";
+        var body = $$"""
+            {
+              "event_id": "{{eventId}}",
+              "event_type": "address.updated",
+              "data": {
+                "email": "{{email}}",
+                "note": "{{bodySentinel}}",
+                "token": "{{jwt}}"
+              }
+            }
+            """;
+
+        using var client = Factory.CreateClient();
+        using var response = await PostSignedAsync(client, body);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var row = Assert.Single(await db.PaddleWebhookDeliveries
+            .Where(item => item.EventId == eventId)
+            .ToListAsync());
+        Assert.DoesNotContain(email, row.DetailSanitized ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain(bodySentinel, row.DetailSanitized ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain(jwt, row.DetailSanitized ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain("{", row.DetailSanitized ?? string.Empty, StringComparison.Ordinal);
     }
 
     private async Task<Tenant> SeedBillableTenantAsync()
@@ -222,6 +336,29 @@ public sealed class PaddleWebhookIntegrationTests(PaddleWebhookIntegrationFixtur
         };
         request.Headers.TryAddWithoutValidation("Paddle-Signature", header);
         return await client.SendAsync(request);
+    }
+
+    private async Task<PaddleWebhookDelivery> AssertDeliveryAsync(
+        DateTimeOffset started,
+        PaddleWebhookDeliveryDisposition disposition,
+        int httpStatus,
+        string? eventId,
+        string[] forbidden)
+    {
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var row = await db.PaddleWebhookDeliveries
+            .Where(item => item.ObservedAt >= started && item.Disposition == disposition && item.HttpStatus == httpStatus)
+            .OrderByDescending(item => item.ObservedAt)
+            .FirstOrDefaultAsync();
+        Assert.NotNull(row);
+        Assert.Equal(eventId, row.EventId);
+        foreach (var marker in forbidden)
+        {
+            Assert.DoesNotContain(marker, row.DetailSanitized ?? string.Empty, StringComparison.Ordinal);
+        }
+
+        return row;
     }
 
     private sealed record WebhookAck(bool Received, bool Processed, bool Duplicate, string? Detail);

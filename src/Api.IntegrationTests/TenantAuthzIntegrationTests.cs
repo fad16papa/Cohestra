@@ -112,6 +112,12 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var outboxList = await client.GetAsync("/api/v1/platform/ops/outbox");
         outboxList.EnsureSuccessStatusCode();
+
+        using var paddleConfig = await client.GetAsync("/api/v1/platform/ops/paddle/config");
+        paddleConfig.EnsureSuccessStatusCode();
+
+        using var paddleDeliveries = await client.GetAsync("/api/v1/platform/ops/paddle/deliveries");
+        paddleDeliveries.EnsureSuccessStatusCode();
     }
 
     private async Task<HttpClient> CreateTenantMemberClientAsync()
@@ -150,6 +156,12 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var outboxList = await client.GetAsync("/api/v1/platform/ops/outbox");
         await AssertForbiddenAsync(outboxList);
+
+        using var paddleConfig = await client.GetAsync("/api/v1/platform/ops/paddle/config");
+        await AssertForbiddenAsync(paddleConfig);
+
+        using var paddleDeliveries = await client.GetAsync("/api/v1/platform/ops/paddle/deliveries");
+        await AssertForbiddenAsync(paddleDeliveries);
 
         using var search = await client.GetAsync("/api/v1/platform/search?q=ops");
         await AssertForbiddenAsync(search);
