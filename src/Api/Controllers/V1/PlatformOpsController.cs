@@ -18,6 +18,7 @@ namespace Cohestra.Api.Controllers.V1;
 public sealed class PlatformOpsController(
     IPlatformTenantOpsService platformTenantOpsService,
     IPlatformOpsOverviewService overviewService,
+    IPlatformOpsVersionService versionService,
     IPlatformOpsHealthService healthService,
     IPlatformOpsOutboxService outboxService,
     IPlatformOpsPaddleService paddleService,
@@ -181,6 +182,13 @@ public sealed class PlatformOpsController(
     {
         var overview = await overviewService.GetAsync(hideLoadTest, cancellationToken);
         return Ok(overview);
+    }
+
+    [HttpGet("ops/version")]
+    [ProducesResponseType(typeof(PlatformOpsVersionResponse), StatusCodes.Status200OK)]
+    public ActionResult<PlatformOpsVersionResponse> GetVersion()
+    {
+        return Ok(versionService.Get());
     }
 
     [HttpGet("search")]

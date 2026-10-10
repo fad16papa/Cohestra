@@ -263,6 +263,7 @@ public static class DependencyInjection
         services.AddScoped<IPlatformSupportReportService, PlatformSupportReportService>();
         services.AddScoped<IPlatformTenantOpsService, PlatformTenantOpsService>();
         services.AddScoped<IPlatformOpsOverviewService, PlatformOpsOverviewService>();
+        services.AddScoped<IPlatformOpsVersionService, PlatformOpsVersionService>();
         services.AddScoped<IPlatformOpsHealthService, PlatformOpsHealthService>();
         services.AddScoped<IPlatformOpsOutboxService, PlatformOpsOutboxService>();
         services.AddScoped<IPlatformOpsPaddleService, PlatformOpsPaddleService>();

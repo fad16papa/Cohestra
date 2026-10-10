@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { PlatformOpsOutboxSection } from "@/components/platform/platform-ops-outbox";
 import { PlatformOpsPaddleSection } from "@/components/platform/platform-ops-paddle";
+import { PlatformOpsVersionSection } from "@/components/platform/platform-ops-version";
 import { getPlatformOpsHealth, type PlatformOpsHealth } from "@/lib/platform-api";
 import {
   formatDurationMs,
@@ -164,6 +165,8 @@ export default function PlatformOperationsPage() {
       <PlatformOpsPaddleSection />
 
       <PlatformOpsOutboxSection />
+
+      <PlatformOpsVersionSection />
     </div>
   );
 }

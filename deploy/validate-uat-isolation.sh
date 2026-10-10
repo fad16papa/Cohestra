@@ -492,6 +492,27 @@ else
 fi
 rm -f "$EDGE_TMP"
 
+DEPLOY="$ROOT_DIR/deploy/remote-deploy.sh"
+if [[ -f "$DEPLOY" ]] \
+  && grep -q 'git reset --hard "origin/$DEPLOY_BRANCH"' "$DEPLOY" \
+  && awk '
+    /git reset --hard "origin\/\$DEPLOY_BRANCH"/ { reset=1 }
+    reset && /GIT_SHA="\$\(git rev-parse HEAD\)"/ { derived=1 }
+    derived && /export GIT_SHA/ { exported=1 }
+    END { exit(reset && derived && exported ? 0 : 1) }
+  ' "$DEPLOY"; then
+  pass "remote-deploy derives and exports GIT_SHA after git reset"
+else
+  fail "remote-deploy must derive/export GIT_SHA after git reset --hard"
+fi
+
+if grep -qE '^[[:space:]]*GIT_SHA:[[:space:]]*\$\{GIT_SHA:-\}[[:space:]]*$' "$COMPOSE" \
+  && ! grep -qiE 'GIT_SHA:[[:space:]]*[0-9a-fA-F]{7,}' "$COMPOSE"; then
+  pass "API compose receives GIT_SHA from \${GIT_SHA:-} with no hardcoded SHA"
+else
+  fail "API service must pass GIT_SHA: \${GIT_SHA:-} and must not hardcode a SHA"
+fi
+
 echo ""
 echo "Passed: $PASS  Failed: $FAIL"
 if [[ "$FAIL" -gt 0 ]]; then

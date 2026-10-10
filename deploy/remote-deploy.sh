@@ -37,6 +37,11 @@ if [[ -f .env ]]; then
   set +a
 fi
 
+# Derive after reset (and after .env) so the built tree's HEAD wins over any leftover env.
+GIT_SHA="$(git rev-parse HEAD)"
+export GIT_SHA
+echo "GIT_SHA=${GIT_SHA}"
+
 # shellcheck disable=SC1091
 source "$ROOT_DIR/deploy/cohestra-uat-guards.sh"
 refuse_legacy_compose_project || exit 1

@@ -131,6 +131,9 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var support = await client.GetAsync("/api/v1/platform/support-issues?severity=Unspecified");
         support.EnsureSuccessStatusCode();
+
+        using var version = await client.GetAsync("/api/v1/platform/ops/version");
+        version.EnsureSuccessStatusCode();
     }
 
     private async Task<HttpClient> CreateTenantMemberClientAsync()
@@ -204,6 +207,9 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
             $"/api/v1/platform/support-issues/{Guid.CreateVersion7()}",
             JsonContent.Create(new { severity = "High" }));
         await AssertForbiddenAsync(supportPatch);
+
+        using var version = await client.GetAsync("/api/v1/platform/ops/version");
+        await AssertForbiddenAsync(version);
 
         using var reset = await client.PostAsync(
             $"/api/v1/platform/tenants/{tenantId}/members/{memberUserId}/send-password-reset",

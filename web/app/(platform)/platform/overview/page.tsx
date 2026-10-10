@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { PlatformKpiTile } from "@/components/platform/platform-kpi-tile";
+import { PlatformOpsVersionSection } from "@/components/platform/platform-ops-version";
 import {
   getPlatformOpsOverview,
   type PlatformOpsOverview,
@@ -195,6 +196,8 @@ export default function PlatformOverviewPage() {
           </PlatformKpiTile>
         </div>
       ) : null}
+
+      <PlatformOpsVersionSection headingId="overview-version-heading" />
     </div>
   );
 }
