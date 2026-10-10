@@ -39,9 +39,6 @@ describe("semantic text tokens", () => {
     expect(light["--stone-cinema"]).toBe("#5a636e");
     expect(light["--text-muted"]).toBe("#252c33");
     expect(light["--text-muted"]).not.toBe("var(--stone-cinema)");
-    const globals = fs.readFileSync(path.join(webRoot, "app/globals.css"), "utf8");
-    expect(globals).toMatch(/\[data-demo-theme\]/);
-    expect(globals).toMatch(/--text-muted:\s*var\(--stone-cinema\)/);
   });
 
   it("maps input borders to the control token", () => {

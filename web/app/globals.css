@@ -150,94 +150,6 @@
     animation: marketing-hero-stack-rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
-  @keyframes marketing-product-carousel-enter {
-    from {
-      opacity: 0;
-      transform: translate3d(0, 12px, 0);
-    }
-    to {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
-    }
-  }
-
-  .marketing-product-carousel-enter {
-    animation: marketing-product-carousel-enter 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  @keyframes marketing-cinema-room-enter {
-    from {
-      opacity: 0;
-      transform: translate3d(0, 10px, 0);
-    }
-    to {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
-    }
-  }
-
-  .marketing-cinema-room-enter {
-    animation: marketing-cinema-room-enter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  .marketing-cinema-reel-stage {
-    isolation: isolate;
-  }
-
-  .marketing-cinema-reel-layer {
-    will-change: transform, opacity;
-  }
-
-  .marketing-cinema-reel-caption {
-    will-change: transform, opacity;
-  }
-
-  .marketing-cinema-roll-panel {
-    transition:
-      opacity 0.32s cubic-bezier(0.2, 0.8, 0.2, 1),
-      transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .marketing-cinema-roll-selected {
-    transition:
-      background-color 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-      box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-      opacity 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .marketing-cinema-roll-emphasis {
-    transition:
-      opacity 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-      border-color 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
-      background-color 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  @keyframes marketing-cinema-climax {
-    0% {
-      transform: scale(1) translate3d(0, 0, 0);
-    }
-    40% {
-      transform: scale(1.02) translate3d(0, -4px, 0);
-    }
-    100% {
-      transform: scale(1) translate3d(0, 0, 0);
-    }
-  }
-
-  .marketing-cinema-climax {
-    animation: marketing-cinema-climax 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-  }
-
-  /* Cinema stage: force nested demo mounts to fill the visual column */
-  .marketing-cinema-visual,
-  .marketing-cinema-visual > div,
-  .marketing-cinema-visual .marketing-demo-mount {
-    display: flex;
-    height: 100%;
-    min-height: 0;
-    flex-direction: column;
-  }
-
   @keyframes marketing-hero-stack-rise {
     from {
       opacity: 0;
@@ -547,51 +459,15 @@
     background-color: var(--background);
   }
 
-  /* H3 — cinema DemoClub mounts: muted text on paper-warm must meet AA.
-     Override tokens so chart ticks (`var(--text-muted-warm)`) and opacity
-     utilities (`text-text-muted-warm/90`) inherit stone-cinema, not raw stone. */
-  [data-demo-theme] {
-    --text-muted: var(--stone-cinema);
-    --text-muted-warm: var(--stone-cinema);
-    --muted-foreground: var(--stone-cinema);
-    --color-text-muted: var(--stone-cinema);
-    --color-text-muted-warm: var(--stone-cinema);
-    --color-muted-foreground: var(--stone-cinema);
-  }
-
-  [data-demo-theme] .text-stone,
-  [data-demo-theme] .text-text-muted,
-  [data-demo-theme] .text-text-muted-warm,
-  [data-demo-theme] .text-muted-foreground,
-  [data-demo-theme] .text-icon-muted,
-  [data-demo-theme] [class*="text-stone/"],
-  [data-demo-theme] [class*="text-text-muted/"],
-  [data-demo-theme] [class*="text-text-muted-warm/"],
-  [data-demo-theme] [class*="text-muted-foreground/"] {
-    color: var(--stone-cinema);
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .animate-fade-in-up,
     .marketing-hero-enter,
     .marketing-product-lift,
-    .marketing-hero-stack-card,
-    .marketing-product-carousel-enter,
-    .marketing-cinema-room-enter,
-    .marketing-cinema-climax {
+    .marketing-hero-stack-card {
       animation: none;
       opacity: 1;
       transform: none;
       filter: none;
-    }
-
-    .marketing-cinema-roll-panel,
-    .marketing-cinema-roll-selected,
-    .marketing-cinema-roll-emphasis,
-    .marketing-cinema-reel-layer,
-    .marketing-cinema-reel-caption {
-      transition: none;
-      will-change: auto;
     }
 
     .marketing-atelier-btn:hover {

@@ -26,17 +26,18 @@ describe("marketing cookie consent contract", () => {
   });
 
   it("hides for accepted, essential, and unknown stored values", () => {
-    expect(shouldShowMarketingCookieBanner(null, "")).toBe(true);
-    expect(shouldShowMarketingCookieBanner("", "")).toBe(true);
-    expect(shouldShowMarketingCookieBanner(CONSENT_ACCEPTED, "")).toBe(false);
-    expect(shouldShowMarketingCookieBanner(CONSENT_ESSENTIAL, "")).toBe(false);
-    expect(shouldShowMarketingCookieBanner("legacy-yes", "")).toBe(false);
+    expect(shouldShowMarketingCookieBanner(null)).toBe(true);
+    expect(shouldShowMarketingCookieBanner("")).toBe(true);
+    expect(shouldShowMarketingCookieBanner(CONSENT_ACCEPTED)).toBe(false);
+    expect(shouldShowMarketingCookieBanner(CONSENT_ESSENTIAL)).toBe(false);
+    expect(shouldShowMarketingCookieBanner("legacy-yes")).toBe(false);
     expect(isKnownConsentValue("legacy-yes")).toBe(false);
   });
 
-  it("never shows over Live Proof Cinema", () => {
-    expect(shouldShowMarketingCookieBanner(null, "#crm")).toBe(false);
-    expect(shouldShowMarketingCookieBanner("", "#crm")).toBe(false);
+  it("does not gate visibility on a leftover #crm hash", () => {
+    expect(COOKIE_SOURCE).not.toContain("window.location.hash");
+    expect(COOKIE_SOURCE).not.toContain("#crm");
+    expect(shouldShowMarketingCookieBanner(null)).toBe(true);
   });
 
   it("maps preferences to accepted only when optional analytics is on", () => {

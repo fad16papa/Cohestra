@@ -13,7 +13,6 @@ import {
 } from "@/components/marketing/marketing-shell";
 import { MarketingAmbientScene } from "@/components/marketing/marketing-ambient-scene";
 import { MarketingHeroProductStack } from "@/components/marketing/marketing-hero-product-stack";
-import { MarketingProductCarousel } from "@/components/marketing/marketing-product-carousel";
 import {
   MarketingReveal,
   marketingRevealDelay,
@@ -241,8 +240,6 @@ export function MarketingHomePage() {
           </div>
         </div>
       </section>
-
-      <MarketingProductCarousel />
 
       {/* ── How it works ─────────────────────────────────────── */}
       <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-16 sm:px-8 lg:px-10 lg:py-24">

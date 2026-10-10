@@ -61,7 +61,6 @@ export function MarketingWordmark({ className }: { className?: string }) {
 const MARKETING_NAV_LINKS = [
   { label: "Features", href: "/#features" },
   { label: "Document", href: "/docs" },
-  { label: "Clients", href: "/#crm" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "Pricing", href: "/pricing" },
   { label: "FAQ", href: "/#faq" },
@@ -118,7 +117,6 @@ const FOOTER_COLUMNS = [
     links: [
       { label: "Features", href: "/#features" },
       { label: "Document", href: "/docs" },
-      { label: "Clients", href: "/#crm" },
       { label: "How it works", href: "/#how-it-works" },
       { label: "Pricing", href: "/pricing" },
       { label: "FAQ", href: "/#faq" },

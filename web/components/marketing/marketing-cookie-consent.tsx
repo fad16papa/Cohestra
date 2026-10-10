@@ -43,11 +43,11 @@ export function MarketingCookieConsent() {
   useEffect(() => {
     const sync = () => {
       const stored = readStoredMarketingConsent();
-      setVisible(shouldShowMarketingCookieBanner(stored, window.location.hash));
+      setVisible(shouldShowMarketingCookieBanner(stored));
     };
     sync();
-    window.addEventListener("hashchange", sync);
-    return () => window.removeEventListener("hashchange", sync);
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
   }, []);
 
   useEffect(() => {
