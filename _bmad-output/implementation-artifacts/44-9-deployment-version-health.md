@@ -2,7 +2,7 @@
 id: 44.9
 key: 44-9-deployment-version-health-read-only
 title: Deployment Version Health
-status: review
+status: done
 epic: 44
 created: 2026-10-10
 baseline_commit: 3fc6151517a4cd15a83e2d5c47a845c08b3b38a7
@@ -10,9 +10,9 @@ baseline_commit: 3fc6151517a4cd15a83e2d5c47a845c08b3b38a7
 
 # Story 44.9: Deployment Version Health (read-only)
 
-Status: review
+Status: done
 
-DONE requires the Mandatory Code Review Loop on the final HEAD. Epic 44 stays in-progress in this story PR.
+DONE requires the Mandatory Code Review Loop on the final HEAD. Epic 44 stays in-progress. PlatformAdmin light-only correction PR #431 is separate.
 
 ## Story
 
@@ -76,6 +76,10 @@ so that **I can identify what build is serving Cohestra without SSH and without 
 ### Agent Model Used
 
 Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
+
+### Completion Notes List
+
+- Merged PR #430. Accepted HEAD `31da0413491080f13251165f939bee961d2e2f5a`. Main merge `4128294427fff1c062d8bf93f7e7ac6c7e0e9e0b`. Exact-head CI `38024230632` green. Post-merge main CI `38028740025` green. Deploy remains pre-existing Epic 19. Epic 44 stays in-progress. PR #431 PlatformAdmin light-only remains HOLD.
 
 ## Exclusions
 
