@@ -12,7 +12,7 @@ Model: Cursor Grok 4.6
 | P1-12 | skip + one h1 + Audits aria-current | Playwright |
 | DetailsJson | sentinel absent JSON + CSV | integration |
 | Formula | = + - @ sanitized in CSV | unit + integration |
-| from>to / invalid action | 400 not empty | integration |
+| from>to / invalid action / numeric alias | 400 not empty | unit + integration |
 | Filter parity | list and export share normalizer | unit + integration |
 | Recent audit | tenant detail unchanged | frontend + Playwright |
 

@@ -10,7 +10,7 @@ Gate: **PASS** for Story 44.7 P0/P1. Not a production-cutover gate. DigitalOcean
 | FR-44-13 search | ApplyFilters + Skip/Take | PlatformAuditListResponse | GET /audits | /platform/audits | unit + integration + vitest |
 | FR-44-7 / P0-17 export cap | Take(5001) | CSV allow-list | GET /audits/export | Export CSV | unit + integration + Playwright |
 | P0-17 tenant JWT 403 | — | — | PlatformAdminOnly | route guard not relied on | TenantAuthz + Isolation |
-| P1-08 action | enum parse | Action string | action= | Action select | integration |
+| P1-08 action | name-only enum (reject `0`/`1`) | Action string | action= | Action select | unit + integration |
 | P1-08 tenantId | TenantId == | tenantId | tenantId= | Tenant ID | Isolation A/B |
 | P1-08 actorEmail | ToLower exact | actorEmail | actorEmail= | Actor email | integration |
 | P1-08 from/to | inclusive CreatedAt | createdAt | from/to | From/To UTC | integration 400 from>to |
