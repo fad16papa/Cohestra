@@ -9,6 +9,7 @@ import {
   marketingCardClass,
 } from "@/components/marketing/marketing-shell";
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
+import { ProductDocsImage } from "@/components/marketing/product-docs-image";
 import {
   PRODUCT_DOCS_EYEBROW,
   PRODUCT_DOCS_GROUPS,
@@ -52,6 +53,20 @@ function DocsBlockView({ block }: { block: DocsBlock }) {
           <li key={item}>{item}</li>
         ))}
       </ol>
+    );
+  }
+
+  if (block.type === "image") {
+    return <ProductDocsImage block={block} />;
+  }
+
+  if (block.type === "next") {
+    return (
+      <p>
+        <a href={block.href} className="font-semibold text-lagoon hover:text-lagoon-deep">
+          Next: {block.label}
+        </a>
+      </p>
     );
   }
 
@@ -99,6 +114,12 @@ function sectionMatchesQuery(section: DocsSection, query: string): boolean {
       }
       if (block.type === "steps" || block.type === "list") {
         return block.items;
+      }
+      if (block.type === "image") {
+        return [block.alt, block.caption, block.src];
+      }
+      if (block.type === "next") {
+        return [block.label, block.href];
       }
       return [...block.headers, ...block.rows.flat()];
     }),
@@ -192,6 +213,22 @@ export function ProductDocsPage() {
 
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-5 py-10 sm:px-8 lg:flex-row lg:px-10 lg:py-12">
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] lg:w-64 lg:shrink-0 lg:overflow-y-auto">
+          <details className="mb-4 rounded-[12px] border border-line bg-paper lg:hidden">
+            <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-ink">
+              Chapters
+            </summary>
+            <nav aria-label="Document chapters on this page" className="space-y-3 px-3 pb-3">
+              {visibleSections.map((section) => (
+                <a
+                  key={`mobile-${section.id}`}
+                  href={`#${section.id}`}
+                  className="block py-1 text-sm text-stone hover:text-ink"
+                >
+                  {section.title}
+                </a>
+              ))}
+            </nav>
+          </details>
           <label className="relative block">
             <Search
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-stone"
@@ -202,12 +239,12 @@ export function ProductDocsPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search the manual"
+              aria-label="Search the Document"
               className="h-10 w-full rounded-xl border-0 bg-muted/55 pr-3 pl-9 text-sm text-ink outline-none ring-0 placeholder:text-stone focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-lagoon/30"
             />
-            <span className="sr-only">Search the Document</span>
           </label>
 
-          <nav aria-label="Document chapters" className="mt-6 space-y-5">
+          <nav aria-label="Document chapters" className="mt-6 hidden space-y-5 lg:block">
             {PRODUCT_DOCS_GROUPS.map((group) => {
               const items = visibleSections.filter((section) => section.group === group.id);
               if (items.length === 0) {
@@ -245,7 +282,9 @@ export function ProductDocsPage() {
 
         <article className="min-w-0 flex-1">
           {visibleSections.length === 0 ? (
-            <p className="text-sm text-stone">No chapters match that search. Try a shorter word.</p>
+            <p className="text-sm text-stone">
+              No chapters match that search. Try “Follow-up”, “Form Studio”, or “Analytics”.
+            </p>
           ) : (
             <div className="space-y-14">
               {visibleSections.map((section) => (

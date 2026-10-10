@@ -5,7 +5,7 @@ import { ProductDocsPage } from "@/components/marketing/product-docs-page";
 export const metadata: Metadata = {
   title: "Document — How to use Cohestra",
   description:
-    "A plain-language guide to Cohestra: sign up, create activities, share a QR code, keep a client list, and follow up.",
+    "Workspace guide to Cohestra: activities, Form Studio, clients, Follow-up, Website Studio, campaigns, Analytics, and Cohestra AI.",
 };
 
 export default function DocsPage() {

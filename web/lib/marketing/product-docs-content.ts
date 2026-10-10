@@ -1,25 +1,46 @@
+import type { DocsImageBlock } from "@/lib/marketing/product-docs-images";
+
 export type DocsBlock =
   | { type: "p"; text: string }
   | { type: "steps"; items: string[] }
   | { type: "list"; items: string[] }
   | { type: "note"; text: string }
-  | { type: "table"; headers: string[]; rows: string[][] };
+  | { type: "table"; headers: string[]; rows: string[][] }
+  | DocsImageBlock
+  | { type: "next"; href: string; label: string };
+
+export type DocsGroupId =
+  | "start"
+  | "workspace"
+  | "activities"
+  | "form-studio"
+  | "publishing"
+  | "people"
+  | "website"
+  | "campaigns"
+  | "insights"
+  | "account"
+  | "help";
 
 export type DocsSection = {
   id: string;
   title: string;
-  group: "start" | "events" | "grow" | "account";
+  group: DocsGroupId;
   blocks: DocsBlock[];
 };
 
-export const PRODUCT_DOCS_GROUPS: Array<{
-  id: DocsSection["group"];
-  label: string;
-}> = [
-  { id: "start", label: "Start here" },
-  { id: "events", label: "Run events" },
-  { id: "grow", label: "Keep and grow" },
-  { id: "account", label: "Account and plans" },
+export const PRODUCT_DOCS_GROUPS: Array<{ id: DocsGroupId; label: string }> = [
+  { id: "start", label: "Getting started" },
+  { id: "workspace", label: "Dashboard and navigation" },
+  { id: "activities", label: "Activities and registrations" },
+  { id: "form-studio", label: "Form Studio" },
+  { id: "publishing", label: "Publishing and public registration" },
+  { id: "people", label: "Clients and Follow-up" },
+  { id: "website", label: "Website Studio" },
+  { id: "campaigns", label: "Email Campaigns" },
+  { id: "insights", label: "Analytics and Cohestra AI" },
+  { id: "account", label: "Workspace settings and plans" },
+  { id: "help", label: "Troubleshooting and glossary" },
 ];
 
 export const PRODUCT_DOCS_START_PATHS = [
@@ -34,610 +55,671 @@ export const PRODUCT_DOCS_START_PATHS = [
     detail: "Name it, set the form, then share a QR code.",
   },
   {
-    href: "/docs#clients",
-    title: "Your people list",
-    detail: "Find someone, change their status, say hello.",
+    href: "/docs#build-the-form",
+    title: "Form Studio",
+    detail: "Build, design, and preview the registration form.",
   },
   {
-    href: "/docs#plans",
-    title: "Plans in plain words",
-    detail: "What Basic, Core, and Pro include.",
+    href: "/docs#follow-up",
+    title: "Follow-up",
+    detail: "Work Due now, At risk, Opportunity, and Healthy.",
   },
 ] as const;
 
 export const PRODUCT_DOCS_TITLE = "How to use Cohestra";
 export const PRODUCT_DOCS_EYEBROW = "Document";
 export const PRODUCT_DOCS_INTRO =
-  "This page teaches you how to use Cohestra, one small step at a time. We use short sentences and plain words. If you can follow a recipe, you can follow this guide.";
+  "A workspace guide for the Cohestra you have today: activities, Form Studio, clients, Follow-up, Website Studio, campaigns, Analytics, and Cohestra AI.";
+
+function shot(
+  file: string,
+  alt: string,
+  caption: string,
+  width = 1440,
+  height = 900
+): DocsImageBlock {
+  return {
+    type: "image",
+    src: `/docs-screenshots/${file}`,
+    alt,
+    caption,
+    width,
+    height,
+  };
+}
 
 export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
   {
     id: "what-is-cohestra",
-    title: "1. What is Cohestra?",
+    title: "What Cohestra is",
     group: "start",
     blocks: [
       {
         type: "p",
-        text: "Cohestra is a tool for people who run clubs, classes, workshops, and community events. You use it to tell people about an event, let them sign up, keep their names in one list, and follow up later.",
-      },
-      {
-        type: "p",
-        text: "Think of it like a school sign-up sheet, a phone book, and a website — all in one place.",
+        text: "Cohestra is workspace software for clubs, workshops, and groups. You publish activities, collect registrations, keep one client list, follow up, and — on higher plans — run a public website and email campaigns.",
       },
       {
         type: "list",
         items: [
-          "You create an activity (that is one event or class).",
-          "You share a link or a QR code.",
-          "People fill in a form on their phone.",
-          "Their name lands in your client list.",
-          "You can message them, email them, and see reports.",
+          "Create an activity and a registration form.",
+          "Share a public link or QR code. Guests never create an account.",
+          "Each signup lands on Registrations and in Clients.",
+          "Use Follow-up, Analytics, and Cohestra AI in the same workspace.",
         ],
       },
       {
         type: "note",
-        text: "Cohestra is built by Creativorare. The product name you see in the app is Cohestra.",
+        text: "This Document is for workspace operators and teammates only.",
       },
+      { type: "next", href: "#two-kinds-of-people", label: "Who signs in" },
     ],
   },
   {
     id: "two-kinds-of-people",
-    title: "2. Two kinds of people",
+    title: "Who uses Cohestra",
     group: "start",
     blocks: [
       {
-        type: "p",
-        text: "There are only two kinds of people in Cohestra. Do not mix them up.",
-      },
-      {
         type: "table",
-        headers: ["Who", "What they do", "Do they need an account?"],
+        headers: ["Who", "What they do", "Account?"],
         rows: [
           [
-            "You (the operator)",
-            "Create events, publish links, talk to leads, run the website",
-            "Yes. You sign in.",
+            "Workspace admin",
+            "Owns the workspace, billing (when shown), Team on Core+, and settings",
+            "Yes. Role appears as admin.",
           ],
           [
-            "Guests (your people)",
-            "Open a link or scan a QR code and fill in a form",
+            "Workspace member",
+            "Uses unlocked rooms their admin can open. Team and Billing stay hidden.",
+            "Yes. Role appears as member.",
+          ],
+          [
+            "Guests",
+            "Open your public form or website and register",
             "No. They never sign in.",
           ],
         ],
       },
       {
         type: "note",
-        text: "This Document is for you — the operator. Guests only need the link or QR code you give them.",
+        text: "Guests are not operators. Do not send them /login.",
       },
-    ],
-  },
-  {
-    id: "first-ten-minutes",
-    title: "3. Your first ten minutes",
-    group: "start",
-    blocks: [
-      {
-        type: "p",
-        text: "If you are new, do these steps in this order. Do not skip ahead.",
-      },
-      {
-        type: "steps",
-        items: [
-          "Create your account on the Sign up page.",
-          "Check your email. Enter the 6-digit code.",
-          "Look at the Dashboard. It is your home screen.",
-          "Open Activities → Communities. Add the name of your club or group.",
-          "Open Activities → Categories. Add a type, like Social or Class.",
-          "Select New activity. Fill in the name, date, and place. Save the draft.",
-          "Open the Form tab. Add the questions you want people to answer. Save the form.",
-          "Open Overview. Select Publish.",
-          "Open QR & Link. Copy the link or download the QR code.",
-          "Share it. Watch new names appear on Registrations and Clients.",
-        ],
-      },
+      { type: "next", href: "#sign-up-and-sign-in", label: "Sign up and sign in" },
     ],
   },
   {
     id: "sign-up-and-sign-in",
-    title: "4. Sign up and sign in",
+    title: "Sign up, sign in, and recovery",
     group: "start",
     blocks: [
       {
         type: "p",
-        text: "Start on the Cohestra website. Select Sign in if you already have an account. Select Start free if you do not.",
+        text: "On the marketing site, choose Start free for a new workspace or Sign in for an existing one. Public pages: /signup, /login, /forgot-password.",
       },
-      {
-        type: "p",
-        text: "When you sign up, you choose a plan. Basic is free. Core and Pro have a trial. You will need an email and a password.",
-      },
+      shot(
+        "01-login.png",
+        "Cohestra Sign in page with Email, Password, Sign in, and Forgot password.",
+        "Sign in. Use Forgot password if you need a reset code."
+      ),
       {
         type: "steps",
         items: [
-          "Enter your name, email, and password.",
-          "Agree to the terms.",
+          "On Sign up, enter your name, email, and password, then agree to the terms.",
+          "Choose a plan. Basic is free. Core and Pro start a 30 day trial.",
           "Select Create account.",
-          "Open your email. Copy the 6-digit code.",
-          "Paste the code on the verify screen.",
-          "You land on the Dashboard.",
+          "Open the email and enter the 6-digit code on the verify screen.",
+          "You land on Dashboard.",
         ],
       },
       {
         type: "p",
-        text: "Forgot your password? On the sign-in page, select Forgot password. We send a code to your email. Enter the code and pick a new password.",
+        text: "Forgot password: on Sign in, select Forgot password, enter the email code, then choose a new password. To sign out, open the initials control and select Sign out.",
       },
       {
-        type: "p",
-        text: "To sign out, open the circle with your initials in the top right. Select Sign out.",
+        type: "note",
+        text: "Availability: any signed-in workspace user. Team invites are a Core+ admin action, not public signup.",
       },
+      { type: "next", href: "#first-ten-minutes", label: "First ten minutes" },
+    ],
+  },
+  {
+    id: "first-ten-minutes",
+    title: "First ten minutes",
+    group: "start",
+    blocks: [
+      {
+        type: "p",
+        text: "Do this once in order. Later chapters explain each room.",
+      },
+      {
+        type: "steps",
+        items: [
+          "Create the account and verify email.",
+          "Open Dashboard.",
+          "Open Activities → Communities and add your group name.",
+          "Open Activities → Categories and add a type such as Class.",
+          "Select New activity. Fill name, schedule, and place. Save the draft.",
+          "Open the Form tab. Use Build form, then Preview. Save the form.",
+          "Open Overview and select Publish.",
+          "Open Share kit. Copy the link or download the QR code.",
+          "Share it. New names appear on Registrations, Clients, and Follow-up.",
+        ],
+      },
+      { type: "next", href: "#the-left-menu", label: "Workspace navigation" },
     ],
   },
   {
     id: "the-left-menu",
-    title: "5. The left menu",
-    group: "start",
+    title: "Workspace navigation",
+    group: "workspace",
     blocks: [
       {
         type: "p",
-        text: "After you sign in, look at the left side of the screen. That is your map. On a phone, tap the menu icon first.",
+        text: "After sign-in the left nav is the map. On a phone, open the menu first. Locked items stay visible with an upgrade or ask-admin state — they are not removed.",
       },
       {
         type: "table",
-        headers: ["Menu item", "What it is for"],
+        headers: ["Menu item", "Route", "Who can use it"],
         rows: [
-          ["Dashboard", "Today’s home. See new people and what needs a reply."],
-          ["Website", "Build the public homepage for your club (Core and Pro)."],
-          ["Activities", "All your events. Also Communities and Categories."],
-          ["Clients", "One list of every person who ever signed up."],
-          ["Campaigns", "Email a group of people who said yes to email (Pro)."],
-          ["Reports", "Numbers for a week or a month. Export a spreadsheet."],
+          ["Dashboard", "/dashboard", "Every plan"],
+          ["Clients", "/clients", "Every plan"],
+          ["Activities", "/activities", "Every plan. Children: All activities, Communities, Categories"],
+          ["Follow-up", "/follow-up", "Every plan"],
+          ["Analytics", "/analytics", "Every plan. /reports still opens Analytics"],
+          ["Cohestra AI", "/ai", "Every plan. Not a free-form chatbot"],
+          ["Website", "/dashboard/website", "Core and above. Basic shows a Core lock"],
+          ["Campaigns", "/campaigns", "Pro. Basic and Core show a Pro lock"],
         ],
       },
       {
         type: "p",
-        text: "Settings, Team, and Billing live under your initials in the top right — not in the left menu.",
+        text: "Settings, Team, Billing, and Appearance live under Settings — not as extra primary nav rooms.",
       },
+      { type: "next", href: "#dashboard", label: "Dashboard" },
     ],
   },
   {
     id: "dashboard",
-    title: "6. Dashboard",
-    group: "events",
+    title: "Dashboard",
+    group: "workspace",
     blocks: [
       {
         type: "p",
-        text: "The Dashboard is the first page you see after sign in. It answers: what happened, and who still needs a hello?",
+        text: "Dashboard is the signed-in home. It summarizes recent registrations and work that needs attention. It does not replace Follow-up or Analytics.",
       },
+      shot(
+        "02-dashboard.png",
+        "Cohestra Dashboard after sign-in, with workspace navigation and today’s summary.",
+        "Dashboard. Use the left nav to open other rooms."
+      ),
       {
-        type: "list",
-        items: [
-          "Chips at the top jump you to new leads, people waiting for a reply, or live activities.",
-          "Needs follow-up shows people still marked New.",
-          "Tiles show counts. Click a tile to open the matching list.",
-          "Activity performance ranks events by how many people signed up.",
-        ],
+        type: "p",
+        text: "Where: left nav → Dashboard. Availability: every plan and both admin and member.",
       },
-      {
-        type: "note",
-        text: "If you have no activities yet, the Dashboard tells you to create one. That is normal. Start there.",
-      },
+      { type: "next", href: "#communities-and-categories", label: "Communities and categories" },
     ],
   },
   {
     id: "communities-and-categories",
-    title: "7. Communities and categories",
-    group: "events",
+    title: "Communities and categories",
+    group: "activities",
     blocks: [
       {
         type: "p",
-        text: "A community is the name of the group. Example: Friday Night Magic, Tennis Club, Kids Art.",
-      },
-      {
-        type: "p",
-        text: "A category is the type of event. Example: Social, Class, Workshop.",
-      },
-      {
-        type: "p",
-        text: "Make these first. Then every new activity can pick them from a list.",
+        text: "Communities are the groups you run. Categories are the types of activity. Create them before the first activity if you can — the New activity form asks for both.",
       },
       {
         type: "steps",
         items: [
-          "Open Activities → Communities.",
-          "Type a name. Select Add community.",
-          "Open Activities → Categories.",
-          "Type a name. Select Add category.",
+          "Open Activities → Communities. Add a name such as your club.",
+          "Open Activities → Categories. Add a type such as Class or Social.",
+          "Return to All activities when you are ready to create.",
         ],
       },
       {
         type: "note",
-        text: "You cannot delete a community or category while an activity still uses it. Rename it, or move the activity first.",
+        text: "Plan caps apply to how many communities you can keep. Basic includes 1 community; Core 3; Pro 10.",
       },
+      { type: "next", href: "#create-an-activity", label: "Create an activity" },
     ],
   },
   {
     id: "create-an-activity",
-    title: "8. Create an activity",
-    group: "events",
+    title: "Create an activity",
+    group: "activities",
     blocks: [
       {
         type: "p",
-        text: "An activity is one event. One night. One class. One sign-up drive. Each activity has its own form, its own link, and its own list of people.",
+        text: "An activity is one session people can register for. Open Activities → All activities, then New activity.",
       },
+      shot(
+        "03-activities-list.png",
+        "Activities list showing All activities with published and draft sessions.",
+        "All activities. Use New activity to start a draft."
+      ),
       {
         type: "steps",
         items: [
-          "Select New activity (top right on the Activities page).",
-          "Type the name people will see.",
-          "Pick a community and a category.",
-          "Set the date and time.",
-          "Set the country and the place (a room, an address, or “online”).",
-          "You can set a max number of people if you want a cap.",
-          "Select Save draft activity.",
+          "Select New activity.",
+          "Enter the name, community, category, schedule, and place.",
+          "Save the draft. You land on the activity with tabs Overview, Design, Form, Registrations, and Share kit.",
         ],
       },
+      shot(
+        "04-activity-create.png",
+        "New activity form with name, schedule, and place fields.",
+        "New activity. Save a draft before you publish."
+      ),
       {
         type: "p",
-        text: "A draft is private. Guests cannot see it yet. That is good. You still need a form.",
+        text: "Expected outcome: a draft activity you can still edit. Publishing happens on Overview after the form is ready.",
       },
+      { type: "next", href: "#build-the-form", label: "Form Studio" },
     ],
   },
   {
     id: "build-the-form",
-    title: "9. Build the sign-up form",
-    group: "events",
+    title: "Form Studio — Build form",
+    group: "form-studio",
     blocks: [
       {
         type: "p",
-        text: "Open the activity. Select the Form tab. This is the sheet guests fill in.",
+        text: "Form Studio lives on the activity Form tab. Modes are Build form and Preview. Add fields, sections, columns, and domain blocks here. Saved templates exist on every plan (Basic 1, Core 5, Pro 25). Recipes, two-column layouts, and activity/community blocks need Core or above. Splitting a form into steps needs Pro.",
       },
-      {
-        type: "p",
-        text: "You can start from a ready-made template, or add fields one by one.",
-      },
-      {
-        type: "list",
-        items: [
-          "Text — a name or a short answer.",
-          "Phone — a phone number with a country code.",
-          "Email — an email address.",
-          "Select — a list they pick from.",
-          "Checkbox — yes or no.",
-          "Consent — they must agree before they can submit.",
-          "Referral source — how they heard about you.",
-        ],
-      },
+      shot(
+        "05-form-studio-build.png",
+        "Form Studio composition with the block palette and form structure canvas.",
+        "Build form composition. Add fields from the palette, then Save form."
+      ),
       {
         type: "steps",
         items: [
-          "Add the fields you need.",
-          "Mark the important ones as Required.",
-          "Drag fields to change the order.",
-          "Look at the live preview on the right.",
-          "Select Save form. Always save before you publish.",
+          "Open the activity → Form.",
+          "Stay on Build form.",
+          "Add fields from the palette. Use sections and columns to group questions.",
+          "Use domain blocks when you want activity-aware content.",
+          "Apply a starting template if you want one. Recipes (conditional questions) need Core+.",
+          "Select Save. Unpublished template changes are blocked while the activity is published.",
         ],
       },
       {
         type: "note",
-        text: "To publish, the saved form must have at least one field, and at least one required phone or email. Unsaved changes do not count.",
+        text: "Saved versus unsaved: a dirty form stays in this activity until you Save. Preview uses the current draft, including unsaved changes, and does not write a public registration.",
       },
+      { type: "next", href: "#form-studio-design", label: "Design and Preview" },
+    ],
+  },
+  {
+    id: "form-studio-design",
+    title: "Form Studio — Design and Preview",
+    group: "form-studio",
+    blocks: [
+      {
+        type: "p",
+        text: "The Design tab sets the public registration look. Back on Form, Preview shows the guest experience at desktop and narrower widths.",
+      },
+      shot(
+        "06-activity-design.png",
+        "Activity Design tab with public registration theme controls.",
+        "Design. Theme choices apply to the public form, not the workspace chrome."
+      ),
+      {
+        type: "steps",
+        items: [
+          "Open Design. Choose the public experience and theme. Save if prompted.",
+          "Return to Form and select Preview.",
+          "Walk the form. Submit in Preview to see the success state.",
+          "Confirm nothing new appears on Registrations or Clients — Preview is a simulation.",
+        ],
+      },
+      shot(
+        "07-form-studio-preview.png",
+        "Form Studio Preview showing the public registration shell inside the activity.",
+        "Preview simulates submission. It never creates a public registration."
+      ),
+      { type: "next", href: "#publish-and-share", label: "Publish and share" },
     ],
   },
   {
     id: "publish-and-share",
-    title: "10. Publish and share",
-    group: "events",
+    title: "Publish, QR, and links",
+    group: "publishing",
     blocks: [
       {
         type: "p",
-        text: "Publishing turns the draft into a live sign-up page.",
+        text: "Publish from Overview when the form is ready. Share kit holds the public link and QR code.",
       },
       {
         type: "steps",
         items: [
-          "Save the form first.",
-          "Open the Overview tab.",
-          "You can add a photo and a color for the public page. Save branding if you do.",
-          "Select Publish activity.",
-          "Open the QR & Link tab.",
-          "Copy the public link, or download the QR picture.",
-          "Put the QR on a poster, a chat, or a table tent.",
+          "Open Overview. Fix any publish-gate messages if they appear.",
+          "Select Publish.",
+          "Open Share kit. Copy the public link or download the QR code.",
+          "Share the link or print the QR. Guests open /register/{slug} — they do not sign in.",
         ],
       },
-      {
-        type: "table",
-        headers: ["Status", "What it means"],
-        rows: [
-          ["Draft", "Only you can see it. No public sign-ups."],
-          ["Published", "The link and QR work. People can register."],
-          ["Archived", "Closed for good. Old data stays. You cannot publish it again."],
-        ],
-      },
+      shot(
+        "08-share-kit.png",
+        "Share kit tab with the public registration link and QR code.",
+        "Share kit. Copy the link or download the QR after you publish."
+      ),
       {
         type: "p",
-        text: "Unpublish stops new sign-ups but keeps the people you already have. You can edit the form and publish again.",
+        text: "Expected outcome: the activity is published and the public door accepts real signups.",
       },
+      { type: "next", href: "#what-guests-see", label: "What guests see" },
     ],
   },
   {
     id: "what-guests-see",
-    title: "11. What guests see",
-    group: "events",
+    title: "Public registration",
+    group: "publishing",
     blocks: [
       {
         type: "p",
-        text: "Guests never open Cohestra the way you do. They only open your link or scan your QR.",
+        text: "Guests open the public form on a phone or desktop. The form is responsive. After a real submit they see a confirmation and a registration number.",
       },
+      shot(
+        "09-public-registration-desktop.png",
+        "Desktop public registration form for a published activity.",
+        "Public registration on desktop. Guests do not sign in."
+      ),
+      shot(
+        "10-public-registration-mobile.png",
+        "Mobile public registration form at a narrow viewport.",
+        "Same public form at 390px. Fields stack; nothing should scroll sideways.",
+        390,
+        844
+      ),
       {
-        type: "steps",
-        items: [
-          "They see the activity name, time, place, and your photo if you added one.",
-          "They fill in the form.",
-          "They submit.",
-          "They see “You’re registered!” and a Registration ID.",
-          "They can copy that ID for the door.",
-          "If you asked for email, they may get a confirmation email.",
-        ],
+        type: "note",
+        text: "Capacity and close-at, when set on the activity, stop further public submits. That is a real write path — unlike Form Preview.",
       },
-      {
-        type: "p",
-        text: "One person can sign up once per activity. A second try with the same phone or email is blocked.",
-      },
-      {
-        type: "p",
-        text: "If the activity is a draft, unpublished, or archived, guests see that sign-up is closed.",
-      },
+      { type: "next", href: "#clients", label: "Clients" },
     ],
   },
   {
     id: "clients",
-    title: "12. Clients — your people list",
-    group: "grow",
+    title: "Clients",
+    group: "people",
     blocks: [
       {
         type: "p",
-        text: "Clients is one list of every person who signed up, across every activity. If the same person comes to two events, you still see one client.",
+        text: "Clients is one list of people who registered. Repeat signups from the same person merge into one profile. Open Clients from the left nav.",
       },
-      {
-        type: "p",
-        text: "Each client has a lead status. This is how you remember who you talked to.",
-      },
-      {
-        type: "table",
-        headers: ["Status", "Use it when"],
-        rows: [
-          ["New", "You have not said hello yet."],
-          ["Contacted", "You sent a first message."],
-          ["Active", "They keep coming or they replied."],
-          ["Inactive", "They stopped coming, for now."],
-        ],
-      },
+      shot(
+        "11-clients-list.png",
+        "Clients directory with search and status filters.",
+        "Clients. Open a row to see the profile and timeline."
+      ),
       {
         type: "steps",
         items: [
           "Open Clients.",
-          "Search by name.",
-          "Filter by status or community.",
-          "Open a person to see their profile.",
-          "Change lead status from the dropdown.",
-          "Use WhatsApp or Viber if you have their phone. Cohestra can log that you opened the chat.",
-          "Read the timeline. It shows sign-ups, status changes, and messages you logged.",
+          "Search or filter to find someone.",
+          "Open the profile to see history, status, and follow-up context.",
+        ],
+      },
+      shot(
+        "12-client-profile.png",
+        "Client profile with timeline and status.",
+        "Client profile. Status and notes stay on this person across activities."
+      ),
+      { type: "next", href: "#follow-up", label: "Follow-up" },
+    ],
+  },
+  {
+    id: "follow-up",
+    title: "Follow-up",
+    group: "people",
+    blocks: [
+      {
+        type: "p",
+        text: "Follow-up is its own room at /follow-up. It is not a Clients filter and not an Activities tab. Categories are Due now, At risk, Opportunity, and Healthy.",
+      },
+      shot(
+        "13-follow-up.png",
+        "Follow-up room with Due now, At risk, Opportunity, and Healthy categories.",
+        "Follow-up. Start on Due now unless you choose another category."
+      ),
+      {
+        type: "steps",
+        items: [
+          "Open Follow-up.",
+          "Choose Due now, At risk, Opportunity, or Healthy.",
+          "Open a person and record the outreach you actually sent.",
         ],
       },
       {
         type: "note",
-        text: "You can fix a name or phone on the master profile. The original form answers stay as they were on the day they signed up.",
+        text: "Availability: every plan. WhatsApp and Viber logging open from the client, not as a separate product install.",
       },
+      { type: "next", href: "#website", label: "Website Studio" },
     ],
   },
   {
     id: "website",
-    title: "13. Your public website",
-    group: "grow",
+    title: "Website Studio",
+    group: "website",
     blocks: [
       {
         type: "p",
-        text: "On Core and Pro, Website lets you build a homepage for your club. Guests can find your upcoming activities there.",
+        text: "Website Studio is at /dashboard/website (nav label Website). Core and Pro can draft, preview, publish, and revert. Basic operators see a Core lock. Basic still gets a public stub page with the org name and activity links — not the full studio.",
       },
+      shot(
+        "14-website-studio.png",
+        "Website Studio with Build, Design, and Preview workspace controls.",
+        "Website Studio on Core or Pro. Use Preview before Publish."
+      ),
       {
         type: "steps",
         items: [
-          "Open Website in the left menu.",
-          "Give the site a name.",
-          "Upload your own logo if you have one. If you do not, the header shows your site name.",
-          "Pick a color.",
-          "Add or edit sections (hero, activities, about, and more on Pro).",
-          "Use Live preview to see phone and desktop.",
-          "When it looks right, publish.",
+          "Open Website. If you see a Core lock, an admin must upgrade.",
+          "Stay on Build. Use Design, Sections, and Templates to edit.",
+          "Switch to Preview — or Split on desktop — before you publish.",
+          "Select Publish when ready. Revert live site if a published version should go back.",
         ],
       },
       {
         type: "note",
-        text: "The Cohestra logo is for the Cohestra product only. Your public site uses your logo — or no logo — never the Cohestra mark as a stand-in.",
+        text: "Studio extras such as richer blocks appear on Pro. Custom domain settings are not a tenant self-serve control on Core or Pro.",
       },
+      { type: "next", href: "#campaigns", label: "Email campaigns" },
     ],
   },
   {
     id: "campaigns",
-    title: "14. Email campaigns",
-    group: "grow",
+    title: "Email campaigns",
+    group: "campaigns",
     blocks: [
       {
         type: "p",
-        text: "Campaigns (Pro) let you email people who already said yes to email on a form. You cannot email people who did not give consent.",
+        text: "Campaigns is Pro-only. Basic and Core see the nav item locked to Pro. Recipients come from people who consented to email — do not treat the full client list as a send list.",
       },
+      shot(
+        "15-campaigns.png",
+        "Compose campaign screen with Target community and consented recipient preview.",
+        "Compose campaign. Preview consented recipients before you send."
+      ),
       {
         type: "steps",
         items: [
-          "Check Settings → Email delivery first. The checklist must be ready.",
-          "Open Campaigns → New campaign.",
-          "Pick a community.",
-          "Look at who is ready (has email and consent) and who will be skipped.",
-          "Write a subject and a message.",
-          "Preview it. Send a test to yourself.",
-          "Select Send campaign. Confirm the count.",
-          "Open the campaign later to see who got it and who failed.",
+          "Open Campaigns. Select New campaign.",
+          "Choose a consented segment (activity, community, or status).",
+          "Write the message. Use Preview.",
+          "Send only after the recipient count matches people who opted in.",
         ],
       },
+      { type: "next", href: "#reports", label: "Analytics" },
     ],
   },
   {
     id: "reports",
-    title: "15. Reports",
-    group: "grow",
+    title: "Analytics",
+    group: "insights",
     blocks: [
       {
         type: "p",
-        text: "Reports answers “how did we do?” Pick a week, a month, or your own dates.",
+        text: "Analytics is the canonical room at /analytics. /reports still opens the same Analytics experience. Every plan can open it. Basic includes the weekly registration report and CSV export. Monthly queryable reports unlock on Core and Pro.",
       },
-      {
-        type: "list",
-        items: [
-          "How many people signed up.",
-          "How many new people you met.",
-          "Which activities did best.",
-          "Which communities did best.",
-          "How many people are still New.",
-        ],
-      },
+      shot(
+        "16-analytics.png",
+        "Analytics room with registration figures and export actions.",
+        "Analytics. Use /analytics. /reports is a compatibility address only."
+      ),
       {
         type: "steps",
         items: [
-          "Open Reports.",
-          "Pick the date range.",
-          "Add filters if you want one activity or one community.",
-          "Read the charts and lists.",
-          "Select Export CSV if you want a spreadsheet.",
+          "Open Analytics.",
+          "Set the date or activity filters you need.",
+          "Export CSV when you want a spreadsheet. That does not email anyone.",
         ],
       },
+      { type: "next", href: "#cohestra-ai", label: "Cohestra AI" },
+    ],
+  },
+  {
+    id: "cohestra-ai",
+    title: "Cohestra AI",
+    group: "insights",
+    blocks: [
+      {
+        type: "p",
+        text: "Cohestra AI is at /ai. Older addresses /intelligence and /needs-attention still open this room. It is a workspace brief with recommended actions — not a free-form chatbot and not an automation that messages people for you.",
+      },
+      shot(
+        "17-cohestra-ai.png",
+        "Cohestra AI brief with recommended actions for the workspace.",
+        "Cohestra AI. Read the brief and act in Follow-up or Clients yourself."
+      ),
+      {
+        type: "note",
+        text: "Availability: every plan. Compatibility paths must not be documented as separate products.",
+      },
+      { type: "next", href: "#settings-team-billing", label: "Settings, Team, and Billing" },
     ],
   },
   {
     id: "settings-team-billing",
-    title: "16. Settings, team, and billing",
+    title: "Settings, Team, and Billing",
     group: "account",
     blocks: [
       {
         type: "p",
-        text: "Open your initials (top right) to reach Settings.",
+        text: "Open Settings from the workspace footer or initials menu. Profile, organization, notifications, and appearance are for signed-in users. Team is admin-only and locked on Basic. Billing is visible to Basic admins and to the billing owner on paid plans.",
       },
+      shot(
+        "18-settings.png",
+        "Workspace Settings page with account and organization options.",
+        "Settings. Team and Billing appear only when your role and plan allow."
+      ),
       {
-        type: "list",
-        items: [
-          "Appearance — light, dark, or match the device.",
-          "Password — change it any time.",
-          "Email delivery — the checklist for sending mail.",
-          "Team — invite other operators if your plan has seats (Core and Pro).",
-          "Billing — see your plan, invoices, and change or cancel.",
+        type: "table",
+        headers: ["Area", "Who sees it", "Notes"],
+        rows: [
+          ["Settings", "Admin and member", "/settings"],
+          ["Team", "Admin on Core+", "Invite admin or member seats up to the plan cap"],
+          ["Billing", "Basic admin, or billing owner on paid plans", "Members never see Billing"],
+          ["Help / support", "Signed-in workspace users", "Use in-app Help from Settings"],
         ],
       },
-      {
-        type: "p",
-        text: "Only a workspace owner or admin should change billing. Members can use the product but should not touch the card.",
-      },
+      { type: "next", href: "#plans", label: "Plans" },
     ],
   },
   {
     id: "plans",
-    title: "17. Plans in plain words",
+    title: "Plans",
     group: "account",
     blocks: [
       {
+        type: "p",
+        text: "Current published caps. Always check Settings → plan if your workspace was customized.",
+      },
+      {
         type: "table",
-        headers: ["Plan", "Good for", "Big limits to remember"],
+        headers: ["", "Basic", "Core", "Pro"],
         rows: [
-          [
-            "Basic (free)",
-            "Trying Cohestra with one person",
-            "1 seat, 1 community, 4 published activities, 250 sign-ups a month",
-          ],
-          [
-            "Core",
-            "A club that needs a homepage and a small team",
-            "3 seats, 3 communities, 12 published activities, 500 sign-ups a month, website builder",
-          ],
-          [
-            "Pro",
-            "A team that emails people and wants a richer site",
-            "10 seats, 10 communities, 50 published activities, 5,000 sign-ups a month, campaigns, Studio website",
-          ],
-          [
-            "Enterprise",
-            "Bigger groups who need a custom talk",
-            "Ask us. Book a demo from the Pricing page.",
-          ],
+          ["Price", "Free", "$14.99 / mo or $152.92 / year", "$29.99 / mo or $305.93 / year"],
+          ["Trial", "None", "30 days", "30 days"],
+          ["Seats", "1", "3", "10"],
+          ["Communities", "1", "3", "10"],
+          ["Published activities", "4", "12", "50"],
+          ["Registrations / month", "250", "500", "5,000"],
+          ["Website Studio", "Stub page only", "Yes (Essentials)", "Yes (Studio)"],
+          ["Team invites", "Locked", "Yes", "Yes"],
+          ["Email campaigns", "Locked", "Locked", "Yes"],
+          ["Analytics / Follow-up / Cohestra AI", "Yes", "Yes", "Yes"],
         ],
       },
       {
-        type: "p",
-        text: "If you hit a limit, Cohestra will tell you. You can archive an old activity, wait for the next month, or change plan in Billing.",
+        type: "note",
+        text: "Enterprise exists as a billed plan. Custom domain self-serve is not enabled for Core or Pro.",
       },
     ],
   },
   {
     id: "if-something-goes-wrong",
-    title: "18. If something goes wrong",
-    group: "account",
+    title: "If something goes wrong",
+    group: "help",
     blocks: [
       {
         type: "table",
-        headers: ["What you see", "What to try"],
+        headers: ["Symptom", "What to try"],
         rows: [
-          [
-            "I cannot publish",
-            "Save the form. Make sure there is a required phone or email. Check you are not at your activity limit.",
-          ],
-          [
-            "The QR does nothing",
-            "The activity must be Published. Copy the link and open it on your own phone first.",
-          ],
-          [
-            "A guest says they already signed up",
-            "One person can register once per activity. Check Clients and the Registrations tab.",
-          ],
-          [
-            "I cannot send email",
-            "Open Settings → Email delivery. Finish every item that says action required.",
-          ],
-          [
-            "I forgot my password",
-            "Use Forgot password on the sign-in page. Check spam for the code.",
-          ],
-          [
-            "The website still shows the old page",
-            "You must Publish the website draft. Saving a draft does not change the live site.",
-          ],
-          [
-            "Still stuck?",
-            "Open Settings → Help & support, attach a screenshot, and save your support ID.",
-          ],
+          ["Cannot open Website", "Basic is locked to Core. Ask an admin to upgrade."],
+          ["Cannot open Campaigns", "Needs Pro. The nav item stays visible but locked."],
+          ["Preview submit created no client", "Correct. Preview never writes a public registration."],
+          ["Guest cannot register", "Confirm Publish, capacity, and close-at on Overview."],
+          ["Forgot password", "Use Forgot password on Sign in. Do not email guests a login."],
+          ["Old /reports bookmark", "It still opens Analytics at /analytics."],
         ],
       },
+      { type: "next", href: "#words-we-use", label: "Glossary" },
     ],
   },
   {
     id: "words-we-use",
-    title: "19. Words we use",
-    group: "account",
+    title: "Glossary",
+    group: "help",
     blocks: [
       {
         type: "table",
-        headers: ["Word", "Plain meaning"],
+        headers: ["Word", "Meaning in Cohestra"],
         rows: [
-          ["Activity", "One event or class with its own form and link."],
-          ["Registration", "One person signing up for one activity."],
-          ["Client", "The person in your list. They can have many registrations."],
-          ["Community", "The group name, like a club."],
-          ["Category", "The type, like Social or Workshop."],
-          ["Lead status", "New, Contacted, Active, or Inactive."],
-          ["Campaign", "One email you send to a group."],
-          ["Consent", "They said yes to being contacted."],
-          ["Registration ID", "The code they show at the door."],
-          ["Draft", "Not public yet."],
-          ["Published", "Live. People can sign up."],
-          ["Archived", "Closed. History stays."],
-          ["Workspace", "Your club’s private Cohestra home."],
+          ["Activity", "One session people can register for"],
+          ["Form Studio", "Build form + Preview on the Form tab, plus the Design tab"],
+          ["Share kit", "Public link and QR after publish"],
+          ["Clients", "Deduped people list"],
+          ["Follow-up", "Due now / At risk / Opportunity / Healthy room"],
+          ["Website Studio", "Public homepage editor at /dashboard/website"],
+          ["Analytics", "Canonical reports room at /analytics"],
+          ["Cohestra AI", "Brief and recommended actions at /ai — not a chatbot"],
         ],
       },
     ],
   },
 ];
+
+export const PRODUCT_DOCS_SECTION_IDS = PRODUCT_DOCS_SECTIONS.map((section) => section.id);
+
+export const PRODUCT_DOCS_LEGACY_ANCHORS = [
+  "what-is-cohestra",
+  "two-kinds-of-people",
+  "first-ten-minutes",
+  "sign-up-and-sign-in",
+  "the-left-menu",
+  "dashboard",
+  "communities-and-categories",
+  "create-an-activity",
+  "build-the-form",
+  "publish-and-share",
+  "what-guests-see",
+  "clients",
+  "website",
+  "campaigns",
+  "reports",
+  "settings-team-billing",
+  "plans",
+  "if-something-goes-wrong",
+  "words-we-use",
+] as const;
