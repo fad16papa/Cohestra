@@ -13,6 +13,7 @@ using Cohestra.Contracts.Intelligence;
 using Cohestra.Domain.Clients;
 using Cohestra.Domain.Registrations;
 using Cohestra.Domain.Billing;
+using Cohestra.Domain.Support;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
@@ -672,5 +673,183 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.NotNull(list);
         Assert.Contains(list.Items, item => item.TenantId == tenantAId && item.EventId == eventA);
         Assert.DoesNotContain(list.Items, item => item.TenantId == tenantB.Id);
+    }
+
+    [SkippableFact]
+    public async Task Platform_tenant_timeline_returns_only_requested_tenant()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        var tenantAId = TenantIds.Default;
+        const string markerA = "TENANT_A_TIMELINE_44_6";
+        const string markerB = "TENANT_B_TIMELINE_44_6";
+        const string auditSecret = "AUDIT_DETAILS_SECRET_44_6";
+        const string outboxSecret = "OUTBOX_PAYLOAD_SECRET_44_6";
+        const string supportSecret = "SUPPORT_BODY_SECRET_44_6";
+        const string paddleSecret = "PADDLE_SECRET_44_6";
+        var now = DateTimeOffset.UtcNow;
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            db.PlatformAuditLogs.AddRange(
+                new PlatformAuditLog
+                {
+                    Id = Guid.CreateVersion7(),
+                    ActorUserId = Guid.CreateVersion7(),
+                    TenantId = tenantAId,
+                    Action = PlatformAuditAction.TenantCreated,
+                    Reason = markerA,
+                    DetailsJson = auditSecret,
+                    CreatedAt = now,
+                },
+                new PlatformAuditLog
+                {
+                    Id = Guid.CreateVersion7(),
+                    ActorUserId = Guid.CreateVersion7(),
+                    TenantId = tenantB.Id,
+                    Action = PlatformAuditAction.TenantCreated,
+                    Reason = markerB,
+                    DetailsJson = auditSecret,
+                    CreatedAt = now,
+                });
+            db.SupportIssues.AddRange(
+                new SupportIssue
+                {
+                    Id = Guid.CreateVersion7(),
+                    TenantId = tenantAId,
+                    IssueNumber = "SUP-ISO-A",
+                    SubmittedByUserId = Guid.CreateVersion7(),
+                    Subject = supportSecret,
+                    Description = supportSecret,
+                    OperatorEmail = "a@example.com",
+                    OperatorDisplayName = "A",
+                    TenantSlug = "default",
+                    TenantName = "Default",
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                },
+                new SupportIssue
+                {
+                    Id = Guid.CreateVersion7(),
+                    TenantId = tenantB.Id,
+                    IssueNumber = "SUP-ISO-B",
+                    SubmittedByUserId = Guid.CreateVersion7(),
+                    Subject = supportSecret,
+                    Description = supportSecret,
+                    OperatorEmail = "b@example.com",
+                    OperatorDisplayName = "B",
+                    TenantSlug = tenantB.Slug,
+                    TenantName = tenantB.Name,
+                    CreatedAt = now,
+                    UpdatedAt = now,
+                });
+            db.OutboxMessages.AddRange(
+                new OutboxMessage
+                {
+                    Id = Guid.CreateVersion7(),
+                    TenantId = tenantAId,
+                    MessageType = OutboxMessageTypes.CampaignRecipient,
+                    PayloadJson = $"{{\"marker\":\"{outboxSecret}\"}}",
+                    Status = OutboxMessageStatus.Failed,
+                    CreatedAt = now,
+                    NextAttemptAt = now,
+                    LastError = outboxSecret,
+                },
+                new OutboxMessage
+                {
+                    Id = Guid.CreateVersion7(),
+                    TenantId = tenantB.Id,
+                    MessageType = OutboxMessageTypes.CampaignRecipient,
+                    PayloadJson = $"{{\"marker\":\"{outboxSecret}\"}}",
+                    Status = OutboxMessageStatus.Failed,
+                    CreatedAt = now,
+                    NextAttemptAt = now,
+                    LastError = outboxSecret,
+                });
+            db.PaddleWebhookDeliveries.AddRange(
+                new PaddleWebhookDelivery
+                {
+                    Id = Guid.CreateVersion7(),
+                    EventId = "evt-iso-a",
+                    EventType = "transaction.completed",
+                    Disposition = PaddleWebhookDeliveryDisposition.Processed,
+                    TenantId = tenantAId,
+                    HttpStatus = 200,
+                    DetailSanitized = "Processed.",
+                    ObservedAt = now,
+                },
+                new PaddleWebhookDelivery
+                {
+                    Id = Guid.CreateVersion7(),
+                    EventId = "evt-iso-b",
+                    EventType = "transaction.completed",
+                    Disposition = PaddleWebhookDeliveryDisposition.Processed,
+                    TenantId = tenantB.Id,
+                    HttpStatus = 200,
+                    DetailSanitized = paddleSecret,
+                    ObservedAt = now,
+                },
+                new PaddleWebhookDelivery
+                {
+                    Id = Guid.CreateVersion7(),
+                    EventId = "evt-iso-null",
+                    EventType = "transaction.completed",
+                    Disposition = PaddleWebhookDeliveryDisposition.Rejected,
+                    TenantId = null,
+                    HttpStatus = 400,
+                    DetailSanitized = paddleSecret,
+                    ObservedAt = now,
+                });
+            await db.SaveChangesAsync();
+        }
+
+        using var tenantAdmin = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            tenantAdmin,
+            await IntegrationTestHelpers.LoginAsOperatorAsync(tenantAdmin));
+        using var forbidden = await tenantAdmin.GetAsync($"/api/v1/platform/tenants/{tenantAId}/timeline");
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+        using var platform = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            platform,
+            await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform));
+
+        using var forA = await platform.GetAsync($"/api/v1/platform/tenants/{tenantAId}/timeline");
+        Assert.Equal(HttpStatusCode.OK, forA.StatusCode);
+        var bodyA = await forA.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(markerB, bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain(tenantB.Id.ToString(), bodyA, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("SUP-ISO-B", bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain("evt-iso-b", bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain("evt-iso-null", bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain(auditSecret, bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain(outboxSecret, bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain(supportSecret, bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain(paddleSecret, bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain("payloadJson", bodyA, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("detailsJson", bodyA, StringComparison.OrdinalIgnoreCase);
+
+        var timelineA = JsonSerializer.Deserialize<PlatformTenantTimelineResponse>(
+            bodyA,
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(timelineA);
+        Assert.Equal(tenantAId, timelineA.TenantId);
+        Assert.DoesNotContain(timelineA.Items, item => item.Summary.Contains(markerB, StringComparison.Ordinal));
+
+        using var forB = await platform.GetAsync($"/api/v1/platform/tenants/{tenantB.Id}/timeline");
+        Assert.Equal(HttpStatusCode.OK, forB.StatusCode);
+        var bodyB = await forB.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(markerA, bodyB, StringComparison.Ordinal);
+        Assert.DoesNotContain("SUP-ISO-A", bodyB, StringComparison.Ordinal);
+        Assert.DoesNotContain("evt-iso-a", bodyB, StringComparison.Ordinal);
+        var timelineB = JsonSerializer.Deserialize<PlatformTenantTimelineResponse>(
+            bodyB,
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(timelineB);
+        Assert.Equal(tenantB.Id, timelineB.TenantId);
+        Assert.DoesNotContain(timelineB.Items, item => item.Summary.Contains(markerA, StringComparison.Ordinal));
     }
 }

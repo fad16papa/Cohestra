@@ -118,6 +118,9 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var paddleDeliveries = await client.GetAsync("/api/v1/platform/ops/paddle/deliveries");
         paddleDeliveries.EnsureSuccessStatusCode();
+
+        using var timeline = await client.GetAsync($"/api/v1/platform/tenants/{TenantIds.Default}/timeline");
+        timeline.EnsureSuccessStatusCode();
     }
 
     private async Task<HttpClient> CreateTenantMemberClientAsync()
@@ -174,6 +177,9 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var issues = await client.GetAsync($"/api/v1/platform/tenants/{tenantId}/open-issues");
         await AssertForbiddenAsync(issues);
+
+        using var timeline = await client.GetAsync($"/api/v1/platform/tenants/{tenantId}/timeline");
+        await AssertForbiddenAsync(timeline);
 
         using var reset = await client.PostAsync(
             $"/api/v1/platform/tenants/{tenantId}/members/{memberUserId}/send-password-reset",
