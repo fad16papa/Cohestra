@@ -107,6 +107,8 @@ async function openAuthed(page: Page, session: OperatorSession, route: string): 
 async function selectAdminTheme(page: Page, option: "Light" | "Dark" | "System"): Promise<void> {
   await page.getByRole("button", { name: /appearance:/i }).click();
   await page.getByRole("radio", { name: new RegExp(`^${option}$`, "i") }).click();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("radio", { name: /^(light|dark|system)$/i })).toHaveCount(0);
 }
 
 async function selectPublicTheme(page: Page, option: "Light" | "Dark" | "System"): Promise<void> {
@@ -114,6 +116,7 @@ async function selectPublicTheme(page: Page, option: "Light" | "Dark" | "System"
   await expect(toggle).toBeVisible();
   await toggle.click();
   await page.getByRole("radio", { name: new RegExp(`^${option}$`, "i") }).click();
+  await page.keyboard.press("Escape");
 }
 
 test.describe("PlatformAdmin light-only + tenant theme preservation", () => {
