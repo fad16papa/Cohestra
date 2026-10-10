@@ -2,7 +2,7 @@
 title: 'Remove landing-page Cinema / House Tour section'
 type: 'chore'
 created: '2026-10-10'
-status: 'review'
+status: 'implemented'
 baseline_commit: '7266815f3b1488698160d78a505a2d16bcda5c13'
 context: []
 ---
@@ -73,9 +73,11 @@ context: []
 ## Verification
 
 **Commands:**
-- `cd web && npx vitest run lib/marketing-cookie-consent.test.ts lib/semantic-text-tokens.test.ts lib/marketing/landing-cinema-removed.test.ts` -- expected: pass
-- `cd web && npm run build` -- expected: success
-- Playwright `web/e2e/landing-cinema-removed.spec.ts` -- expected: pass when stack is up
+- `cd web && npx vitest run` -- 712 passed (includes cookie, tokens, landing-cinema-removed)
+- `cd web && npx tsc --noEmit` -- pass
+- `cd web && npm run build` -- pass (Next 16.3.6)
+- Playwright `PUBLIC_BASE_URL=http://localhost:3000 npx playwright test e2e/landing-cinema-removed.spec.ts` -- pass
+- Playwright leftover `#crm` cookie banner -- pass
+- Manual + Playwright screenshots 1440 / 768 / 390 -- Cinema gone, overflow 0, Features flows into How it works
 
-**Manual checks:**
-- 1440 / 768 / 390: Cinema gone, remaining sections intact, no overflow
+HEAD: `34dfb922` plus cookie-hash cleanup commit. PR: https://github.com/fad16papa/Cohestra/pull/435 (draft). Do not merge without owner auth.

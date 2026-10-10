@@ -10,7 +10,7 @@ export function isKnownConsentValue(value: string | null): value is MarketingCoo
 }
 
 /** Any stored decision hides the banner, including unknown legacy strings. */
-export function shouldShowMarketingCookieBanner(stored: string | null, _hash?: string): boolean {
+export function shouldShowMarketingCookieBanner(stored: string | null): boolean {
   return stored == null || stored === "";
 }
 

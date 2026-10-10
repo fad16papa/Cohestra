@@ -26,17 +26,18 @@ describe("marketing cookie consent contract", () => {
   });
 
   it("hides for accepted, essential, and unknown stored values", () => {
-    expect(shouldShowMarketingCookieBanner(null, "")).toBe(true);
-    expect(shouldShowMarketingCookieBanner("", "")).toBe(true);
-    expect(shouldShowMarketingCookieBanner(CONSENT_ACCEPTED, "")).toBe(false);
-    expect(shouldShowMarketingCookieBanner(CONSENT_ESSENTIAL, "")).toBe(false);
-    expect(shouldShowMarketingCookieBanner("legacy-yes", "")).toBe(false);
+    expect(shouldShowMarketingCookieBanner(null)).toBe(true);
+    expect(shouldShowMarketingCookieBanner("")).toBe(true);
+    expect(shouldShowMarketingCookieBanner(CONSENT_ACCEPTED)).toBe(false);
+    expect(shouldShowMarketingCookieBanner(CONSENT_ESSENTIAL)).toBe(false);
+    expect(shouldShowMarketingCookieBanner("legacy-yes")).toBe(false);
     expect(isKnownConsentValue("legacy-yes")).toBe(false);
   });
 
-  it("does not hide the banner for a leftover #crm hash", () => {
-    expect(shouldShowMarketingCookieBanner(null, "#crm")).toBe(true);
-    expect(shouldShowMarketingCookieBanner("", "#crm")).toBe(true);
+  it("does not gate visibility on a leftover #crm hash", () => {
+    expect(COOKIE_SOURCE).not.toContain("window.location.hash");
+    expect(COOKIE_SOURCE).not.toContain("#crm");
+    expect(shouldShowMarketingCookieBanner(null)).toBe(true);
   });
 
   it("maps preferences to accepted only when optional analytics is on", () => {
