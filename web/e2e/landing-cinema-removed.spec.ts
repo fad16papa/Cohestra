@@ -19,7 +19,7 @@ test.describe("landing Cinema section removed", () => {
       page.getByRole("heading", { name: /registrations, client list, and follow up/i })
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: /built for clubs, workshops, and groups/i })
+      page.getByRole("heading", { name: "Built for clubs, workshops, and groups", exact: true })
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: /set up before your next event/i })
