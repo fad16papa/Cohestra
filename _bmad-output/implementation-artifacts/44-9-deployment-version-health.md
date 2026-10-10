@@ -12,7 +12,7 @@ baseline_commit: 3fc6151517a4cd15a83e2d5c47a845c08b3b38a7
 
 Status: done
 
-DONE requires the Mandatory Code Review Loop on the final HEAD. Epic 44 stays in-progress. PlatformAdmin light-only correction PR #431 is merged.
+DONE requires the Mandatory Code Review Loop on the final HEAD. PlatformAdmin light-only correction PR #431 is merged. Epic 44 closure is the owner-authorized close PR.
 
 ## Story
 
