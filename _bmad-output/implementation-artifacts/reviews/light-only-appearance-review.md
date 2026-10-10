@@ -1,7 +1,7 @@
 # BMAD code review — Light-only application appearance
 
 Date: 2026-10-10
-HEAD: pending (see git after this review loop)
+HEAD: df2cad0c6ceae9747236906302b1dccf1b58c2db (plus header-slot follow-up)
 Reviewer: Cursor Grok 4.6
 Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor
 PR: https://github.com/fad16papa/Cohestra/pull/431
@@ -19,6 +19,7 @@ PASS after in-loop fix of the Story 38.4 semantic-token contract that still requ
 | R2 | MINOR | Leftover `dark:` Tailwind utilities remain in some components | Accepted — unreachable without `html.dark`; first-paint script removes `.dark`; token inversion gone |
 | R3 | NIT | `updateAppearancePreference` unused wrapper remains | Kept for API compatibility |
 | R4 | NIT | Historical UX/epic artifacts still describe ThemeToggle | Correct — superseded, not rewritten |
+| R5 | MAJOR | Tenant website header left an empty flex slot after ThemeToggle removal | FIXED — render header actions only for cinemaFold |
 
 ## Targeted hunt
 

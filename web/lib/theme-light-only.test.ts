@@ -103,6 +103,10 @@ describe("light-only application appearance", () => {
     expect(layout).toContain('<meta name="color-scheme" content="light" />');
     expect(layout).toContain("ThemeScript");
     expect(layout).toContain("BrandAccentSync");
+
+    const site = read("components/marketing/site-page-renderer.tsx");
+    expect(site).toContain("{cinemaFold ? (");
+    expect(site).not.toMatch(/ThemeToggle/);
   });
 
   it("removes Settings Appearance and keeps Brand Accent plus Form Studio design", () => {

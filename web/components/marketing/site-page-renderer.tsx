@@ -1046,8 +1046,8 @@ export function SitePageRenderer({
             ) : null}
           </div>
         </div>
+        {cinemaFold ? (
         <div className="flex items-center gap-2">
-          {cinemaFold ? (
             <nav
               aria-label="Harbourline"
               className="hidden items-center gap-1 md:flex"
@@ -1066,8 +1066,7 @@ export function SitePageRenderer({
                 </span>
               ))}
             </nav>
-          ) : null}
-          {clubFacingOnly && cinemaFold ? (
+          {clubFacingOnly ? (
             <span
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-semibold",
@@ -1080,6 +1079,7 @@ export function SitePageRenderer({
             </span>
           ) : null}
         </div>
+        ) : null}
         </div>
       </HeaderTag>
 

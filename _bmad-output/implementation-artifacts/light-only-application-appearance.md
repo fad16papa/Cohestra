@@ -2,7 +2,7 @@
 id: light-only
 key: light-only-application-appearance
 title: Cohestra light-only application appearance
-status: in-progress
+status: review
 created: 2026-10-10
 baseline_commit: 3fc6151517a4cd15a83e2d5c47a845c08b3b38a7
 frozen_pr_430: 31da0413491080f13251165f939bee961d2e2f5a

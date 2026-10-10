@@ -8,6 +8,7 @@ import {
   loginOperatorSession,
   loginPlatformAdminSession,
   seedOperatorAuthSession,
+  tenantWebBase,
   waitForOperatorWorkspace,
   waitForPlatformConsole,
   type OperatorSession,
@@ -117,6 +118,36 @@ test.describe("light-only application appearance", () => {
       path: path.join(evidenceDir, "register-390-prefers-dark.png"),
       fullPage: true,
     });
+  });
+
+  test("public registration shell and tenant website stay light", async ({ page }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    await page.emulateMedia({ colorScheme: "dark" });
+    await seedDarkStorage(page);
+    const origin = tenantWebBase();
+
+    for (const viewport of VIEWPORTS) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto(`${origin}/register/demo-marina-social-meetup`, {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(page.locator("[data-registration-layout-container='public']")).toBeVisible();
+      await assertLightRoot(page);
+      await assertNoThemeControls(page);
+      await page.screenshot({
+        path: path.join(evidenceDir, `public-registration-${viewport.name}-prefers-dark.png`),
+        fullPage: true,
+      });
+
+      await page.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await assertLightRoot(page);
+      await assertNoThemeControls(page);
+      await page.screenshot({
+        path: path.join(evidenceDir, `tenant-website-${viewport.name}-prefers-dark.png`),
+        fullPage: true,
+      });
+    }
   });
 
   test("dashboard, settings, and platform stay light when live stack is available", async ({

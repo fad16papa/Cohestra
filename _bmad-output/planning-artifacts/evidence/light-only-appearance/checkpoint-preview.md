@@ -14,4 +14,13 @@ Model: Cursor Grok 4.6
 | Are Form Studio design options preserved? | YES | design tab / composition files unchanged in purpose |
 | Does Platform Overview now render as a coherent light application? | YES | --plat-* aliases light tokens; live screenshots under prefers-dark |
 
-Verdict: PASS pending exact-head CI and live visual confirmation on this HEAD.
+Live visual confirmation (prefers-color-scheme: dark + old dark storage):
+
+- Platform Overview 1440/390: light paper, white cards, ink header — not the charcoal/washed-gray failure
+- Dashboard 1440/390: light shell, no appearance control
+- Settings: Your account + Help & support; Appearance absent; Brand accent remains
+- Tenant/platform login: light, no toggle
+- Public registration: light PublicFormLayout, no toggle
+- Tenant website: light SitePageRenderer, no toggle, no empty header slot
+
+Verdict: CHECKPOINT PASS. Exact-head CI still required. STOP before merge.
