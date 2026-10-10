@@ -29,6 +29,15 @@ export function normalizeThemePreference(
   return "system";
 }
 
+/** PlatformAdmin console — always light. Route override, not a saved preference. */
+export function isPlatformLightOnlyPath(pathname: string | null | undefined): boolean {
+  if (!pathname) {
+    return false;
+  }
+
+  return pathname === "/platform" || pathname.startsWith("/platform/");
+}
+
 /** Marketing apex routes — designed light-only (Midnight Atelier paper tokens). */
 export function isMarketingLightOnlyPath(pathname: string | null): boolean {
   if (!pathname) {
@@ -71,7 +80,6 @@ export function isPublicLocalThemePath(pathname: string | null): boolean {
 
   return (
     pathname === "/login"
-    || pathname === "/platform/login"
     || pathname.startsWith("/register")
     || pathname === "/forgot-password"
     || pathname === "/reset-password"
@@ -128,4 +136,4 @@ export function getThemeToggleAriaLabel(
   return `Appearance: ${themeOptionLabels[preference]}`;
 }
 
-export const themeInitScript = `(function(){try{var d=document.documentElement,c="dark",operatorKey="${OPERATOR_THEME_STORAGE_KEY}",legacyKey="${LEGACY_THEME_STORAGE_KEY}",sessionKey="${PUBLIC_THEME_SESSION_KEY}",m=window.matchMedia("(prefers-color-scheme: dark)"),p=location.pathname;function isPublicPath(pathname){if(!pathname)return false;if(pathname==="/"||pathname==="/pricing"||pathname==="/docs"||pathname==="/terms"||pathname==="/privacy"||pathname==="/signup"||pathname.indexOf("/signup/")===0||pathname==="/invite/accept"||pathname==="/billing/paddle-return")return true;return pathname==="/login"||pathname==="/platform/login"||pathname.indexOf("/register")===0||pathname==="/forgot-password"||pathname==="/reset-password"}function norm(v){return v==="light"||v==="dark"||v==="system"?v:"system"}function resolve(theme){var t=norm(theme);if(t==="dark")return"dark";if(t==="light")return"light";return m.matches?"dark":"light"}function applyResolved(r){if(r==="dark"){d.classList.add(c)}else{d.classList.remove(c)}d.style.colorScheme=r}var isPublic=isPublicPath(p);var s=null;if(isPublic){try{s=sessionStorage.getItem(sessionKey)}catch(e){}}else{try{s=localStorage.getItem(operatorKey)||localStorage.getItem(legacyKey)}catch(e){}}applyResolved(resolve(s||"system"))}catch(e){}})();`;
+export const themeInitScript = `(function(){try{var d=document.documentElement,c="dark",operatorKey="${OPERATOR_THEME_STORAGE_KEY}",legacyKey="${LEGACY_THEME_STORAGE_KEY}",sessionKey="${PUBLIC_THEME_SESSION_KEY}",m=window.matchMedia("(prefers-color-scheme: dark)"),p=location.pathname;function isPlatformPath(pathname){return pathname==="/platform"||(pathname&&pathname.indexOf("/platform/")===0)}function isPublicPath(pathname){if(!pathname)return false;if(pathname==="/"||pathname==="/pricing"||pathname==="/docs"||pathname==="/terms"||pathname==="/privacy"||pathname==="/signup"||pathname.indexOf("/signup/")===0||pathname==="/invite/accept"||pathname==="/billing/paddle-return")return true;return pathname==="/login"||pathname.indexOf("/register")===0||pathname==="/forgot-password"||pathname==="/reset-password"}function norm(v){return v==="light"||v==="dark"||v==="system"?v:"system"}function resolve(theme){var t=norm(theme);if(t==="dark")return"dark";if(t==="light")return"light";return m.matches?"dark":"light"}function applyResolved(r){if(r==="dark"){d.classList.add(c)}else{d.classList.remove(c)}d.style.colorScheme=r}if(isPlatformPath(p)){applyResolved("light");return}var isPublic=isPublicPath(p);var s=null;if(isPublic){try{s=sessionStorage.getItem(sessionKey)}catch(e){}}else{try{s=localStorage.getItem(operatorKey)||localStorage.getItem(legacyKey)}catch(e){}}applyResolved(resolve(s||"system"))}catch(e){}})();`;

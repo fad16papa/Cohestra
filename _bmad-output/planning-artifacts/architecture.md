@@ -296,7 +296,7 @@ Three launch form templates (TGH Tennis, Harbourline Pickleball, Board Game Nigh
 3. **Client deduplication** — normalized phone/email at API ingestion; merge-suspect flags only in MVP
 4. **Audit timeline** — append-only events (registrations, status changes, campaigns, WhatsApp actions, notes)
 5. **Consent & communication preferences** — gates campaign segments and Board Game template submit
-6. **Theme system** — web-only (next-themes); API stores operator appearance preference
+6. **Theme system** — web-only (next-themes); API stores operator appearance preference. PlatformAdmin (`/platform` and `/platform/**`) is a route-level light override and does not persist a preference.
 7. **Lead Status lifecycle** — New → Contacted → Active → Inactive; drives filters, badges, reports
 8. **Segment/filter engine** — AND-semantics shared by Reports and Campaign compose endpoints
 9. **Rate limiting & abuse prevention** — Redis on public registration POST

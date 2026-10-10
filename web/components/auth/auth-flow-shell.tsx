@@ -15,6 +15,7 @@ type AuthFlowShellProps = {
   footer?: React.ReactNode;
   className?: string;
   siteBranding?: PublishedSiteBranding | null;
+  showAppearanceToggle?: boolean;
 };
 
 export function AuthFlowShell({
@@ -25,6 +26,7 @@ export function AuthFlowShell({
   footer,
   className,
   siteBranding = null,
+  showAppearanceToggle = true,
 }: AuthFlowShellProps) {
   const tenantName = siteBranding?.siteName?.trim();
   const logoUrl = siteBranding?.logoUrl ?? PLATFORM_LOGO_PATH;
@@ -53,7 +55,9 @@ export function AuthFlowShell({
         ) : (
           <MarketingWordmark />
         )}
-        <ThemeToggle variant="public" className="min-h-10 shrink-0 px-3" />
+        {showAppearanceToggle ? (
+          <ThemeToggle variant="public" className="min-h-10 shrink-0 px-3" />
+        ) : null}
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-5 py-10 sm:px-8">

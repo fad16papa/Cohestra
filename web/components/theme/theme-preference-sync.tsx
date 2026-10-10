@@ -7,6 +7,7 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/components/auth/auth-provider";
 import {
   effectivePathname,
+  isPlatformLightOnlyPath,
   isPublicLocalThemePath,
   normalizeThemePreference,
 } from "@/components/theme/theme-config";
@@ -21,7 +22,7 @@ export function ThemePreferenceSync() {
       return;
     }
 
-    if (!pathname || isPublicLocalThemePath(pathname)) {
+    if (!pathname || isPlatformLightOnlyPath(pathname) || isPublicLocalThemePath(pathname)) {
       return;
     }
 

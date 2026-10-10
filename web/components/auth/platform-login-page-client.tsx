@@ -16,6 +16,7 @@ function PlatformLoginPageContent() {
   return (
     <AuthFlowShell
       siteBranding={null}
+      showAppearanceToggle={false}
       eyebrow="Platform console"
       title="Platform admin sign in"
       description="Sign in to manage tenants, complimentary plans, and Cohestra platform operations."

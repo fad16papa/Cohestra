@@ -8,11 +8,12 @@ Brand colors and typography are defined in `styles/brand-tokens.css` (sourced fr
 
 ## Theme system
 
-- **next-themes** with `defaultTheme="system"`, class-based dark mode on `<html>`
+- Tenant/operator and public surfaces: **Light / Dark / System** via **next-themes**, class-based dark mode on `<html>`
 - Blocking inline script in `app/layout.tsx` `<head>` prevents flash of wrong theme
-- Preference stored in `localStorage` key `theme` (`light` | `dark` | `system`)
-- Full ThemeToggle UI in `components/theme/theme-toggle.tsx` (admin top bar + public footer via layout shells)
-- Public routes use `PublicFormLayout` — see `/register/[slug]`
+- Operator preference is stored in `cohestra-theme-operator` and the profile `themePreference`
+- Public surfaces use a per-tab session key (`cohestra-theme-public-session`)
+- ThemeToggle lives in the admin top bar, Settings → Appearance, and public/auth shells
+- **PlatformAdmin exception:** `/platform` and `/platform/**` (including `/platform/login`) are a route override to light only. Visiting PlatformAdmin must not write `themePreference` or operator/public storage.
 
 ## Authentication
 
