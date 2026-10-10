@@ -233,6 +233,99 @@ test.describe("PlatformAdmin light-only + tenant theme preservation", () => {
     expect(appearancePatches.join(" ")).not.toMatch(/"themePreference"\s*:\s*"light"/);
   });
 
+  test("44.9 version surfaces stay light under OS/stored dark", async ({ page, request }) => {
+    test.skip(!process.env.E2E_LIVE_STACK, "Set E2E_LIVE_STACK=1 with API+web running.");
+    test.setTimeout(180_000);
+    fs.mkdirSync(evidenceDir, { recursive: true });
+
+    const sha = "abcdef0123456789abcdef0123456789abcdef01";
+    const kpi = (value: unknown, overrides: Record<string, unknown> = {}) => ({
+      value,
+      source: "GIT_SHA",
+      observedAt: "2026-10-10T05:58:00Z",
+      freshness: "actual",
+      ...overrides,
+    });
+    const payload = (overrides: Record<string, unknown> = {}) => ({
+      gitSha: kpi(sha),
+      environmentName: kpi("Production", { source: "IHostEnvironment.EnvironmentName" }),
+      apiVersion: kpi("v1", { source: "API contract v1" }),
+      ...overrides,
+    });
+
+    await page.emulateMedia({ colorScheme: "dark" });
+    await seedOperatorTheme(page, "dark");
+    const platform = await loginPlatformAdminSession(request);
+
+    await page.route("**/api/v1/platform/ops/version", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(payload()),
+      });
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openAuthed(page, platform, "/platform/overview");
+    await waitForPlatformConsole(page);
+    await expect(page.getByRole("heading", { name: "Version" })).toBeVisible();
+    await expect(page.getByText(sha, { exact: true })).toBeVisible();
+    await assertLightRoot(page);
+    await page.screenshot({
+      path: path.join(evidenceDir, "platform-overview-version-actual-1440-prefers-dark.png"),
+      fullPage: true,
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/platform/overview", { waitUntil: "domcontentloaded" });
+    await waitForPlatformConsole(page);
+    await expect(page.getByText(sha, { exact: true })).toBeVisible();
+    await assertLightRoot(page);
+    expect(await pageOverflows(page)).toBe(false);
+    await page.screenshot({
+      path: path.join(evidenceDir, "platform-overview-version-actual-390-prefers-dark.png"),
+      fullPage: true,
+    });
+
+    await page.unroute("**/api/v1/platform/ops/version");
+    await page.route("**/api/v1/platform/ops/version", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(
+          payload({
+            gitSha: kpi(null, { source: "Not instrumented", freshness: "missing_instrumentation" }),
+          })
+        ),
+      });
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/platform/overview", { waitUntil: "domcontentloaded" });
+    await waitForPlatformConsole(page);
+    await expect(page.getByText("Missing instrumentation")).toBeVisible();
+    await assertLightRoot(page);
+    await page.screenshot({
+      path: path.join(evidenceDir, "platform-overview-version-missing-1440-prefers-dark.png"),
+      fullPage: true,
+    });
+
+    await page.unroute("**/api/v1/platform/ops/version");
+    await page.route("**/api/v1/platform/ops/version", async (route) => {
+      await route.fulfill({
+        status: 503,
+        contentType: "application/problem+json",
+        body: JSON.stringify({ title: "Version data unavailable" }),
+      });
+    });
+    await page.goto("/platform/ops", { waitUntil: "domcontentloaded" });
+    await waitForPlatformConsole(page);
+    await expect(page.getByRole("heading", { name: "Version data unavailable" })).toBeVisible();
+    await assertLightRoot(page);
+    await page.screenshot({
+      path: path.join(evidenceDir, "platform-ops-version-error-1440-prefers-dark.png"),
+      fullPage: true,
+    });
+  });
+
   test("F-J + route-transition: tenant themes survive a Platform visit", async ({
     page,
     request,
