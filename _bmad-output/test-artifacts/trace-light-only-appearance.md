@@ -1,7 +1,7 @@
 # Trace — PlatformAdmin light-only appearance
 
 Date: 2026-10-10
-HEAD: bec1c2e197f6720631d689cf02fc231ae3bf7855
+HEAD: fa356f3faf49c1230cf96485dbf05fbaca957ec1
 Spec: `_bmad-output/planning-artifacts/specs/spec-light-only-appearance/SPEC.md`
 
 | AC | Test / evidence | Result |

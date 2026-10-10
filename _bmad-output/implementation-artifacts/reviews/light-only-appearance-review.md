@@ -1,7 +1,7 @@
 # BMAD code review — PlatformAdmin light-only appearance
 
 Date: 2026-10-10
-HEAD: bec1c2e197f6720631d689cf02fc231ae3bf7855
+HEAD: fa356f3faf49c1230cf96485dbf05fbaca957ec1
 Reviewer: Cursor Grok 4.6
 Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor
 PR: https://github.com/fad16papa/Cohestra/pull/431
