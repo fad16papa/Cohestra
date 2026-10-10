@@ -328,8 +328,13 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
       },
       shot(
         "05-form-studio-build.png",
+        "Activity Form tab in Build form mode with Save form, templates, and intro copy.",
+        "Build form. The activity stays in view so you can Save form without leaving the tab."
+      ),
+      shot(
+        "05b-form-studio-composition.png",
         "Form Studio composition with the block palette and form structure canvas.",
-        "Build form composition. Add fields from the palette, then Save form."
+        "Composition canvas. Add fields from the palette, then return to Save form."
       ),
       {
         type: "steps",
@@ -374,7 +379,7 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
       },
       shot(
         "07-form-studio-preview.png",
-        "Form Studio Preview showing the public registration shell inside the activity.",
+        "Form Studio Preview with Preview mode copy and the public registration fields.",
         "Preview simulates submission. It never creates a public registration."
       ),
       { type: "next", href: "#publish-and-share", label: "Publish and share" },
@@ -508,8 +513,8 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
       },
       shot(
         "14-website-studio.png",
-        "Website Studio with Build, Design, and Preview workspace controls.",
-        "Website Studio on Core or Pro. Use Preview before Publish."
+        "Website Studio Split view with homepage sections on the left and a phone preview on the right.",
+        "Website Studio. Sections plus live preview — no onboarding tour."
       ),
       {
         type: "steps",
@@ -538,17 +543,21 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
       },
       shot(
         "15-campaigns.png",
-        "Compose campaign screen with Target community and consented recipient preview.",
-        "Compose campaign. Preview consented recipients before you send."
+        "Compose campaign with consented recipients, Subject, Message editor, and Preview.",
+        "Compose campaign. Choose a consented community, write the message, then Preview."
       ),
       {
         type: "steps",
         items: [
           "Open Campaigns. Select New campaign.",
           "Choose a consented segment (activity, community, or status).",
-          "Write the message. Use Preview.",
+          "Write the Subject and Message. Use Preview.",
           "Send only after the recipient count matches people who opted in.",
         ],
+      },
+      {
+        type: "note",
+        text: "Isolated or unverified workspaces may show Email delivery needs attention above the composer. That is a server delivery checklist, not a missing Campaigns feature. Do not put API keys in the Document.",
       },
       { type: "next", href: "#reports", label: "Analytics" },
     ],

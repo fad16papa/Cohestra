@@ -68,9 +68,12 @@ describe("Documentation 2.0 content contract", () => {
     expect(allText).toContain("not a free-form chatbot");
   });
 
-  it("ships at least 15 allowlisted screenshots that exist on disk", () => {
+  it("ships 19 allowlisted screenshots that exist on disk", () => {
     const images = imageBlocks();
-    expect(images.length).toBeGreaterThanOrEqual(15);
+    expect(images.length).toBe(19);
+    expect(images.some((image) => image.src.endsWith("05b-form-studio-composition.png"))).toBe(
+      true
+    );
     for (const image of images) {
       expect(isAllowedDocsImageSrc(image.src)).toBe(true);
       expect(existsSync(resolve(publicDir, image.src.replace(/^\//, "")))).toBe(true);

@@ -19,7 +19,8 @@ Do not invent UI with image generators. Capture from an isolated seeded tenant (
 | `02-dashboard.png` | `/dashboard` | 1440×900 | Pro trial | operator@cohestra.local | Dashboard |
 | `03-activities-list.png` | `/activities` | 1440×900 | Pro trial | default demo | Activities |
 | `04-activity-create.png` | `/activities/new` | 1440×900 | Pro trial | default demo | Create an activity |
-| `05-form-studio-build.png` | `/activities/{id}?tab=form` | 1440×900 | Pro trial | Marina Pickleball | Form Studio |
+| `05-form-studio-build.png` | `/activities/{id}?tab=form` | 1440×900 | Pro trial | Marina Pickleball | Form Studio chrome |
+| `05b-form-studio-composition.png` | Form → Go to composition | 1440×900 | Pro trial | Marina Pickleball | Form composition |
 | `06-activity-design.png` | `/activities/{id}?tab=design` | 1440×900 | Pro trial | Marina Pickleball | Design |
 | `07-form-studio-preview.png` | Form → Preview | 1440×900 | Pro trial | Marina Pickleball | Preview |
 | `08-share-kit.png` | `/activities/{id}?tab=share` | 1440×900 | Pro trial | Marina Pickleball | Share kit |
@@ -28,8 +29,8 @@ Do not invent UI with image generators. Capture from an isolated seeded tenant (
 | `11-clients-list.png` | `/clients` | 1440×900 | Pro trial | default demo | Clients |
 | `12-client-profile.png` | `/clients/{id}` | 1440×900 | Pro trial | Sophia R. | Client profile |
 | `13-follow-up.png` | `/follow-up` | 1440×900 | Pro trial | default demo | Follow-up |
-| `14-website-studio.png` | `/dashboard/website` | 1440×900 | Pro trial | default demo | Website Studio |
-| `15-campaigns.png` | `/campaigns/new` | 1440×900 | Pro trial | default demo | Campaigns |
+| `14-website-studio.png` | `/dashboard/website` Sections + Split | 1440×900 | Pro trial | default demo, tour skipped | Website Studio |
+| `15-campaigns.png` | `/campaigns/new` | 1440×900 | Pro trial | Eastside Tennis consented segment | Campaigns |
 | `16-analytics.png` | `/analytics` | 1440×900 | Pro trial | default demo | Analytics |
 | `17-cohestra-ai.png` | `/ai` | 1440×900 | Pro trial | default demo | Cohestra AI |
 | `18-settings.png` | `/settings` | 1440×900 | Pro trial | default demo | Settings |
