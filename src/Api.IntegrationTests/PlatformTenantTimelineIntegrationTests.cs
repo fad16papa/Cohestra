@@ -98,7 +98,14 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
-        var path = $"/api/v1/platform/tenants/{TenantIds.Default}/timeline";
+        using var platform = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(platform, await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform));
+        var tenant = await IntegrationTestHelpers.CreateTenantViaPlatformAsync(
+            platform,
+            "Timeline Authz",
+            $"tl-authz-{Guid.NewGuid():N}"[..12],
+            "admin@tl-authz.test");
+        var path = $"/api/v1/platform/tenants/{tenant.Id}/timeline";
 
         using var anonymous = Factory.CreateClient();
         using var anonymousResponse = await anonymous.GetAsync(path);
@@ -114,15 +121,15 @@ public sealed class PlatformTenantTimelineIntegrationTests(IntegrationTestFixtur
         var email = $"member-tl-{Guid.NewGuid():N}@example.com";
         var (user, _) = await IntegrationTestHelpers.CreateTenantMemberUserAsync(
             Factory.Services,
-            TenantIds.Default,
+            tenant.Id,
             email);
         var token = IntegrationTestHelpers.MintTenantAccessToken(
             Factory.Services,
             user,
-            TenantIds.Default,
+            tenant.Id,
             TenantMembershipRole.TenantMember);
         using var member = Factory.CreateClient();
-        IntegrationTestHelpers.UseTenantHost(member, TenantIds.DefaultSlug);
+        IntegrationTestHelpers.UseTenantHost(member, tenant.Slug);
         IntegrationTestHelpers.UseBearerToken(member, token);
         member.DefaultRequestHeaders.Host = "localhost";
         using var memberResponse = await member.GetAsync(path);

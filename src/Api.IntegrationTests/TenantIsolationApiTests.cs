@@ -84,6 +84,11 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, visibleSlug);
         await IntegrationTestHelpers.HideOtherDefaultHomepageActivitiesAsync(Factory.Services, visibleSlug);
 
+        var previousComplimentary = await IntegrationTestHelpers.SetDefaultTenantComplimentaryAsync(
+            Factory.Services,
+            complimentary: true);
+        try
+        {
         using var adminClient = Factory.CreateClient();
         var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
         IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
@@ -107,6 +112,13 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.Equal(HttpStatusCode.NotFound, activityResponse.StatusCode);
         var activityBody = await activityResponse.Content.ReadAsStringAsync();
         Assert.DoesNotContain(foreignMarker, activityBody, StringComparison.Ordinal);
+        }
+        finally
+        {
+            await IntegrationTestHelpers.SetDefaultTenantComplimentaryAsync(
+                Factory.Services,
+                previousComplimentary);
+        }
     }
 
     [SkippableFact]
@@ -367,6 +379,11 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             await dbContext.SaveChangesAsync();
         }
 
+        var previousComplimentary = await IntegrationTestHelpers.SetDefaultTenantComplimentaryAsync(
+            Factory.Services,
+            complimentary: true);
+        try
+        {
         using var adminClient = Factory.CreateClient();
         var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
         IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
@@ -382,6 +399,13 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             new SetCommunityDefaultFormTemplateRequest(foreignTemplateId));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+        finally
+        {
+            await IntegrationTestHelpers.SetDefaultTenantComplimentaryAsync(
+                Factory.Services,
+                previousComplimentary);
+        }
     }
 
     [SkippableFact]
@@ -408,6 +432,11 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             await dbContext.SaveChangesAsync();
         }
 
+        var previousComplimentary = await IntegrationTestHelpers.SetDefaultTenantComplimentaryAsync(
+            Factory.Services,
+            complimentary: true);
+        try
+        {
         using var adminClient = Factory.CreateClient();
         var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
         IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
@@ -417,6 +446,13 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             new DuplicateFormTemplateRequest(null));
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
+        finally
+        {
+            await IntegrationTestHelpers.SetDefaultTenantComplimentaryAsync(
+                Factory.Services,
+                previousComplimentary);
+        }
     }
 
     [SkippableFact]
