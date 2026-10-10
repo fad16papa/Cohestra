@@ -891,4 +891,79 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
         Assert.Equal(tenantB.Id, timelineB.TenantId);
         Assert.DoesNotContain(timelineB.Items, item => item.Summary.Contains(markerA, StringComparison.Ordinal));
     }
+
+    [SkippableFact]
+    public async Task Platform_audit_search_and_export_return_only_requested_tenant()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        var tenantAId = TenantIds.Default;
+        const string markerA = "TENANT_A_AUDIT_44_7";
+        const string markerB = "TENANT_B_AUDIT_44_7";
+        var secret = $"AUDIT_DETAILS_SECRET_44_7_{Guid.NewGuid():N}"[..28];
+        var now = DateTimeOffset.UtcNow;
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            db.PlatformAuditLogs.AddRange(
+                new PlatformAuditLog
+                {
+                    Id = Guid.CreateVersion7(),
+                    ActorUserId = Guid.CreateVersion7(),
+                    ActorEmail = "a@example.com",
+                    TenantId = tenantAId,
+                    Action = PlatformAuditAction.TenantSuspended,
+                    Reason = markerA,
+                    DetailsJson = $"{{\"secret\":\"{secret}\"}}",
+                    CreatedAt = now,
+                },
+                new PlatformAuditLog
+                {
+                    Id = Guid.CreateVersion7(),
+                    ActorUserId = Guid.CreateVersion7(),
+                    ActorEmail = "b@example.com",
+                    TenantId = tenantB.Id,
+                    Action = PlatformAuditAction.TenantSuspended,
+                    Reason = markerB,
+                    DetailsJson = $"{{\"secret\":\"{secret}\"}}",
+                    CreatedAt = now,
+                });
+            await db.SaveChangesAsync();
+        }
+
+        using var tenantAdmin = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            tenantAdmin,
+            await IntegrationTestHelpers.LoginAsOperatorAsync(tenantAdmin));
+        using var forbidden = await tenantAdmin.GetAsync($"/api/v1/platform/audits?tenantId={tenantAId}");
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+        using var forbiddenExport = await tenantAdmin.GetAsync($"/api/v1/platform/audits/export?tenantId={tenantAId}");
+        Assert.Equal(HttpStatusCode.Forbidden, forbiddenExport.StatusCode);
+
+        using var platform = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            platform,
+            await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform));
+
+        using var forA = await platform.GetAsync($"/api/v1/platform/audits?tenantId={tenantAId}&action=TenantSuspended");
+        Assert.Equal(HttpStatusCode.OK, forA.StatusCode);
+        var bodyA = await forA.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(markerB, bodyA, StringComparison.Ordinal);
+        Assert.DoesNotContain(secret, bodyA, StringComparison.Ordinal);
+        Assert.Contains(markerA, bodyA, StringComparison.Ordinal);
+
+        using var exportA = await platform.GetAsync($"/api/v1/platform/audits/export?tenantId={tenantAId}&action=TenantSuspended");
+        Assert.Equal(HttpStatusCode.OK, exportA.StatusCode);
+        var csvA = await exportA.Content.ReadAsStringAsync();
+        Assert.Contains(markerA, csvA, StringComparison.Ordinal);
+        Assert.DoesNotContain(markerB, csvA, StringComparison.Ordinal);
+        Assert.DoesNotContain(secret, csvA, StringComparison.Ordinal);
+
+        using var forB = await platform.GetAsync($"/api/v1/platform/audits?tenantId={tenantB.Id}&action=TenantSuspended");
+        var bodyB = await forB.Content.ReadAsStringAsync();
+        Assert.Contains(markerB, bodyB, StringComparison.Ordinal);
+        Assert.DoesNotContain(markerA, bodyB, StringComparison.Ordinal);
+    }
 }

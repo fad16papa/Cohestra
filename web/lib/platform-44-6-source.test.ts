@@ -31,7 +31,6 @@ describe("Story 44.6 tenant timeline source contract", () => {
     expect(TENANT).toContain("Recent audit");
     expect(OPS).toContain("Members & recovery");
     expect(OPS).toContain("Send password reset");
-    expect(HEADER).not.toContain("Audits");
     expect(TENANT).not.toContain("/platform/audits");
     expect(TENANT + TIMELINE).not.toMatch(/impersonat/i);
     expect(TIMELINE).not.toContain("Replay");

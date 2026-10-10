@@ -121,6 +121,13 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var timeline = await client.GetAsync($"/api/v1/platform/tenants/{TenantIds.Default}/timeline");
         timeline.EnsureSuccessStatusCode();
+
+        using var audits = await client.GetAsync("/api/v1/platform/audits");
+        audits.EnsureSuccessStatusCode();
+
+        using var export = await client.GetAsync(
+            $"/api/v1/platform/audits/export?from={Uri.EscapeDataString(DateTimeOffset.UtcNow.AddYears(10).ToString("O"))}");
+        export.EnsureSuccessStatusCode();
     }
 
     private async Task<HttpClient> CreateTenantMemberClientAsync()
@@ -180,6 +187,12 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
 
         using var timeline = await client.GetAsync($"/api/v1/platform/tenants/{tenantId}/timeline");
         await AssertForbiddenAsync(timeline);
+
+        using var audits = await client.GetAsync("/api/v1/platform/audits");
+        await AssertForbiddenAsync(audits);
+
+        using var export = await client.GetAsync("/api/v1/platform/audits/export");
+        await AssertForbiddenAsync(export);
 
         using var reset = await client.PostAsync(
             $"/api/v1/platform/tenants/{tenantId}/members/{memberUserId}/send-password-reset",
