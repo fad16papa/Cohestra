@@ -273,6 +273,11 @@ development_status:
   epic-18-retrospective: done
 
   # Epic 19 — unblocked 2026-08-23 after Epic 29. Do not put Stripe keys on the droplet.
+  # 2026-10-10 reconciliation (additive; October 8 notes below stay historical):
+  # origin/main f293650d (PR #436 Docs 2.0). Required CI SUCCESS run 38065729824.
+  # PR #404 MERGED 2026-10-08 at 69814fc3 (ancestor of main). Public UAT SHA still unproven.
+  # 19.3 + 19.5 story files created. Shared-app cert thesocialcollectivesg.com expired 2026-10-01.
+  # Evidence: epic-19-reconciliation-2026-10-10.md. Production NO-GO. No UAT deploy this run.
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
   # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.
   # Isolation review on 95e5bd0 found BLOCKER/MAJOR; patches applied, story stays in-progress.

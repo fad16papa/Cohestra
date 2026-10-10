@@ -149,3 +149,9 @@ Cloud Agent has **no SSH**. Public checks only (no secrets):
 
 Tracker stays **in-progress / not done**. This probe does **not** replace droplet smoke (`uat-smoke.sh`), owner SSH acceptance, or the Mandatory Code Review Loop close. Public stack is **not** proven to be PR #404 HEAD `47ebb1b5`.
 
+## Reconciliation addendum (2026-10-10)
+
+PR #404 **is merged** at `69814fc3` (2026-10-08) and is an ancestor of `origin/main` `f293650d`. The October 8 “not proven to be 47ebb1b5” sentence above is historical.
+
+Public probe this date: `/ready` still Healthy; HTTP→HTTPS 301. Deployed SHA still **unproven** (no SSH). Shared existing-app cert `thesocialcollectivesg.com` **expired 2026-10-01** (insecure `/ready` still Healthy). Do not deploy without explicit owner UAT authorization. Do not mark done.
+

@@ -93,6 +93,10 @@ Cloud Agent has **no SSH**. Public TLS checks only (no secrets):
 
 Owner SSH checkboxes above remain **unchecked**. Tracker stays **review / not done**. This probe does **not** replace `prove-edge-tls-wildcard.sh`, existing-app regression, or BMAD close. Apex `cohestra.app` cert expiry is **unrelated** (shared droplet serves another site cert).
 
+## Reconciliation addendum (2026-10-10)
+
+Public probe repeated: UAT wildcard SAN, HTTP 301, HSTS, tenant SNI, singleton security headers — still PASS. Shared existing-app `thesocialcollectivesg.com` certificate **expired 2026-10-01** (CN matches that host; `/ready` Healthy only with insecure TLS). Existing-app regression checkbox stays **unchecked**. No SSH. Do not mark done.
+
 ## Renewal
 
 **MANUAL-ACCEPTED** for UAT until DNS provider automation exists.
