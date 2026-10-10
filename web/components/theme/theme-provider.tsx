@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
@@ -37,6 +37,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     : isPublicSurface
       ? resolvePublicTheme(publicTheme)
       : undefined;
+
+  useLayoutEffect(() => {
+    if (!isPlatformSurface) {
+      return;
+    }
+
+    document.documentElement.classList.remove("dark");
+    document.documentElement.style.colorScheme = "light";
+  }, [isPlatformSurface]);
 
   useEffect(() => {
     migrateLegacyThemeStorage();

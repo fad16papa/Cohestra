@@ -1,36 +1,52 @@
-# BMAD code review — Light-only application appearance
+# BMAD code review — PlatformAdmin light-only appearance
 
 Date: 2026-10-10
-HEAD: 9d3fa6a331df95a64d2488ddf2ddc40d8f7e5fae
+HEAD: bec1c2e197f6720631d689cf02fc231ae3bf7855
 Reviewer: Cursor Grok 4.6
 Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor
 PR: https://github.com/fad16papa/Cohestra/pull/431
 Frozen: PR #430 not modified
+Supersedes: review of global light-only HEAD `d1540d1e`
+
+Mandatory Code Review Loop is in force. This review targets the PlatformAdmin-only implementation, not the superseded global lock.
 
 ## Verdict
 
-PASS after in-loop fix of the Story 38.4 semantic-token contract that still required a `.dark` CSS block.
+PASS after in-loop patch of the first-paint race Blind Hunter + Edge Case Hunter raised.
 
 ## Findings
 
-| ID | Severity | Finding | Disposition |
-|---|---|---|---|
-| R1 | BLOCKER | `parseBrandTokens` / contrast matrix still required `.dark` after token-skin removal | FIXED — light-only pairs; dark map empty |
-| R2 | MINOR | Leftover `dark:` Tailwind utilities remain in some components | Accepted — unreachable without `html.dark`; first-paint script removes `.dark`; token inversion gone |
-| R3 | NIT | `updateAppearancePreference` unused wrapper remains | Kept for API compatibility |
-| R4 | NIT | Historical UX/epic artifacts still describe ThemeToggle | Correct — superseded, not rewritten |
-| R5 | MAJOR | Tenant website header left an empty flex slot after ThemeToggle removal | FIXED — render header actions only for cinemaFold |
+| ID | Severity | Source | Finding | Disposition |
+|---|---|---|---|---|
+| R1 | MAJOR | blind+edge | next-themes body script can re-apply stored/OS dark if SSR `forcedTheme` is missing | PATCHED — trailing `<ThemeScript />` after ThemeProvider + `useLayoutEffect` Platform lock |
+| R2 | MINOR | blind | SPA navigation onto `/platform/**` is not locked before paint by ThemeScript | PATCHED — `useLayoutEffect` removes `html.dark` and sets `color-scheme: light` when entering Platform |
+| R3 | MINOR | blind | ThemeToggle hide is a Platform login prop, not a path lock | DISMISS — owner asked for explicit `showAppearanceToggle={false}` on Platform login, not pathname hacks in generic UI |
+| R4 | NIT | blind | `isPlatformLightOnlyPath` is duplicated inside ThemeScript | DISMISS — inline script cannot import; unit tests keep predicates aligned |
+
+Acceptance Auditor: NO FINDINGS. Kernel items PASS.
 
 ## Targeted hunt
 
-- ThemeToggle hidden but dark mode still active: **no** — ThemeScript no longer reads storage/OS; `.dark` token skin removed
-- ThemeScript still applying system dark: **no**
-- stale `.dark` class: first paint removes it; no runtime adder remains
-- prefers-color-scheme controlling app: **no**
-- old localStorage / public session / profile dark winning: **no**
-- dead Appearance route: redirects to `/settings/profile`
-- Brand Accent accidentally removed: **no**
-- Form Studio design removed: **no**
-- Story 44.x logic touched: **no**
-- next-themes left in: **removed**
-- ThemePreference destructively migrated: **no**
+- Platform still inheriting dark mode: **no** — ThemeScript + `forcedTheme="light"` + live Overview under OS/stored dark
+- First-paint dark flash: **no** — head script, trailing script, e2e `__sawHtmlDark === false`
+- `/platform/login` ThemeToggle: **no** — `showAppearanceToggle={false}`; screenshot has no control
+- Platform visit overwriting tenant preference: **no** — sync skips Platform; e2e storage stays `dark`; no appearance PATCH to light
+- Tenant dark removed: **no** — dashboard dark screenshot
+- Settings Appearance missing: **no** — Light/Dark/System radios restored
+- Tenant ThemeToggle missing: **no**
+- Public registration ThemeToggle missing: **no**
+- Tenant website theme missing: **no**
+- Brand Accent dark damaged: **no** — `isDark` branch + unit matrix restored
+- Global `color-scheme: light` on `html`: **no**
+- Global `html.dark` prohibited: **no** — legitimate on tenant
+- next-themes removed: **no**
+- Platform override leaking to tenant routes: **no**
+- Leaving Platform stuck light: **no** — route-transition e2e
+- Story 44.x functional regression: **no** — ops/support/overview still load
+
+## Clean review
+
+Unresolved BLOCKER: 0
+Unresolved MAJOR: 0
+Dismissed: 2
+Patched in this HEAD: 2

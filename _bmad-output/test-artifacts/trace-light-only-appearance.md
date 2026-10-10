@@ -1,20 +1,24 @@
-# Traceability — Light-only application appearance
+# Trace — PlatformAdmin light-only appearance
 
 Date: 2026-10-10
-Workflow: bmad-testarch-trace
-Model: Cursor Grok 4.6
+HEAD: bec1c2e197f6720631d689cf02fc231ae3bf7855
+Spec: `_bmad-output/planning-artifacts/specs/spec-light-only-appearance/SPEC.md`
 
-| Spec ID | Implementation | Unit / source | Playwright |
-|---|---|---|---|
-| MODE light-only | ThemeScript + html color-scheme | theme-light-only.test.ts | light-only-appearance.spec.ts |
-| OS dark ignored | themeInitScript has no matchMedia | theme-light-only.test.ts | emulateMedia colorScheme dark |
-| Old storage ignored | script does not read storage | theme-light-only.test.ts | addInitScript dark keys |
-| Profile dark ignored | no ThemePreferenceSync | brand-accent + layout | live dashboard/settings |
-| ThemeToggle absent | deleted + consumers cleaned | theme-light-only.test.ts | assertNoThemeControls |
-| Settings Appearance absent | sections + redirect | settings-routes.test.ts | settings-nested + light-only |
-| Brand accent preserved | buildBrandAccentStyle light-only | brand-accent.test.ts | Settings Brand accent link |
-| Form Studio preserved | design tab files remain | theme-light-only.test.ts | existing 42.x specs |
-| Platform light tokens | --plat-* aliases --ink/--paper | theme-light-only.test.ts | platform overview live |
-| A11y | no html.dark; light contrast pairs | semantic-text-tokens.test.ts | Axe on platform overview |
+| AC | Test / evidence | Result |
+|---|---|---|
+| A Platform + OS light → light | ThemeScript + e2e console | PASS |
+| B Platform + OS dark → light | Playwright emulateMedia dark | PASS |
+| C Platform + stored operator dark → light | seeded `cohestra-theme-operator=dark` | PASS |
+| D Platform + stored system → light | ThemeScript platform branch ignores system | PASS |
+| E Platform login + OS dark → light | `platform-login-*-prefers-dark.png` | PASS |
+| F Tenant dashboard selected dark → dark | `tenant-dashboard-1440-dark.png` | PASS |
+| G Tenant dashboard selected light → light | `tenant-dashboard-1440-light.png` | PASS |
+| H Tenant dashboard system + OS dark → dark | e2e F–J | PASS |
+| I Settings → Appearance exists | `settings-appearance-1440.png` | PASS |
+| J Tenant admin ThemeToggle exists | e2e F–J | PASS |
+| K Public registration ThemeToggle preserved | `public-registration-1440-dark.png` | PASS |
+| L Tenant website theme preserved | `tenant-website-1440.png` | PASS |
+| Route transition dark → Platform light → dark | e2e F–J; no PATCH light | PASS |
+| Platform Overview owner regression | `platform-overview-*-prefers-dark.png` | PASS |
 
-Quality gate: PASS for the light-only kernel on HEAD after review-loop fix.
+Gate: PASS. STOP before merge.

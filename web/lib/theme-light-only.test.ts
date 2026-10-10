@@ -217,10 +217,13 @@ describe("tenant theme architecture remains supported", () => {
     expect(read("components/auth/platform-login-page-client.tsx")).toContain(
       "showAppearanceToggle={false}"
     );
-    expect(read("app/layout.tsx")).toMatch(/ThemeProvider|ThemePreferenceSync|ThemeScript/);
+    const layout = read("app/layout.tsx");
+    expect(layout).toMatch(/ThemeProvider/);
+    expect(layout).toMatch(/ThemePreferenceSync/);
+    expect(layout.match(/<ThemeScript \/>/g)?.length).toBeGreaterThanOrEqual(2);
     expect(read("package.json")).toMatch(/next-themes/);
-    expect(read("app/layout.tsx")).not.toContain('style={{ colorScheme: "light" }}');
-    expect(read("app/layout.tsx")).not.toContain('<meta name="color-scheme" content="light" />');
+    expect(layout).not.toContain('style={{ colorScheme: "light" }}');
+    expect(layout).not.toContain('<meta name="color-scheme" content="light" />');
   });
 
   it("keeps Settings Appearance and theme-aware brand accent", () => {
@@ -257,6 +260,7 @@ describe("tenant theme architecture remains supported", () => {
     const provider = read("components/theme/theme-provider.tsx");
     expect(provider).toMatch(/forcedTheme/);
     expect(provider).toMatch(/isPlatformLightOnlyPath/);
+    expect(provider).toMatch(/useLayoutEffect/);
   });
 
   it("keeps Form Studio design modules", () => {
