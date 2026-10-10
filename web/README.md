@@ -4,15 +4,14 @@ Brand colors and typography are defined in `styles/brand-tokens.css` (sourced fr
 
 - Use semantic Tailwind classes (`bg-primary`, `bg-status-new`, `text-text-warm`, etc.)
 - Do not hard-code hex values in components — CSS variables only
-- Dark mode tokens are in `.dark` (see Theme system below)
+- Cohestra has one application appearance: light. Historical `.dark` token blocks are unreachable.
 
-## Theme system
+## Application appearance
 
-- **next-themes** with `defaultTheme="system"`, class-based dark mode on `<html>`
-- Blocking inline script in `app/layout.tsx` `<head>` prevents flash of wrong theme
-- Preference stored in `localStorage` key `theme` (`light` | `dark` | `system`)
-- Full ThemeToggle UI in `components/theme/theme-toggle.tsx` (admin top bar + public footer via layout shells)
-- Public routes use `PublicFormLayout` — see `/register/[slug]`
+- Light only. There is no Light / Dark / System control and no ThemeToggle.
+- A blocking inline script in `app/layout.tsx` forces `color-scheme: light` and removes `.dark` on first paint.
+- Old `theme` / `cohestra-theme-operator` / `cohestra-theme-public-session` values and profile `themePreference` do not change the skin.
+- Brand accent remains a workspace setting. Public routes use `PublicFormLayout` — see `/register/[slug]`.
 
 ## Authentication
 
@@ -21,7 +20,7 @@ Brand colors and typography are defined in `styles/brand-tokens.css` (sourced fr
 - Admin routes under `app/(admin)/` redirect to `/login` when unauthenticated
 - Use `useAuth().authFetch()` for authenticated API calls; expired sessions redirect to login with toast
 - Dev operator: `operator@cohestra.local` / `ChangeMe123!`
-- Settings → Appearance saves to operator profile via `PATCH /api/v1/admin/me/appearance`; `ThemePreferenceSync` applies profile theme after login
+- `PATCH /api/v1/admin/me/appearance` still updates brand accent. Stored `themePreference` is compatibility-only and does not change appearance.
 
 
 ## Getting Started

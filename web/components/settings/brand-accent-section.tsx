@@ -2,10 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Check, Sparkles } from "lucide-react";
-import { useTheme } from "next-themes";
-
 import { useAuth } from "@/components/auth/auth-provider";
-import { usePersistedThemePreference } from "@/components/theme/use-persisted-theme-preference";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { updateAppearanceSettings } from "@/lib/auth-api";
@@ -22,8 +19,6 @@ import { cn } from "@/lib/utils";
 export function BrandAccentSection({ embedded = false }: { embedded?: boolean }) {
   const { authFetch, applyProfile, profile } = useAuth();
   const isTenantAdmin = profile?.roles.includes("TenantAdmin") ?? false;
-  const { selected: themePreference } = usePersistedThemePreference();
-  const { resolvedTheme } = useTheme();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [customHex, setCustomHex] = useState(
@@ -40,10 +35,7 @@ export function BrandAccentSection({ embedded = false }: { embedded?: boolean })
     customHex.trim() && isValidBrandAccentColor(customHex)
       ? normalizeBrandAccentColor(customHex)
       : savedColor;
-  const previewStyle = buildBrandAccentStyle(
-    previewColor,
-    resolvedTheme === "dark"
-  );
+  const previewStyle = buildBrandAccentStyle(previewColor);
 
   const persistAccent = useCallback(
     async (nextAccent: string | null) => {
@@ -52,7 +44,7 @@ export function BrandAccentSection({ embedded = false }: { embedded?: boolean })
 
       try {
         const updated = await updateAppearanceSettings(authFetch, {
-          themePreference,
+          themePreference: profile?.themePreference ?? "light",
           brandAccentColor: nextAccent,
         });
         applyProfile(updated);
@@ -69,7 +61,7 @@ export function BrandAccentSection({ embedded = false }: { embedded?: boolean })
         setIsSaving(false);
       }
     },
-    [applyProfile, authFetch, themePreference]
+    [applyProfile, authFetch, profile?.themePreference]
   );
 
   async function selectPreset(presetId: BrandAccentPresetId) {

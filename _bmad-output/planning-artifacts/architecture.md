@@ -42,7 +42,7 @@ All business logic, persistence, and domain rules live in the **.NET API**. Web 
 | **Hosting** | DigitalOcean Ubuntu (Linux) | Docker Compose deployment |
 | **Containers** | Docker + Docker Compose | Local dev and deployment consistency |
 | **Web client (MVP)** | Next.js + Tailwind CSS + shadcn/ui | Admin dashboard + public registration (UX spec) |
-| **Theming (web)** | next-themes | Light / Dark / System per `DESIGN.md` |
+| **Theming (web)** | Light-only first-paint script | One application appearance (light). Historical next-themes Light/Dark/System is superseded. |
 | **Future client** | Mobile app (platform TBD) | Same API v1 contracts |
 
 ### Rejected alternatives
@@ -132,7 +132,7 @@ Cohestra.sln
 Next.js owns **UI only**:
 
 - Routing, SSR for public `/register/{slug}` (FCP &lt; 2s target)
-- shadcn components, theme toggle, 60s dashboard polling
+- shadcn components, 60s dashboard polling (application appearance is light-only; ThemeToggle superseded 2026-10-10)
 - JWT storage and `Authorization: Bearer` on admin API calls (see Authentication below)
 
 Next.js does **not** own:
@@ -172,7 +172,7 @@ Next.js does **not** own:
 3. Next.js admin routes attach access token to API calls
 4. On 401, client calls `POST /api/v1/auth/refresh` with refresh token
 5. Session expiry per PRD assumption: 24h inactivity acceptable — configure refresh token TTL accordingly
-6. Operator **appearance/theme preference** stored on Identity user profile (synced from Settings)
+6. Operator **appearance/theme preference** may still exist on the Identity user profile as historical compatibility; it no longer controls rendering (superseded 2026-10-10 — light-only)
 
 **Rejected:** BFF HttpOnly cookie proxy — direct JWT chosen for parity with future mobile client.
 
@@ -280,7 +280,7 @@ Three launch form templates (TGH Tennis, Harbourline Pickleball, Board Game Nigh
 
 ### Technical Constraints & Dependencies
 
-- **UX mandate:** Next.js + shadcn/ui + Tailwind + next-themes on web (`EXPERIENCE.md`, `DESIGN.md`)
+- **UX mandate:** Next.js + shadcn/ui + Tailwind on web (`EXPERIENCE.md`, `DESIGN.md`). next-themes Light/Dark/System is superseded (2026-10-10) — one light appearance.
 - **Backend mandate:** .NET API is system of record — chosen for team skill and mobile roadmap
 - **Email provider:** SendGrid — API integrates send + delivery/failure log
 - **WhatsApp:** Click-to-message in web only for MVP; Business API deferred to Phase 2
@@ -296,7 +296,7 @@ Three launch form templates (TGH Tennis, Harbourline Pickleball, Board Game Nigh
 3. **Client deduplication** — normalized phone/email at API ingestion; merge-suspect flags only in MVP
 4. **Audit timeline** — append-only events (registrations, status changes, campaigns, WhatsApp actions, notes)
 5. **Consent & communication preferences** — gates campaign segments and Board Game template submit
-6. **Theme system** — web-only (next-themes); API stores operator appearance preference
+6. **Theme system** — superseded 2026-10-10. Application appearance is light-only. Stored `ThemePreference` is inert compatibility; brand accent remains.
 7. **Lead Status lifecycle** — New → Contacted → Active → Inactive; drives filters, badges, reports
 8. **Segment/filter engine** — AND-semantics shared by Reports and Campaign compose endpoints
 9. **Rate limiting & abuse prevention** — Redis on public registration POST

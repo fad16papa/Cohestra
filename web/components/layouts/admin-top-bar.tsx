@@ -11,7 +11,6 @@ import { PlanBadge } from "@/components/shell/plan-badge";
 import { SponsoredBadge } from "@/components/shell/sponsored-badge";
 import { useTenantShell } from "@/components/shell/tenant-shell-provider";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { getAdminBreadcrumbs } from "@/lib/admin-nav";
 import { buildContinuityCrumbs, readContinuityContext } from "@/lib/continuity-context";
 
@@ -89,7 +88,6 @@ export function AdminTopBar() {
       >
         <Search className="size-4" />
       </Button>
-      <ThemeToggle variant="admin" />
       <AdminUserMenu />
     </header>
   );

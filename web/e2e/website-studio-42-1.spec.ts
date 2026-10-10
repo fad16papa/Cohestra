@@ -573,17 +573,13 @@ test.describe("Story 42.1 — Website Studio chrome and placement", () => {
 
     await page.evaluate(() => {
       window.localStorage.setItem("cohestra-theme-operator", "dark");
-      document.documentElement.classList.add("dark");
     });
-    await expect(page.locator("html")).toHaveClass(/dark/);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(page.locator("html")).not.toHaveClass(/dark/);
     await expect(page.getByRole("heading", { name: "Website Studio", level: 1 })).toBeVisible();
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "dark-1440.png"),
+      path: path.join(evidenceDir, "viewports", "dark-storage-ignored-1440.png"),
       fullPage: true,
-    });
-    await page.evaluate(() => {
-      window.localStorage.setItem("cohestra-theme-operator", "light");
-      document.documentElement.classList.remove("dark");
     });
 
     await page.emulateMedia({ forcedColors: "active" });

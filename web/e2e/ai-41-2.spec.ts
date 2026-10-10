@@ -438,15 +438,12 @@ test.describe("Story 41.2 — Cohestra AI room", () => {
     await expect(page.getByText("People due")).toBeVisible();
     await assertAxe(page, "ai light");
 
-    await page.getByRole("button", { name: /appearance:/i }).click();
-    await page.getByRole("radio", { name: /^dark$/i }).click();
-    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("radio", { name: /^dark$/i })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /appearance:/i })).toHaveCount(0);
+    await expect(page.locator("html")).not.toHaveClass(/dark/);
     await waitForAiContent(page);
-    await assertAxe(page, "ai dark");
+    await assertAxe(page, "ai light-only");
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "ai-dark-1440.png"),
+      path: path.join(evidenceDir, "viewports", "ai-light-1440.png"),
       fullPage: true,
     });
 

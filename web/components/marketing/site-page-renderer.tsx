@@ -12,7 +12,6 @@ import {
   QrCode,
   Users,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 
 import {
   MarketingEyebrow,
@@ -40,7 +39,6 @@ import { StatsPublicSection } from "@/components/marketing/sections/stats-sectio
 import { TestimonialsPublicSection } from "@/components/marketing/sections/testimonials-section";
 import { ContactSection } from "@/components/marketing/sections/contact-section";
 import { SitePreviewBanner } from "@/components/marketing/site-preview-banner";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { buildBrandAccentStyle } from "@/lib/brand-accent";
 import {
   getEnabledSections,
@@ -74,7 +72,7 @@ type SitePageRendererProps = {
    */
   embedded?: boolean;
   /**
-   * Cinema / DemoClub: hide Cohestra operator chrome (theme toggle, QR hint)
+   * Cinema / DemoClub: hide Cohestra operator chrome (QR hint)
    * so the public site reads as the club’s own front of house.
    */
   clubFacingOnly?: boolean;
@@ -893,8 +891,6 @@ export function SitePageRenderer({
   const previewMode = useSitePreviewLayout();
   const shouldShowPreviewBanner = showPreviewBanner ?? (isPreview && !previewMode);
   const { published, upcomingActivities } = site;
-  const { resolvedTheme } = useTheme();
-
   const sections = useMemo(() => getEnabledSections(published), [published]);
   const showUpcoming = isUpcomingActivitiesSectionEnabled(published);
   const heroSection = sections.find((section) => section.type.toLowerCase() === "hero");
@@ -907,8 +903,8 @@ export function SitePageRenderer({
       : "";
 
   const accentStyle = useMemo(
-    () => buildBrandAccentStyle(published.accentColor, resolvedTheme === "dark"),
-    [published.accentColor, resolvedTheme]
+    () => buildBrandAccentStyle(published.accentColor),
+    [published.accentColor]
   );
 
   const siteLogoUrl = useMemo(() => {
@@ -1071,18 +1067,7 @@ export function SitePageRenderer({
               ))}
             </nav>
           ) : null}
-          {!clubFacingOnly ? (
-            <div
-              className={cn(
-                "rounded-full border p-0.5 transition-colors duration-300",
-                headerOverHero
-                  ? "border-white/25 bg-white/10 backdrop-blur-[2px]"
-                  : "border-border-warm/60 bg-card/60 shadow-sm backdrop-blur-sm"
-              )}
-            >
-              <ThemeToggle variant="public" />
-            </div>
-          ) : cinemaFold ? (
+          {clubFacingOnly && cinemaFold ? (
             <span
               className={cn(
                 "rounded-md px-2.5 py-1 text-xs font-semibold",

@@ -612,7 +612,7 @@ export async function updateAppearanceSettings(
   return parseAdminProfile(raw);
 }
 
-/** Convenience wrapper when only theme mode changes. */
+/** Compatibility wrapper. Theme preference is stored but does not change appearance. */
 export async function updateAppearancePreference(
   authFetch: (input: string, init?: RequestInit) => Promise<Response>,
   themePreference: ThemePreference,

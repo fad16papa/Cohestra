@@ -574,15 +574,12 @@ test.describe("Story 41.1 — Analytics room", () => {
     await expect(page.getByRole("heading", { name: "Top activities" }).or(page.getByText("No registrations in this period."))).toBeVisible();
     await assertAxe(page, "analytics populated");
 
-    await page.getByRole("button", { name: /appearance:/i }).click();
-    await page.getByRole("radio", { name: /^dark$/i }).click();
-    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("radio", { name: /^dark$/i })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /appearance:/i })).toHaveCount(0);
+    await expect(page.locator("html")).not.toHaveClass(/dark/);
     await waitForReportsContent(page);
-    await assertAxe(page, "analytics dark");
+    await assertAxe(page, "analytics light-only");
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "analytics-dark-1440.png"),
+      path: path.join(evidenceDir, "viewports", "analytics-light-1440.png"),
       fullPage: true,
     });
 

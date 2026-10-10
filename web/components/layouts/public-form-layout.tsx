@@ -1,7 +1,6 @@
 import Image from "next/image";
 
 import { PublisherWebsiteTextLink } from "@/components/registration/publisher-website-link";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   PLATFORM_BYLINE,
   PLATFORM_LOGO_PATH,
@@ -24,7 +23,7 @@ export function PublicFormLayout({
       data-registration-layout-container="public"
     >
       <header className="border-b border-border-warm/70 bg-card/80 backdrop-blur-sm">
-        <div className="mx-auto flex w-full max-w-[720px] items-center justify-between gap-3 px-5 py-4">
+        <div className="mx-auto flex w-full max-w-[720px] items-center gap-3 px-5 py-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 p-2 ring-1 ring-primary/15">
               <Image
@@ -40,7 +39,6 @@ export function PublicFormLayout({
               <p className="truncate text-xs text-text-muted-warm">Community registration</p>
             </div>
           </div>
-          <ThemeToggle variant="public" className="min-h-11 shrink-0 px-3" />
         </div>
       </header>
 

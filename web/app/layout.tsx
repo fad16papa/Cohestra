@@ -3,9 +3,6 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { fraunces, plusJakartaSans } from "@/lib/fonts";
 import { BrandAccentSync } from "@/components/theme/brand-accent-sync";
-import { MarketingThemeLock } from "@/components/theme/marketing-theme-lock";
-import { ThemeProvider } from "@/components/theme/theme-provider";
-import { ThemePreferenceSync } from "@/components/theme/theme-preference-sync";
 import { ThemeScript } from "@/components/theme/theme-script";
 import { AppFooter } from "@/components/layouts/app-footer";
 import { ToastProvider } from "@/components/ui/toast-provider";
@@ -39,22 +36,19 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      suppressHydrationWarning
+      style={{ colorScheme: "light" }}
       className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${fraunces.variable} ${plusJakartaSans.variable} h-full antialiased`}
     >
       <head>
         <ThemeScript />
+        <meta name="color-scheme" content="light" />
       </head>
       <body className="flex min-h-screen flex-col">
         <ToastProvider>
           <AuthProvider>
-            <ThemeProvider>
-              <BrandAccentSync />
-              <MarketingThemeLock />
-              <ThemePreferenceSync />
-              <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-              <AppFooter />
-            </ThemeProvider>
+            <BrandAccentSync />
+            <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+            <AppFooter />
           </AuthProvider>
         </ToastProvider>
       </body>

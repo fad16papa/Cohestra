@@ -3,6 +3,10 @@
 @import "shadcn/tailwind.css";
 @import "../styles/brand-tokens.css";
 
+html {
+  color-scheme: light;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

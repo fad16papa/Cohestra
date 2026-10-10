@@ -144,18 +144,9 @@ async function keyboardSkipOnce(page: Page): Promise<void> {
   await expect(page.locator("#main-content")).toBeFocused();
 }
 
-async function setOperatorAppearance(
-  page: Page,
-  preference: "light" | "dark"
-): Promise<void> {
-  await page.getByRole("button", { name: /appearance:/i }).click();
-  await page.getByRole("radio", { name: new RegExp(`^${preference}$`, "i") }).click();
-  await page.keyboard.press("Escape");
-  if (preference === "dark") {
-    await expect(page.locator("html")).toHaveClass(/dark/, { timeout: 15_000 });
-  } else {
-    await expect(page.locator("html")).not.toHaveClass(/dark/, { timeout: 15_000 });
-  }
+async function assertLightAppearance(page: Page): Promise<void> {
+  await expect(page.getByRole("button", { name: /appearance:/i })).toHaveCount(0);
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
 }
 
 test.describe("Story 38.5 — landmarks, headings, skip link", () => {
@@ -195,7 +186,7 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await openAuthed(page, session, "/dashboard", origin);
-    await setOperatorAppearance(page, "light");
+    await assertLightAppearance(page);
     await expect(page.getByRole("heading", { name: "Dashboard", level: 1 })).toBeVisible({
       timeout: 30_000,
     });
@@ -355,15 +346,14 @@ test.describe("Story 38.5 — landmarks, headings, skip link", () => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await waitForOperatorWorkspace(page);
-    await setOperatorAppearance(page, "dark");
+    await assertLightAppearance(page);
     await resetSequentialFocus(page);
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
-    await expect(page.locator("html")).toHaveClass(/dark/);
+    await expect(page.locator("html")).not.toHaveClass(/dark/);
     await page.screenshot({
-      path: path.join(evidenceDir, "viewports", "skip-focused-dark-1440x900.png"),
+      path: path.join(evidenceDir, "viewports", "skip-focused-light-1440x900.png"),
     });
-    await setOperatorAppearance(page, "light");
 
     fs.writeFileSync(
       path.join(evidenceDir, "axe-route-matrix.json"),

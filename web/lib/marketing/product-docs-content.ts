@@ -523,8 +523,8 @@ export const PRODUCT_DOCS_SECTIONS: DocsSection[] = [
       {
         type: "list",
         items: [
-          "Appearance — light, dark, or match the device.",
           "Password — change it any time.",
+          "Brand accent — workspace color for buttons and highlights. Cohestra itself is always light.",
           "Email delivery — the checklist for sending mail.",
           "Team — invite other operators if your plan has seats (Core and Pro).",
           "Billing — see your plan, invoices, and change or cancel.",

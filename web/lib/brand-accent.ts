@@ -100,9 +100,9 @@ function ensureOnFillContrast(fillHex: string): { fill: string; fg: string } {
   return { fill: rgbToHex(fill), fg: "#ffffff" };
 }
 
-function deriveAccentTier(baseHex: string, isDark: boolean) {
+function deriveAccentTier(baseHex: string) {
   const black: Rgb = { r: 0, g: 0, b: 0 };
-  const base = isDark ? rgbToHex(mixRgb(hexToRgb(baseHex), black, 0.22)) : baseHex.toLowerCase();
+  const base = baseHex.toLowerCase();
   const primaryPair = ensureOnFillContrast(base);
   const accentPair = ensureOnFillContrast(rgbToHex(mixRgb(hexToRgb(primaryPair.fill), black, 0.08)));
 
@@ -123,15 +123,14 @@ export type BrandAccentCssVars = CSSProperties;
 
 /** Maps one accent hex to the accent-tier CSS variables only (semantic tokens unchanged). */
 export function buildBrandAccentStyle(
-  accentHex: string | null | undefined,
-  isDark: boolean
+  accentHex: string | null | undefined
 ): BrandAccentCssVars | undefined {
   const normalized = normalizeBrandAccentColor(accentHex);
   if (!normalized || !isValidBrandAccentColor(normalized)) {
     return undefined;
   }
 
-  const tier = deriveAccentTier(normalized, isDark);
+  const tier = deriveAccentTier(normalized);
 
   return {
     "--primary": tier.primary,

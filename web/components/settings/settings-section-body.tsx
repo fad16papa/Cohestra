@@ -1,7 +1,6 @@
 "use client";
 
 import { AllowedEmbedHostsSection } from "@/components/settings/allowed-embed-hosts-section";
-import { AppearanceSection } from "@/components/settings/appearance-section";
 import { AccountSection } from "@/components/settings/account-section";
 import { BrandAccentSection } from "@/components/settings/brand-accent-section";
 import { ChangePasswordSection } from "@/components/settings/change-password-section";
@@ -37,8 +36,6 @@ export function SettingsSectionBody({ id }: { id: SettingsSectionId }) {
       );
     case "settings-support":
       return <HelpSupportSection embedded />;
-    case "settings-appearance":
-      return <AppearanceSection embedded />;
     default:
       return null;
   }

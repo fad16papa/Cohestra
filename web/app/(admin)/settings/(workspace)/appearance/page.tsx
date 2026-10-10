@@ -1,5 +1,7 @@
-import { SettingsAreaPage } from "@/components/settings/settings-area-page";
+import { redirect } from "next/navigation";
+
+import { SETTINGS_PROFILE_PATH } from "@/lib/admin-canonical-routes";
 
 export default function SettingsAppearancePage() {
-  return <SettingsAreaPage id="settings-appearance" />;
+  redirect(SETTINGS_PROFILE_PATH);
 }
