@@ -100,3 +100,10 @@ Checklist:
 - [x] Restore out-of-scope files
 - [x] Platform-only overlay
 - [x] Tests rewritten
+
+## 6. Closure
+
+- Merged PR #431. Accepted HEAD `d9c413badb7ea52ee7fa6c4bef24d6f8c8570133`.
+- Main merge `4d058ebf8fef04021c8d39477b01e23725fe296a`.
+- Exact-head CI `38029492629` green. Post-merge main CI `38032215748` green.
+- Epic 44 stays in-progress. No deploy.

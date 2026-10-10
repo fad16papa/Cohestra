@@ -3,8 +3,8 @@
 ## Hand-off Brief
 
 1. **What happened.** HEAD `d1540d1e` implemented a global Cohestra light-only lock that deleted tenant/public theme architecture. Owner superseded that with PlatformAdmin-only light.
-2. **Where the case stands.** Out-of-scope product files were restored from `origin/main`. Remaining work is a PlatformAdmin route override plus tests/docs that still describe the global lock.
-3. **What's needed next.** Keep the existing theme tree; force light only on `isPlatformLightOnlyPath`; rewrite tests and current-facing docs.
+2. **Where the case stands.** Closed. PlatformAdmin-only light lock is on main. Tenant/public Light/Dark/System remain.
+3. **What's needed next.** None for this correction. Epic 44 close / retrospective is a separate owner-authorized step.
 
 ## Case Info
 
@@ -42,6 +42,8 @@ Owner hypothesis: PR #431 removed theme functionality outside PlatformAdmin. Tha
 | ---- | ----- | ------ | ---------- |
 | 2026-10-10 | Global light-only shipped on `cursor/light-only-appearance-59c2` | `12f02080` / `d1540d1e` | Confirmed |
 | 2026-10-10 | Owner: previous correction too broad | User query | Confirmed |
+| 2026-10-10 | PR #431 merged at accepted HEAD | `d9c413ba` / main `4d058ebf` | Confirmed |
+| 2026-10-10 | Post-merge main CI green | run `38032215748` | Confirmed |
 
 ## Confirmed Findings
 

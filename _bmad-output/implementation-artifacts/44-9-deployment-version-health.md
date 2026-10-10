@@ -12,7 +12,7 @@ baseline_commit: 3fc6151517a4cd15a83e2d5c47a845c08b3b38a7
 
 Status: done
 
-DONE requires the Mandatory Code Review Loop on the final HEAD. Epic 44 stays in-progress. PlatformAdmin light-only correction PR #431 is separate.
+DONE requires the Mandatory Code Review Loop on the final HEAD. Epic 44 stays in-progress. PlatformAdmin light-only correction PR #431 is merged.
 
 ## Story
 
@@ -79,7 +79,8 @@ Cursor Grok 4.6 (exclusive primary). Composer 2.5 not delegated. Auto disabled.
 
 ### Completion Notes List
 
-- Merged PR #430. Accepted HEAD `31da0413491080f13251165f939bee961d2e2f5a`. Main merge `4128294427fff1c062d8bf93f7e7ac6c7e0e9e0b`. Exact-head CI `38024230632` green. Post-merge main CI `38028740025` green. Deploy remains pre-existing Epic 19. Epic 44 stays in-progress. PR #431 PlatformAdmin light-only remains HOLD.
+- Merged PR #430. Accepted HEAD `31da0413491080f13251165f939bee961d2e2f5a`. Main merge `4128294427fff1c062d8bf93f7e7ac6c7e0e9e0b`. Exact-head CI `38024230632` green. Post-merge main CI `38028740025` green. Deploy remains pre-existing Epic 19. Epic 44 stays in-progress.
+- PlatformAdmin light-only correction PR #431 merged. Accepted HEAD `d9c413badb7ea52ee7fa6c4bef24d6f8c8570133`. Main merge `4d058ebf8fef04021c8d39477b01e23725fe296a`. Exact-head CI `38029492629` green. Post-merge main CI `38032215748` green. Epic 44 stays in-progress.
 
 ## Exclusions
 
