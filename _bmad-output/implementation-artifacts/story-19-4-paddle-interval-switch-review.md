@@ -1,6 +1,6 @@
 # BMAD Code Review — Story 19.4 Paddle interval switch
 
-**Implementation HEAD reviewed:** current branch HEAD after review patches  
+**Implementation HEAD reviewed:** `96b0e26b086b9aacc9861433260a4d315b46a0bd`  
 **Reviewer:** Grok 4.6 (Blind Hunter + Edge Case Hunter + Acceptance Auditor, same model; no cross-model delegation)  
 **Mandatory Code Review Loop:** in force. Story 19.4 is **not** closed.
 
