@@ -181,11 +181,11 @@ Attributed to `/home/deploy/cohestra` at `f293650d`. This agent did not SSH.
 
 Tracker stays **in-progress / not done**. Full matrix: `epic-19-1-19-2-acceptance-2026-10-11.md`.
 
-## Owner preflight paste (2026-10-11 ~09:53 UTC)
+## Owner preflight paste (2026-10-11 ~09:53–09:54 UTC)
 
-From `/home/deploy/cohestra` at deployed `f293650d`. **17 passed / 1 failed / 1 warning.**
+From `/home/deploy/cohestra` at deployed `f293650d`. Both runs **17 passed / 1 failed / 1 warning.**
 
-- **FAIL:** `Stripe keys must not be set` — leftover `Stripe__SecretKey` and/or `Stripe__WebhookSecret` in `.env`. Do not paste values. Unset those names and re-run. Compose does not inject Stripe into the API.
+- **FAIL:** leftover Stripe lines are still **uncommented**. Names only: SecretKey, PublishableKey, WebhookSecret, four Price*, TrialPeriodDays. A trailing comment on a live assignment does not disable it. Use `sed` to prefix `# ` (see acceptance matrix).
 - **WARN:** reCAPTCHA disabled — expected until 19.3.
 - **PASS:** PUBLIC_BASE_URL, secrets present (not printed), seeds/DEV_TENANT_SLUG off, ports isolated, Paddle sandbox configured.
 

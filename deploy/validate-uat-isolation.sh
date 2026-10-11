@@ -605,6 +605,16 @@ else
   fail "api and web build.args must pass GIT_SHA: \${GIT_SHA:-}"
 fi
 
+PREFLIGHT="$ROOT_DIR/deploy/preflight-launch.sh"
+if [[ -f "$PREFLIGHT" ]] \
+  && grep -q "compgen -e" "$PREFLIGHT" \
+  && grep -q "leftover_name=" "$PREFLIGHT" \
+  && grep -q 'grep '\''^Stripe__'\' "$PREFLIGHT"; then
+  pass "preflight refuses any leftover Stripe__* names without printing values"
+else
+  fail "preflight must scan all Stripe__* env names and print leftover_name= only"
+fi
+
 COMPARE="$ROOT_DIR/deploy/compare-ef-migration-ids.sh"
 if [[ -x "$COMPARE" ]] || [[ -f "$COMPARE" ]]; then
   if bash "$COMPARE" --self-test >/tmp/compare-ef-self-test.out; then
