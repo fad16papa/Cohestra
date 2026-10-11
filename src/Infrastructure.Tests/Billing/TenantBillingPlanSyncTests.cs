@@ -86,6 +86,8 @@ public sealed class TenantBillingPlanSyncTests
             TenantPlan.Core, BillingInterval.Annual, TenantPlan.Core, BillingInterval.Monthly));
         Assert.False(TenantBillingPlanSync.ShouldDeferPlanChange(
             TenantPlan.Core, BillingInterval.Monthly, TenantPlan.Pro, BillingInterval.Monthly));
+        Assert.False(TenantBillingPlanSync.ShouldDeferPlanChange(
+            TenantPlan.Pro, BillingInterval.Monthly, TenantPlan.Pro, BillingInterval.Annual));
     }
 
     [Fact]

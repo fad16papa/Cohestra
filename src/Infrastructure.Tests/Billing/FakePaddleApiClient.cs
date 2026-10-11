@@ -54,6 +54,10 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public string? LastUpdateEffectiveFrom { get; private set; }
 
+    public string? LastUpdateProrationBillingMode { get; private set; }
+
+    public Exception? UpdateSubscriptionException { get; set; }
+
     public List<PaddleCustomer> CustomersByEmail { get; } = [];
 
     public bool CreateCustomerShouldFail { get; set; }
@@ -232,13 +236,24 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
     {
         LastUpdatePriceId = priceId;
         LastUpdateEffectiveFrom = effectiveFrom;
+        LastUpdateProrationBillingMode = prorationBillingMode;
+        if (UpdateSubscriptionException is not null)
+        {
+            throw UpdateSubscriptionException;
+        }
+
         Subscription ??= new PaddleSubscription { Id = subscriptionId, Status = "active", CustomerId = Customer.Id };
         if (string.Equals(effectiveFrom, "immediately", StringComparison.OrdinalIgnoreCase))
         {
-            Subscription.Items = [new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = priceId } }];
+            var preservedTrial = Subscription.Items.FirstOrDefault()?.TrialDates ?? Subscription.TrialDates;
+            Subscription.Items = [new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = priceId }, TrialDates = preservedTrial }];
         }
 
-        Subscription.Status = "active";
+        if (string.IsNullOrWhiteSpace(Subscription.Status))
+        {
+            Subscription.Status = "active";
+        }
+
         Subscription.CurrentBillingPeriod ??= new PaddleTimePeriod
         {
             StartsAt = DateTimeOffset.UtcNow,

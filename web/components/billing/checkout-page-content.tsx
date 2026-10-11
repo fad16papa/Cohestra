@@ -31,7 +31,9 @@ import {
 import { resolvePaddleOverlaySuccessUrl } from "@/lib/billing/paddle-return";
 import {
   checkoutActionLabel,
+  checkoutImmediateChangeCopy,
   checkoutIntroCopy,
+  checkoutPastDueMessage,
   checkoutPriceCaption,
   hasActivePaidSubscription,
   isDeferredPlanChange,
@@ -41,6 +43,7 @@ import {
   matchesScheduledPlanChange,
   normalizeBillingInterval,
   normalizePlanId,
+  requiresImmediateChargeConfirmation,
   type BillingIntervalId,
   type PaidPlanId,
 } from "@/lib/billing/checkout-validation";
@@ -80,8 +83,7 @@ function CheckoutContent() {
 
   const initialPlan: PaidPlanId | null =
     planParam === "pro" ? "pro" : planParam === "core" ? "core" : null;
-  const initialInterval: BillingIntervalId =
-    intervalParam === "annual" ? "annual" : "monthly";
+  const initialInterval: BillingIntervalId = normalizeBillingInterval(intervalParam);
 
   const [plan, setPlan] = useState<PaidPlanId | null>(initialPlan);
   const [interval, setInterval] = useState<BillingIntervalId>(initialInterval);
@@ -91,6 +93,7 @@ function CheckoutContent() {
   const [starting, setStarting] = useState(autoStart && !canceled);
   const [undoingScheduledChange, setUndoingScheduledChange] = useState(false);
   const [deferredConfirmOpen, setDeferredConfirmOpen] = useState(false);
+  const [immediateConfirmOpen, setImmediateConfirmOpen] = useState(false);
   const [handoffPending, setHandoffPending] = useState(
     () => (searchParams.get("handoff")?.trim().length ?? 0) > 0
   );
@@ -137,6 +140,34 @@ function CheckoutContent() {
     setPlan(initialPlan);
     setInterval(initialInterval);
   }, [initialInterval, initialPlan]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const urlPlan = params.get("plan");
+    const urlInterval = normalizeBillingInterval(params.get("interval"));
+    let changed = false;
+
+    if (plan && urlPlan !== plan) {
+      params.set("plan", plan);
+      changed = true;
+    }
+
+    if (urlInterval !== interval) {
+      params.set("interval", interval);
+      changed = true;
+    }
+
+    if (changed && params.get("start") === "1") {
+      params.delete("start");
+    }
+
+    if (!changed) {
+      return;
+    }
+
+    const query = params.toString();
+    window.history.replaceState(null, "", query ? `${window.location.pathname}?${query}` : window.location.pathname);
+  }, [interval, plan, searchParams]);
 
   useEffect(() => {
     if (status !== "authenticated") {
@@ -422,19 +453,48 @@ function CheckoutContent() {
         billingStatus,
         trialEndsAt: billingSummary.trialEndsAt,
         hasConsumedTrial: billingSummary.hasConsumedTrial,
+        currentInterval: billingSummary.billingInterval,
+        targetInterval: interval,
       })
     : "After trial";
+  const isPastDue = billingStatus === "PastDue";
+  const needsImmediateChargeConfirm =
+    billingSummary !== null
+    && requiresImmediateChargeConfirmation({
+      billingStatus,
+      currentInterval: billingSummary.billingInterval,
+      targetInterval: interval,
+    });
+  const immediateChangeCopy = billingSummary
+    ? checkoutImmediateChangeCopy({
+        billingStatus,
+        currentInterval: billingSummary.billingInterval,
+        targetInterval: interval,
+        trialEndsAt: billingSummary.trialEndsAt,
+      })
+    : null;
   const submitDisabled =
     starting
     || isSameSelection
+    || isPastDue
     || Boolean(matchesExistingSchedule)
     || (Boolean(hasScheduledPlanChange) && !matchesExistingSchedule)
     || (isDeferredSelection && shellLoading && !billingSummary?.usage);
   const isPaidTenant = hasActivePaidSubscription(billingStatus);
 
   function requestPlanChange() {
+    if (isPastDue) {
+      setError(checkoutPastDueMessage());
+      return;
+    }
+
     if (isDeferredSelection) {
       setDeferredConfirmOpen(true);
+      return;
+    }
+
+    if (needsImmediateChargeConfirm) {
+      setImmediateConfirmOpen(true);
       return;
     }
 
@@ -603,7 +663,14 @@ function CheckoutContent() {
         </div>
       ) : null}
 
-      {isDeferredSelection ? (
+      {isPastDue ? (
+        <p
+          role="status"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
+        >
+          {checkoutPastDueMessage()}
+        </p>
+      ) : isDeferredSelection ? (
         <div
           role="status"
           className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-text-warm"
@@ -636,12 +703,12 @@ function CheckoutContent() {
             </p>
           ) : null}
         </div>
-      ) : isPaidTenant && !isSameSelection ? (
+      ) : isPaidTenant && !isSameSelection && immediateChangeCopy ? (
         <p
           role="status"
           className="rounded-xl border border-border-warm bg-muted/30 px-4 py-3 text-sm text-text-muted-warm"
         >
-          This change applies immediately. Any price difference is prorated on your next invoice.
+          {immediateChangeCopy}
         </p>
       ) : null}
 
@@ -792,6 +859,30 @@ function CheckoutContent() {
           {isPaidTenant ? "Keep current plan" : "Stay on Basic for now"}
         </Link>
       </div>
+
+      <AlertDialog open={immediateConfirmOpen} onOpenChange={setImmediateConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Switch to yearly billing now?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {immediateChangeCopy
+                ?? "Yearly billing starts now. Unused time on your current period is applied as credit against the new price."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={starting}>Keep current billing</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={starting}
+              onClick={() => {
+                setImmediateConfirmOpen(false);
+                void startCheckout(effectivePlan, interval);
+              }}
+            >
+              {starting ? "Processing…" : "Switch to yearly now"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={deferredConfirmOpen} onOpenChange={setDeferredConfirmOpen}>
         <AlertDialogContent>

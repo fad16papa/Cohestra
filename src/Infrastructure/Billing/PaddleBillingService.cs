@@ -495,11 +495,30 @@ internal sealed class PaddleBillingService(
                 "Could not load your current subscription. Open Settings → Billing and try again.");
         }
 
-        var currentPriceId = subscription.Items.FirstOrDefault()?.Price?.Id;
+        var rejected = PaddleSubscriptionChangePolicy.RejectImmediateUpdate(subscription, tenant.BillingStatus);
+        if (rejected is not null)
+        {
+            throw new InvalidOperationException(rejected);
+        }
+
+        var currentPriceId = PaddleSubscriptionChangePolicy.CurrentPriceId(subscription);
         if (string.Equals(currentPriceId, newPriceId, StringComparison.Ordinal))
         {
             throw new InvalidOperationException("Your workspace is already on the selected plan and billing interval.");
         }
+
+        var currentInterval = tenant.BillingInterval;
+        if (!string.IsNullOrWhiteSpace(currentPriceId)
+            && TenantBillingPlanSync.TryMapPrice(currentPriceId, _settings, out _, out var liveInterval))
+        {
+            currentInterval = liveInterval;
+        }
+
+        var update = PaddleSubscriptionChangePolicy.ResolveImmediateUpdate(
+            subscription,
+            tenant.BillingStatus,
+            currentInterval,
+            command.Interval);
 
         PaddleSubscription updated;
         try
@@ -507,23 +526,27 @@ internal sealed class PaddleBillingService(
             updated = await paddleClient.UpdateSubscriptionItemsAsync(
                 subscription.Id,
                 newPriceId,
-                "immediately",
-                "prorated_next_billing_period",
+                update.EffectiveFrom,
+                update.ProrationBillingMode,
                 BuildCustomData(tenant, command),
                 cancellationToken);
         }
         catch (PaddleApiException ex)
         {
-            logger.LogWarning(ex, "Paddle subscription upgrade failed for tenant {TenantId}", tenant.Id);
-            throw new InvalidOperationException(
-                "Could not update your subscription. Open Settings → Billing and try again.");
+            logger.LogWarning(
+                ex,
+                "Paddle subscription upgrade failed for tenant {TenantId} status {PaddleStatus} code {PaddleErrorCode}",
+                tenant.Id,
+                ex.StatusCode,
+                ex.ErrorCode);
+            throw new InvalidOperationException(PaddleSubscriptionChangePolicy.MapProviderFailure(ex));
         }
 
         await ApplyLiveSubscriptionAsync(tenant, updated, cancellationToken);
 
         var disclaimer = tenant.BillingStatus == BillingStatus.Trialing && tenant.TrialEndsAt is { } trialEnd
             ? TenantBillingPlanSync.BuildTrialDisclaimer(trialEnd)
-            : "Your plan was updated. Any price difference is prorated on your next invoice.";
+            : update.Disclaimer;
 
         return new CheckoutSessionDto(
             BuildInAppSuccessUrl(command.SuccessUrl, disclaimer),
