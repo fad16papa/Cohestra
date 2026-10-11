@@ -164,5 +164,5 @@ Attributed to the owner droplet console. This agent did not SSH and did not inve
 
 Independent public probe the same day: existing + UAT `/ready` Healthy with **trusted** TLS after the owner renew.
 
-Still **BLOCKED** for close: firewall 22/80/443 only; `__EFMigrationsHistory`; `free`/`docker stats`/`df`; redacted API logs; image build provenance. See `epic-19-1-19-2-acceptance-2026-10-11.md`. **Do not mark done.**
+Still **BLOCKED** for close: firewall 22/80/443 only; `__EFMigrationsHistory`; `free`/`docker stats`/`df`; redacted API logs; image **build** provenance; first-operator `/register`. A later request named “new droplet evidence” for those items; the outputs were **not** pasted into chat or GitHub — not fabricated. See `epic-19-1-19-2-acceptance-2026-10-11.md`. **Do not mark done.**
 

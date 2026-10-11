@@ -1,0 +1,11 @@
+[Unit]
+Description=Twice-weekly cert expiry watch (existing site + UAT)
+
+[Timer]
+OnCalendar=Mon,Thu *-*-* 07:00:00
+Persistent=true
+AccuracySec=10min
+Unit=cohestra-edge-cert-expiry-watch.service
+
+[Install]
+WantedBy=timers.target

@@ -137,6 +137,12 @@ bash deploy/host-proxy/persist-cohestra-vhost.sh   # host export; bind mount sti
 Certificate renewal for DNS-01 wildcard is **manual** unless a vetted DNS provider
 plugin is added later. See script output for expiry and renewal steps.
 
+Existing-site HTTP-01 (`thesocialcollectivesg.com`) is a **separate** lineage.
+Use `renew-existing-site-http01.sh` on the **host** (fingerprint + `nginx -t` /
+reload). Do **not** put `docker exec` in a certbot `--deploy-hook`. Do not install
+the systemd timer without owner authorization. UAT names must never appear on
+that renew command.
+
 The existing nginx mounts `/var/www/certbot` **read-only**. ACME writes (preflight
 and `certbot`) use `lead-generation-crm_certbot_www` via a throwaway container.
 Do not `docker exec` mkdir on that path inside `lead-generation-crm-nginx-1`.

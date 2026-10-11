@@ -357,6 +357,52 @@ else
   fail "Missing deploy/host-proxy/prove-edge-tls-wildcard.sh"
 fi
 
+RENEW_HTTP01="$ROOT_DIR/deploy/host-proxy/renew-existing-site-http01.sh"
+if [[ -f "$RENEW_HTTP01" ]]; then
+  if grep -q -- '--cert-name "$EXISTING_CERT_NAME"' "$RENEW_HTTP01" \
+    && grep -q 'thesocialcollectivesg.com' "$RENEW_HTTP01" \
+    && grep -q 'fingerprint_live_fullchain' "$RENEW_HTTP01" \
+    && grep -q 'nginx -t' "$RENEW_HTTP01" \
+    && grep -q 'nginx -s reload' "$RENEW_HTTP01" \
+    && grep -q 'COHESTRA_AUTHORIZE_EXISTING_RENEW' "$RENEW_HTTP01" \
+    && ! grep -q -- '--deploy-hook' "$RENEW_HTTP01" \
+    && ! grep -q 'renew-letsencrypt.sh' "$RENEW_HTTP01" \
+    && ! grep -q 'force-recreate' "$RENEW_HTTP01"; then
+    pass "renew-existing-site-http01.sh renews existing lineage on the host (no certbot deploy-hook)"
+  else
+    fail "renew-existing-site-http01.sh must compare fingerprints on the host and never use a certbot deploy-hook"
+  fi
+else
+  fail "Missing deploy/host-proxy/renew-existing-site-http01.sh"
+fi
+
+RENEW_HTTP01_TEST="$ROOT_DIR/deploy/host-proxy/renew-existing-site-http01.test.sh"
+if [[ -f "$RENEW_HTTP01_TEST" ]]; then
+  if bash "$RENEW_HTTP01_TEST"; then
+    pass "renew-existing-site-http01 mocked tests (renew / no-op / certbot fail / nginx -t fail)"
+  else
+    fail "renew-existing-site-http01 mocked tests failed"
+  fi
+else
+  fail "Missing deploy/host-proxy/renew-existing-site-http01.test.sh"
+fi
+
+RENEW_TIMER="$ROOT_DIR/deploy/host-proxy/systemd/cohestra-existing-site-http01-renew.timer"
+RENEW_SVC="$ROOT_DIR/deploy/host-proxy/systemd/cohestra-existing-site-http01-renew.service"
+if [[ -f "$RENEW_TIMER" && -f "$RENEW_SVC" ]]; then
+  if grep -q 'WantedBy=timers.target' "$RENEW_TIMER" \
+    && grep -q 'Persistent=true' "$RENEW_TIMER" \
+    && grep -q 'User=deploy' "$RENEW_SVC" \
+    && grep -q 'renew-existing-site-http01.sh' "$RENEW_SVC" \
+    && ! grep -q 'uat.cohestra.app' "$RENEW_SVC" "$RENEW_TIMER"; then
+    pass "existing-site HTTP-01 systemd units are system timers (survive logout/reboot) and exclude UAT"
+  else
+    fail "existing-site renew systemd units must be system-level and existing-site only"
+  fi
+else
+  fail "Missing deploy/host-proxy/systemd existing-site HTTP-01 units"
+fi
+
 ZZ_PERSIST="$ROOT_DIR/deploy/host-proxy/prove-zz-vhost-persist.sh"
 if [[ -f "$ZZ_PERSIST" ]]; then
   if grep -q 'zz-cohestra-uat.conf' "$ZZ_PERSIST" \

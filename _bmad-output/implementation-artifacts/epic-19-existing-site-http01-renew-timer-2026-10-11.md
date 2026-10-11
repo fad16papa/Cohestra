@@ -1,108 +1,66 @@
-# Host-managed HTTP-01 renew for thesocialcollectivesg.com — 2026-10-11
+# Host-managed HTTP-01 renew for thesocialcollectivesg.com — corrected 2026-10-11
 
-**Mutation:** none this run. Do not install a timer until the owner authorizes it.  
-**Out of scope:** Cohestra UAT wildcard (`uat.cohestra.app` / `*.uat.cohestra.app`) — DNS-01, MANUAL-ACCEPTED.
+**Mutation:** none. Scripts exist in git. Do **not** `systemctl enable` or run a live renew without owner authorization.  
+**Finding (PR #438):** a certbot `--deploy-hook` that calls `docker exec` runs **inside** the certbot container, which has no Docker socket. That hook cannot reload nginx. **Fixed:** host script compares live fullchain fingerprints, then `docker exec … nginx -t` / `nginx -s reload` on the host.
 
-## Why a host timer
+**Out of scope:** Cohestra UAT wildcard DNS-01 (`uat.cohestra.app` / `*.uat.cohestra.app`). Never pass those names to this path. Never use `deploy/renew-letsencrypt.sh`.
 
-The existing leaf expired 2026-10-01 and was re-issued 2026-10-11 04:45 GMT (public notAfter **2027-01-09**). UAT wildcard issued 2026-09-14 was **not** replaced. That is separate lineages on `lead-generation-crm_certbot_certs`.
-
-`deploy/renew-letsencrypt.sh` targets the **Cohestra** compose certbot profile and is **forbidden** on this shared host.
-
-## Install unit (authorized later, as `deploy`)
-
-Write these two files. Do not enable until `certbot certificates` shows a distinct `thesocialcollectivesg.com` lineage.
-
-`/home/deploy/bin/renew-existing-site-http01.sh`:
+## Runtime (authorized later)
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-# Existing site only. Refuse UAT names.
-if docker ps -q --filter ancestor=certbot/certbot | grep -q .; then
-  echo "REFUSE: certbot already running" >&2
-  exit 1
-fi
-docker pull certbot/certbot:latest
-docker run --rm \
-  -v lead-generation-crm_certbot_certs:/etc/letsencrypt \
-  -v lead-generation-crm_certbot_www:/var/www/certbot \
-  certbot/certbot:latest \
-  renew --cert-name thesocialcollectivesg.com --quiet \
-  --deploy-hook 'docker exec lead-generation-crm-nginx-1 nginx -t && docker exec lead-generation-crm-nginx-1 nginx -s reload'
+# as deploy, after prove lineages are separate
+COHESTRA_AUTHORIZE_EXISTING_RENEW=1 bash deploy/host-proxy/renew-existing-site-http01.sh --dry-run
+COHESTRA_AUTHORIZE_EXISTING_RENEW=1 bash deploy/host-proxy/renew-existing-site-http01.sh
 ```
 
-systemd user timer (or root cron `0 3 * * 1` calling the same script):
+Behavior:
 
-```
-# ~/.config/systemd/user/existing-site-http01-renew.service
-[Service]
-Type=oneshot
-ExecStart=/home/deploy/bin/renew-existing-site-http01.sh
+1. Refuse unless cert-name is `thesocialcollectivesg.com`.
+2. Refuse unless `COHESTRA_AUTHORIZE_EXISTING_RENEW=1`.
+3. SHA-256 `fullchain.pem` via `docker exec` on `lead-generation-crm-nginx-1` (certs already mounted there).
+4. Throwaway `certbot/certbot` `renew --cert-name thesocialcollectivesg.com` — **no deploy-hook**.
+5. Re-read fingerprint.
+   - Same → `RESULT=NOOP`, no reload.
+   - Different → host `nginx -t`; only then `nginx -s reload` → `RESULT=RENEWED`.
+   - `nginx -t` fail → `RESULT=NGINX_TEST_FAIL`, **no reload** (process keeps the previous in-memory cert).
+6. No container recreate.
 
-# ~/.config/systemd/user/existing-site-http01-renew.timer
-[Timer]
-OnCalendar=Mon *-*-* 03:00:00
-Persistent=true
-[Install]
-WantedBy=timers.target
-```
+Tests (CI via isolation contract): `deploy/host-proxy/renew-existing-site-http01.test.sh` — renew, no-op, certbot fail, nginx -t fail, UAT name refuse, missing auth env.
 
-`renew --cert-name thesocialcollectivesg.com` must never list `uat.cohestra.app`. If certbot would expand names, **stop**.
+## Timer that survives logout and reboot
 
-## Validation after a renew (or after `--dry-run`)
+Use **system** units (not `~/.config/systemd/user`). User timers die on logout unless linger is enabled; system timers do not.
+
+Install **only** after owner authorization and a successful dry-run:
 
 ```bash
-docker run --rm \
-  -v lead-generation-crm_certbot_certs:/etc/letsencrypt \
-  -v lead-generation-crm_certbot_www:/var/www/certbot \
-  certbot/certbot:latest \
-  renew --cert-name thesocialcollectivesg.com --dry-run
-# Then prove:
-curl -fsS https://thesocialcollectivesg.com/ready
-curl -fsS https://uat.cohestra.app/ready
-echo | openssl s_client -servername thesocialcollectivesg.com -connect thesocialcollectivesg.com:443 2>/dev/null \
-  | openssl x509 -noout -subject -dates
-echo | openssl s_client -servername uat.cohestra.app -connect uat.cohestra.app:443 2>/dev/null \
-  | openssl x509 -noout -ext subjectAltName
+sudo install -m 644 deploy/host-proxy/systemd/cohestra-existing-site-http01-renew.service /etc/systemd/system/
+sudo install -m 644 deploy/host-proxy/systemd/cohestra-existing-site-http01-renew.timer /etc/systemd/system/
+sudo install -m 644 deploy/host-proxy/systemd/cohestra-existing-site-http01-renew-alert.service /etc/systemd/system/
+sudo install -m 644 deploy/host-proxy/systemd/cohestra-edge-cert-expiry-watch.service /etc/systemd/system/
+sudo install -m 644 deploy/host-proxy/systemd/cohestra-edge-cert-expiry-watch.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now cohestra-existing-site-http01-renew.timer
+sudo systemctl enable --now cohestra-edge-cert-expiry-watch.timer
 ```
 
-PASS: existing leaf trusted and unexpired; UAT SAN still `uat` + `*.uat`; both `/ready` Healthy; no nginx recreate.
+Units run as `User=deploy` `Group=docker`. `OnFailure=` starts the alert oneshot (`logger` + optional `mail` if `COHESTRA_OPS_MAIL` is set).
 
-## Monitoring / alerting
+An uninstalled timer is **not** operational. 19.2 must not treat this as PASS.
 
-Weekly (same user, mail on non-zero if cron `MAILTO` is set):
+## Monitoring / alerts
 
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-needles() {
-  local host="$1"
-  echo | openssl s_client -servername "$host" -connect "${host}:443" 2>/dev/null \
-    | openssl x509 -noout -enddate
-}
-python3 - <<'PY'
-import datetime, os, subprocess, sys
-def days(host):
-    out = subprocess.check_output(
-        ["bash","-lc", f"echo | openssl s_client -servername {host} -connect {host}:443 2>/dev/null | openssl x509 -noout -enddate"],
-        text=True).strip()
-    # notAfter=Jan  9 04:45:23 2027 GMT
-    raw = out.split("=",1)[1]
-    dt = datetime.datetime.strptime(raw, "%b %d %H:%M:%S %Y %Z")
-    return (dt - datetime.datetime.utcnow()).days
-for host, floor in [("thesocialcollectivesg.com", 21), ("uat.cohestra.app", 21)]:
-    d = days(host)
-    print(f"{host} days_remaining={d}")
-    if d < floor:
-        print(f"FAIL: {host} expires in {d} days", file=sys.stderr)
-        sys.exit(1)
-PY
-```
+| Signal | How |
+|--------|-----|
+| Renew fail | systemd `OnFailure` + `journalctl -u cohestra-existing-site-http01-renew.service` |
+| `nginx -t` fail after disk change | `RESULT=NGINX_TEST_FAIL`; no reload |
+| Expiry &lt; 21 days | `watch-edge-cert-expiry.sh` twice weekly (existing + UAT watch-only) |
+| Mail | optional `COHESTRA_OPS_MAIL`; journal is the default sink |
 
-Alert = non-zero exit + cron mail. Do not add Slack/PagerDuty in this story. UAT wildcard remaining days is **watch only** — do not auto-renew it here.
+UAT wildcard remaining days is **watch only**.
 
 ## Rollback
 
-- Failed `nginx -t` in the deploy-hook: certbot leaves the new lineage in `archive/`; nginx keeps the previous live symlink until a successful reload. Re-run `nginx -t` and do **not** recreate.
-- Wrong cert-name: stop. Restore `live/thesocialcollectivesg.com` from `archive` if needed. Never delete `live/uat.cohestra.app`.
+- Certbot fail: no fingerprint change, no reload.
+- `nginx -t` fail: do not reload; fix config; do not recreate nginx.
+- Wrong lineage: refuse. Never delete `live/uat.cohestra.app`.

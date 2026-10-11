@@ -279,6 +279,8 @@ development_status:
   # Public probe: both hosts trusted HTTPS. Missing: firewall, migrations inspect,
   # resources/logs, image build provenance, zz bind persistence.
   # Evidence: epic-19-1-19-2-acceptance-2026-10-11.md. Production NO-GO.
+  # 2026-10-11 later: certbot deploy-hook docker exec is invalid; host-side
+  # renew script + mocked tests. Timer not installed. 19.1/19.2 still open.
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
   # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.
   # Isolation review on 95e5bd0 found BLOCKER/MAJOR; patches applied, story stays in-progress.

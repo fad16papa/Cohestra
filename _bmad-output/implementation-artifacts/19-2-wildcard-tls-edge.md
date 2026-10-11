@@ -71,7 +71,7 @@ bash deploy/host-proxy/persist-cohestra-vhost.sh
 - [x] Tenant URLs emit `*.uat.cohestra.app` not `*.cohestra.app` — `TenantPublicWebUrlBuilder` + live `og:url`
 - [x] Security headers verified — owner `verify-security-headers.sh` (inside smoke 10/0) + public singleton headers
 
-Durable `zz-cohestra-uat.conf` bind remains **BLOCKED** (not inspected). Auto-renew timer for the existing site is **designed, not installed**. Tracker stays **review / not done**. See `epic-19-1-19-2-acceptance-2026-10-11.md`.
+Durable `zz-cohestra-uat.conf` bind remains **BLOCKED** (not inspected; assume CONTAINER_ONLY until `prove-zz-vhost-persist.sh`). Existing-site HTTP-01 timer is **designed, not installed, not operational**. Certbot deploy-hook/`docker exec` design was **incorrect** and is replaced by a host-side fingerprint + `nginx -t`/reload script. Tracker stays **review / not done**. See `epic-19-1-19-2-acceptance-2026-10-11.md`.
 
 ## Live state at story start (2026-09-12)
 
