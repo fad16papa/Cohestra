@@ -133,6 +133,11 @@ public sealed class PaddleSubscriptionChangePolicyTests
                     ],
                 },
                 BillingStatus.Active));
+        Assert.Equal(
+            PaddleSubscriptionChangePolicy.NoBillableItemsMessage,
+            PaddleSubscriptionChangePolicy.RejectImmediateUpdate(
+                new PaddleSubscription { Status = "active", Items = [] },
+                BillingStatus.Active));
         Assert.Null(
             PaddleSubscriptionChangePolicy.RejectImmediateUpdate(
                 new PaddleSubscription { Status = "active", Items = OneItem() },

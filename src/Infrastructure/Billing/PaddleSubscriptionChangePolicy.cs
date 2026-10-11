@@ -22,6 +22,12 @@ internal static class PaddleSubscriptionChangePolicy
     public const string UnsupportedItemsMessage =
         "This subscription has extra items that cannot be changed in-app. Open Settings → Billing to manage it.";
 
+    public const string NoBillableItemsMessage =
+        "This subscription has no billable items. Open Settings → Billing and try again.";
+
+    public const string UnknownIntervalMessage =
+        "Could not determine your current billing interval. Open Settings → Billing and try again.";
+
     public const string RestrictedStatusMessage =
         "This subscription cannot be changed in its current state. Open Settings → Billing and try again.";
 
@@ -134,6 +140,11 @@ internal static class PaddleSubscriptionChangePolicy
         }
 
         var items = RecurringItems(subscription);
+        if (items.Count == 0)
+        {
+            return NoBillableItemsMessage;
+        }
+
         if (items.Count != 1 || items[0].Quantity != 1)
         {
             return UnsupportedItemsMessage;

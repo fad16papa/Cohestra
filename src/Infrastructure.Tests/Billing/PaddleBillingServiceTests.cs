@@ -596,6 +596,24 @@ public sealed class PaddleBillingServiceTests
     }
 
     [Fact]
+    public async Task Checkout_uses_live_paddle_interval_to_defer_annual_to_monthly()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Monthly, "active");
+        client.Subscription!.Items =
+            [new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = "pri_pro_a" } }];
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var session = await service.CreateCheckoutSessionAsync(
+            Checkout(tenant.Id) with { Plan = TenantPlan.Pro, Interval = BillingInterval.Monthly });
+
+        Assert.True(session.CompletedInApp);
+        Assert.Equal("next_billing_period", client.LastUpdateEffectiveFrom);
+        Assert.Equal("do_not_bill", client.LastUpdateProrationBillingMode);
+        Assert.NotEqual("prorated_immediately", client.LastUpdateProrationBillingMode);
+    }
+
+    [Fact]
     public async Task Checkout_annual_to_monthly_is_deferred()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
@@ -661,6 +679,24 @@ public sealed class PaddleBillingServiceTests
             service.CreateCheckoutSessionAsync(AnnualPro(tenant.Id)));
 
         Assert.Contains("scheduled to cancel", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(client.LastUpdatePriceId);
+    }
+
+    [Fact]
+    public async Task Checkout_rejects_unmapped_interval_without_update()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Monthly, "active");
+        tenant.BillingInterval = null;
+        db.SaveChanges();
+        client.Subscription!.Items =
+            [new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = "pri_unknown" } }];
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(AnnualPro(tenant.Id)));
+
+        Assert.Contains("current billing interval", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Null(client.LastUpdatePriceId);
     }
 

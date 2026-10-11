@@ -459,21 +459,6 @@ internal sealed class PaddleBillingService(
         CreateCheckoutSessionCommand command,
         CancellationToken cancellationToken)
     {
-        if (TenantBillingPlanSync.ShouldDeferPlanChange(
-                tenant.Plan,
-                tenant.BillingInterval,
-                command.Plan,
-                command.Interval))
-        {
-            return await ScheduleDowngradeExistingSubscriptionAsync(tenant, command, cancellationToken);
-        }
-
-        if (PaddleSubscriptionChangeScheduler.HasActiveScheduledPaidDowngrade(tenant))
-        {
-            throw new InvalidOperationException(
-                "A plan change is already scheduled. Undo it on the checkout page or in Settings → Billing before choosing a different plan.");
-        }
-
         var newPriceId = TenantBillingPlanSync.ResolvePriceId(command.Plan, command.Interval, _settings)
             ?? throw new InvalidOperationException("Paddle price ID is not configured for the selected plan.");
 
@@ -495,29 +480,43 @@ internal sealed class PaddleBillingService(
                 "Could not load your current subscription. Open Settings → Billing and try again.");
         }
 
-        var rejected = PaddleSubscriptionChangePolicy.RejectImmediateUpdate(subscription, tenant.BillingStatus);
-        if (rejected is not null)
-        {
-            throw new InvalidOperationException(rejected);
-        }
-
         var currentPriceId = PaddleSubscriptionChangePolicy.CurrentPriceId(subscription);
         if (string.Equals(currentPriceId, newPriceId, StringComparison.Ordinal))
         {
             throw new InvalidOperationException("Your workspace is already on the selected plan and billing interval.");
         }
 
-        var currentInterval = tenant.BillingInterval;
-        if (!string.IsNullOrWhiteSpace(currentPriceId)
-            && TenantBillingPlanSync.TryMapPrice(currentPriceId, _settings, out _, out var liveInterval))
+        if (string.IsNullOrWhiteSpace(currentPriceId)
+            || !TenantBillingPlanSync.TryMapPrice(currentPriceId, _settings, out var livePlan, out var liveInterval))
         {
-            currentInterval = liveInterval;
+            throw new InvalidOperationException(PaddleSubscriptionChangePolicy.UnknownIntervalMessage);
+        }
+
+        if (TenantBillingPlanSync.ShouldDeferPlanChange(
+                livePlan,
+                liveInterval,
+                command.Plan,
+                command.Interval))
+        {
+            return await ScheduleDowngradeExistingSubscriptionAsync(tenant, command, cancellationToken);
+        }
+
+        if (PaddleSubscriptionChangeScheduler.HasActiveScheduledPaidDowngrade(tenant))
+        {
+            throw new InvalidOperationException(
+                "A plan change is already scheduled. Undo it on the checkout page or in Settings → Billing before choosing a different plan.");
+        }
+
+        var rejected = PaddleSubscriptionChangePolicy.RejectImmediateUpdate(subscription, tenant.BillingStatus);
+        if (rejected is not null)
+        {
+            throw new InvalidOperationException(rejected);
         }
 
         var update = PaddleSubscriptionChangePolicy.ResolveImmediateUpdate(
             subscription,
             tenant.BillingStatus,
-            currentInterval,
+            liveInterval,
             command.Interval);
 
         PaddleSubscription updated;
