@@ -1,7 +1,8 @@
 # BMAD Code Review — Story 19.4 Paddle return URL
 
-**Reviewed HEAD (this report):** `b1aa4fbb` then patched; **final HEAD after in-scope fixes must be re-stated after commit.**  
-**Reviewer:** Grok 4.6 (Blind Hunter + Edge Case Hunter + Acceptance Auditor, same model)  
+**Implementation HEAD reviewed after patches:** `e38572cbad7dd4413a0f94e2eda5c687e15fc43d`  
+**Prior review HEAD:** `b1aa4fbb` (stale after MAJOR patches)  
+**Reviewer:** Grok 4.6 (Blind Hunter + Edge Case Hunter + Acceptance Auditor, same model; second pass on the patch HEAD)  
 **Mandatory Code Review Loop:** in force. Story 19.4 is **not** closed.
 
 ## Layers
@@ -29,9 +30,24 @@
 
 Dismissed: 4. Deferred: 3. Patched in this loop: 1–5.
 
-## Verdict after patches
+## Second pass on `e38572cb`
+
+Re-read `BillingReturnUrl`, portal/checkout, and the new tests. Invalid `PublicWeb` no longer becomes `https://{slug}.cohestra.app` for allow-listing. Checkout defaults go through `IsAllowed`. Custom-domain portal 503/400 paths exist.
 
 Unresolved **BLOCKER**: none  
-Unresolved **MAJOR**: none (1–2 patched)  
+Unresolved **MAJOR**: none  
 
-Product/UAT acceptance still required on an authorized deploy. Do not mark 19.4 done.
+Residual NIT/defer only (port-agnostic host match, live UAT/Paddle, trailing-dot FQDN). Product/UAT acceptance still required on an authorized deploy. Do not mark 19.4 done.
+
+## Final gate
+
+| Gate | Result |
+| ---- | ------ |
+| Spec | Defect scoped; 19.4 remains open |
+| Implementation | Tenant public origin allow-list |
+| Build | .NET 9 succeeded |
+| Tests | Unit 1124; billing unit 24; billing integration 20; full integration 207; Next billing 29; isolation 51/0 |
+| BMAD review | Pass on `e38572cb` (no unresolved BLOCKER/MAJOR) |
+| Product/UX acceptance | Not claimed — needs authorized UAT deploy |
+| CI | Watch PR #439 |
+| Production | NO-GO |

@@ -1,5 +1,5 @@
 ---
-status: in-progress
+status: in-review
 story: 19.4
 title: Fix Paddle Manage Payment return URL validation
 ---
