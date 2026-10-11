@@ -164,7 +164,7 @@ Attributed to the owner droplet console. This agent did not SSH and did not inve
 
 Independent public probe the same day: existing + UAT `/ready` Healthy with **trusted** TLS after the owner renew.
 
-Still **BLOCKED** for close: DigitalOcean cloud firewall inbound 22/80/443 (host `ufw` is **inactive**; agent TCP probe of 22/80/443 is complementary only); OCI image **build** provenance (LABEL wired, live images unlabeled); first-operator `/register`; `preflight-launch.sh`. Migration IDs **MATCH** (50/50) after the 09:37 paste. See addendum below. **Do not mark done.**
+Still **BLOCKED** for close: DigitalOcean cloud firewall inbound 22/80/443 (missing rule-list paste ≠ FAIL); `preflight-launch.sh` (no paste ≠ FAIL); first-operator `/register` (walk prepared, not executed, no invented sign-off); live OCI revision (LABEL in #438, running images unlabeled). Migration IDs **PASS** 50/50. See addendum below. **Do not mark done.**
 
 ## Owner ops paste (2026-10-11 ~09:26 UTC)
 

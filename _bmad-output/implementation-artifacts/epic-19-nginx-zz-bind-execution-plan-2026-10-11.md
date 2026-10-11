@@ -25,6 +25,16 @@ Live 2026-10-11 ~09:26: `PERSISTENCE=EXPORT_ONLY`. Export already exists.
 4. `docker exec lead-generation-crm-nginx-1 nginx -t` already ok
 5. Written owner authorization for **nginx-only** recreate
 
+## Live dump immediately before any edit (required)
+
+```bash
+EDGE=lead-generation-crm-nginx-1
+docker inspect "$EDGE" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} ip={{$v.IPAddress}} aliases={{$v.Aliases}}{{println}}{{end}}'
+docker inspect --format '{{range .Mounts}}{{.Type}} {{.Source}} -> {{.Destination}} rw={{.RW}}{{println}}{{end}}' "$EDGE"
+```
+
+Abort unless you still see **both** `lead-generation-crm_default` and `cohestra_uat_edge`, **`cohestra_uat_edge` aliases empty**, the `active-ssl.conf` RO bind, and both certbot volumes. Do not add an alias. Do not drop a network.
+
 ## Smallest change
 
 On the **existing** compose nginx service, add **one** read-only bind. Keep every current volume and both networks. Do not edit web/api/postgres/redis.
