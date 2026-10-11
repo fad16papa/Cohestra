@@ -256,6 +256,19 @@ internal sealed class PaddleBillingService(
                 : "You do not have permission to manage billing for this workspace.");
     }
 
+    public async Task<string?> GetVerifiedCustomDomainAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        var row = await dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => new { tenant.CustomDomain, tenant.CustomDomainVerifiedAt })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return BillingReturnUrl.VerifiedCustomDomain(row?.CustomDomain, row?.CustomDomainVerifiedAt);
+    }
+
     public async Task<BillingDetailsDto> GetDetailsAsync(
         Guid tenantId,
         string operatorEmail,
