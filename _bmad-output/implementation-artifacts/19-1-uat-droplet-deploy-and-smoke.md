@@ -189,5 +189,7 @@ From `/home/deploy/cohestra` at deployed `f293650d`. Both runs **17 passed / 1 f
 - **WARN:** reCAPTCHA disabled — expected until 19.3.
 - **PASS:** PUBLIC_BASE_URL, secrets present (not printed), seeds/DEV_TENANT_SLUG off, ports isolated, Paddle sandbox configured.
 
-Follow-up ~09:56: `sed` commented `Stripe__*` after `.env.bak.stripe-*`; preflight **17/0/1** → **PASS**. Do **not** compose-up the running stack. **Do not mark done.**
+Follow-up ~09:56: `sed` commented `Stripe__*` after `.env.bak.stripe-*`; preflight **17/0/1** → **PASS**.
+
+Follow-up ~10:05: owner `remote-deploy` of **main**. Smoke **10/0**. api/web healthy (new); Cohestra nginx/postgres/redis not recreated. OCI revision **empty** (expected). Existing + UAT `/ready` Healthy. **Do not mark done.**
 

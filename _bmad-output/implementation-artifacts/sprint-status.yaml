@@ -288,7 +288,8 @@ development_status:
   # = PARTIAL; OCI LABEL wired for next authorized rebuild only.
   # #438 16855e7c CI SUCCESS 38129452967. Preflight 09:53 FAIL (Stripe
   # leftovers still uncommented 09:54; 09:56 sed + preflight 17/0/1 PASS.
-  # DO firewall + first-operator still BLOCKED.
+  # ~10:05 main remote-deploy: smoke 10/0; api/web recreated; edge nginx
+  # untouched; OCI revision empty. DO firewall + first-operator BLOCKED.
   # Do not close.
   # Do not recreate nginx. Do not install timer. Do not merge without owner.
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
