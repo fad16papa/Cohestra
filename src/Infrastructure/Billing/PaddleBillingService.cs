@@ -61,7 +61,8 @@ internal sealed class PaddleBillingService(
             MapPlanLimits(proLimits),
             tenant.ScheduledPlan is TenantPlan.Basic ? null : tenant.ScheduledPlan,
             tenant.ScheduledPlanEffectiveAt,
-            tenant.ScheduledBillingInterval);
+            tenant.ScheduledBillingInterval,
+            tenant.ScheduledPlan == TenantPlan.Basic && tenant.ScheduledPlanEffectiveAt is not null);
     }
 
     public async Task<CheckoutSessionDto> CreateCheckoutSessionAsync(
@@ -596,11 +597,16 @@ internal sealed class PaddleBillingService(
             throw new InvalidOperationException("Your workspace is already on the selected plan and billing interval.");
         }
 
+        var periodEnd = PaddleTenantBillingSync.ResolvePeriodEnd(subscription)
+            ?? throw new InvalidOperationException(PaddleSubscriptionChangePolicy.MissingPeriodEndMessage);
+
+        var clearedPendingCancel = false;
         if (PaddleSubscriptionChangeScheduler.SubscriptionHasCancelAtPeriodEnd(subscription))
         {
             try
             {
                 subscription = await paddleClient.ClearScheduledChangeAsync(subscription.Id, cancellationToken);
+                clearedPendingCancel = true;
             }
             catch (PaddleApiException ex)
             {
@@ -611,14 +617,7 @@ internal sealed class PaddleBillingService(
                 throw new InvalidOperationException(
                     "Could not schedule your plan change while cancellation is pending. Open Settings → Billing and try again.");
             }
-
-            PaddleTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
-            await dbContext.SaveChangesAsync(cancellationToken);
         }
-
-        var periodEnd = PaddleTenantBillingSync.ResolvePeriodEnd(subscription)
-            ?? throw new InvalidOperationException(
-                "Could not determine when your current billing period ends. Open Settings → Billing and try again.");
 
         try
         {
@@ -632,7 +631,18 @@ internal sealed class PaddleBillingService(
         }
         catch (PaddleApiException ex)
         {
-            logger.LogWarning(ex, "Paddle subscription downgrade scheduling failed for tenant {TenantId}", tenant.Id);
+            logger.LogWarning(
+                ex,
+                "Paddle subscription downgrade scheduling failed for tenant {TenantId} afterCancelClear {AfterCancelClear}",
+                tenant.Id,
+                clearedPendingCancel);
+            if (clearedPendingCancel)
+            {
+                PaddleTenantBillingSync.ApplySubscription(tenant, subscription, _settings);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                throw new InvalidOperationException(PaddleSubscriptionChangePolicy.PartialCancelClearMessage);
+            }
+
             throw new InvalidOperationException(
                 "Could not schedule your plan change. Open Settings → Billing and try again.");
         }

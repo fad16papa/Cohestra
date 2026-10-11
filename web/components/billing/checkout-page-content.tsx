@@ -31,6 +31,7 @@ import {
 import { resolvePaddleOverlaySuccessUrl } from "@/lib/billing/paddle-return";
 import {
   checkoutActionLabel,
+  checkoutDeferredCancelDisclosure,
   checkoutImmediateChangeCopy,
   checkoutIntroCopy,
   checkoutPastDueMessage,
@@ -44,6 +45,7 @@ import {
   normalizeBillingInterval,
   normalizePlanId,
   requiresImmediateChargeConfirmation,
+  willResumePendingCancellation,
   type BillingIntervalId,
   type PaidPlanId,
 } from "@/lib/billing/checkout-validation";
@@ -407,6 +409,13 @@ function CheckoutContent() {
     && isBillingIntervalDowngrade(billingSummary.billingInterval, interval);
   const isCombinedTierAndIntervalDowngrade =
     isTierDowngradeSelection && isIntervalDowngradeSelection;
+  const resumesPendingCancellation = willResumePendingCancellation({
+    cancelAtPeriodEnd: billingSummary?.cancelAtPeriodEnd,
+    isDeferredChange: isDeferredSelection,
+  });
+  const deferredCancelDisclosure = resumesPendingCancellation
+    ? checkoutDeferredCancelDisclosure()
+    : null;
   const downgradeLimitWarnings = isTierDowngradeSelection
     ? getDowngradeLimitWarnings(shell, effectivePlan, {
         usage: billingSummary?.usage,
@@ -682,6 +691,7 @@ function CheckoutContent() {
                 ? `This change takes effect at the end of your current billing period. You keep ${currentPlan} access until then.`
                 : "Switching from yearly to monthly billing takes effect at the end of your current billing period. You keep your current plan and yearly rate until then."}
           </p>
+          {deferredCancelDisclosure ? <p className="mt-2">{deferredCancelDisclosure}</p> : null}
           {downgradeLimitWarnings.length > 0 ? (
             <div className="mt-3 space-y-2">
               <p className="font-medium text-amber-900 dark:text-amber-100">
@@ -887,13 +897,18 @@ function CheckoutContent() {
       <AlertDialog open={deferredConfirmOpen} onOpenChange={setDeferredConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Schedule this plan change?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {resumesPendingCancellation
+                ? "Keep your subscription and schedule this change?"
+                : "Schedule this plan change?"}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {isCombinedTierAndIntervalDowngrade
                 ? `Your workspace will switch to ${effectiveMeta?.name ?? "the selected plan"} on monthly billing at the end of your current billing period. You keep ${currentPlan} access until then.`
                 : isTierDowngradeSelection
                   ? `Your workspace will switch to ${effectiveMeta?.name ?? "the selected plan"} at the end of your current billing period. You keep ${currentPlan} access until then.`
                   : "Your billing interval will switch to monthly at the end of your current billing period. You keep your current plan and yearly rate until then."}
+              {deferredCancelDisclosure ? ` ${deferredCancelDisclosure}` : ""}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -905,7 +920,11 @@ function CheckoutContent() {
                 void startCheckout(effectivePlan, interval);
               }}
             >
-              {starting ? "Processing…" : "Schedule change"}
+              {starting
+                ? "Processing…"
+                : resumesPendingCancellation
+                  ? "Keep subscription and schedule"
+                  : "Schedule change"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

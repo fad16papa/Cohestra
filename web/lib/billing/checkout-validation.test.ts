@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   checkoutActionLabel,
+  checkoutDeferredCancelDisclosure,
   checkoutImmediateChangeCopy,
   checkoutPastDueMessage,
   checkoutPriceCaption,
@@ -15,6 +16,7 @@ import {
   isSamePlanAndInterval,
   matchesScheduledPlanChange,
   requiresImmediateChargeConfirmation,
+  willResumePendingCancellation,
 } from "@/lib/billing/checkout-validation";
 
 describe("checkout-validation", () => {
@@ -172,6 +174,30 @@ describe("checkout-validation", () => {
 
   it("exposes the past-due billing message", () => {
     expect(checkoutPastDueMessage()).toMatch(/past due/i);
+  });
+
+  it("discloses that a deferred change removes a pending cancellation", () => {
+    expect(
+      willResumePendingCancellation({
+        cancelAtPeriodEnd: true,
+        isDeferredChange: true,
+      })
+    ).toBe(true);
+    expect(
+      willResumePendingCancellation({
+        cancelAtPeriodEnd: true,
+        isDeferredChange: false,
+      })
+    ).toBe(false);
+    expect(
+      willResumePendingCancellation({
+        cancelAtPeriodEnd: false,
+        isDeferredChange: true,
+      })
+    ).toBe(false);
+    expect(checkoutDeferredCancelDisclosure()).toMatch(/cancellation will be removed/i);
+    expect(checkoutDeferredCancelDisclosure()).toMatch(/will not be charged today/i);
+    expect(checkoutDeferredCancelDisclosure()).not.toMatch(/payment resumes now/i);
   });
 
   it("labels immediate tier upgrade symmetrically", () => {

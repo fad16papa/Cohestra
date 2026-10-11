@@ -32,6 +32,7 @@ function summary(partial: Partial<BillingSummary> = {}): BillingSummary {
     scheduledPlan: null,
     scheduledPlanEffectiveAt: null,
     scheduledBillingInterval: null,
+    cancelAtPeriodEnd: false,
     ...partial,
   };
 }

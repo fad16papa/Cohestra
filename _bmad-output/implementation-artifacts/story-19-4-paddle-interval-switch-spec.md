@@ -19,7 +19,7 @@ UAT `POST /api/v1/admin/billing/checkout` for an existing Pro monthly subscripti
 - Annual → monthly: keep deferred `next_billing_period` + `do_not_bill`.
 - Past due, paused/canceled, non-cancel scheduled changes, and multi-item or quantity ≠ 1: reject on both immediate and deferred paths before any Paddle mutation.
 - Immediate + pending cancellation: reject; user must resume first.
-- Deferred + pending cancellation on an otherwise safe single-item subscription: authorized billing-b2 behavior — clear cancel, then schedule the downgrade.
+- Deferred + pending cancellation on an otherwise safe single-item subscription: authorized billing-b2 behavior — clear cancel, then schedule the downgrade. The two Paddle calls are not atomic. Period end is captured before clear. If schedule fails after clear, local state is reconciled to “not canceling” and retry completes the schedule. Checkout must disclose and confirm that cancellation will be removed.
 - Same plan + interval: no-op.
 - Provider 400/409/429/5xx: safe user message, no entitlement change, no leaked Paddle detail.
 - Keep billing-owner auth, tenant isolation, and #439 return-URL allow-list.
@@ -40,6 +40,7 @@ UAT `POST /api/v1/admin/billing/checkout` for an existing Pro monthly subscripti
 - Given an active annual subscription, when the owner switches to monthly, then the change is deferred to period end.
 - Given past due, paused/canceled, a non-cancel scheduled change, or extra items, when checkout is posted for an immediate or deferred change, then the API returns an actionable 400 and does not PATCH, clear a cancellation, or change entitlements.
 - Given an immediate upgrade while cancellation is pending, then the API rejects without mutation.
-- Given a deferred annual→monthly (or paid downgrade) on a safe single-item subscription with cancel-at-period-end, then cancel is cleared and the downgrade is scheduled (billing-b2).
+- Given a deferred annual→monthly (or paid downgrade) on a safe single-item subscription with cancel-at-period-end, then checkout discloses that cancellation will be removed, the user confirms, cancel is cleared, and the downgrade is scheduled (billing-b2).
+- Given clear-cancel succeeds and the schedule PATCH fails, then entitlements stay on the current plan, local cancel artifacts are cleared to match Paddle, the user is told to retry, and a second attempt finishes the schedule.
 - Given Paddle 400/409/429/5xx, when the update fails, then entitlements stay unchanged and the user message contains no provider internals.
 - Given checkout `?interval=monthly` while the owner selects yearly, then the URL, banner, and POST body stay on annual.

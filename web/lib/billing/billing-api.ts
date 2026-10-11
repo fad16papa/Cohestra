@@ -30,6 +30,7 @@ export type BillingSummary = {
   scheduledPlan: string | null;
   scheduledPlanEffectiveAt: string | null;
   scheduledBillingInterval: string | null;
+  cancelAtPeriodEnd: boolean;
 };
 
 export type CheckoutSessionResult = {
@@ -352,6 +353,7 @@ export function mapBillingSummary(raw: Record<string, unknown>): BillingSummary 
       typeof (raw.scheduledBillingInterval ?? raw.ScheduledBillingInterval) === "string"
         ? String(raw.scheduledBillingInterval ?? raw.ScheduledBillingInterval)
         : null,
+    cancelAtPeriodEnd: Boolean(raw.cancelAtPeriodEnd ?? raw.CancelAtPeriodEnd),
   };
 }
 

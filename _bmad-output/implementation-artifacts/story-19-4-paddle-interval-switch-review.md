@@ -1,53 +1,51 @@
 # BMAD Code Review — Story 19.4 Paddle interval switch
 
-**Implementation HEAD reviewed:** `88d433272dc77ff1cac61e22496e6dafbcfbbbfd`  
-**Reviewer:** Grok 4.6 (Blind Hunter + Edge Case Hunter + Acceptance Auditor, same model; no cross-model delegation)  
+**Implementation HEAD reviewed:** pending pin after this gate  
+**Reviewer:** Grok 4.6 (Blind Hunter + Edge Case Hunter + Acceptance Auditor; no cross-model delegation)  
 **Mandatory Code Review Loop:** in force. Story 19.4 is **not** closed.
 
 ## Layers
 
 - Blind Hunter: completed
-- Edge Case Hunter: completed — deferred path could mutate before shared safety
-- Acceptance Auditor: completed — immediate monthly→annual ACs still hold; deferred fail-closed now matches policy
+- Edge Case Hunter: completed — two-step cancel-then-schedule is not atomic
+- Acceptance Auditor: completed — monthly→annual ACs hold; deferred fail-closed holds; cancel disclosure added
 
-## Deferred-path disposition
+## Two-step cancellation disposition
 
 | Question | Finding |
 |---|---|
-| Annual→monthly + scheduled cancel | **Authorized billing-b2**, not a defect: clear cancel, then schedule. Immediate upgrades still reject pending cancel. |
-| Past-due can enter deferred? | **Was yes** — MAJOR. Now rejected before PATCH or `ClearScheduledChange`. |
-| Paused/canceled can enter deferred? | **Was yes** if tenant status was stale Active. Now rejected. |
-| Multi-item / qty > 1 updated by deferred? | **Was yes** (`UpdateSubscriptionItemsAsync` replaces all items). Now rejected. |
-| Scheduled changes consistent? | Tenant marker and Paddle `scheduled_change=update` now reject on both paths. |
-| Contradict 19.4 fail-closed? | Yes, before this patch, for past-due / restricted / extra items. |
-| Is cancel-clear authorized? | Yes — billing-b2 AC1. Kept only after shared safety (single item, not past due/paused). |
+| Clear succeeds, Update fails | Paddle cancel is gone; schedule is not created. Local state is reconciled to match Paddle (no Basic cancel). User message says retry or re-cancel. Not atomic. |
+| ResolvePeriodEnd after clear | **Was a hole** if only `ScheduledChange.EffectiveAt` existed. Period end is now captured **before** clear. Missing period end fails before any mutation. |
+| Local vs Paddle after partial | After handled failure: both “active, not canceling, no paid schedule.” |
+| Retry | Safe: second deferred checkout sees no cancel and schedules `next_billing_period` + `do_not_bill`. |
+| Duplicates / webhooks | After success, tenant paid-schedule marker blocks a second schedule. Webhook `ApplySubscription` remains the existing reconciler. Crash between clear and local save can leave stale Basic cancel until webhook or retry. |
+| Recovery | Documented: retry the same deferred checkout, or cancel again from Settings → Billing. |
 
-Shared gate: `RejectBeforeMutation(subscription, status, allowPendingCancel)`. Item checks run before the cancel exception.
+## Cancellation disclosure
+
+Checkout summary now exposes `cancelAtPeriodEnd` without promoting Basic as a paid scheduled plan. Deferred confirm title/copy/action require explicit approval that cancellation is removed and that nothing is charged today.
 
 ## Triage
 
 | ID | Source | Severity | Decision | Title |
 | -- | ------ | -------- | -------- | ----- |
-| 1 | owner+edge | MAJOR | patch | Deferred path skipped `RejectImmediateUpdate` |
-| 2 | edge | MAJOR | patch | `allowPendingCancel` skipped item-count/quantity checks |
-| 3 | edge | MINOR | patch | Deferred used a second GET and `Items[0].Price.Id` only |
-| 4 | auditor | — | keep | billing-b2 cancel-then-schedule on safe deferred changes |
-| 5 | auditor | MINOR | defer | Checkout summary hides Basic cancel; deferred dialog does not say it will resume the subscription |
-| 6 | auditor | — | defer | Live UAT SHA / Paddle error body missing |
-| 7 | auditor | — | defer | No Paddle dollar-amount preview |
-| 8 | auditor | — | defer | Authorized sandbox UAT after merge/deploy |
+| 1 | owner+edge | MAJOR | patch | Deferred path skipped shared safety |
+| 2 | edge | MAJOR | patch | Period end resolved after cancel clear |
+| 3 | edge | MAJOR | patch | Partial two-step left cancel/local mismatch and no retry proof |
+| 4 | auditor | MAJOR | patch | Deferred confirm did not disclose cancel removal |
+| 5 | keep | — | keep | billing-b2 cancel-then-schedule |
+| 6 | auditor | MINOR | defer | Portal-initiated cancel may not be on local summary until sync |
+| 7 | auditor | — | defer | Live UAT SHA / Paddle error body |
+| 8 | auditor | — | defer | No Paddle dollar preview; sandbox UAT |
 
 Unresolved **BLOCKER**: none  
-Unresolved **MAJOR**: none  
-
-Immediate monthly→annual remains: trial `do_not_bill`; active `prorated_immediately`; same-frequency `prorated_next_billing_period`; live price interval; unmapped price fail-closed; sanitized provider errors.
+Unresolved **MAJOR**: none on this implementation (CI on the new HEAD still required for MERGE READY)
 
 ## Final gate
 
 | Gate | Result |
 | ---- | ------ |
-| Spec | Refined cancel vs unsafe-state policy; 19.4 remains open |
-| Implementation | Shared pre-mutation gate |
-| Product/UX acceptance | Not claimed |
+| Spec | Two-step recovery + disclosure added; 19.4 remains open |
+| Implementation | Shared gate + pre-captured period end + partial reconcile |
 | Production | NO-GO |
-| Merge | Not authorized |
+| Merge | Not authorized until owner approval after current-HEAD CI |

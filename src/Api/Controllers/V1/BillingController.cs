@@ -568,7 +568,8 @@ public class BillingController(
                     summary.ProLimits.RegistrationsPerMonth),
             summary.ScheduledPlan?.ToString(),
             summary.ScheduledPlanEffectiveAt,
-            summary.ScheduledBillingInterval?.ToString());
+            summary.ScheduledBillingInterval?.ToString(),
+            summary.CancelAtPeriodEnd);
 
     private static bool TryParsePlan(string? value, out TenantPlan plan)
     {

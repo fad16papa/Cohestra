@@ -267,6 +267,17 @@ export function checkoutPastDueMessage(): string {
   return "This subscription is past due. Update the payment method in Settings → Billing before changing plans.";
 }
 
+export function willResumePendingCancellation(input: {
+  cancelAtPeriodEnd: boolean | null | undefined;
+  isDeferredChange: boolean;
+}): boolean {
+  return Boolean(input.cancelAtPeriodEnd) && input.isDeferredChange;
+}
+
+export function checkoutDeferredCancelDisclosure(): string {
+  return "This keeps your subscription. The scheduled cancellation will be removed. You stay on your current plan until the period ends, then the selected plan or monthly billing starts. You will not be charged today.";
+}
+
 function capitalizePlan(plan: PaidPlanId): string {
   return plan === "pro" ? "Pro" : "Core";
 }

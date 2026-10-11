@@ -27,7 +27,8 @@ public sealed record BillingSummaryResponse(
     BillingPlanLimitsResponse? ProLimits = null,
     string? ScheduledPlan = null,
     DateTimeOffset? ScheduledPlanEffectiveAt = null,
-    string? ScheduledBillingInterval = null);
+    string? ScheduledBillingInterval = null,
+    bool CancelAtPeriodEnd = false);
 
 public sealed record CreateCheckoutSessionRequest(
     string Plan,

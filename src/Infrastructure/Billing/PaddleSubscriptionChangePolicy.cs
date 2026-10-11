@@ -37,6 +37,12 @@ internal static class PaddleSubscriptionChangePolicy
     public const string ScheduledCancelMessage =
         "This subscription is scheduled to cancel. Resume it in Settings → Billing before changing plans.";
 
+    public const string PartialCancelClearMessage =
+        "Your pending cancellation was removed, but the plan change could not be scheduled. Try again, or schedule cancellation again from Settings → Billing.";
+
+    public const string MissingPeriodEndMessage =
+        "Could not determine when your current billing period ends. Open Settings → Billing and try again.";
+
     public sealed record ImmediateUpdate(
         string EffectiveFrom,
         string ProrationBillingMode,

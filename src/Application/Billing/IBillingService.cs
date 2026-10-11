@@ -92,7 +92,8 @@ public sealed record BillingSummaryDto(
     BillingPlanLimitsDto? ProLimits = null,
     TenantPlan? ScheduledPlan = null,
     DateTimeOffset? ScheduledPlanEffectiveAt = null,
-    BillingInterval? ScheduledBillingInterval = null);
+    BillingInterval? ScheduledBillingInterval = null,
+    bool CancelAtPeriodEnd = false);
 
 public sealed record CreateCheckoutSessionCommand(
     Guid TenantId,
