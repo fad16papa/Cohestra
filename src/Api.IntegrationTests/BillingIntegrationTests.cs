@@ -182,12 +182,15 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
     }
 
     [SkippableFact]
-    public async Task TenantAdmin_CreatePortal_ForwardedHostDoesNotBypassAllowList()
+    public async Task TenantAdmin_CreatePortal_ForwardedHeadersDoNotBypassAllowList()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
         using var client = await CreateBillingOwnerClientAsync();
+        // Loopback is a trusted ForwardedHeaders peer. Keep the forwarded host on the
+        // authenticated tenant so resolution still succeeds; proto https would have
+        // failed the old Request.Scheme compare against an http PublicWeb origin.
         client.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
-        client.DefaultRequestHeaders.Add("X-Forwarded-Host", "evil.example");
+        client.DefaultRequestHeaders.Add("X-Forwarded-Host", $"{TenantIds.DefaultSlug}.localhost");
 
         using var rejected = await client.PostAsJsonAsync(
             "/api/v1/admin/billing/portal",
@@ -247,12 +250,12 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
     }
 
     [SkippableFact]
-    public async Task TenantAdmin_CreateCheckout_ForwardedHostDoesNotBypassAllowList()
+    public async Task TenantAdmin_CreateCheckout_ForwardedHeadersDoNotBypassAllowList()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
         using var client = await CreateBillingOwnerClientAsync();
         client.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
-        client.DefaultRequestHeaders.Add("X-Forwarded-Host", "evil.example");
+        client.DefaultRequestHeaders.Add("X-Forwarded-Host", $"{TenantIds.DefaultSlug}.localhost");
 
         using var rejected = await client.PostAsJsonAsync(
             "/api/v1/admin/billing/checkout",

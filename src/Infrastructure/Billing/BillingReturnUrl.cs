@@ -32,7 +32,8 @@ public static class BillingReturnUrl
         if (string.IsNullOrWhiteSpace(candidate)
             || string.IsNullOrWhiteSpace(tenantSlug)
             || !Uri.TryCreate(candidate, UriKind.Absolute, out var returnUri)
-            || !IsHttpOrHttps(returnUri))
+            || !IsHttpOrHttps(returnUri)
+            || !string.IsNullOrEmpty(returnUri.UserInfo))
         {
             return false;
         }

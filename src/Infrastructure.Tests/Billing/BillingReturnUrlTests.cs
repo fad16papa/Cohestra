@@ -71,6 +71,7 @@ public sealed class BillingReturnUrlTests
     [InlineData("not-a-url")]
     [InlineData("javascript:alert(1)")]
     [InlineData("ftp://creativorare.uat.cohestra.app/settings/billing")]
+    [InlineData("https://attacker@creativorare.uat.cohestra.app/settings/billing")]
     public void IsAllowed_invalid_url(string? candidate)
     {
         Assert.False(BillingReturnUrl.IsAllowed(candidate, UatPublicBase, Slug));
