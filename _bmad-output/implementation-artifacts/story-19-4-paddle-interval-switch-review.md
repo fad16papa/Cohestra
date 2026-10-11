@@ -1,6 +1,6 @@
 # BMAD Code Review — Story 19.4 Paddle interval switch
 
-**Implementation HEAD reviewed:** pending pin after this gate  
+**Implementation HEAD reviewed:** `90e1bc83`  
 **Reviewer:** Grok 4.6 (Blind Hunter + Edge Case Hunter + Acceptance Auditor; no cross-model delegation)  
 **Mandatory Code Review Loop:** in force. Story 19.4 is **not** closed.
 
