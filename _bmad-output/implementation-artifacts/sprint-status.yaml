@@ -286,8 +286,9 @@ development_status:
   # after 09:37 ID paste (49-count was Snapshot grep miss). Resources/logs PASS.
   # ufw inactive — DO cloud firewall still BLOCKED. Image Created + GIT_SHA
   # = PARTIAL; OCI LABEL wired for next authorized rebuild only.
-  # #438 d3339598 required CI SUCCESS 38129104256. Missing DO firewall /
-  # preflight / first-operator stay BLOCKED (not FAIL). Do not close.
+  # #438 16855e7c CI SUCCESS 38129452967. Preflight 09:53 FAIL (Stripe
+  # leftovers in .env; 17/1/1). DO firewall + first-operator still BLOCKED.
+  # Do not close.
   # Do not recreate nginx. Do not install timer. Do not merge without owner.
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
   # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.

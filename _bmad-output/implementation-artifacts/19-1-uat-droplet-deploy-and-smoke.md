@@ -164,7 +164,7 @@ Attributed to the owner droplet console. This agent did not SSH and did not inve
 
 Independent public probe the same day: existing + UAT `/ready` Healthy with **trusted** TLS after the owner renew.
 
-Still **BLOCKED** for close: DigitalOcean cloud firewall inbound 22/80/443 (missing rule-list paste ≠ FAIL); `preflight-launch.sh` (no paste ≠ FAIL); first-operator `/register` (walk prepared, not executed, no invented sign-off); live OCI revision (LABEL in #438, running images unlabeled). Migration IDs **PASS** 50/50. See addendum below. **Do not mark done.**
+Still **BLOCKED** for close: DigitalOcean cloud firewall inbound 22/80/443 (missing rule-list paste ≠ FAIL); `preflight-launch.sh` **FAIL** (leftover Stripe keys in `.env`; recaptcha warn allowed); first-operator `/register` (walk prepared, not executed, no invented sign-off); live OCI revision (LABEL in #438, running images unlabeled). Migration IDs **PASS** 50/50. See addendum below. **Do not mark done.**
 
 ## Owner ops paste (2026-10-11 ~09:26 UTC)
 
@@ -180,4 +180,14 @@ Attributed to `/home/deploy/cohestra` at `f293650d`. This agent did not SSH.
 | MOTD / zombies | Informational | Restart required + 5 zombies. **Do not reboot** for this story |
 
 Tracker stays **in-progress / not done**. Full matrix: `epic-19-1-19-2-acceptance-2026-10-11.md`.
+
+## Owner preflight paste (2026-10-11 ~09:53 UTC)
+
+From `/home/deploy/cohestra` at deployed `f293650d`. **17 passed / 1 failed / 1 warning.**
+
+- **FAIL:** `Stripe keys must not be set` — leftover `Stripe__SecretKey` and/or `Stripe__WebhookSecret` in `.env`. Do not paste values. Unset those names and re-run. Compose does not inject Stripe into the API.
+- **WARN:** reCAPTCHA disabled — expected until 19.3.
+- **PASS:** PUBLIC_BASE_URL, secrets present (not printed), seeds/DEV_TENANT_SLUG off, ports isolated, Paddle sandbox configured.
+
+**Do not mark done.**
 

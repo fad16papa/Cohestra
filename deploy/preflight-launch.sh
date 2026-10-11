@@ -104,6 +104,8 @@ fi
 
 if [[ -n "${Stripe__SecretKey:-}" || -n "${Stripe__WebhookSecret:-}" ]]; then
   fail "Stripe keys must not be set — billing is Paddle (Epic 29 / Story 19.4)"
+  [[ -n "${Stripe__SecretKey:-}" ]] && echo "   leftover_name=Stripe__SecretKey (value not printed)"
+  [[ -n "${Stripe__WebhookSecret:-}" ]] && echo "   leftover_name=Stripe__WebhookSecret (value not printed)"
 fi
 
 if [[ "${COMPOSE_PROJECT_NAME:-}" == "cohestra-infra-uat" ]]; then
