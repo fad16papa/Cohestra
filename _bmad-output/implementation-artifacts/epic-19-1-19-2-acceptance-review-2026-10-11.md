@@ -1,6 +1,6 @@
-# BMAD code review — 19.1/19.2 acceptance + HTTP-01 host renew
+# BMAD code review — 19.1/19.2 09:26 evidence record
 
-**Reviewed content HEAD:** `54881d63` vs `origin/main` `f293650d`  
+**Reviewed content HEAD:** `8fb08ad5` vs previous review HEAD `aa60bc4c` (base `origin/main` `f293650d`)  
 **PR:** #438 (draft). #437 stays draft at `54a98647`.  
 **Model:** Grok 4.6 only. In-session Blind / Edge / Acceptance. No other models.
 
@@ -8,7 +8,7 @@ Stories 19.1 and 19.2 are **not** closed. Production **NO-GO**. Timer **not** in
 
 ## Diff (this iteration)
 
-Host-side `renew-existing-site-http01.sh` (no certbot deploy-hook), mocked tests (6/0), system timer units (install-later), expiry watch, persistence/renew docs, isolation 55/0.
+Docs only. Records owner 2026-10-11 ~09:26 UTC paste: `PERSISTENCE=EXPORT_ONLY`, `__EFMigrationsHistory` 50, resources/logs PASS, `ufw` inactive, image `Created` + `GIT_SHA` PARTIAL. Tracker statuses unchanged (`19.1` in-progress, `19.2` review).
 
 ## Layer results
 
@@ -16,31 +16,33 @@ Host-side `renew-existing-site-http01.sh` (no certbot deploy-hook), mocked tests
 
 | Finding | Triage |
 |---------|--------|
-| systemd unit sets `COHESTRA_AUTHORIZE_EXISTING_RENEW=1` | **Dismiss** — install is the authorization boundary; script still refuses UAT names |
-| “new droplet evidence” still BLOCKED | **Dismiss** — outputs were not pasted; not fabricated |
+| 50 history rows vs 49 Up() files | **Dismiss as close-blocker** — count inspect is the gate; delta noted; Cohestra `uat-compose` postgres, not existing-app |
+| `ufw` inactive recorded as a paste | **Dismiss** — matrix keeps firewall **BLOCKED**; planning AC is DO cloud inbound 22/80/443 |
+| EXPORT_ONLY written into 19.2 | **Dismiss** — marked CONDITIONAL; owner acceptance of the workaround is still required |
+| Image `Created` could be read as build provenance | **Dismiss** — matrix is **PARTIAL**; OCI `revision` still missing |
 
 ### Edge Case Hunter
 
 | location | trigger | guard | Triage |
 |----------|---------|-------|--------|
-| certbot deploy-hook docker exec | no docker in certbot CT | removed; host fingerprint + exec | **Fixed** |
-| fingerprint via nginx | certs not mounted | live discovery mounts certs; fail → FINGERPRINT_FAIL | **Handled** |
-| `nginx -t` fail after disk change | bad conf | no reload; in-memory cert stays | **Handled** |
-| user systemd timer | logout | system units, not user | **Handled** |
-| UAT name on renew | operator mistake | refuse_wrong_lineage + isolation | **Handled** |
+| Recreate of existing nginx | operator follows persist banner | Docs: do not recreate; live aliases `[]` must be kept | **Handled** |
+| Prove script not on droplet `main` | owner ran from `~` then from checkout | Classification from equivalent inspect, not invented `PERSISTENCE=` line | **Handled** |
+| Persist export of a bad vhost | container file stale | Public UAT HTTPS + listen 443 / SAN names in inspect | **Handled** |
+| Wrong postgres | existing-app DB | Command was `deploy/uat-compose.sh exec -T postgres` | **Handled** |
+| Reboot for MOTD / zombies | operator “fixes” host | Explicit do-not-reboot | **Handled** |
 
 ### Acceptance Auditor
 
 | Gate | Verdict |
 |------|---------|
-| 19.1 close | **Met** (not closed; firewall/migrations/logs/provenance BLOCKED) |
-| 19.2 close | **Met** (not closed; zz BIND BLOCKED; timer not operational) |
-| Tests for renew / no-op / certbot fail / nginx -t fail | **Met** |
-| No merge without owner | **Met** |
+| 19.1 close | **Met** (not closed; DO firewall + first-operator/preflight + OCI provenance still open) |
+| 19.2 close | **Met** (not closed; EXPORT_ONLY observed, not owner-accepted; BIND not present; timer not operational) |
+| No fabricated command output | **Met** |
+| No merge / no nginx mutate / no timer install | **Met** |
 | No live Paddle / recaptcha / prod | **Met** |
 
 ## Verdict
 
 **No unresolved BLOCKER or MAJOR.**  
 **Do not merge #437 or #438 without explicit owner authorization.**  
-**Do not treat CI green as 19.1/19.2 close.**
+**Do not treat this evidence record as 19.1/19.2 close.**
