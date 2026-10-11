@@ -164,7 +164,7 @@ Attributed to the owner droplet console. This agent did not SSH and did not inve
 
 Independent public probe the same day: existing + UAT `/ready` Healthy with **trusted** TLS after the owner renew.
 
-Still **BLOCKED** for close: DigitalOcean cloud firewall inbound 22/80/443 (missing rule-list paste ≠ FAIL); `preflight-launch.sh` **FAIL** (leftover Stripe keys in `.env`; recaptcha warn allowed); first-operator `/register` (walk prepared, not executed, no invented sign-off); live OCI revision (LABEL in #438, running images unlabeled). Migration IDs **PASS** 50/50. See addendum below. **Do not mark done.**
+Still **BLOCKED** for close: DigitalOcean cloud firewall inbound 22/80/443 (missing rule-list paste ≠ FAIL); first-operator `/register` (walk prepared, not executed, no invented sign-off); live OCI revision (LABEL in #438, running images unlabeled). Preflight **PASS** 17/0/1 (recaptcha warn until 19.3). Migration IDs **PASS** 50/50. See addendum below. **Do not mark done.**
 
 ## Owner ops paste (2026-10-11 ~09:26 UTC)
 
@@ -189,5 +189,5 @@ From `/home/deploy/cohestra` at deployed `f293650d`. Both runs **17 passed / 1 f
 - **WARN:** reCAPTCHA disabled — expected until 19.3.
 - **PASS:** PUBLIC_BASE_URL, secrets present (not printed), seeds/DEV_TENANT_SLUG off, ports isolated, Paddle sandbox configured.
 
-**Do not mark done.**
+Follow-up ~09:56: `sed` commented `Stripe__*` after `.env.bak.stripe-*`; preflight **17/0/1** → **PASS**. Do **not** compose-up the running stack. **Do not mark done.**
 
