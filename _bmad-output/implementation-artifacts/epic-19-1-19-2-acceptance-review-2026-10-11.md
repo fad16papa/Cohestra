@@ -1,16 +1,14 @@
-# BMAD code review — Stories 19.1 / 19.2 acceptance evidence
+# BMAD code review — 19.1/19.2 acceptance + HTTP-01 host renew
 
-**Reviewed HEAD:** `99002bc0` vs `origin/main` `f293650d`  
-**Model:** Grok 4.6 only. In-session Blind / Edge / Acceptance layers. No Composer / Auto / other models.  
-**Skills:** `bmad-code-review`, `bmad-review-adversarial-general`, `bmad-review-edge-case-hunter`.
+**Reviewed content HEAD:** `54881d63` vs `origin/main` `f293650d`  
+**PR:** #438 (draft). #437 stays draft at `54a98647`.  
+**Model:** Grok 4.6 only. In-session Blind / Edge / Acceptance. No other models.
 
-Mandatory loop applies. Stories 19.1 and 19.2 are **not** closed. Production **NO-GO**. PR #437 stays draft and is not this change.
+Stories 19.1 and 19.2 are **not** closed. Production **NO-GO**. Timer **not** installed. No nginx recreate.
 
-## Diff scope
+## Diff (this iteration)
 
-8 files: story addenda, tracker comments (statuses unchanged), three evidence/design notes, read-only `prove-zz-vhost-persist.sh`, isolation contract +1. No API/web product code. No timer installed. No nginx/cert mutation.
-
-Local: `bash deploy/validate-uat-isolation.sh` — 52 passed, 0 failed.
+Host-side `renew-existing-site-http01.sh` (no certbot deploy-hook), mocked tests (6/0), system timer units (install-later), expiry watch, persistence/renew docs, isolation 55/0.
 
 ## Layer results
 
@@ -18,32 +16,31 @@ Local: `bash deploy/validate-uat-isolation.sh` — 52 passed, 0 failed.
 
 | Finding | Triage |
 |---------|--------|
-| 19.2 checklist all `[x]` could be read as story done | **Dismiss** — same section says tracker stays review / not done; zz bind BLOCKED |
-| Owner 10/0 / 6/0 / 9/0 not pasted verbatim | **Dismiss** — attributed; counts match script contracts; public probe independent |
-| Truncated image IDs in 19.1 addendum | **Dismiss** — full sha256 in evidence file |
+| systemd unit sets `COHESTRA_AUTHORIZE_EXISTING_RENEW=1` | **Dismiss** — install is the authorization boundary; script still refuses UAT names |
+| “new droplet evidence” still BLOCKED | **Dismiss** — outputs were not pasted; not fabricated |
 
 ### Edge Case Hunter
 
 | location | trigger | guard | Triage |
 |----------|---------|-------|--------|
-| `prove-zz-vhost-persist.sh` | CONTAINER_ONLY | exit 0 + CONDITIONAL | **Handled** — missing vhost exits 1; BIND exits 0 PASS |
-| Timer playbook | operator omits `--cert-name` | docs refuse UAT names; do not install | **Handled** |
-| `renew --quiet` | failed hook | nginx -t before reload | **Handled** |
-| Image IDs | treated as source SHA | evidence says provenance BLOCKED | **Handled** |
+| certbot deploy-hook docker exec | no docker in certbot CT | removed; host fingerprint + exec | **Fixed** |
+| fingerprint via nginx | certs not mounted | live discovery mounts certs; fail → FINGERPRINT_FAIL | **Handled** |
+| `nginx -t` fail after disk change | bad conf | no reload; in-memory cert stays | **Handled** |
+| user systemd timer | logout | system units, not user | **Handled** |
+| UAT name on renew | operator mistake | refuse_wrong_lineage + isolation | **Handled** |
 
 ### Acceptance Auditor
 
-| Planning AC | This PR | Verdict |
-|-------------|---------|---------|
-| 19.1 isolate + smoke + seeds + DNS | smoke/seeds/DNS/SHA attributed or public | **Partial** — firewall BLOCKED |
-| 19.1 close | statuses unchanged | **Met** (not closed) |
-| 19.2 headers + HSTS + HTTP redirect | public + owner | **Met** (shared-edge `zz` + reload, not `active-ssl` recreate) |
-| 19.2 close | zz persist BLOCKED | **Met** (not closed) |
-| No false PASS / no prod GO | matrices | **Met** |
+| Gate | Verdict |
+|------|---------|
+| 19.1 close | **Met** (not closed; firewall/migrations/logs/provenance BLOCKED) |
+| 19.2 close | **Met** (not closed; zz BIND BLOCKED; timer not operational) |
+| Tests for renew / no-op / certbot fail / nginx -t fail | **Met** |
+| No merge without owner | **Met** |
+| No live Paddle / recaptcha / prod | **Met** |
 
 ## Verdict
 
 **No unresolved BLOCKER or MAJOR.**  
-Docs + read-only prove script are merge-ready after required CI on this HEAD.  
-**Do not merge without owner authorization.**  
-**Do not treat merge or CI green as 19.1/19.2 close.**
+**Do not merge #437 or #438 without explicit owner authorization.**  
+**Do not treat CI green as 19.1/19.2 close.**
