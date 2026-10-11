@@ -59,8 +59,45 @@ An uninstalled timer is **not** operational. 19.2 must not treat this as PASS.
 
 UAT wildcard remaining days is **watch only**.
 
-## Rollback
+## Authorization (before any install)
+
+1. Owner names this install in writing (separate from 19.1/19.2 close).
+2. Lineages still separate: existing leaf SAN `thesocialcollectivesg.com` only; UAT SAN `uat` + `*.uat`.
+3. Dry-run as `deploy` (talks to Let's Encrypt; does **not** reload):
+
+```bash
+COHESTRA_AUTHORIZE_EXISTING_RENEW=1 bash deploy/host-proxy/renew-existing-site-http01.sh --dry-run
+# expect RESULT=DRY_RUN_OK and no --deploy-hook
+```
+
+4. Certbot container is throwaway `certbot/certbot:latest` with **only** cert + www volumes. No Docker socket. Reload is host `docker exec` after fingerprint change.
+
+## Alert validation (authorized, no renew)
+
+```bash
+sudo systemctl start cohestra-existing-site-http01-renew-alert.service
+journalctl -u cohestra-existing-site-http01-renew-alert.service -n 20
+# expect RESULT=RENEW_ALERT in journal. Optional mail only if COHESTRA_OPS_MAIL is set.
+sudo systemctl start cohestra-edge-cert-expiry-watch.service
+# expect RESULT=EXPIRY_OK while both leaves have >21 days
+```
+
+Do not `systemctl start` the renew **service** (non-dry-run) unless the owner also authorized a live HTTP-01 attempt.
+
+## Rollback (installed timer)
+
+```bash
+sudo systemctl disable --now cohestra-existing-site-http01-renew.timer
+sudo systemctl disable --now cohestra-edge-cert-expiry-watch.timer
+# units may stay on disk; removing them is optional
+# never delete live/thesocialcollectivesg.com or live/uat.cohestra.app
+```
 
 - Certbot fail: no fingerprint change, no reload.
 - `nginx -t` fail: do not reload; fix config; do not recreate nginx.
 - Wrong lineage: refuse. Never delete `live/uat.cohestra.app`.
+- Uninstall does not revert a successful Let's Encrypt renew already on disk.
+
+## UAT wildcard (separate)
+
+DNS-01 for `uat.cohestra.app` / `*.uat.cohestra.app` stays **MANUAL-ACCEPTED**. The HTTP-01 timer must never receive those names (`refuse_wrong_lineage`). Expiry watch reports UAT days remaining only.

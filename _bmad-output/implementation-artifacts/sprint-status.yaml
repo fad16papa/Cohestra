@@ -282,10 +282,11 @@ development_status:
   # 2026-10-11 later: certbot deploy-hook docker exec is invalid; host-side
   # renew script + mocked tests. Timer not installed. 19.1/19.2 still open.
   # 2026-10-11 ~09:26 owner paste (no SSH): PERSISTENCE=EXPORT_ONLY (zz in
-  # container, no bind, persist export + snapshot). Migrations count 50.
-  # Resources/logs PASS. ufw inactive — DO cloud firewall still BLOCKED.
-  # Image Created + GIT_SHA = PARTIAL, not OCI build. Do not close 19.1/19.2.
-  # Do not recreate nginx. Do not install timer.
+  # container, no bind, persist export + snapshot). Migrations count 50 vs
+  # 49 IDs — ID compare BLOCKED (not assumed harmless). Resources/logs PASS.
+  # ufw inactive — DO cloud firewall still BLOCKED. Image Created + GIT_SHA
+  # = PARTIAL; OCI LABEL wired for next authorized rebuild only.
+  # Do not close 19.1/19.2. Do not recreate nginx. Do not install timer.
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
   # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.
   # Isolation review on 95e5bd0 found BLOCKER/MAJOR; patches applied, story stays in-progress.

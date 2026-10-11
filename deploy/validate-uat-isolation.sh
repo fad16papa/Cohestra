@@ -572,6 +572,51 @@ else
   fail "API service must pass GIT_SHA: \${GIT_SHA:-} and must not hardcode a SHA"
 fi
 
+API_DOCKERFILE="$ROOT_DIR/src/Api/Dockerfile"
+WEB_DOCKERFILE="$ROOT_DIR/web/Dockerfile"
+if grep -q 'LABEL org.opencontainers.image.revision="${GIT_SHA}"' "$API_DOCKERFILE" \
+  && grep -q 'ARG GIT_SHA=' "$API_DOCKERFILE"; then
+  pass "API image declares OCI revision LABEL from GIT_SHA ARG"
+else
+  fail "API Dockerfile must LABEL org.opencontainers.image.revision from GIT_SHA"
+fi
+if grep -q 'LABEL org.opencontainers.image.revision="${GIT_SHA}"' "$WEB_DOCKERFILE" \
+  && grep -q 'ARG GIT_SHA=' "$WEB_DOCKERFILE"; then
+  pass "web image declares OCI revision LABEL from GIT_SHA ARG"
+else
+  fail "web Dockerfile must LABEL org.opencontainers.image.revision from GIT_SHA"
+fi
+if awk '
+  /container_name: cohestra-uat-api/ { api=1 }
+  api && /build:/ { b=1 }
+  b && /GIT_SHA: \$\{GIT_SHA:-\}/ { arg=1 }
+  api && /environment:/ { exit }
+  END { exit(arg ? 0 : 1) }
+' "$COMPOSE" \
+  && awk '
+  /container_name: cohestra-uat-web/ { web=1 }
+  web && /build:/ { b=1 }
+  b && /GIT_SHA: \$\{GIT_SHA:-\}/ { arg=1 }
+  web && /environment:/ { exit }
+  END { exit(arg ? 0 : 1) }
+' "$COMPOSE"; then
+  pass "api and web compose build args pass GIT_SHA"
+else
+  fail "api and web build.args must pass GIT_SHA: \${GIT_SHA:-}"
+fi
+
+COMPARE="$ROOT_DIR/deploy/compare-ef-migration-ids.sh"
+if [[ -x "$COMPARE" ]] || [[ -f "$COMPARE" ]]; then
+  if bash "$COMPARE" --self-test >/tmp/compare-ef-self-test.out; then
+    pass "EF migration ID compare self-test"
+  else
+    fail "EF migration ID compare self-test"
+    cat /tmp/compare-ef-self-test.out || true
+  fi
+else
+  fail "missing deploy/compare-ef-migration-ids.sh"
+fi
+
 echo ""
 echo "Passed: $PASS  Failed: $FAIL"
 if [[ "$FAIL" -gt 0 ]]; then

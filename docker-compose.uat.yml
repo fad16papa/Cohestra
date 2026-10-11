@@ -62,6 +62,8 @@ services:
     build:
       context: .
       dockerfile: src/Api/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
     restart: unless-stopped
     ports:
       - "127.0.0.1:${API_HOST_PORT:-5100}:8080"
@@ -139,6 +141,7 @@ services:
       context: ./web
       dockerfile: Dockerfile
       args:
+        GIT_SHA: ${GIT_SHA:-}
         NEXT_PUBLIC_API_URL: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
         NEXT_PUBLIC_LANDING_SITE_NAME: ${LANDING_SITE_NAME:-Cohestra}
         NEXT_PUBLIC_LANDING_TAGLINE: ${LANDING_TAGLINE:-Community events. Meaningful connections.}

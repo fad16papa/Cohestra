@@ -18,7 +18,7 @@
 | Recreate risk | Recreate (not reload) of `lead-generation-crm-nginx-1` would drop UAT HTTPS until RO bind or `docker cp` restore |
 | `cohestra_uat_edge` aliases | **[]** (empty). Keep empty on any future authorized edit |
 
-Owner has **not** written acceptance of EXPORT_ONLY as the 19.2 close workaround. Do not recreate nginx from this document.
+Owner has **not** written acceptance of EXPORT_ONLY as the 19.2 close workaround. Do not recreate nginx from this document. Authorized bind steps: `epic-19-nginx-zz-bind-execution-plan-2026-10-11.md`.
 
 ## Durable export / backup (no recreate)
 
