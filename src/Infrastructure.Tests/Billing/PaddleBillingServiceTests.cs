@@ -529,6 +529,7 @@ public sealed class PaddleBillingServiceTests
 
         Assert.Contains("past due", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Null(client.LastUpdatePriceId);
+        Assert.False(client.ClearScheduledCalled);
     }
 
     [Fact]
@@ -634,6 +635,165 @@ public sealed class PaddleBillingServiceTests
     }
 
     [Fact]
+    public async Task Checkout_deferred_past_due_is_rejected_without_mutation()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "past_due");
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id)));
+
+        Assert.Contains("past due", ex.Message, StringComparison.OrdinalIgnoreCase);
+        AssertNoSubscriptionMutation(client, tenant, db, BillingInterval.Annual);
+    }
+
+    [Fact]
+    public async Task Checkout_deferred_paused_is_rejected_without_mutation()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "active");
+        client.Subscription!.Status = "paused";
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id)));
+
+        Assert.Contains("current state", ex.Message, StringComparison.OrdinalIgnoreCase);
+        AssertNoSubscriptionMutation(client, tenant, db, BillingInterval.Annual);
+    }
+
+    [Fact]
+    public async Task Checkout_deferred_canceled_is_rejected_without_mutation()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "active");
+        client.Subscription!.Status = "canceled";
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id)));
+
+        Assert.Contains("current state", ex.Message, StringComparison.OrdinalIgnoreCase);
+        AssertNoSubscriptionMutation(client, tenant, db, BillingInterval.Annual);
+    }
+
+    [Fact]
+    public async Task Checkout_deferred_multi_item_is_rejected_without_mutation()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "active");
+        client.Subscription!.Items =
+        [
+            new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = "pri_pro_a" } },
+            new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = "pri_addon" } },
+        ];
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id)));
+
+        Assert.Contains("extra items", ex.Message, StringComparison.OrdinalIgnoreCase);
+        AssertNoSubscriptionMutation(client, tenant, db, BillingInterval.Annual);
+    }
+
+    [Fact]
+    public async Task Checkout_deferred_quantity_over_one_is_rejected_without_mutation()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "active");
+        client.Subscription!.Items =
+            [new PaddleSubscriptionItem { Quantity = 3, Price = new PaddlePrice { Id = "pri_pro_a" } }];
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id)));
+
+        Assert.Contains("extra items", ex.Message, StringComparison.OrdinalIgnoreCase);
+        AssertNoSubscriptionMutation(client, tenant, db, BillingInterval.Annual);
+    }
+
+    [Fact]
+    public async Task Checkout_deferred_paddle_scheduled_update_is_rejected_without_mutation()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "active");
+        client.Subscription!.ScheduledChange = new PaddleScheduledChange { Action = "update" };
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id)));
+
+        Assert.Contains("already scheduled", ex.Message, StringComparison.OrdinalIgnoreCase);
+        AssertNoSubscriptionMutation(client, tenant, db, BillingInterval.Annual);
+    }
+
+    [Fact]
+    public async Task Checkout_deferred_tenant_scheduled_change_is_rejected_without_mutation()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "active");
+        tenant.ScheduledPlan = TenantPlan.Core;
+        tenant.ScheduledPlanEffectiveAt = DateTimeOffset.UtcNow.AddDays(14);
+        tenant.ScheduledBillingInterval = BillingInterval.Monthly;
+        tenant.PaddleSubscriptionScheduleId = "sch:sub_existing:pri_core_m";
+        db.SaveChanges();
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id)));
+
+        Assert.Contains("already scheduled", ex.Message, StringComparison.OrdinalIgnoreCase);
+        AssertNoSubscriptionMutation(client, tenant, db, BillingInterval.Annual);
+        Assert.Equal(TenantPlan.Core, db.Tenants.Single(t => t.Id == tenant.Id).ScheduledPlan);
+    }
+
+    [Fact]
+    public async Task Checkout_deferred_cancel_with_extra_items_is_rejected_without_mutation()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "active");
+        client.Subscription!.ScheduledChange = new PaddleScheduledChange { Action = "cancel" };
+        client.Subscription.Items =
+        [
+            new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = "pri_pro_a" } },
+            new PaddleSubscriptionItem { Quantity = 1, Price = new PaddlePrice { Id = "pri_addon" } },
+        ];
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id)));
+
+        Assert.Contains("extra items", ex.Message, StringComparison.OrdinalIgnoreCase);
+        AssertNoSubscriptionMutation(client, tenant, db, BillingInterval.Annual);
+    }
+
+    [Fact]
+    public async Task Checkout_deferred_clears_pending_cancel_then_schedules_downgrade()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Annual, "active");
+        client.Subscription!.ScheduledChange = new PaddleScheduledChange
+        {
+            Action = "cancel",
+            EffectiveAt = DateTimeOffset.UtcNow.AddDays(20),
+        };
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var session = await service.CreateCheckoutSessionAsync(MonthlyPro(tenant.Id));
+
+        Assert.True(session.CompletedInApp);
+        Assert.True(client.ClearScheduledCalled);
+        Assert.Equal("pri_pro_m", client.LastUpdatePriceId);
+        Assert.Equal("next_billing_period", client.LastUpdateEffectiveFrom);
+        Assert.Equal("do_not_bill", client.LastUpdateProrationBillingMode);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal(TenantPlan.Pro, updated.Plan);
+        Assert.Equal(BillingInterval.Annual, updated.BillingInterval);
+        Assert.Equal(BillingInterval.Monthly, updated.ScheduledBillingInterval);
+    }
+
+    [Fact]
     public async Task Checkout_rejects_tenant_scheduled_change_before_paddle()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
@@ -650,6 +810,7 @@ public sealed class PaddleBillingServiceTests
 
         Assert.Contains("already scheduled", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Null(client.LastUpdatePriceId);
+        Assert.False(client.ClearScheduledCalled);
     }
 
     [Fact]
@@ -680,6 +841,7 @@ public sealed class PaddleBillingServiceTests
 
         Assert.Contains("scheduled to cancel", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Null(client.LastUpdatePriceId);
+        Assert.False(client.ClearScheduledCalled);
     }
 
     [Fact]
@@ -717,6 +879,7 @@ public sealed class PaddleBillingServiceTests
 
         Assert.Contains("extra items", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Null(client.LastUpdatePriceId);
+        Assert.False(client.ClearScheduledCalled);
     }
 
     [Theory]
@@ -781,6 +944,22 @@ public sealed class PaddleBillingServiceTests
         };
         return (tenant, client);
     }
+
+    private static void AssertNoSubscriptionMutation(
+        FakePaddleApiClient client,
+        Tenant tenant,
+        CohestraDbContext db,
+        BillingInterval expectedInterval)
+    {
+        Assert.Null(client.LastUpdatePriceId);
+        Assert.False(client.ClearScheduledCalled);
+        var updated = db.Tenants.Single(t => t.Id == tenant.Id);
+        Assert.Equal(expectedInterval, updated.BillingInterval);
+        Assert.Equal(tenant.Plan, updated.Plan);
+    }
+
+    private static CreateCheckoutSessionCommand MonthlyPro(Guid tenantId) =>
+        Checkout(tenantId) with { Plan = TenantPlan.Pro, Interval = BillingInterval.Monthly };
 
     private static CreateCheckoutSessionCommand AnnualPro(Guid tenantId) =>
         Checkout(tenantId) with { Plan = TenantPlan.Pro, Interval = BillingInterval.Annual };

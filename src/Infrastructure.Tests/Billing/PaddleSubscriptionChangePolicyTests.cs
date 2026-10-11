@@ -142,6 +142,33 @@ public sealed class PaddleSubscriptionChangePolicyTests
             PaddleSubscriptionChangePolicy.RejectImmediateUpdate(
                 new PaddleSubscription { Status = "active", Items = OneItem() },
                 BillingStatus.Active));
+        Assert.Null(
+            PaddleSubscriptionChangePolicy.RejectBeforeMutation(
+                new PaddleSubscription
+                {
+                    Status = "active",
+                    Items = OneItem(),
+                    ScheduledChange = new PaddleScheduledChange { Action = "cancel" },
+                },
+                BillingStatus.Active,
+                allowPendingCancel: true));
+        Assert.Equal(
+            PaddleSubscriptionChangePolicy.PastDueMessage,
+            PaddleSubscriptionChangePolicy.RejectBeforeMutation(
+                new PaddleSubscription { Status = "past_due", Items = OneItem() },
+                BillingStatus.Active,
+                allowPendingCancel: true));
+        Assert.Equal(
+            PaddleSubscriptionChangePolicy.ScheduledChangeMessage,
+            PaddleSubscriptionChangePolicy.RejectBeforeMutation(
+                new PaddleSubscription
+                {
+                    Status = "active",
+                    Items = OneItem(),
+                    ScheduledChange = new PaddleScheduledChange { Action = "update" },
+                },
+                BillingStatus.Active,
+                allowPendingCancel: true));
     }
 
     [Theory]

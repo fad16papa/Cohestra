@@ -118,9 +118,16 @@ internal static class PaddleSubscriptionChangePolicy
             "Your plan was updated. Any price difference is prorated on your next invoice.");
     }
 
-    public static string? RejectImmediateUpdate(
+    /// <summary>
+    /// Shared fail-closed gate for immediate and deferred item updates.
+    /// Pending cancellation may be cleared only on the authorized deferred
+    /// downgrade path (billing-b2); every other unsafe state rejects before
+    /// any Paddle mutation.
+    /// </summary>
+    public static string? RejectBeforeMutation(
         PaddleSubscription subscription,
-        BillingStatus tenantStatus)
+        BillingStatus tenantStatus,
+        bool allowPendingCancel)
     {
         if (IsPastDue(subscription, tenantStatus))
         {
@@ -130,13 +137,6 @@ internal static class PaddleSubscriptionChangePolicy
         if (IsRestrictedStatus(subscription))
         {
             return RestrictedStatusMessage;
-        }
-
-        if (subscription.ScheduledChange is { Action.Length: > 0 })
-        {
-            return string.Equals(subscription.ScheduledChange.Action, "cancel", StringComparison.OrdinalIgnoreCase)
-                ? ScheduledCancelMessage
-                : ScheduledChangeMessage;
         }
 
         var items = RecurringItems(subscription);
@@ -150,8 +150,23 @@ internal static class PaddleSubscriptionChangePolicy
             return UnsupportedItemsMessage;
         }
 
+        if (subscription.ScheduledChange is { Action.Length: > 0 })
+        {
+            if (string.Equals(subscription.ScheduledChange.Action, "cancel", StringComparison.OrdinalIgnoreCase))
+            {
+                return allowPendingCancel ? null : ScheduledCancelMessage;
+            }
+
+            return ScheduledChangeMessage;
+        }
+
         return null;
     }
+
+    public static string? RejectImmediateUpdate(
+        PaddleSubscription subscription,
+        BillingStatus tenantStatus) =>
+        RejectBeforeMutation(subscription, tenantStatus, allowPendingCancel: false);
 
     public static string MapProviderFailure(PaddleApiException ex)
     {

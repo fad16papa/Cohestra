@@ -492,25 +492,34 @@ internal sealed class PaddleBillingService(
             throw new InvalidOperationException(PaddleSubscriptionChangePolicy.UnknownIntervalMessage);
         }
 
-        if (TenantBillingPlanSync.ShouldDeferPlanChange(
-                livePlan,
-                liveInterval,
-                command.Plan,
-                command.Interval))
+        var defer = TenantBillingPlanSync.ShouldDeferPlanChange(
+            livePlan,
+            liveInterval,
+            command.Plan,
+            command.Interval);
+
+        var rejected = PaddleSubscriptionChangePolicy.RejectBeforeMutation(
+            subscription,
+            tenant.BillingStatus,
+            allowPendingCancel: defer);
+        if (rejected is not null)
         {
-            return await ScheduleDowngradeExistingSubscriptionAsync(tenant, command, cancellationToken);
+            throw new InvalidOperationException(rejected);
+        }
+
+        if (defer)
+        {
+            return await ScheduleDowngradeExistingSubscriptionAsync(
+                tenant,
+                command,
+                subscription,
+                cancellationToken);
         }
 
         if (PaddleSubscriptionChangeScheduler.HasActiveScheduledPaidDowngrade(tenant))
         {
             throw new InvalidOperationException(
                 "A plan change is already scheduled. Undo it on the checkout page or in Settings → Billing before choosing a different plan.");
-        }
-
-        var rejected = PaddleSubscriptionChangePolicy.RejectImmediateUpdate(subscription, tenant.BillingStatus);
-        if (rejected is not null)
-        {
-            throw new InvalidOperationException(rejected);
         }
 
         var update = PaddleSubscriptionChangePolicy.ResolveImmediateUpdate(
@@ -558,6 +567,7 @@ internal sealed class PaddleBillingService(
     private async Task<CheckoutSessionDto> ScheduleDowngradeExistingSubscriptionAsync(
         Tenant tenant,
         CreateCheckoutSessionCommand command,
+        PaddleSubscription subscription,
         CancellationToken cancellationToken)
     {
         if (PaddleSubscriptionChangeScheduler.HasActiveScheduledPaidDowngrade(tenant))
@@ -566,29 +576,20 @@ internal sealed class PaddleBillingService(
                 "A plan change is already scheduled. Undo it on the checkout page or in Settings → Billing before choosing a different plan.");
         }
 
+        var rejected = PaddleSubscriptionChangePolicy.RejectBeforeMutation(
+            subscription,
+            tenant.BillingStatus,
+            allowPendingCancel: true);
+        if (rejected is not null)
+        {
+            throw new InvalidOperationException(rejected);
+        }
+
         var newPriceId = TenantBillingPlanSync.ResolvePriceId(command.Plan, command.Interval, _settings)
             ?? throw new InvalidOperationException("Paddle price ID is not configured for the selected plan.");
 
-        PaddleSubscription subscription;
-        try
-        {
-            subscription = await paddleClient.GetSubscriptionAsync(tenant.PaddleSubscriptionId!, cancellationToken)
-                ?? throw new InvalidOperationException(
-                    "Could not load your current subscription. Open Settings → Billing and try again.");
-        }
-        catch (PaddleApiException ex)
-        {
-            logger.LogWarning(
-                ex,
-                "Could not load Paddle subscription {SubscriptionId} for tenant {TenantId}",
-                tenant.PaddleSubscriptionId,
-                tenant.Id);
-            throw new InvalidOperationException(
-                "Could not load your current subscription. Open Settings → Billing and try again.");
-        }
-
-        var currentPriceId = subscription.Items.FirstOrDefault()?.Price?.Id
-            ?? throw new InvalidOperationException("Subscription has no billable items.");
+        var currentPriceId = PaddleSubscriptionChangePolicy.CurrentPriceId(subscription)
+            ?? throw new InvalidOperationException(PaddleSubscriptionChangePolicy.NoBillableItemsMessage);
 
         if (string.Equals(currentPriceId, newPriceId, StringComparison.Ordinal))
         {
