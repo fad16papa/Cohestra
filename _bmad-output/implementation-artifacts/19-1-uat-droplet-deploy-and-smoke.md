@@ -164,7 +164,7 @@ Attributed to the owner droplet console. This agent did not SSH and did not inve
 
 Independent public probe the same day: existing + UAT `/ready` Healthy with **trusted** TLS after the owner renew.
 
-Still **BLOCKED** for close after the 09:26 paste: DigitalOcean cloud firewall inbound 22/80/443 (host `ufw` is **inactive**; agent TCP probe of 22/80/443 is complementary only); migration **IDs** (count 50 ≠ 49 files); OCI image **build** provenance (LABEL wired, live images unlabeled); first-operator `/register`; `preflight-launch.sh`. See addendum below. **Do not mark done.**
+Still **BLOCKED** for close: DigitalOcean cloud firewall inbound 22/80/443 (host `ufw` is **inactive**; agent TCP probe of 22/80/443 is complementary only); OCI image **build** provenance (LABEL wired, live images unlabeled); first-operator `/register`; `preflight-launch.sh`. Migration IDs **MATCH** (50/50) after the 09:37 paste. See addendum below. **Do not mark done.**
 
 ## Owner ops paste (2026-10-11 ~09:26 UTC)
 
@@ -172,7 +172,7 @@ Attributed to `/home/deploy/cohestra` at `f293650d`. This agent did not SSH.
 
 | Gate | Status | Owner value |
 |------|--------|-------------|
-| `__EFMigrationsHistory` | **PARTIAL / ID-COMPARE BLOCKED** | Count **50** vs 49 repo IDs. Not assumed harmless. Paste `MigrationId` list. See `epic-19-migration-id-compare-2026-10-11.md`. |
+| `__EFMigrationsHistory` | **PASS** | 50 pasted IDs match 50 repo Up() files. `AddSitePagePreviousPublishedSnapshot` is in both (earlier 49-count was a `Snapshot` grep miss). |
 | Resources / `uat-compose ps` / stats | **PASS** | 3.8 Gi RAM, 2.0 Gi avail; 77 G disk 44%; all five `cohestra-uat-*` healthy; loopback 3100/5100/8180; postgres/redis unpublished |
 | Redacted API logs | **PASS** (window) | Outbox + default-tenant EXISTS; no secrets in the 80-line tail |
 | Image IDs + `Created` + `GIT_SHA` | **PARTIAL** | Same sha256 as earlier; Created 2026-10-10T16:25Z; env SHA matches checkout. No OCI revision label |

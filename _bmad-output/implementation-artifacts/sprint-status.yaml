@@ -282,8 +282,8 @@ development_status:
   # 2026-10-11 later: certbot deploy-hook docker exec is invalid; host-side
   # renew script + mocked tests. Timer not installed. 19.1/19.2 still open.
   # 2026-10-11 ~09:26 owner paste (no SSH): PERSISTENCE=EXPORT_ONLY (zz in
-  # container, no bind, persist export + snapshot). Migrations count 50 vs
-  # 49 IDs — ID compare BLOCKED (not assumed harmless). Resources/logs PASS.
+  # container, no bind, persist export + snapshot). Migrations 50/50 MATCH
+  # after 09:37 ID paste (49-count was Snapshot grep miss). Resources/logs PASS.
   # ufw inactive — DO cloud firewall still BLOCKED. Image Created + GIT_SHA
   # = PARTIAL; OCI LABEL wired for next authorized rebuild only.
   # Do not close 19.1/19.2. Do not recreate nginx. Do not install timer.

@@ -1,50 +1,24 @@
 # Story 19.1 — EF migration ID compare (2026-10-11)
 
-**Mutation:** none. Count 50 is **not** treated as harmless. Close stays blocked until IDs are pasted and compared.
+**Mutation:** none. Owner pasted IDs from `/home/deploy/cohestra` (cwd miss from `~` first, then success).
 
-## What is known
+## Result: MATCH (50 / 50)
 
 | Item | Value |
 |------|--------|
-| Owner count (09:26, Cohestra `uat-compose` postgres) | **50** |
-| Repo Up() files at `f293650d` / #438 | **49** (`deploy/expected-ef-migration-ids.txt`) |
-| Deleted-and-not-restored migration in git | `20260830140000_AddTenantEmailOnNewRegistration` (21114a20 → deleted 3bb03ef0) |
-| Orphan Designer.cs | **none** — EF would not discover that class on a normal `MigrateAsync` |
-| Fold | `EmailOnNewRegistration` was later added to `20260830141409_AddTenantFormTemplates` |
+| Applied IDs (owner 09:37, Cohestra postgres) | **50** |
+| Repo Up() files at `f293650d` / this PR | **50** |
+| Extra / missing | **none** |
+| `RESULT` | **MATCH** |
 
-A count-only PASS was too weak. Status is **PARTIAL / ID-COMPARE BLOCKED**.
+The earlier **49** file count was a tooling error: `grep -v Snapshot` also dropped `20260707140334_AddSitePagePreviousPublishedSnapshot` (real Up() migration for `site_pages.PreviousPublishedAt` + `previous_published_sections_json`). That ID **is** in the repo (Designer included) and **is** on UAT.
 
-## Hypotheses (do not pick one without IDs)
+The deleted orphan `20260830140000_AddTenantEmailOnNewRegistration` is **not** in the history table.
 
-1. Extra row is the deleted orphan ID. Schema may still be fine if `tenants.EmailOnNewRegistration` exists (folded migration or leftover column). Do **not** delete the history row without a column check.
-2. Extra row is some other ID from an unmerged UAT deploy. That is an unknown schema object until identified.
-3. Count 50 includes a duplicate / unexpected table. The pasted ID list will show this.
+`deploy/expected-ef-migration-ids.txt` now lists all 50. Compare self-test checks the list against Up() files using `! -name CohestraDbContextModelSnapshot.cs`, not a `Snapshot` substring.
 
-## Owner commands (non-secret)
+## Gate
 
-```bash
-cd /home/deploy/cohestra
-# IDs only — no PII
-bash deploy/uat-compose.sh exec -T postgres \
-  psql -U crm -d cohestra -Atc 'SELECT "MigrationId" FROM "__EFMigrationsHistory" ORDER BY 1;' \
-  | tee /tmp/uat-migration-ids.txt
+**PASS** — Cohestra volume, all current IDs applied, no unknown extras.
 
-# After this PR is on the droplet, or copy the 50 lines into the compare locally:
-bash deploy/compare-ef-migration-ids.sh /tmp/uat-migration-ids.txt
-
-# Column check (name only)
-bash deploy/uat-compose.sh exec -T postgres \
-  psql -U crm -d cohestra -c "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='tenants' AND column_name='EmailOnNewRegistration';"
-```
-
-Paste the 50 `MigrationId` lines (and the column name row). Do not paste other table dumps.
-
-## Close rule
-
-Migrations gate moves to **PASS** only when:
-
-- all 49 expected IDs are present, and
-- the single extra ID is identified, and
-- the matching schema object is confirmed (or an owner-accepted leftover history row is recorded).
-
-Until then 19.1 stays open.
+This does **not** close 19.1. Firewall, first-operator, preflight, and live OCI revision remain open.

@@ -30,10 +30,14 @@ self_test() {
   tmp=$(mktemp)
   extra=$(mktemp)
   normalize_ids < "$EXPECTED" > "$tmp"
-  if [[ "$(wc -l < "$tmp")" -eq 49 ]]; then
-    pass "expected list has 49 unique IDs"
+  local disk
+  disk=$(find "$ROOT_DIR/src/Infrastructure/Persistence/Migrations" -name '*.cs' \
+    ! -name '*Designer.cs' ! -name 'CohestraDbContextModelSnapshot.cs' \
+    -printf '%f\n' | sed 's/\.cs$//' | sort)
+  if [[ "$(wc -l < "$tmp")" -eq 50 ]] && [[ "$(printf '%s\n' "$disk")" == "$(cat "$tmp")" ]]; then
+    pass "expected list has 50 unique IDs matching Up() files (not ModelSnapshot)"
   else
-    fail "expected list must have 49 unique IDs"
+    fail "expected list must have 50 unique IDs matching Up() files"
   fi
   if ! grep -qx "$ORPHAN_CANDIDATE" "$tmp"; then
     pass "expected list does not include deleted orphan ID"
