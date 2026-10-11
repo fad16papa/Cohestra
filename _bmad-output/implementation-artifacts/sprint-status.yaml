@@ -273,6 +273,12 @@ development_status:
   epic-18-retrospective: done
 
   # Epic 19 — unblocked 2026-08-23 after Epic 29. Do not put Stripe keys on the droplet.
+  # 2026-10-11 acceptance (additive; do not close 19.1/19.2):
+  # Owner console: droplet SHA + API GIT_SHA = f293650d; smoke 10/0; existing-app 6/0;
+  # wildcard TLS 9/0; existing cert renewed; Paddle SANDBOX; recaptcha off.
+  # Public probe: both hosts trusted HTTPS. Missing: firewall, migrations inspect,
+  # resources/logs, image build provenance, zz bind persistence.
+  # Evidence: epic-19-1-19-2-acceptance-2026-10-11.md. Production NO-GO.
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
   # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.
   # Isolation review on 95e5bd0 found BLOCKER/MAJOR; patches applied, story stays in-progress.

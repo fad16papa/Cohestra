@@ -357,6 +357,19 @@ else
   fail "Missing deploy/host-proxy/prove-edge-tls-wildcard.sh"
 fi
 
+ZZ_PERSIST="$ROOT_DIR/deploy/host-proxy/prove-zz-vhost-persist.sh"
+if [[ -f "$ZZ_PERSIST" ]]; then
+  if grep -q 'zz-cohestra-uat.conf' "$ZZ_PERSIST" \
+    && grep -q 'PERSISTENCE=' "$ZZ_PERSIST" \
+    && ! grep -vE '^[[:space:]]*(#|echo )' "$ZZ_PERSIST" | grep -Eq 'nginx -s reload|compose up|force-recreate|certonly|certbot renew'; then
+    pass "prove-zz-vhost-persist.sh is read-only (inspect bind vs container-only, no reload/renew)"
+  else
+    fail "prove-zz-vhost-persist.sh must stay read-only and never reload or renew"
+  fi
+else
+  fail "Missing deploy/host-proxy/prove-zz-vhost-persist.sh"
+fi
+
 FLIP_HTTPS="$ROOT_DIR/deploy/host-proxy/flip-public-base-https.sh"
 if [[ -f "$FLIP_HTTPS" ]]; then
   if grep -q 'https://uat.cohestra.app' "$FLIP_HTTPS" \

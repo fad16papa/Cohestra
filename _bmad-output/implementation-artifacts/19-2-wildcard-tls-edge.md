@@ -62,14 +62,16 @@ bash deploy/host-proxy/persist-cohestra-vhost.sh
 
 ## Acceptance checklist
 
-- [ ] `EXISTING APP PRE-TLS BASELINE: PASS`
-- [ ] HTTP Host `uat.cohestra.app` + `creativorare.uat.cohestra.app` → Cohestra
-- [ ] Cert SAN: `uat.cohestra.app` + `*.uat.cohestra.app`
-- [ ] `https://uat.cohestra.app/ready` Healthy
-- [ ] `https://creativorare.uat.cohestra.app/register/sunday-dragon-highlander-2` renders
-- [ ] `https://thesocialcollectivesg.com/ready` unchanged cert + Healthy
-- [ ] Tenant URLs emit `*.uat.cohestra.app` not `*.cohestra.app`
-- [ ] Security headers verified (`verify-security-headers.sh`)
+- [x] `EXISTING APP PRE-TLS BASELINE: PASS` — owner `verify-existing-app.sh` 6/0 on 2026-10-11 (after renew)
+- [x] HTTP Host `uat.cohestra.app` + `creativorare.uat.cohestra.app` → Cohestra — public 2026-10-11
+- [x] Cert SAN: `uat.cohestra.app` + `*.uat.cohestra.app` — public + owner wildcard proof 9/0
+- [x] `https://uat.cohestra.app/ready` Healthy — public + owner
+- [x] `https://creativorare.uat.cohestra.app/register/sunday-dragon-highlander-2` renders — public **200** Cohestra chrome (activity archived / unavailable; `og:url` on `*.uat`)
+- [x] `https://thesocialcollectivesg.com/ready` Healthy with **trusted** TLS — owner renew 2026-10-11 04:45 GMT; public notAfter 2027-01-09; UAT wildcard **unchanged**
+- [x] Tenant URLs emit `*.uat.cohestra.app` not `*.cohestra.app` — `TenantPublicWebUrlBuilder` + live `og:url`
+- [x] Security headers verified — owner `verify-security-headers.sh` (inside smoke 10/0) + public singleton headers
+
+Durable `zz-cohestra-uat.conf` bind remains **BLOCKED** (not inspected). Auto-renew timer for the existing site is **designed, not installed**. Tracker stays **review / not done**. See `epic-19-1-19-2-acceptance-2026-10-11.md`.
 
 ## Live state at story start (2026-09-12)
 
@@ -95,4 +97,5 @@ Owner SSH checkboxes above remain **unchecked**. Tracker stays **review / not do
 
 ## Renewal
 
-**MANUAL-ACCEPTED** for UAT until DNS provider automation exists.
+**MANUAL-ACCEPTED** for UAT wildcard until DNS provider automation exists.  
+Existing-site HTTP-01 timer: designed in `epic-19-existing-site-http01-renew-timer-2026-10-11.md` — **do not install** without owner authorization.

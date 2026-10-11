@@ -149,3 +149,20 @@ Cloud Agent has **no SSH**. Public checks only (no secrets):
 
 Tracker stays **in-progress / not done**. This probe does **not** replace droplet smoke (`uat-smoke.sh`), owner SSH acceptance, or the Mandatory Code Review Loop close. Public stack is **not** proven to be PR #404 HEAD `47ebb1b5`.
 
+## Owner UAT evidence (2026-10-11)
+
+Attributed to the owner droplet console. This agent did not SSH and did not invent script output.
+
+| Item | Owner report |
+|------|----------------|
+| Checkout + API `GIT_SHA` | `f293650d3ab3b536e159c2888f562b124540f26f` (= `origin/main`; CI `38065729824`) |
+| API / web image IDs | `sha256:5c69a9aa…fbaf154` / `sha256:63ac14b3…4a287bf` — IDs only; **build provenance still BLOCKED** |
+| `uat-smoke.sh` | 10 passed, 0 failed |
+| `verify-existing-app.sh` | 6 passed, 0 failed |
+| Seeds / captcha bypass | absent (expected) |
+| Paddle classify | SANDBOX (19.4, not a 19.1 close gate) |
+
+Independent public probe the same day: existing + UAT `/ready` Healthy with **trusted** TLS after the owner renew.
+
+Still **BLOCKED** for close: firewall 22/80/443 only; `__EFMigrationsHistory`; `free`/`docker stats`/`df`; redacted API logs; image build provenance. See `epic-19-1-19-2-acceptance-2026-10-11.md`. **Do not mark done.**
+
