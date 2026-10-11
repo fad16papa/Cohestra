@@ -165,16 +165,42 @@ public sealed class BillingReturnUrlTests
     }
 
     [Fact]
-    public void IsAllowed_localhost_http_matches_public_web_portless_host()
+    public void IsAllowed_localhost_http_requires_public_web_port()
     {
         Assert.True(BillingReturnUrl.IsAllowed(
+            "http://studio.localhost:3000/settings/billing",
+            "http://localhost:3000",
+            "studio"));
+        Assert.False(BillingReturnUrl.IsAllowed(
             "http://studio.localhost/settings/billing",
             "http://localhost:3000",
             "studio"));
         Assert.False(BillingReturnUrl.IsAllowed(
-            "https://studio.localhost/settings/billing",
+            "http://studio.localhost:3001/settings/billing",
             "http://localhost:3000",
             "studio"));
+        Assert.False(BillingReturnUrl.IsAllowed(
+            "https://studio.localhost:3000/settings/billing",
+            "http://localhost:3000",
+            "studio"));
+    }
+
+    [Fact]
+    public void IsAllowed_https_default_port_matches_explicit_443_and_rejects_nonstandard()
+    {
+        Assert.True(BillingReturnUrl.IsAllowed(
+            $"{UatOrigin}:443/settings/billing",
+            UatPublicBase,
+            Slug));
+        Assert.False(BillingReturnUrl.IsAllowed(
+            $"{UatOrigin}:8443/settings/billing",
+            UatPublicBase,
+            Slug));
+        Assert.False(BillingReturnUrl.IsAllowed(
+            "https://events.acme.example:8443/settings/billing",
+            UatPublicBase,
+            Slug,
+            "events.acme.example"));
     }
 
     [Fact]

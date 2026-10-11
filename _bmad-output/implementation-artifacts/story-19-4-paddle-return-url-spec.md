@@ -19,6 +19,6 @@ UAT Manage payment posts `https://{slug}.uat.cohestra.app/settings/billing` and 
 ## Acceptance (Given / When / Then)
 
 - Given UAT PublicWeb `https://uat.cohestra.app` and tenant `creativorare`, when Manage payment posts the workspace HTTPS billing URL, then validation succeeds (Paddle 200/503, not 400 origin).
-- Given a return URL with http, another tenant host, an external host, a deceptive suffix, or a non-URL, then the API returns 400.
+- Given a return URL with http, another tenant host, an external host, a deceptive suffix, a nonstandard port, or a non-URL, then the API returns 400.
 - Given `X-Forwarded-Host: evil.example`, when the return URL is that host, then the API still returns 400.
 - Given checkout success/cancel URLs, then the same allow-list applies.

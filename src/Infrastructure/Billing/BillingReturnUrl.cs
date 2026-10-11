@@ -7,9 +7,10 @@ namespace Cohestra.Infrastructure.Billing;
 /// Uses the authenticated tenant's public origin, not API
 /// <see cref="Microsoft.AspNetCore.Http.HttpRequest.Scheme"/> /
 /// <see cref="Microsoft.AspNetCore.Http.HttpRequest.Host"/> — those stay
-/// <c>http</c> behind the two-proxy UAT hop because ForwardedHeaders trusts
-/// loopback only.
-/// </summary>
+    /// <c>http</c> behind the two-proxy UAT hop because ForwardedHeaders trusts
+    /// loopback only. Scheme, hostname, and port must match the approved origin
+    /// (<see cref="Uri.Port"/> treats omitted 80/443 as the default).
+    /// </summary>
 public static class BillingReturnUrl
 {
     public static string TenantOrigin(string publicBaseUrl, string tenantSlug) =>
@@ -113,7 +114,8 @@ public static class BillingReturnUrl
 
     private static bool MatchesWorkspace(Uri returnUri, Uri origin) =>
         string.Equals(returnUri.Scheme, origin.Scheme, StringComparison.OrdinalIgnoreCase)
-        && string.Equals(returnUri.Host, origin.Host, StringComparison.OrdinalIgnoreCase);
+        && string.Equals(returnUri.Host, origin.Host, StringComparison.OrdinalIgnoreCase)
+        && returnUri.Port == origin.Port;
 
     private static bool IsHttpOrHttps(Uri uri) =>
         uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)

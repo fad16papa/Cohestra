@@ -20,7 +20,7 @@
 | 3 | blind+edge | MINOR | patch | Checkout defaults were not run through `IsAllowed` |
 | 4 | blind | MINOR | patch | Custom domain had no portal integration proof |
 | 5 | blind | NIT | patch | Slug origin not asserted once custom domain is present |
-| 6 | blind | NIT | dismiss | Port omitted from match — intentional, same as prior helper; required for `localhost:3000` vs portless host |
+| 6 | blind+owner | MINOR | patch | Port omitted from match — tightened; scheme + host + `Uri.Port` (default 80/443 equivalent) |
 | 7 | auditor | NIT | dismiss | `X-Forwarded-Host: evil.example` 403s at tenant resolution; allow-list still unused for that host |
 | 8 | auditor | — | defer | Live UAT / Paddle sandbox not run (explicit release restriction) |
 | 9 | blind | NIT | dismiss | 400-before-503 and portal slug `Forbid` are intentional fail-closed |
@@ -28,7 +28,7 @@
 | 11 | edge | NIT | defer | Trailing-dot FQDN / IDN punycode |
 | 12 | blind | NIT | dismiss | Apex host is not a tenant workspace origin |
 
-Dismissed: 4. Deferred: 3. Patched in this loop: 1–5.
+Dismissed: 3. Deferred: 3. Patched in this loop: 1–6.
 
 ## Second pass on `e38572cb`
 
@@ -37,7 +37,19 @@ Re-read `BillingReturnUrl`, portal/checkout, and the new tests. Invalid `PublicW
 Unresolved **BLOCKER**: none  
 Unresolved **MAJOR**: none  
 
-Residual NIT/defer only (port-agnostic host match, live UAT/Paddle, trailing-dot FQDN). Product/UAT acceptance still required on an authorized deploy. Do not mark 19.4 done.
+Residual NIT/defer only (live UAT/Paddle, trailing-dot FQDN). Product/UAT acceptance still required on an authorized deploy. Do not mark 19.4 done.
+
+## Third pass — port origin (owner review finding)
+
+**Decision:** tighten, do not accept. A nonstandard port is a different web origin. Paddle would otherwise be allowed to return to `{tenant-host}:8443`.
+
+`MatchesWorkspace` now requires `returnUri.Port == origin.Port`. .NET `Uri.Port` treats omitted `:80` / `:443` as the default, so UAT `https://{slug}.uat.cohestra.app/settings/billing` still matches. Local PublicWeb `http://localhost:3000` requires `:3000` on the slug host. Custom-domain origins keep the public scheme’s default port and do not inherit the localhost dev port.
+
+Unit and integration tests cover explicit `:443`, rejected `:8443` / portless localhost / `:3001`, and checkout/portal workspace URLs on `:3000`.
+
+Unresolved **BLOCKER**: none  
+Unresolved **MAJOR**: none  
+Story 19.4 remains open. Production NO-GO. Do not merge without owner approval. #437/#438 untouched.
 
 ## Final gate
 

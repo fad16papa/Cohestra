@@ -135,7 +135,7 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
 
         using var response = await client.PostAsJsonAsync(
             "/api/v1/admin/billing/portal",
-            new CreatePortalSessionRequest($"http://{TenantIds.DefaultSlug}.localhost/settings/billing"),
+            new CreatePortalSessionRequest(WorkspaceUrl("/settings/billing")),
             IntegrationTestHelpers.JsonOptions);
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
@@ -164,6 +164,8 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
     [InlineData("http://harbourline.localhost/settings/billing", "Invalid return URL")]
     [InlineData("https://evil.example/settings/billing", "Invalid return URL")]
     [InlineData("http://default.localhost.evil.example/settings/billing", "Invalid return URL")]
+    [InlineData("http://default.localhost:8443/settings/billing", "Invalid return URL")]
+    [InlineData("http://default.localhost/settings/billing", "Invalid return URL")]
     [InlineData("not-a-url", "Invalid return URL")]
     public async Task TenantAdmin_CreatePortal_RejectsUnsafeReturnUrl(string returnUrl, string title)
     {
@@ -200,7 +202,7 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
 
         using var accepted = await client.PostAsJsonAsync(
             "/api/v1/admin/billing/portal",
-            new CreatePortalSessionRequest($"http://{TenantIds.DefaultSlug}.localhost/settings/billing"),
+            new CreatePortalSessionRequest(WorkspaceUrl("/settings/billing")),
             IntegrationTestHelpers.JsonOptions);
         Assert.Equal(HttpStatusCode.ServiceUnavailable, accepted.StatusCode);
     }
@@ -263,8 +265,8 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
             new CreateCheckoutSessionRequest(
                 "Core",
                 "monthly",
-                $"http://{TenantIds.DefaultSlug}.localhost/dashboard?billing=success",
-                $"http://{TenantIds.DefaultSlug}.localhost/billing/checkout?canceled=1"),
+                WorkspaceUrl("/dashboard?billing=success"),
+                WorkspaceUrl("/billing/checkout?canceled=1")),
             IntegrationTestHelpers.JsonOptions);
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
@@ -274,10 +276,11 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
     }
 
     [SkippableTheory]
-    [InlineData("https://evil.example/success", "http://default.localhost/cancel", "Invalid success URL")]
-    [InlineData("http://default.localhost/success", "https://evil.example/cancel", "Invalid cancel URL")]
-    [InlineData("http://other.localhost/success", "http://default.localhost/cancel", "Invalid success URL")]
-    [InlineData("http://default.localhost.evil.example/success", "http://default.localhost/cancel", "Invalid success URL")]
+    [InlineData("https://evil.example/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
+    [InlineData("http://default.localhost:3000/success", "https://evil.example/cancel", "Invalid cancel URL")]
+    [InlineData("http://other.localhost:3000/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
+    [InlineData("http://default.localhost.evil.example/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
+    [InlineData("http://default.localhost:8443/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
     public async Task TenantAdmin_CreateCheckout_RejectsUnsafeReturnUrls(
         string successUrl,
         string cancelUrl,
@@ -319,11 +322,14 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
             new CreateCheckoutSessionRequest(
                 "Core",
                 "monthly",
-                $"http://{TenantIds.DefaultSlug}.localhost/dashboard?billing=success",
-                $"http://{TenantIds.DefaultSlug}.localhost/billing/checkout?canceled=1"),
+                WorkspaceUrl("/dashboard?billing=success"),
+                WorkspaceUrl("/billing/checkout?canceled=1")),
             IntegrationTestHelpers.JsonOptions);
         Assert.Equal(HttpStatusCode.ServiceUnavailable, accepted.StatusCode);
     }
+
+    private static string WorkspaceUrl(string path) =>
+        $"http://{TenantIds.DefaultSlug}.localhost:3000{path}";
 
     private async Task<HttpClient> CreateBillingOwnerClientAsync()
     {
