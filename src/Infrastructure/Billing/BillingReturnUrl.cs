@@ -31,6 +31,7 @@ public static class BillingReturnUrl
     {
         if (string.IsNullOrWhiteSpace(candidate)
             || string.IsNullOrWhiteSpace(tenantSlug)
+            || !TryAbsoluteHttpOrigin(publicBaseUrl, out _)
             || !Uri.TryCreate(candidate, UriKind.Absolute, out var returnUri)
             || !IsHttpOrHttps(returnUri)
             || !string.IsNullOrEmpty(returnUri.UserInfo))
@@ -55,11 +56,14 @@ public static class BillingReturnUrl
         string? verifiedCustomDomain = null)
     {
         var origins = new List<Uri>(2);
-        if (Uri.TryCreate(TenantOrigin(publicBaseUrl, tenantSlug), UriKind.Absolute, out var tenantOrigin)
-            && IsHttpOrHttps(tenantOrigin))
+        if (!TryAbsoluteHttpOrigin(publicBaseUrl, out _)
+            || !Uri.TryCreate(TenantOrigin(publicBaseUrl, tenantSlug), UriKind.Absolute, out var tenantOrigin)
+            || !IsHttpOrHttps(tenantOrigin))
         {
-            origins.Add(tenantOrigin);
+            return origins;
         }
+
+        origins.Add(tenantOrigin);
 
         var customHost = SanitizeHost(verifiedCustomDomain);
         if (customHost is not null
@@ -97,6 +101,14 @@ public static class BillingReturnUrl
         }
 
         return parsed.Host;
+    }
+
+    private static bool TryAbsoluteHttpOrigin(string? publicBaseUrl, out Uri publicBase)
+    {
+        publicBase = null!;
+        return !string.IsNullOrWhiteSpace(publicBaseUrl)
+            && Uri.TryCreate(publicBaseUrl.Trim(), UriKind.Absolute, out publicBase!)
+            && IsHttpOrHttps(publicBase);
     }
 
     private static bool MatchesWorkspace(Uri returnUri, Uri origin) =>

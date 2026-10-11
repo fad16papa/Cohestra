@@ -113,11 +113,32 @@ public sealed class BillingReturnUrlTests
             UatPublicBase,
             Slug,
             "events.acme.example"));
+        Assert.True(BillingReturnUrl.IsAllowed(
+            $"{UatOrigin}/settings/billing",
+            UatPublicBase,
+            Slug,
+            "events.acme.example"));
         Assert.False(BillingReturnUrl.IsAllowed(
             "http://events.acme.example/settings/billing",
             UatPublicBase,
             Slug,
             "events.acme.example"));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not-a-url")]
+    public void IsAllowed_invalid_public_web_does_not_fall_back_to_production(string? publicBaseUrl)
+    {
+        Assert.False(BillingReturnUrl.IsAllowed(
+            $"{UatOrigin}/settings/billing",
+            publicBaseUrl!,
+            Slug));
+        Assert.False(BillingReturnUrl.IsAllowed(
+            "https://creativorare.cohestra.app/settings/billing",
+            publicBaseUrl!,
+            Slug));
     }
 
     [Fact]

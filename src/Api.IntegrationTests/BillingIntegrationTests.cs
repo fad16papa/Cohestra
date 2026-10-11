@@ -206,6 +206,53 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
     }
 
     [SkippableFact]
+    public async Task TenantAdmin_CreatePortal_VerifiedCustomDomain_IsAllowedOnPublicScheme()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await SetDefaultCustomDomainAsync("events.acme.example", DateTimeOffset.UtcNow);
+        try
+        {
+            using var client = await CreateBillingOwnerClientAsync();
+
+            using var accepted = await client.PostAsJsonAsync(
+                "/api/v1/admin/billing/portal",
+                new CreatePortalSessionRequest("http://events.acme.example/settings/billing"),
+                IntegrationTestHelpers.JsonOptions);
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, accepted.StatusCode);
+
+            using var rejected = await client.PostAsJsonAsync(
+                "/api/v1/admin/billing/portal",
+                new CreatePortalSessionRequest("https://events.acme.example/settings/billing"),
+                IntegrationTestHelpers.JsonOptions);
+            Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+        }
+        finally
+        {
+            await SetDefaultCustomDomainAsync(null, null);
+        }
+    }
+
+    [SkippableFact]
+    public async Task TenantAdmin_CreatePortal_UnverifiedCustomDomain_IsRejected()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await SetDefaultCustomDomainAsync("events.acme.example", verifiedAt: null);
+        try
+        {
+            using var client = await CreateBillingOwnerClientAsync();
+            using var response = await client.PostAsJsonAsync(
+                "/api/v1/admin/billing/portal",
+                new CreatePortalSessionRequest("http://events.acme.example/settings/billing"),
+                IntegrationTestHelpers.JsonOptions);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+        finally
+        {
+            await SetDefaultCustomDomainAsync(null, null);
+        }
+    }
+
+    [SkippableFact]
     public async Task TenantAdmin_CreateCheckout_ValidWorkspaceUrls_Returns503WhenPaddleMissing()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
@@ -285,5 +332,15 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
         var token = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
         IntegrationTestHelpers.UseBearerToken(client, token);
         return client;
+    }
+
+    private async Task SetDefaultCustomDomainAsync(string? host, DateTimeOffset? verifiedAt)
+    {
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var row = await db.Tenants.FirstAsync(tenant => tenant.Id == TenantIds.Default);
+        row.CustomDomain = host;
+        row.CustomDomainVerifiedAt = verifiedAt;
+        await db.SaveChangesAsync();
     }
 }

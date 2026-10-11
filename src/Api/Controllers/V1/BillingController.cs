@@ -135,36 +135,6 @@ public class BillingController(
             tenantId,
             cancellationToken);
 
-        if (!string.IsNullOrWhiteSpace(request.SuccessUrl)
-            && !BillingReturnUrl.IsAllowed(
-                request.SuccessUrl,
-                publicBaseUrl,
-                tenantSlug,
-                verifiedCustomDomain))
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Invalid success URL",
-                Detail = "Success URL must stay on the current workspace host.",
-                Status = StatusCodes.Status400BadRequest,
-            });
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.CancelUrl)
-            && !BillingReturnUrl.IsAllowed(
-                request.CancelUrl,
-                publicBaseUrl,
-                tenantSlug,
-                verifiedCustomDomain))
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Invalid cancel URL",
-                Detail = "Cancel URL must stay on the current workspace host.",
-                Status = StatusCodes.Status400BadRequest,
-            });
-        }
-
         var successUrl = string.IsNullOrWhiteSpace(request.SuccessUrl)
             ? BillingReturnUrl.TenantPath(
                 publicBaseUrl,
@@ -177,6 +147,26 @@ public class BillingController(
                 tenantSlug,
                 "/billing/checkout?canceled=1")
             : request.CancelUrl!;
+
+        if (!BillingReturnUrl.IsAllowed(successUrl, publicBaseUrl, tenantSlug, verifiedCustomDomain))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid success URL",
+                Detail = "Success URL must stay on the current workspace host.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
+
+        if (!BillingReturnUrl.IsAllowed(cancelUrl, publicBaseUrl, tenantSlug, verifiedCustomDomain))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid cancel URL",
+                Detail = "Cancel URL must stay on the current workspace host.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
 
         if (!paddleOptions.Value.IsConfigured)
         {
