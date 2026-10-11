@@ -28,6 +28,13 @@ public interface IBillingService
         string? operatorEmail,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Hostname of a DNS-verified custom domain, or null. Never request-supplied.
+    /// </summary>
+    Task<string?> GetVerifiedCustomDomainAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
     Task<BillingDetailsDto> GetDetailsAsync(
         Guid tenantId,
         string operatorEmail,

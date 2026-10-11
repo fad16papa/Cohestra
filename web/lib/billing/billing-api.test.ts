@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import {
   BILLING_RECONCILE_REASONS,
   checkoutReconcileKey,
+  createBillingCheckoutWithAuth,
+  createBillingPortalSession,
   createCheckoutReconcileGate,
   reconcileBillingFromProviderWithAuth,
   resolveCheckoutReturnTrigger,
@@ -180,6 +182,54 @@ describe("resolveCheckoutReturnTrigger", () => {
         transactionId: null,
       }).shouldReconcile
     ).toBe(true);
+  });
+});
+
+describe("createBillingPortalSession", () => {
+  it("posts the browser return URL unchanged", async () => {
+    const returnUrl = "https://creativorare.uat.cohestra.app/settings/billing";
+    const authFetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(init?.method).toBe("POST");
+      expect(JSON.parse(String(init?.body))).toEqual({ returnUrl });
+      return new Response(JSON.stringify({ portalUrl: "https://sandbox-customer-portal.paddle.com/s" }), {
+        status: 200,
+      });
+    });
+
+    await expect(createBillingPortalSession(authFetch, returnUrl)).resolves.toBe(
+      "https://sandbox-customer-portal.paddle.com/s"
+    );
+  });
+});
+
+describe("createBillingCheckoutWithAuth", () => {
+  it("posts workspace success and cancel URLs unchanged", async () => {
+    const successUrl = "https://creativorare.uat.cohestra.app/dashboard?billing=success";
+    const cancelUrl = "https://creativorare.uat.cohestra.app/billing/checkout?canceled=1";
+    const authFetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(JSON.parse(String(init?.body))).toEqual({
+        plan: "pro",
+        interval: "monthly",
+        successUrl,
+        cancelUrl,
+      });
+      return new Response(
+        JSON.stringify({
+          checkoutUrl: "https://sandbox-buy.paddle.com/c",
+          trialDisclaimer: "Trial",
+        }),
+        { status: 200 }
+      );
+    });
+
+    await expect(
+      createBillingCheckoutWithAuth(authFetch, {
+        plan: "pro",
+        interval: "monthly",
+        successUrl,
+        cancelUrl,
+      })
+    ).resolves.toMatchObject({ ok: true });
   });
 });
 

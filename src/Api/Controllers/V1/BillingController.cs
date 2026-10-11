@@ -4,6 +4,7 @@ using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Billing;
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Billing;
 using Microsoft.AspNetCore.Authorization;
@@ -23,7 +24,8 @@ namespace Cohestra.Api.Controllers.V1;
 public class BillingController(
     IBillingService billingService,
     ICurrentTenant currentTenant,
-    IOptions<PaddleSettings> paddleOptions) : ControllerBase
+    IOptions<PaddleSettings> paddleOptions,
+    IOptions<PublicWebOptions> publicWebOptions) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(BillingSummaryResponse), StatusCodes.Status200OK)]
@@ -92,24 +94,14 @@ public class BillingController(
         [FromBody] CreateCheckoutSessionRequest request,
         CancellationToken cancellationToken)
     {
-        if (!paddleOptions.Value.IsConfigured)
-        {
-            return StatusCode(
-                StatusCodes.Status503ServiceUnavailable,
-                new ProblemDetails
-                {
-                    Title = "Billing unavailable",
-                    Detail = "Paddle Checkout is not configured in this environment.",
-                    Status = StatusCodes.Status503ServiceUnavailable,
-                });
-        }
-
         if (!currentTenant.IsResolved
             || currentTenant.TenantId is not Guid tenantId
             || string.IsNullOrWhiteSpace(currentTenant.Slug))
         {
             return Forbid();
         }
+
+        var tenantSlug = currentTenant.Slug;
 
         if (!TryParsePlan(request.Plan, out var plan) || plan is not (TenantPlan.Core or TenantPlan.Pro))
         {
@@ -138,9 +130,25 @@ public class BillingController(
         }
 
         var email = GetOperatorEmail() ?? string.Empty;
+        var publicBaseUrl = publicWebOptions.Value.BaseUrl;
+        var verifiedCustomDomain = await billingService.GetVerifiedCustomDomainAsync(
+            tenantId,
+            cancellationToken);
 
-        var tenantBase = $"{Request.Scheme}://{Request.Host.Value}";
-        if (!string.IsNullOrWhiteSpace(request.SuccessUrl) && !IsAllowedReturnUrl(request.SuccessUrl, tenantBase))
+        var successUrl = string.IsNullOrWhiteSpace(request.SuccessUrl)
+            ? BillingReturnUrl.TenantPath(
+                publicBaseUrl,
+                tenantSlug,
+                "/dashboard?billing=success&session_id={CHECKOUT_SESSION_ID}")
+            : request.SuccessUrl!;
+        var cancelUrl = string.IsNullOrWhiteSpace(request.CancelUrl)
+            ? BillingReturnUrl.TenantPath(
+                publicBaseUrl,
+                tenantSlug,
+                "/billing/checkout?canceled=1")
+            : request.CancelUrl!;
+
+        if (!BillingReturnUrl.IsAllowed(successUrl, publicBaseUrl, tenantSlug, verifiedCustomDomain))
         {
             return BadRequest(new ProblemDetails
             {
@@ -150,7 +158,7 @@ public class BillingController(
             });
         }
 
-        if (!string.IsNullOrWhiteSpace(request.CancelUrl) && !IsAllowedReturnUrl(request.CancelUrl, tenantBase))
+        if (!BillingReturnUrl.IsAllowed(cancelUrl, publicBaseUrl, tenantSlug, verifiedCustomDomain))
         {
             return BadRequest(new ProblemDetails
             {
@@ -160,19 +168,24 @@ public class BillingController(
             });
         }
 
-        var successUrl = string.IsNullOrWhiteSpace(request.SuccessUrl)
-            ? $"{tenantBase}/dashboard?billing=success&session_id={{CHECKOUT_SESSION_ID}}"
-            : request.SuccessUrl!;
-        var cancelUrl = string.IsNullOrWhiteSpace(request.CancelUrl)
-            ? $"{tenantBase}/billing/checkout?canceled=1"
-            : request.CancelUrl!;
+        if (!paddleOptions.Value.IsConfigured)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new ProblemDetails
+                {
+                    Title = "Billing unavailable",
+                    Detail = "Paddle Checkout is not configured in this environment.",
+                    Status = StatusCodes.Status503ServiceUnavailable,
+                });
+        }
 
         try
         {
             var session = await billingService.CreateCheckoutSessionAsync(
                 new CreateCheckoutSessionCommand(
                     tenantId,
-                    currentTenant.Slug,
+                    tenantSlug,
                     plan,
                     interval,
                     email,
@@ -208,15 +221,40 @@ public class BillingController(
         [FromBody] CreatePortalSessionRequest? request,
         CancellationToken cancellationToken)
     {
-        if (!currentTenant.IsResolved || currentTenant.TenantId is not Guid tenantId)
+        if (!currentTenant.IsResolved
+            || currentTenant.TenantId is not Guid tenantId
+            || string.IsNullOrWhiteSpace(currentTenant.Slug))
         {
             return Forbid();
         }
 
+        var tenantSlug = currentTenant.Slug;
         var denied = await EnsureBillingAccessAsync(tenantId, cancellationToken);
         if (denied is not null)
         {
             return denied;
+        }
+
+        var publicBaseUrl = publicWebOptions.Value.BaseUrl;
+        var verifiedCustomDomain = await billingService.GetVerifiedCustomDomainAsync(
+            tenantId,
+            cancellationToken);
+        var returnUrl = string.IsNullOrWhiteSpace(request?.ReturnUrl)
+            ? BillingReturnUrl.TenantPath(publicBaseUrl, tenantSlug, "/settings/billing")
+            : request!.ReturnUrl!;
+
+        if (!BillingReturnUrl.IsAllowed(
+                returnUrl,
+                publicBaseUrl,
+                tenantSlug,
+                verifiedCustomDomain))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid return URL",
+                Detail = "Return URL must stay on the current workspace host.",
+                Status = StatusCodes.Status400BadRequest,
+            });
         }
 
         if (!paddleOptions.Value.IsConfigured)
@@ -229,21 +267,6 @@ public class BillingController(
                     Detail = "Paddle Customer Portal is not configured in this environment.",
                     Status = StatusCodes.Status503ServiceUnavailable,
                 });
-        }
-
-        var tenantBase = $"{Request.Scheme}://{Request.Host.Value}";
-        var returnUrl = string.IsNullOrWhiteSpace(request?.ReturnUrl)
-            ? $"{tenantBase}/settings/billing"
-            : request!.ReturnUrl!;
-
-        if (!IsAllowedReturnUrl(returnUrl, tenantBase))
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Invalid return URL",
-                Detail = "Return URL must stay on the current workspace host.",
-                Status = StatusCodes.Status400BadRequest,
-            });
         }
 
         try
@@ -510,18 +533,6 @@ public class BillingController(
                     invoice.PdfUrl,
                     invoice.HostedInvoiceUrl))
                 .ToList());
-
-    private static bool IsAllowedReturnUrl(string url, string tenantBase)
-    {
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var returnUri)
-            || !Uri.TryCreate(tenantBase, UriKind.Absolute, out var baseUri))
-        {
-            return false;
-        }
-
-        return string.Equals(returnUri.Scheme, baseUri.Scheme, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(returnUri.Host, baseUri.Host, StringComparison.OrdinalIgnoreCase);
-    }
 
     private static BillingSummaryResponse MapSummary(BillingSummaryDto summary) =>
         new(

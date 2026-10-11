@@ -442,6 +442,34 @@ public sealed class PaddleBillingServiceTests
         Assert.Equal("sub_late", db.Tenants.Single(t => t.Id == tenant.Id).PaddleSubscriptionId);
     }
 
+    [Fact]
+    public async Task GetVerifiedCustomDomain_returns_host_only_when_verified()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db);
+        tenant.CustomDomain = "Events.Acme.Example";
+        tenant.CustomDomainVerifiedAt = DateTimeOffset.UtcNow;
+        db.SaveChanges();
+        var service = PaddleBillingTestHarness.CreateService(db);
+
+        var host = await service.GetVerifiedCustomDomainAsync(tenant.Id);
+
+        Assert.Equal("events.acme.example", host);
+    }
+
+    [Fact]
+    public async Task GetVerifiedCustomDomain_returns_null_when_unverified()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var tenant = PaddleBillingTestHarness.SeedTenant(db);
+        tenant.CustomDomain = "events.acme.example";
+        tenant.CustomDomainVerifiedAt = null;
+        db.SaveChanges();
+        var service = PaddleBillingTestHarness.CreateService(db);
+
+        Assert.Null(await service.GetVerifiedCustomDomainAsync(tenant.Id));
+    }
+
     private static CreateCheckoutSessionCommand Checkout(Guid tenantId) =>
         new(
             tenantId,

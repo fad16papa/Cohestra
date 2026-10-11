@@ -126,4 +126,227 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
         Assert.Contains("managed by", body, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("503", body, StringComparison.Ordinal);
     }
+
+    [SkippableFact]
+    public async Task TenantAdmin_CreatePortal_ValidWorkspaceUrl_Returns503WhenPaddleMissing()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        using var client = await CreateBillingOwnerClientAsync();
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/portal",
+            new CreatePortalSessionRequest(WorkspaceUrl("/settings/billing")),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Invalid return URL", body, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task TenantAdmin_CreatePortal_DefaultReturnUrl_Returns503WhenPaddleMissing()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        using var client = await CreateBillingOwnerClientAsync();
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/portal",
+            new CreatePortalSessionRequest(null),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Invalid return URL", body, StringComparison.Ordinal);
+    }
+
+    [SkippableTheory]
+    [InlineData("https://default.localhost/settings/billing", "Invalid return URL")]
+    [InlineData("http://harbourline.localhost/settings/billing", "Invalid return URL")]
+    [InlineData("https://evil.example/settings/billing", "Invalid return URL")]
+    [InlineData("http://default.localhost.evil.example/settings/billing", "Invalid return URL")]
+    [InlineData("http://default.localhost:8443/settings/billing", "Invalid return URL")]
+    [InlineData("http://default.localhost/settings/billing", "Invalid return URL")]
+    [InlineData("not-a-url", "Invalid return URL")]
+    public async Task TenantAdmin_CreatePortal_RejectsUnsafeReturnUrl(string returnUrl, string title)
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        using var client = await CreateBillingOwnerClientAsync();
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/portal",
+            new CreatePortalSessionRequest(returnUrl),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains(title, body, StringComparison.Ordinal);
+        Assert.Contains("current workspace host", body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [SkippableFact]
+    public async Task TenantAdmin_CreatePortal_ForwardedHeadersDoNotBypassAllowList()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        using var client = await CreateBillingOwnerClientAsync();
+        // Loopback is a trusted ForwardedHeaders peer. Keep the forwarded host on the
+        // authenticated tenant so resolution still succeeds; proto https would have
+        // failed the old Request.Scheme compare against an http PublicWeb origin.
+        client.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
+        client.DefaultRequestHeaders.Add("X-Forwarded-Host", $"{TenantIds.DefaultSlug}.localhost");
+
+        using var rejected = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/portal",
+            new CreatePortalSessionRequest("https://evil.example/settings/billing"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+
+        using var accepted = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/portal",
+            new CreatePortalSessionRequest(WorkspaceUrl("/settings/billing")),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, accepted.StatusCode);
+    }
+
+    [SkippableFact]
+    public async Task TenantAdmin_CreatePortal_VerifiedCustomDomain_IsAllowedOnPublicScheme()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await SetDefaultCustomDomainAsync("events.acme.example", DateTimeOffset.UtcNow);
+        try
+        {
+            using var client = await CreateBillingOwnerClientAsync();
+
+            using var accepted = await client.PostAsJsonAsync(
+                "/api/v1/admin/billing/portal",
+                new CreatePortalSessionRequest("http://events.acme.example/settings/billing"),
+                IntegrationTestHelpers.JsonOptions);
+            Assert.Equal(HttpStatusCode.ServiceUnavailable, accepted.StatusCode);
+
+            using var rejected = await client.PostAsJsonAsync(
+                "/api/v1/admin/billing/portal",
+                new CreatePortalSessionRequest("https://events.acme.example/settings/billing"),
+                IntegrationTestHelpers.JsonOptions);
+            Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+        }
+        finally
+        {
+            await SetDefaultCustomDomainAsync(null, null);
+        }
+    }
+
+    [SkippableFact]
+    public async Task TenantAdmin_CreatePortal_UnverifiedCustomDomain_IsRejected()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await SetDefaultCustomDomainAsync("events.acme.example", verifiedAt: null);
+        try
+        {
+            using var client = await CreateBillingOwnerClientAsync();
+            using var response = await client.PostAsJsonAsync(
+                "/api/v1/admin/billing/portal",
+                new CreatePortalSessionRequest("http://events.acme.example/settings/billing"),
+                IntegrationTestHelpers.JsonOptions);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+        finally
+        {
+            await SetDefaultCustomDomainAsync(null, null);
+        }
+    }
+
+    [SkippableFact]
+    public async Task TenantAdmin_CreateCheckout_ValidWorkspaceUrls_Returns503WhenPaddleMissing()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        using var client = await CreateBillingOwnerClientAsync();
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/checkout",
+            new CreateCheckoutSessionRequest(
+                "Core",
+                "monthly",
+                WorkspaceUrl("/dashboard?billing=success"),
+                WorkspaceUrl("/billing/checkout?canceled=1")),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Invalid success URL", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Invalid cancel URL", body, StringComparison.Ordinal);
+    }
+
+    [SkippableTheory]
+    [InlineData("https://evil.example/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
+    [InlineData("http://default.localhost:3000/success", "https://evil.example/cancel", "Invalid cancel URL")]
+    [InlineData("http://other.localhost:3000/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
+    [InlineData("http://default.localhost.evil.example/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
+    [InlineData("http://default.localhost:8443/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
+    public async Task TenantAdmin_CreateCheckout_RejectsUnsafeReturnUrls(
+        string successUrl,
+        string cancelUrl,
+        string title)
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        using var client = await CreateBillingOwnerClientAsync();
+
+        using var response = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/checkout",
+            new CreateCheckoutSessionRequest("Core", "monthly", successUrl, cancelUrl),
+            IntegrationTestHelpers.JsonOptions);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains(title, body, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task TenantAdmin_CreateCheckout_ForwardedHeadersDoNotBypassAllowList()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        using var client = await CreateBillingOwnerClientAsync();
+        client.DefaultRequestHeaders.Add("X-Forwarded-Proto", "https");
+        client.DefaultRequestHeaders.Add("X-Forwarded-Host", $"{TenantIds.DefaultSlug}.localhost");
+
+        using var rejected = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/checkout",
+            new CreateCheckoutSessionRequest(
+                "Core",
+                "monthly",
+                "https://evil.example/success",
+                "https://evil.example/cancel"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+
+        using var accepted = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/checkout",
+            new CreateCheckoutSessionRequest(
+                "Core",
+                "monthly",
+                WorkspaceUrl("/dashboard?billing=success"),
+                WorkspaceUrl("/billing/checkout?canceled=1")),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, accepted.StatusCode);
+    }
+
+    private static string WorkspaceUrl(string path) =>
+        $"http://{TenantIds.DefaultSlug}.localhost:3000{path}";
+
+    private async Task<HttpClient> CreateBillingOwnerClientAsync()
+    {
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+        var client = Factory.CreateClient();
+        var token = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, token);
+        return client;
+    }
+
+    private async Task SetDefaultCustomDomainAsync(string? host, DateTimeOffset? verifiedAt)
+    {
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var row = await db.Tenants.FirstAsync(tenant => tenant.Id == TenantIds.Default);
+        row.CustomDomain = host;
+        row.CustomDomainVerifiedAt = verifiedAt;
+        await db.SaveChangesAsync();
+    }
 }
