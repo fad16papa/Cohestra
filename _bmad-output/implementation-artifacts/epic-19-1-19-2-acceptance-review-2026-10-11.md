@@ -1,15 +1,11 @@
-# BMAD code review — Stripe leftovers still live
+# BMAD code review — preflight PASS 17/0/1
 
-**Reviewed content HEAD:** `d69d85ac`  
+**Reviewed content HEAD:** `f6acffda`  
 **PR:** #438 draft. #437 stays draft at `54a98647`.  
 **Model:** Grok 4.6 only.
 
 19.1 / 19.2 **open**. Production **NO-GO**.
 
-## Diff
+Owner ~09:56 `sed` commented `Stripe__*` after backup; preflight **Failed: 0**. Recaptcha warn allowed until 19.3. Script footer “proceed with docker compose up” is **not** authorization to recreate the live stack.
 
-Owner 09:54: comments did not disable Stripe. Eight uncommented `Stripe__` **names** remain. Preflight now fails any non-empty `Stripe__*` via `compgen -e` and prints `leftover_name=` only. Isolation **60/0**.
-
-## Verdict
-
-**No unresolved BLOCKER or MAJOR.** Owner must prefix `# ` on every `Stripe__` line (first non-space char) or delete them, then re-run. Do not paste values. Do not close 19.1.
+**Verdict:** No unresolved BLOCKER/MAJOR. Do not close 19.1 (firewall, first-operator, live OCI still open). Do not compose-up.
