@@ -2,25 +2,23 @@
 
 **Mutation:** none. Do not recreate `lead-generation-crm-nginx-1` until the owner authorizes a bind.
 
-## What we know without SSH
+## Live classification 2026-10-11 ~09:26 UTC (owner paste)
+
+**`PERSISTENCE=EXPORT_ONLY`.** This agent did not SSH. Owner ran `inspect-existing-nginx.sh` + `persist-cohestra-vhost.sh` from `/home/deploy/cohestra` at `f293650d`. `prove-zz-vhost-persist.sh` is **not** on that checkout; equivalent inspect (container file + mounts + export path) matches the script’s EXPORT_ONLY branch.
 
 | Fact | Grade |
 |------|--------|
-| Live UAT HTTPS works | Confirmed (public probe) |
-| Additive vhost path | Confirmed repo: `/etc/nginx/conf.d/zz-cohestra-uat.conf` |
-| Existing site bind | Confirmed 2026-09-06 discovery: `/root/lead-generation-crm/deploy/nginx/active-ssl.conf` → `/etc/nginx/conf.d/default.conf` (RO) |
-| `include /etc/nginx/conf.d/*.conf` | Confirmed 2026-09-06 |
-| `zz` is a **second** bind today | **Unknown** — Cloud Agent cannot `docker inspect` mounts |
-| Default assumption until prove | **CONTAINER_ONLY** (writable layer). Recreate (not reload) would drop UAT HTTPS |
+| Live UAT HTTPS works | Confirmed (public probe + container vhost listen 443) |
+| Additive vhost path | `/etc/nginx/conf.d/zz-cohestra-uat.conf` present (uid 1000, Sep 14 15:58) |
+| Existing site bind | `/root/lead-generation-crm/deploy/nginx/active-ssl.conf` → `/etc/nginx/conf.d/default.conf` (RO) |
+| `include /etc/nginx/conf.d/*.conf` | Confirmed in live `nginx.conf` |
+| `zz` is a **second** bind today | **No.** Mounts are default.conf + certbot www + certs only |
+| Host export | `/home/deploy/cohestra-uat-edge-backups/persist/zz-cohestra-uat.conf` (1655 B) + snapshot `…20261011T092550Z` |
+| Script banner | `NGINX CONFIG PERSISTENCE: CONDITIONAL` |
+| Recreate risk | Recreate (not reload) of `lead-generation-crm-nginx-1` would drop UAT HTTPS until RO bind or `docker cp` restore |
+| `cohestra_uat_edge` aliases | **[]** (empty). Keep empty on any future authorized edit |
 
-Read-only prove (owner, after checkout includes this PR):
-
-```bash
-bash deploy/host-proxy/prove-zz-vhost-persist.sh
-bash deploy/host-proxy/inspect-existing-nginx.sh
-```
-
-Expect `PERSISTENCE=BIND` or `EXPORT_ONLY` or `CONTAINER_ONLY`.
+Owner has **not** written acceptance of EXPORT_ONLY as the 19.2 close workaround. Do not recreate nginx from this document.
 
 ## Durable export / backup (no recreate)
 
@@ -50,8 +48,8 @@ services:
       # keep existing certs / www / any other current mounts verbatim
     networks:
       lead-generation-crm_default: {}
-      cohestra_uat_edge:
-        aliases: [cohestra-uat-nginx]
+      cohestra_uat_edge: {}
+      # live 2026-10-11: aliases=[] — do not add cohestra-uat-nginx unless owner asks
 # top-level
 networks:
   lead-generation-crm_default: {}
@@ -60,7 +58,7 @@ networks:
     external: true
 ```
 
-Confirm the live service key and current networks with `inspect-existing-nginx.sh` before editing. If the default network name differs, keep **that** name.
+Confirm the live service key and current networks with `inspect-existing-nginx.sh` before editing. If the default network name differs, keep **that** name. Keep **empty** `cohestra_uat_edge` aliases unless a later authorized change adds one.
 
 Then the **smallest** recreate (still requires explicit owner authorization):
 

@@ -164,5 +164,20 @@ Attributed to the owner droplet console. This agent did not SSH and did not inve
 
 Independent public probe the same day: existing + UAT `/ready` Healthy with **trusted** TLS after the owner renew.
 
-Still **BLOCKED** for close: firewall 22/80/443 only; `__EFMigrationsHistory`; `free`/`docker stats`/`df`; redacted API logs; image **build** provenance; first-operator `/register`. A later request named “new droplet evidence” for those items; the outputs were **not** pasted into chat or GitHub — not fabricated. See `epic-19-1-19-2-acceptance-2026-10-11.md`. **Do not mark done.**
+Still **BLOCKED** for close after the 09:26 paste: DigitalOcean cloud firewall inbound 22/80/443 (host `ufw` is **inactive**, which is not that AC); OCI image **build** provenance (IDs + `Created` + `GIT_SHA` are only **PARTIAL**); first-operator `/register`; `preflight-launch.sh`. See addendum below. **Do not mark done.**
+
+## Owner ops paste (2026-10-11 ~09:26 UTC)
+
+Attributed to `/home/deploy/cohestra` at `f293650d`. This agent did not SSH.
+
+| Gate | Status | Owner value |
+|------|--------|-------------|
+| `__EFMigrationsHistory` | **PASS** (count) | **50** on Cohestra postgres via `uat-compose`. Repo Up() files at this HEAD: **49**. One extra applied row is consistent with postgres Up 4 weeks. |
+| Resources / `uat-compose ps` / stats | **PASS** | 3.8 Gi RAM, 2.0 Gi avail; 77 G disk 44%; all five `cohestra-uat-*` healthy; loopback 3100/5100/8180; postgres/redis unpublished |
+| Redacted API logs | **PASS** (window) | Outbox + default-tenant EXISTS; no secrets in the 80-line tail |
+| Image IDs + `Created` + `GIT_SHA` | **PARTIAL** | Same sha256 as earlier; Created 2026-10-10T16:25Z; env SHA matches checkout. No OCI revision label |
+| `ufw` | **inactive** | Does **not** satisfy planning AC “firewall 22, 80, 443 only” |
+| MOTD / zombies | Informational | Restart required + 5 zombies. **Do not reboot** for this story |
+
+Tracker stays **in-progress / not done**. Full matrix: `epic-19-1-19-2-acceptance-2026-10-11.md`.
 
