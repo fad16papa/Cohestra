@@ -76,6 +76,8 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public string? LastPreviewProrationBillingMode { get; private set; }
 
+    public string? SwapSubscriptionIdOnUpdate { get; set; }
+
     public List<PaddleCustomer> CustomersByEmail { get; } = [];
 
     public bool CreateCustomerShouldFail { get; set; }
@@ -311,6 +313,11 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
         }
 
         Subscription ??= new PaddleSubscription { Id = subscriptionId, Status = "active", CustomerId = Customer.Id };
+        if (!string.IsNullOrWhiteSpace(SwapSubscriptionIdOnUpdate))
+        {
+            Subscription.Id = SwapSubscriptionIdOnUpdate;
+        }
+
         if (string.Equals(effectiveFrom, "immediately", StringComparison.OrdinalIgnoreCase))
         {
             var preservedTrial = Subscription.Items.FirstOrDefault()?.TrialDates ?? Subscription.TrialDates;

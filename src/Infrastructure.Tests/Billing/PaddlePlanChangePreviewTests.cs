@@ -36,6 +36,24 @@ public sealed class PaddlePlanChangePreviewTests
     }
 
     [Fact]
+    public async Task Confirm_does_not_persist_a_different_paddle_subscription_id()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = Seed(db, TenantPlan.Pro, BillingInterval.Monthly, "active");
+        client.SwapSubscriptionIdOnUpdate = "sub_other";
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            PreviewAndConfirmAsync(service, tenant.Id, TenantPlan.Pro, BillingInterval.Annual));
+
+        Assert.Contains("Could not update your subscription", ex.Message, StringComparison.Ordinal);
+        Assert.Equal("sub_existing", db.Tenants.Single(t => t.Id == tenant.Id).PaddleSubscriptionId);
+        Assert.Equal(BillingInterval.Monthly, db.Tenants.Single(t => t.Id == tenant.Id).BillingInterval);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
+        Assert.Equal(0, client.CreateSubscriptionCalls);
+    }
+
+    [Fact]
     public async Task Preview_omits_money_when_paddle_fields_are_absent()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();

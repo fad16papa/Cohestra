@@ -591,6 +591,17 @@ internal sealed class PaddleBillingService(
             throw new InvalidOperationException(PaddleSubscriptionChangePolicy.MapProviderFailure(ex));
         }
 
+        if (!string.Equals(subscriptionIdBefore, updated.Id, StringComparison.Ordinal))
+        {
+            logger.LogError(
+                "Paddle subscription update returned a different id for tenant {TenantId}: {Before} -> {After}",
+                tenant.Id,
+                subscriptionIdBefore,
+                updated.Id);
+            throw new InvalidOperationException(
+                "Could not update your subscription. Open Settings → Billing and try again.");
+        }
+
         await ApplyLiveSubscriptionAsync(tenant, updated, cancellationToken);
         EnsureSameSubscription(subscriptionIdBefore, tenant.PaddleSubscriptionId);
 
