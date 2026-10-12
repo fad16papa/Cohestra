@@ -36,6 +36,13 @@ export function isBillingIntervalDowngrade(
   return normalizeBillingInterval(currentInterval) === "annual" && targetInterval === "monthly";
 }
 
+export function isBillingIntervalUpgrade(
+  currentInterval: string | null | undefined,
+  targetInterval: BillingIntervalId
+): boolean {
+  return normalizeBillingInterval(currentInterval) === "monthly" && targetInterval === "annual";
+}
+
 export function isDeferredPlanChange(
   currentPlan: string,
   currentInterval: string | null | undefined,
@@ -125,6 +132,10 @@ export function checkoutActionLabel(input: {
     return "Already on this plan";
   }
 
+  if (billingStatus === "PastDue") {
+    return "Update payment method to change plans";
+  }
+
   if (isDeferredPlanChange(currentPlan, currentInterval, targetPlan, targetInterval)) {
     if (isPaidPlanDowngrade(currentPlan, targetPlan)) {
       return `Switch to ${capitalizePlan(targetPlan)} at period end`;
@@ -153,6 +164,8 @@ export function checkoutPriceCaption(input: {
   billingStatus: string;
   trialEndsAt: string | null;
   hasConsumedTrial: boolean;
+  currentInterval?: string | null;
+  targetInterval?: BillingIntervalId;
 }): string {
   const { billingStatus, trialEndsAt, hasConsumedTrial } = input;
 
@@ -166,6 +179,12 @@ export function checkoutPriceCaption(input: {
   }
 
   if (hasActivePaidSubscription(billingStatus)) {
+    if (input.targetInterval && isBillingIntervalUpgrade(input.currentInterval, input.targetInterval)) {
+      return billingStatus === "Trialing"
+        ? "No charge during trial"
+        : "Starts now with prorated credit";
+    }
+
     return hasConsumedTrial ? "Billed on your next invoice" : "After trial";
   }
 
@@ -205,6 +224,58 @@ export function checkoutIntroCopy(input: {
     day: "numeric",
     year: "numeric",
   })} unless you cancel before then.`;
+}
+
+export function checkoutImmediateChangeCopy(input: {
+  billingStatus: string;
+  currentInterval: string | null | undefined;
+  targetInterval: BillingIntervalId;
+  trialEndsAt: string | null;
+}): string {
+  if (input.billingStatus === "Trialing") {
+    if (input.trialEndsAt) {
+      const end = new Date(input.trialEndsAt);
+      return `This change applies now without a charge. Your trial continues until ${end.toLocaleDateString(undefined, {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })}.`;
+    }
+
+    return "This change applies now without a charge. Your trial continues and billing does not start early.";
+  }
+
+  if (isBillingIntervalUpgrade(input.currentInterval, input.targetInterval)) {
+    return "Yearly billing starts now. Unused time on your current period is applied as credit against the new price. Your next renewal is one year from today. Paddle calculates the exact credit when you confirm.";
+  }
+
+  return "This change applies immediately. Any price difference is prorated on your next invoice.";
+}
+
+export function requiresImmediateChargeConfirmation(input: {
+  billingStatus: string;
+  currentInterval: string | null | undefined;
+  targetInterval: BillingIntervalId;
+}): boolean {
+  return (
+    input.billingStatus === "Active"
+    && isBillingIntervalUpgrade(input.currentInterval, input.targetInterval)
+  );
+}
+
+export function checkoutPastDueMessage(): string {
+  return "This subscription is past due. Update the payment method in Settings → Billing before changing plans.";
+}
+
+export function willResumePendingCancellation(input: {
+  cancelAtPeriodEnd: boolean | null | undefined;
+  isDeferredChange: boolean;
+}): boolean {
+  return Boolean(input.cancelAtPeriodEnd) && input.isDeferredChange;
+}
+
+export function checkoutDeferredCancelDisclosure(): string {
+  return "This keeps your subscription. The scheduled cancellation will be removed. You stay on your current plan until the period ends, then the selected plan or monthly billing starts. You will not be charged today.";
 }
 
 function capitalizePlan(plan: PaidPlanId): string {
