@@ -43,6 +43,18 @@ internal static class PaddleSubscriptionChangePolicy
     public const string MissingPeriodEndMessage =
         "Could not determine when your current billing period ends. Open Settings → Billing and try again.";
 
+    public const string PreviewRequiredMessage =
+        "This plan change needs a Paddle billing review before it can be confirmed.";
+
+    public const string PreviewUnavailableMessage =
+        "We couldn't retrieve Paddle's billing review. Try again before confirming this change.";
+
+    public const string StalePreviewMessage =
+        "Your billing state changed while you were reviewing this change. Review the updated billing details and try again.";
+
+    public const string NoExistingSubscriptionMessage =
+        "Start Core or Pro with Checkout. There is no existing subscription to update.";
+
     public sealed record ImmediateUpdate(
         string EffectiveFrom,
         string ProrationBillingMode,

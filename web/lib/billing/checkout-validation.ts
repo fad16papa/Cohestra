@@ -246,7 +246,7 @@ export function checkoutImmediateChangeCopy(input: {
   }
 
   if (isBillingIntervalUpgrade(input.currentInterval, input.targetInterval)) {
-    return "Yearly billing starts now. Unused time on your current period is applied as credit against the new price. Your next renewal is one year from today. Paddle calculates the exact credit when you confirm.";
+    return "Yearly billing starts now. Unused time on your current period is applied as credit against the new price. Your next renewal is one year from today. Paddle shows the exact amounts before you confirm.";
   }
 
   return "This change applies immediately. Any price difference is prorated on your next invoice.";

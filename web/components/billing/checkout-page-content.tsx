@@ -19,8 +19,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  confirmPlanChangeWithAuth,
   createBillingCheckoutWithAuth,
   fetchBillingSummaryWithAuth,
+  previewPlanChangeWithAuth,
+  reconcileBillingFromProviderWithAuth,
+  BILLING_RECONCILE_REASONS,
   type BillingSummary,
 } from "@/lib/billing/billing-api";
 import { cancelScheduledPlanChangeWithAuth } from "@/lib/billing/billing-details-api";
@@ -44,11 +48,22 @@ import {
   matchesScheduledPlanChange,
   normalizeBillingInterval,
   normalizePlanId,
-  requiresImmediateChargeConfirmation,
   willResumePendingCancellation,
   type BillingIntervalId,
   type PaidPlanId,
 } from "@/lib/billing/checkout-validation";
+import {
+  REVIEW_DIALOG_CLASS_NAME,
+  canConfirmImmediatePreview,
+  PREVIEW_FAILURE_COPY,
+  STALE_PREVIEW_COPY,
+  formatProviderMoney,
+  requiresProviderPreview,
+  successShowsAmount,
+  visiblePreviewLines,
+  type PlanChangeConfirmResult,
+  type PlanChangePreview,
+} from "@/lib/billing/plan-change-review";
 import { getDowngradeLimitWarnings } from "@/lib/billing/downgrade-limit-warnings";
 import { exchangeAuthHandoff } from "@/lib/auth-handoff";
 import { setAuthSession } from "@/lib/auth-storage";
@@ -95,7 +110,13 @@ function CheckoutContent() {
   const [starting, setStarting] = useState(autoStart && !canceled);
   const [undoingScheduledChange, setUndoingScheduledChange] = useState(false);
   const [deferredConfirmOpen, setDeferredConfirmOpen] = useState(false);
-  const [immediateConfirmOpen, setImmediateConfirmOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [preview, setPreview] = useState<PlanChangePreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successResult, setSuccessResult] = useState<PlanChangeConfirmResult | null>(null);
   const [handoffPending, setHandoffPending] = useState(
     () => (searchParams.get("handoff")?.trim().length ?? 0) > 0
   );
@@ -342,6 +363,20 @@ function CheckoutContent() {
       return;
     }
 
+    const wouldPreview =
+      billingSummary !== null
+      && requiresProviderPreview({
+        billingStatus: billingSummary.billingStatus,
+        currentPlan: billingSummary.plan,
+        targetPlan: plan,
+        currentInterval: billingSummary.billingInterval,
+        targetInterval: interval,
+      });
+    if (wouldPreview) {
+      setStarting(false);
+      return;
+    }
+
     if (
       billingSummary
       && isSamePlanAndInterval(
@@ -467,10 +502,12 @@ function CheckoutContent() {
       })
     : "After trial";
   const isPastDue = billingStatus === "PastDue";
-  const needsImmediateChargeConfirm =
+  const needsPreview =
     billingSummary !== null
-    && requiresImmediateChargeConfirmation({
+    && requiresProviderPreview({
       billingStatus,
+      currentPlan,
+      targetPlan: effectivePlan,
       currentInterval: billingSummary.billingInterval,
       targetInterval: interval,
     });
@@ -482,16 +519,100 @@ function CheckoutContent() {
         trialEndsAt: billingSummary.trialEndsAt,
       })
     : null;
+  const busy = starting || previewLoading || confirming;
   const submitDisabled =
-    starting
+    busy
     || isSameSelection
     || isPastDue
     || Boolean(matchesExistingSchedule)
     || (Boolean(hasScheduledPlanChange) && !matchesExistingSchedule)
     || (isDeferredSelection && shellLoading && !billingSummary?.usage);
   const isPaidTenant = hasActivePaidSubscription(billingStatus);
+  const previewLines = preview ? visiblePreviewLines(preview) : [];
+  const confirmEnabled = canConfirmImmediatePreview(preview, previewError) && !busy;
+
+  async function requestProviderPreview(selectedPlan: PaidPlanId, selectedInterval: BillingIntervalId) {
+    if (previewLoading || confirming) {
+      return;
+    }
+
+    setPreviewLoading(true);
+    setPreviewError(null);
+    setPreview(null);
+    setReviewOpen(true);
+    setError(null);
+
+    const result = await previewPlanChangeWithAuth(authFetch, {
+      plan: selectedPlan,
+      interval: selectedInterval,
+    });
+
+    setPreviewLoading(false);
+    if (!result.ok) {
+      setPreviewError(result.message || PREVIEW_FAILURE_COPY);
+      return;
+    }
+
+    setPreview(result.result);
+  }
+
+  async function confirmProviderPreview() {
+    if (!preview || confirming || !confirmEnabled) {
+      return;
+    }
+
+    setConfirming(true);
+    setPreviewError(null);
+    const result = await confirmPlanChangeWithAuth(authFetch, {
+      plan: effectivePlan,
+      interval,
+      previewState: preview.previewState,
+      successUrl: `${window.location.origin}/settings/billing?billing=success`,
+      cancelUrl: `${window.location.origin}/billing/checkout?plan=${effectivePlan}&interval=${interval}`,
+    });
+
+    if (!result.ok) {
+      setConfirming(false);
+      if (result.conflict) {
+        setPreview(null);
+        setPreviewError(result.message || STALE_PREVIEW_COPY);
+        void fetchBillingSummaryWithAuth(authFetch)
+          .then(setBillingSummary)
+          .catch(() => undefined);
+        return;
+      }
+
+      setPreviewError(result.message);
+      return;
+    }
+
+    setReviewOpen(false);
+    setPreview(null);
+    setSuccessResult(result.result);
+    setSuccessOpen(true);
+    void reconcileBillingFromProviderWithAuth(authFetch, {
+      reason: BILLING_RECONCILE_REASONS.explicitRefresh,
+    }).then((synced) => {
+      setBillingSummary(synced.summary);
+    }).catch(() => undefined);
+    setConfirming(false);
+  }
+
+  function closeReview() {
+    if (previewLoading || confirming) {
+      return;
+    }
+
+    setReviewOpen(false);
+    setPreview(null);
+    setPreviewError(null);
+  }
 
   function requestPlanChange() {
+    if (busy) {
+      return;
+    }
+
     if (isPastDue) {
       setError(checkoutPastDueMessage());
       return;
@@ -502,16 +623,16 @@ function CheckoutContent() {
       return;
     }
 
-    if (needsImmediateChargeConfirm) {
-      setImmediateConfirmOpen(true);
+    if (needsPreview) {
+      void requestProviderPreview(effectivePlan, interval);
       return;
     }
 
     void startCheckout(effectivePlan, interval);
   }
 
-  // Plan + interval already chosen on the upgrade gate — go straight to checkout (upgrades only).
-  if (autoStart && !canceled && plan && !isDeferredSelection) {
+  // Plan + interval already chosen on the upgrade gate — go straight to checkout (new subscriptions only).
+  if (autoStart && !canceled && plan && !isDeferredSelection && !needsPreview) {
     const meta = MARKETING_PLANS.find((p) => p.id === plan);
     const adjustHref = `/billing/checkout?plan=${plan}&interval=${interval}`;
     const alreadyOnPlan = error?.includes("already on the selected plan");
@@ -738,7 +859,7 @@ function CheckoutContent() {
                   type="button"
                   role="radio"
                   aria-checked={active}
-                  disabled={starting}
+                  disabled={busy}
                   onClick={() => setInterval(value)}
                   className={cn(
                     "flex-1 rounded-lg px-4 py-2.5 text-sm font-medium motion-local sm:flex-none",
@@ -780,7 +901,7 @@ function CheckoutContent() {
                 type="button"
                 role="radio"
                 aria-checked={active}
-                disabled={starting}
+                disabled={busy}
                 onClick={() => setPlan(meta.id as PaidPlanId)}
                 className={cn(
                   "flex h-full flex-col rounded-2xl border p-5 text-left motion-press sm:p-6",
@@ -832,7 +953,7 @@ function CheckoutContent() {
             disabled={submitDisabled}
             onClick={requestPlanChange}
           >
-            {starting ? "Processing…" : actionLabel}
+            {busy ? "Processing…" : actionLabel}
           </Button>
         </div>
 
@@ -870,25 +991,88 @@ function CheckoutContent() {
         </Link>
       </div>
 
-      <AlertDialog open={immediateConfirmOpen} onOpenChange={setImmediateConfirmOpen}>
-        <AlertDialogContent>
+      <AlertDialog
+        open={reviewOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeReview();
+            return;
+          }
+
+          setReviewOpen(true);
+        }}
+      >
+        <AlertDialogContent className={REVIEW_DIALOG_CLASS_NAME}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Switch to yearly billing now?</AlertDialogTitle>
+            <AlertDialogTitle>Review billing change</AlertDialogTitle>
             <AlertDialogDescription>
-              {immediateChangeCopy
-                ?? "Yearly billing starts now. Unused time on your current period is applied as credit against the new price."}
+              {previewLoading
+                ? "Retrieving Paddle's billing review…"
+                : previewError
+                  ? previewError
+                  : preview?.reviewCopy
+                    ?? "Review the Paddle-calculated impact before confirming this change."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {preview && !previewLoading ? (
+            <dl className="space-y-3 text-sm">
+              <div className="flex justify-between gap-4">
+                <dt className="text-text-muted-warm">Current</dt>
+                <dd className="text-right font-medium text-text-warm">
+                  {preview.currentPlan} {preview.currentInterval}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-text-muted-warm">New</dt>
+                <dd className="text-right font-medium text-text-warm">
+                  {preview.targetPlan} {preview.targetInterval}
+                </dd>
+              </div>
+              {previewLines.map((line) => (
+                <div key={line.label} className="flex justify-between gap-4">
+                  <dt className="text-text-muted-warm">{line.label}</dt>
+                  <dd className="text-right font-medium text-text-warm" aria-label={line.ariaLabel}>
+                    {line.value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : null}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy} onClick={closeReview}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!confirmEnabled}
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmProviderPreview();
+              }}
+            >
+              {confirming ? "Confirming…" : preview?.confirmLabel ?? "Confirm plan change"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={successOpen} onOpenChange={setSuccessOpen}>
+        <AlertDialogContent className={REVIEW_DIALOG_CLASS_NAME}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{successResult?.successMessage ?? "Your plan change is complete."}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {successResult && successShowsAmount(successResult) && successResult.amountCharged
+                ? `Amount charged: ${formatProviderMoney(successResult.amountCharged.amountMinor, successResult.amountCharged.currency)}.`
+                : "Your billing summary is refreshing from Paddle."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={starting}>Keep current billing</AlertDialogCancel>
             <AlertDialogAction
-              disabled={starting}
               onClick={() => {
-                setImmediateConfirmOpen(false);
-                void startCheckout(effectivePlan, interval);
+                setSuccessOpen(false);
+                router.push("/settings/billing");
               }}
             >
-              {starting ? "Processing…" : "Switch to yearly now"}
+              Back to billing
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

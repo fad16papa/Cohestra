@@ -36,6 +36,46 @@ public sealed record CreateCheckoutSessionRequest(
     string? SuccessUrl,
     string? CancelUrl);
 
+public sealed record PreviewPlanChangeRequest(string Plan, string Interval);
+
+public sealed record ConfirmPlanChangeRequest(
+    string Plan,
+    string Interval,
+    string? PreviewState,
+    string? SuccessUrl,
+    string? CancelUrl);
+
+public sealed record BillingMoneyResponse(long AmountMinor, string Currency);
+
+public sealed record PreviewPlanChangeResponse(
+    string CurrentPlan,
+    string CurrentInterval,
+    string TargetPlan,
+    string TargetInterval,
+    string? Currency,
+    BillingMoneyResponse? Credit,
+    BillingMoneyResponse? DueNow,
+    BillingMoneyResponse? NextRecurringAmount,
+    DateTimeOffset? NextBilledAt,
+    bool ProviderPreviewAvailable,
+    bool Deferred,
+    string PreviewState,
+    string ReviewCopy,
+    string ConfirmLabel);
+
+public sealed record ConfirmPlanChangeResponse(
+    string SuccessMessage,
+    string RedirectUrl,
+    bool CompletedInApp,
+    BillingMoneyResponse? AmountCharged,
+    string? Currency,
+    string? TransactionId,
+    string? InvoiceReference,
+    DateTimeOffset? NextBilledAt,
+    DateTimeOffset? TrialEndsAt,
+    bool TrialIncluded,
+    IReadOnlyList<string>? Warnings = null);
+
 public sealed record PaddleCheckoutReturnResponse(
     string RedirectUrl,
     string Plan,

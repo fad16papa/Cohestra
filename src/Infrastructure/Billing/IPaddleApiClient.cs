@@ -60,6 +60,14 @@ internal interface IPaddleApiClient
         IReadOnlyDictionary<string, string>? customData = null,
         CancellationToken cancellationToken = default);
 
+    Task<PaddleSubscriptionPreview> PreviewSubscriptionUpdateAsync(
+        string subscriptionId,
+        string priceId,
+        string effectiveFrom,
+        string prorationBillingMode,
+        IReadOnlyDictionary<string, string>? customData = null,
+        CancellationToken cancellationToken = default);
+
     Task<PaddleSubscription> EndTrialNowAsync(
         string subscriptionId,
         CancellationToken cancellationToken = default);

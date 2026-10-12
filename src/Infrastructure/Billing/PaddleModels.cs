@@ -111,7 +111,66 @@ internal sealed class PaddleTotals
 {
     public string? Total { get; set; }
 
+    public string? GrandTotal { get; set; }
+
+    public string? Credit { get; set; }
+
     public string? CurrencyCode { get; set; }
+}
+
+internal sealed class PaddleSubscriptionPreview
+{
+    public string Id { get; set; } = string.Empty;
+
+    public string Status { get; set; } = string.Empty;
+
+    public List<PaddleSubscriptionItem> Items { get; set; } = [];
+
+    public DateTimeOffset? NextBilledAt { get; set; }
+
+    public PaddleUpdateSummary? UpdateSummary { get; set; }
+
+    public PaddlePreviewTransaction? ImmediateTransaction { get; set; }
+
+    public PaddlePreviewTransaction? NextTransaction { get; set; }
+
+    public PaddleTransactionDetails? RecurringTransactionDetails { get; set; }
+}
+
+internal sealed class PaddleUpdateSummary
+{
+    public PaddleMoneyAmount? Credit { get; set; }
+
+    public PaddleMoneyAmount? Charge { get; set; }
+
+    public PaddleUpdateSummaryResult? Result { get; set; }
+}
+
+internal sealed class PaddleMoneyAmount
+{
+    public string? Amount { get; set; }
+
+    public string? CurrencyCode { get; set; }
+}
+
+internal sealed class PaddleUpdateSummaryResult
+{
+    public string? Action { get; set; }
+
+    public string? Amount { get; set; }
+
+    public string? CurrencyCode { get; set; }
+}
+
+internal sealed class PaddlePreviewTransaction
+{
+    public string? Id { get; set; }
+
+    public string? InvoiceNumber { get; set; }
+
+    public PaddleTransactionDetails? Details { get; set; }
+
+    public PaddleTimePeriod? BillingPeriod { get; set; }
 }
 
 internal sealed class PaddlePaymentMethod

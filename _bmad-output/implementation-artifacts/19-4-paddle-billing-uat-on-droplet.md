@@ -1,12 +1,12 @@
 ---
 epic: 19
 story: 4
-status: ready-for-dev
+status: in-progress
 ---
 
 # Story 19.4: Paddle billing UAT on droplet
 
-Status: ready-for-dev — **infrastructure URL/HTTPS exist (independent probe 2026-10-08)**; still blocked on **owner sandbox UAT walk**, **deploy of PR #404**, notification destination (including adjustments), and refund-policy decisions. Uses existing **sandbox** credentials only. Do not mark done.
+Status: in-progress — Option A (Paddle preview → same-subscription PATCH) is in implementation. Do **not** mark done. Live sandbox mutation is not authorized from this step. Still blocked on **owner UAT deploy + sandbox lifecycle walk** after the implementation PR is reviewed. Uses existing **sandbox** credentials only.
 
 Code-side webhook retry, refund ingest, and credential isolation landed 2026-10-08 on the Paddle billing remediation branch. **Do not mark this story done** until droplet sandbox UAT + Mandatory Code Review Loop + product acceptance complete.
 

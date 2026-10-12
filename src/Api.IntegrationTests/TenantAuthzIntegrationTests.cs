@@ -46,6 +46,18 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
             IntegrationTestHelpers.JsonOptions);
         await AssertForbiddenAsync(checkoutResponse);
 
+        using var previewResponse = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/subscription/change-preview",
+            new PreviewPlanChangeRequest("Pro", "annual"),
+            IntegrationTestHelpers.JsonOptions);
+        await AssertForbiddenAsync(previewResponse);
+
+        using var changeResponse = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/subscription/change",
+            new ConfirmPlanChangeRequest("Pro", "annual", "forged-state", null, null),
+            IntegrationTestHelpers.JsonOptions);
+        await AssertForbiddenAsync(changeResponse);
+
         using var portalResponse = await client.PostAsJsonAsync(
             "/api/v1/admin/billing/portal",
             new CreatePortalSessionRequest("http://localhost/settings/billing"),

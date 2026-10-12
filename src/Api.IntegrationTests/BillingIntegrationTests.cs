@@ -275,6 +275,34 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
         Assert.DoesNotContain("Invalid cancel URL", body, StringComparison.Ordinal);
     }
 
+    [SkippableFact]
+    public async Task TenantAdmin_PlanChangePreviewAndConfirm_Return503WhenPaddleMissing()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        using var client = await CreateBillingOwnerClientAsync();
+
+        using var preview = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/subscription/change-preview",
+            new PreviewPlanChangeRequest("Pro", "annual"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, preview.StatusCode);
+
+        using var confirm = await client.PostAsJsonAsync(
+            "/api/v1/admin/billing/subscription/change",
+            new ConfirmPlanChangeRequest(
+                "Pro",
+                "annual",
+                "preview-state",
+                WorkspaceUrl("/settings/billing?billing=success"),
+                WorkspaceUrl("/billing/checkout")),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, confirm.StatusCode);
+
+        var previewBody = await preview.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("pri_", previewBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("pdl_", previewBody, StringComparison.Ordinal);
+    }
+
     [SkippableTheory]
     [InlineData("https://evil.example/success", "http://default.localhost:3000/cancel", "Invalid success URL")]
     [InlineData("http://default.localhost:3000/success", "https://evil.example/cancel", "Invalid cancel URL")]

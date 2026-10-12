@@ -90,7 +90,7 @@ internal sealed class PaddleBillingService(
 
         if (CanUpgradeExistingSubscription(tenant))
         {
-            return await UpgradeExistingSubscriptionAsync(tenant, command, cancellationToken);
+            return await ChangeExistingSubscriptionViaCheckoutAsync(tenant, command, cancellationToken);
         }
 
         if (!string.IsNullOrWhiteSpace(tenant.PaddleSubscriptionId))
@@ -455,89 +455,129 @@ internal sealed class PaddleBillingService(
         }
     }
 
-    private async Task<CheckoutSessionDto> UpgradeExistingSubscriptionAsync(
-        Tenant tenant,
-        CreateCheckoutSessionCommand command,
-        CancellationToken cancellationToken)
+    public async Task<PreviewPlanChangeDto> PreviewPlanChangeAsync(
+        PreviewPlanChangeCommand command,
+        CancellationToken cancellationToken = default)
     {
-        var newPriceId = TenantBillingPlanSync.ResolvePriceId(command.Plan, command.Interval, _settings)
-            ?? throw new InvalidOperationException("Paddle price ID is not configured for the selected plan.");
+        EnsureConfigured();
+        var tenant = await RequireTenantAsync(command.TenantId, cancellationToken);
+        EnsureExistingPaidSubscription(tenant);
 
-        PaddleSubscription subscription;
+        var subscription = await LoadLiveSubscriptionAsync(tenant, cancellationToken);
+        var change = PaddleSubscriptionChangePlanner.Build(
+            tenant,
+            subscription,
+            command.Plan,
+            command.Interval,
+            _settings,
+            command.TenantSlug);
+        EnsureNoConflictingScheduledChange(tenant);
+
+        if (change.Deferred)
+        {
+            return MapPreview(
+                change,
+                PaddlePreviewMoneyMapper.Empty,
+                providerPreviewAvailable: false,
+                reviewCopy: BuildDeferredReviewCopy(tenant, change, subscription));
+        }
+
+        PaddleSubscriptionPreview preview;
         try
         {
-            subscription = await paddleClient.GetSubscriptionAsync(tenant.PaddleSubscriptionId!, cancellationToken)
-                ?? throw new InvalidOperationException(
-                    "Could not load your current subscription. Open Settings → Billing and try again.");
+            preview = await paddleClient.PreviewSubscriptionUpdateAsync(
+                change.SubscriptionId,
+                change.TargetPriceId,
+                change.EffectiveFrom,
+                change.ProrationBillingMode,
+                change.CustomData,
+                cancellationToken);
         }
         catch (PaddleApiException ex)
         {
             logger.LogWarning(
                 ex,
-                "Could not load Paddle subscription {SubscriptionId} for tenant {TenantId}",
-                tenant.PaddleSubscriptionId,
-                tenant.Id);
-            throw new InvalidOperationException(
-                "Could not load your current subscription. Open Settings → Billing and try again.");
+                "Paddle subscription preview failed for tenant {TenantId} status {PaddleStatus} code {PaddleErrorCode}",
+                tenant.Id,
+                ex.StatusCode,
+                ex.ErrorCode);
+            throw new InvalidOperationException(PaddleSubscriptionChangePolicy.PreviewUnavailableMessage);
         }
 
-        var currentPriceId = PaddleSubscriptionChangePolicy.CurrentPriceId(subscription);
-        if (string.Equals(currentPriceId, newPriceId, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException("Your workspace is already on the selected plan and billing interval.");
-        }
+        return MapPreview(
+            change,
+            PaddlePreviewMoneyMapper.Map(preview),
+            providerPreviewAvailable: true,
+            reviewCopy: BuildImmediateReviewCopy(tenant, change, subscription));
+    }
 
-        if (string.IsNullOrWhiteSpace(currentPriceId)
-            || !TenantBillingPlanSync.TryMapPrice(currentPriceId, _settings, out var livePlan, out var liveInterval))
-        {
-            throw new InvalidOperationException(PaddleSubscriptionChangePolicy.UnknownIntervalMessage);
-        }
+    public async Task<ConfirmPlanChangeDto> ConfirmPlanChangeAsync(
+        ConfirmPlanChangeCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureConfigured();
+        var tenant = await RequireTenantAsync(command.TenantId, cancellationToken);
+        EnsureExistingPaidSubscription(tenant);
 
-        var defer = TenantBillingPlanSync.ShouldDeferPlanChange(
-            livePlan,
-            liveInterval,
-            command.Plan,
-            command.Interval);
-
-        var rejected = PaddleSubscriptionChangePolicy.RejectBeforeMutation(
+        var subscriptionIdBefore = tenant.PaddleSubscriptionId;
+        var subscription = await LoadLiveSubscriptionAsync(tenant, cancellationToken);
+        var change = PaddleSubscriptionChangePlanner.Build(
+            tenant,
             subscription,
-            tenant.BillingStatus,
-            allowPendingCancel: defer);
-        if (rejected is not null)
-        {
-            throw new InvalidOperationException(rejected);
-        }
+            command.Plan,
+            command.Interval,
+            _settings,
+            command.TenantSlug);
+        EnsureNoConflictingScheduledChange(tenant);
 
-        if (defer)
+        if (change.Deferred)
         {
-            return await ScheduleDowngradeExistingSubscriptionAsync(
+            var deferred = await ScheduleDowngradeExistingSubscriptionAsync(
                 tenant,
-                command,
+                new CreateCheckoutSessionCommand(
+                    command.TenantId,
+                    command.TenantSlug,
+                    command.Plan,
+                    command.Interval,
+                    string.Empty,
+                    command.SuccessUrl,
+                    command.CancelUrl),
                 subscription,
                 cancellationToken);
+            EnsureSameSubscription(subscriptionIdBefore, tenant.PaddleSubscriptionId);
+            return new ConfirmPlanChangeDto(
+                deferred.TrialDisclaimer,
+                deferred.CheckoutUrl,
+                CompletedInApp: true,
+                AmountCharged: null,
+                Currency: null,
+                TransactionId: null,
+                InvoiceReference: null,
+                NextBilledAt: tenant.ScheduledPlanEffectiveAt,
+                TrialEndsAt: deferred.TrialEndsAt,
+                TrialIncluded: deferred.TrialIncluded,
+                Warnings: deferred.Warnings);
         }
 
-        if (PaddleSubscriptionChangeScheduler.HasActiveScheduledPaidDowngrade(tenant))
+        if (string.IsNullOrWhiteSpace(command.PreviewState))
         {
-            throw new InvalidOperationException(
-                "A plan change is already scheduled. Undo it on the checkout page or in Settings → Billing before choosing a different plan.");
+            throw new InvalidOperationException(PaddleSubscriptionChangePolicy.PreviewRequiredMessage);
         }
 
-        var update = PaddleSubscriptionChangePolicy.ResolveImmediateUpdate(
-            subscription,
-            tenant.BillingStatus,
-            liveInterval,
-            command.Interval);
+        if (!string.Equals(command.PreviewState, change.StateFingerprint, StringComparison.Ordinal))
+        {
+            throw new BillingStateConflictException(PaddleSubscriptionChangePolicy.StalePreviewMessage);
+        }
 
         PaddleSubscription updated;
         try
         {
             updated = await paddleClient.UpdateSubscriptionItemsAsync(
-                subscription.Id,
-                newPriceId,
-                update.EffectiveFrom,
-                update.ProrationBillingMode,
-                BuildCustomData(tenant, command),
+                change.SubscriptionId,
+                change.TargetPriceId,
+                change.EffectiveFrom,
+                change.ProrationBillingMode,
+                change.CustomData,
                 cancellationToken);
         }
         catch (PaddleApiException ex)
@@ -552,17 +592,172 @@ internal sealed class PaddleBillingService(
         }
 
         await ApplyLiveSubscriptionAsync(tenant, updated, cancellationToken);
+        EnsureSameSubscription(subscriptionIdBefore, tenant.PaddleSubscriptionId);
 
-        var disclaimer = tenant.BillingStatus == BillingStatus.Trialing && tenant.TrialEndsAt is { } trialEnd
-            ? TenantBillingPlanSync.BuildTrialDisclaimer(trialEnd)
-            : update.Disclaimer;
+        var successMessage = BuildSuccessCopy(change);
+        return new ConfirmPlanChangeDto(
+            successMessage,
+            BuildInAppSuccessUrl(command.SuccessUrl, successMessage),
+            CompletedInApp: true,
+            AmountCharged: null,
+            Currency: null,
+            TransactionId: null,
+            InvoiceReference: null,
+            NextBilledAt: updated.NextBilledAt,
+            TrialEndsAt: tenant.TrialEndsAt,
+            TrialIncluded: tenant.BillingStatus == BillingStatus.Trialing);
+    }
 
-        return new CheckoutSessionDto(
-            BuildInAppSuccessUrl(command.SuccessUrl, disclaimer),
-            tenant.TrialEndsAt,
-            tenant.BillingStatus == BillingStatus.Trialing,
-            disclaimer,
-            CompletedInApp: true);
+    private async Task<CheckoutSessionDto> ChangeExistingSubscriptionViaCheckoutAsync(
+        Tenant tenant,
+        CreateCheckoutSessionCommand command,
+        CancellationToken cancellationToken)
+    {
+        var subscription = await LoadLiveSubscriptionAsync(tenant, cancellationToken);
+        var change = PaddleSubscriptionChangePlanner.Build(
+            tenant,
+            subscription,
+            command.Plan,
+            command.Interval,
+            _settings,
+            command.TenantSlug);
+        EnsureNoConflictingScheduledChange(tenant);
+
+        if (change.Deferred)
+        {
+            return await ScheduleDowngradeExistingSubscriptionAsync(
+                tenant,
+                command,
+                subscription,
+                cancellationToken);
+        }
+
+        throw new InvalidOperationException(PaddleSubscriptionChangePolicy.PreviewRequiredMessage);
+    }
+
+    private async Task<Tenant> RequireTenantAsync(Guid tenantId, CancellationToken cancellationToken) =>
+        await dbContext.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
+        ?? throw new InvalidOperationException("Tenant not found.");
+
+    private async Task<PaddleSubscription> LoadLiveSubscriptionAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(tenant.PaddleSubscriptionId))
+        {
+            throw new InvalidOperationException(PaddleSubscriptionChangePolicy.NoExistingSubscriptionMessage);
+        }
+
+        try
+        {
+            return await paddleClient.GetSubscriptionAsync(tenant.PaddleSubscriptionId, cancellationToken)
+                ?? throw new InvalidOperationException(
+                    "Could not load your current subscription. Open Settings → Billing and try again.");
+        }
+        catch (PaddleApiException ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Could not load Paddle subscription {SubscriptionId} for tenant {TenantId}",
+                tenant.PaddleSubscriptionId,
+                tenant.Id);
+            throw new InvalidOperationException(
+                "Could not load your current subscription. Open Settings → Billing and try again.");
+        }
+    }
+
+    private static void EnsureExistingPaidSubscription(Tenant tenant)
+    {
+        if (tenant.IsComplimentary)
+        {
+            throw new InvalidOperationException("Complimentary tenants do not use Checkout.");
+        }
+
+        if (!CanUpgradeExistingSubscription(tenant))
+        {
+            throw new InvalidOperationException(PaddleSubscriptionChangePolicy.NoExistingSubscriptionMessage);
+        }
+    }
+
+    private static void EnsureNoConflictingScheduledChange(Tenant tenant)
+    {
+        if (PaddleSubscriptionChangeScheduler.HasActiveScheduledPaidDowngrade(tenant))
+        {
+            throw new InvalidOperationException(PaddleSubscriptionChangePolicy.ScheduledChangeMessage);
+        }
+    }
+
+    private static void EnsureSameSubscription(string? before, string? after)
+    {
+        if (!string.Equals(before, after, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Could not update your subscription. Open Settings → Billing and try again.");
+        }
+    }
+
+    private static PreviewPlanChangeDto MapPreview(
+        PaddleSubscriptionChangeRequest change,
+        MappedPreviewMoney money,
+        bool providerPreviewAvailable,
+        string reviewCopy) =>
+        new(
+            change.CurrentPlan.ToString(),
+            change.CurrentInterval.ToString(),
+            change.TargetPlan.ToString(),
+            change.TargetInterval.ToString(),
+            money.Currency,
+            money.Credit,
+            money.DueNow,
+            money.NextRecurringAmount,
+            money.NextBilledAt,
+            providerPreviewAvailable,
+            change.Deferred,
+            change.StateFingerprint,
+            reviewCopy,
+            ConfirmLabel(change));
+
+    private static string ConfirmLabel(PaddleSubscriptionChangeRequest change) =>
+        change.CurrentPlan == change.TargetPlan && change.TargetInterval == BillingInterval.Annual
+            ? "Confirm yearly billing"
+            : "Confirm plan change";
+
+    private static string BuildSuccessCopy(PaddleSubscriptionChangeRequest change) =>
+        change.CurrentPlan == change.TargetPlan && change.TargetInterval == BillingInterval.Annual
+            ? "Yearly billing is active."
+            : $"{change.TargetPlan} is now active.";
+
+    private static string BuildImmediateReviewCopy(
+        Tenant tenant,
+        PaddleSubscriptionChangeRequest change,
+        PaddleSubscription subscription)
+    {
+        if (PaddleSubscriptionChangePolicy.IsTrialing(subscription, tenant.BillingStatus))
+        {
+            return TenantBillingPlanSync.BuildTrialDisclaimer(
+                subscription.TrialDates?.EndsAt
+                ?? subscription.NextBilledAt
+                ?? tenant.TrialEndsAt
+                ?? DateTimeOffset.UtcNow.AddDays(30));
+        }
+
+        return change.Disclaimer
+            ?? "This change applies to your current Paddle subscription.";
+    }
+
+    private static string BuildDeferredReviewCopy(
+        Tenant tenant,
+        PaddleSubscriptionChangeRequest change,
+        PaddleSubscription subscription)
+    {
+        var periodEnd = PaddleTenantBillingSync.ResolvePeriodEnd(subscription)
+            ?? tenant.ScheduledPlanEffectiveAt;
+        var when = periodEnd is { } at ? $" on {at:MMMM d, yyyy}" : " at the end of your current billing period";
+        if (tenant.Plan == change.TargetPlan)
+        {
+            return $"Your billing interval will change to monthly{when}. You keep {change.CurrentPlan} access on yearly billing until then.";
+        }
+
+        return $"Your plan will change to {change.TargetPlan}{when}. You keep {change.CurrentPlan} access until then.";
     }
 
     private async Task<CheckoutSessionDto> ScheduleDowngradeExistingSubscriptionAsync(
