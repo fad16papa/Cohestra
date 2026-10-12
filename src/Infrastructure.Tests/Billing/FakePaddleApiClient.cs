@@ -64,6 +64,16 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public int CreateCheckoutTransactionCalls { get; private set; }
 
+    public int CreateCustomerCalls { get; private set; }
+
+    public int UpdateCustomerCalls { get; private set; }
+
+    public string? LastCreatedCustomerEmail { get; private set; }
+
+    public string? LastUpdatedCustomerEmail { get; private set; }
+
+    public string? LastUpdatedCustomerId { get; private set; }
+
     public int CreateSubscriptionCalls { get; private set; }
 
     public int PreviewSubscriptionCalls { get; private set; }
@@ -82,6 +92,8 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
 
     public bool CreateCustomerShouldFail { get; set; }
 
+    public Exception? UpdateCustomerException { get; set; }
+
     public int GetTransactionCalls { get; private set; }
 
     public int AttachSubscriptionAfterGetCalls { get; set; }
@@ -99,6 +111,8 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
             throw new PaddleApiException("customer email conflicts with existing customer", 409, "conflict");
         }
 
+        CreateCustomerCalls++;
+        LastCreatedCustomerEmail = email;
         Customer = new PaddleCustomer
         {
             Id = string.IsNullOrWhiteSpace(Customer.Id) ? "ctm_test" : Customer.Id,
@@ -123,6 +137,14 @@ internal sealed class FakePaddleApiClient : IPaddleApiClient
         string? name,
         CancellationToken cancellationToken = default)
     {
+        if (UpdateCustomerException is not null)
+        {
+            throw UpdateCustomerException;
+        }
+
+        UpdateCustomerCalls++;
+        LastUpdatedCustomerId = customerId;
+        LastUpdatedCustomerEmail = email;
         Customer.Id = customerId;
         if (!string.IsNullOrWhiteSpace(email))
         {

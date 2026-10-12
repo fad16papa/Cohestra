@@ -29,4 +29,4 @@ Canonical design: `_bmad-output/specs/spec-story-19-4-paddle-verified-plan-chang
 
 ## Still required after this PR
 
-UAT deploy, read-only SHA verification, authorized Paddle sandbox lifecycle, owner/product acceptance. Story stays OPEN.
+UAT deploy, read-only SHA verification, authorized Paddle sandbox lifecycle, **billing recipient alignment to `Tenant.AdminContactEmail`**, owner/product acceptance. Story stays OPEN. Recipient slice: `story-19-4-billing-recipient.md`.

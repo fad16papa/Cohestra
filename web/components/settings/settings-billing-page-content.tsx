@@ -96,6 +96,7 @@ function SettingsBillingBody() {
         shellBillingStatus={shell.billingStatus}
         shellTrialEndsAt={shell.trialEndsAt}
         isComplimentary={shell.isComplimentary}
+        billingOwnerEmail={shell.billingOwnerEmail}
         onRefreshShell={refreshShell}
       />
     </div>
