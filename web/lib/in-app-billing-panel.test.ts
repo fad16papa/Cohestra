@@ -284,7 +284,21 @@ describe("InAppBillingPanel presentation", () => {
 
     expect(rootEl.textContent).toMatch(/owner@example.com/);
     expect(rootEl.textContent).not.toMatch(/signed-in@cohestra.local/);
-    expect(rootEl.textContent).toMatch(/Billing notifications are sent to the workspace billing owner/);
     expect(rootEl.textContent).not.toMatch(/Billing uses your signed-in account email/);
+
+    const edit = Array.from(rootEl.querySelectorAll("button")).find((button) =>
+      /update information/i.test(button.textContent ?? "")
+    );
+    expect(edit).toBeTruthy();
+    await act(async () => {
+      edit!.click();
+    });
+    await flush();
+
+    expect(rootEl.textContent).toMatch(/Billing notifications are sent to the workspace billing owner/);
+    expect((rootEl.querySelector("input[type='email']") as HTMLInputElement | null)?.value).toBe(
+      "owner@example.com"
+    );
+    expect(rootEl.textContent).not.toMatch(/signed-in@cohestra.local/);
   });
 });
