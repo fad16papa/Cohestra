@@ -40,7 +40,7 @@ function summary(partial: Partial<BillingSummary> = {}): BillingSummary {
 vi.mock("@/components/auth/auth-provider", () => ({
   useAuth: () => ({
     authFetch: vi.fn(),
-    profile: { email: "owner@cohestra.local" },
+    profile: { email: "signed-in@cohestra.local" },
   }),
 }));
 
@@ -249,5 +249,56 @@ describe("InAppBillingPanel presentation", () => {
     expect(rootEl.textContent).toMatch(/Billing is on hold/i);
     expect(rootEl.textContent).toMatch(/read-only/i);
     expect(rootEl.textContent).not.toMatch(/workspace paused|Trial —/i);
+  });
+
+  it("shows the workspace billing owner email, not the signed-in operator", async () => {
+    billingMocks.details = {
+      summary: summary(),
+      contact: {
+        name: "Workspace Owner",
+        email: "owner@example.com",
+        phone: null,
+      },
+      paymentMethod: null,
+      subscription: {
+        cancelAtPeriodEnd: false,
+        currentPeriodEnd: null,
+        scheduledPlan: null,
+        scheduledPlanEffectiveAt: null,
+      },
+      invoices: [],
+    };
+
+    await act(async () => {
+      root.render(
+        createElement(InAppBillingPanel, {
+          shellPlan: "Pro",
+          shellBillingStatus: "Active",
+          shellTrialEndsAt: null,
+          billingOwnerEmail: "owner@example.com",
+          onRefreshShell: async () => undefined,
+        })
+      );
+    });
+    await flush();
+
+    expect(rootEl.textContent).toMatch(/owner@example.com/);
+    expect(rootEl.textContent).not.toMatch(/signed-in@cohestra.local/);
+    expect(rootEl.textContent).not.toMatch(/Billing uses your signed-in account email/);
+
+    const edit = Array.from(rootEl.querySelectorAll("button")).find((button) =>
+      /update information/i.test(button.textContent ?? "")
+    );
+    expect(edit).toBeTruthy();
+    await act(async () => {
+      edit!.click();
+    });
+    await flush();
+
+    expect(rootEl.textContent).toMatch(/Billing notifications are sent to the workspace billing owner/);
+    expect((rootEl.querySelector("input[type='email']") as HTMLInputElement | null)?.value).toBe(
+      "owner@example.com"
+    );
+    expect(rootEl.textContent).not.toMatch(/signed-in@cohestra.local/);
   });
 });

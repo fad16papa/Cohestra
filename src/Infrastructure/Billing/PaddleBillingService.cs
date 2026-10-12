@@ -98,7 +98,7 @@ internal sealed class PaddleBillingService(
             throw new InvalidOperationException("Tenant already has a subscription in progress.");
         }
 
-        await EnsurePaddleCustomerForOperatorAsync(tenant, command.AdminEmail, cancellationToken);
+        await EnsurePaddleCustomerForTenantAsync(tenant, cancellationToken);
 
         var savedPaymentMethod = await FetchDefaultPaymentMethodAsync(
             tenant.PaddleCustomerId!,
@@ -112,10 +112,9 @@ internal sealed class PaddleBillingService(
                 cancellationToken);
         }
 
-        if (string.IsNullOrWhiteSpace(tenant.PaddleCustomerId)
-            && string.IsNullOrWhiteSpace(command.AdminEmail))
+        if (string.IsNullOrWhiteSpace(tenant.PaddleCustomerId))
         {
-            throw new InvalidOperationException("Admin email is required to start Checkout.");
+            throw new InvalidOperationException("Could not create a billing customer for this workspace.");
         }
 
         var includeTrial = !tenant.HasConsumedTrial;
@@ -169,10 +168,7 @@ internal sealed class PaddleBillingService(
             throw new InvalidOperationException("Complimentary tenants do not use the billing portal.");
         }
 
-        var billingEmail = tenant.AdminContactEmail
-            ?? throw new InvalidOperationException("Workspace billing owner email is not configured.");
-
-        await EnsurePaddleCustomerForOperatorAsync(tenant, billingEmail, cancellationToken);
+        await EnsurePaddleCustomerForTenantAsync(tenant, cancellationToken);
 
         try
         {
@@ -298,7 +294,7 @@ internal sealed class PaddleBillingService(
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken)
             ?? throw new InvalidOperationException("Tenant not found.");
 
-        await EnsurePaddleCustomerForOperatorAsync(tracked, operatorEmail, cancellationToken);
+        await EnsurePaddleCustomerForTenantAsync(tracked, cancellationToken);
 
         var contact = await FetchPaddleContactAsync(tracked.PaddleCustomerId!, cancellationToken)
             ?? BuildLocalContact(tracked);
@@ -319,6 +315,9 @@ internal sealed class PaddleBillingService(
         string? phoneLocal,
         CancellationToken cancellationToken = default)
     {
+        // operatorEmail authorizes the caller. Request email is ignored: Paddle
+        // recipient stays Tenant.AdminContactEmail (not an owner-transfer).
+        _ = email;
         await ValidateBillingAccessAsync(tenantId, operatorEmail, cancellationToken);
         EnsureConfigured();
 
@@ -331,7 +330,7 @@ internal sealed class PaddleBillingService(
             throw new InvalidOperationException("Complimentary tenants do not manage billing contact.");
         }
 
-        await EnsurePaddleCustomerForOperatorAsync(tenant, operatorEmail, cancellationToken);
+        await EnsurePaddleCustomerForTenantAsync(tenant, cancellationToken);
 
         var hasPhoneUpdate = phoneCountry is not null || phoneLocal is not null;
         if (hasPhoneUpdate)
@@ -367,7 +366,7 @@ internal sealed class PaddleBillingService(
         {
             await paddleClient.UpdateCustomerAsync(
                 tenant.PaddleCustomerId!,
-                operatorEmail.Trim(),
+                RequireTenantBillingEmail(tenant),
                 string.IsNullOrWhiteSpace(name) ? null : name.Trim(),
                 cancellationToken);
         }
@@ -518,6 +517,7 @@ internal sealed class PaddleBillingService(
         EnsureConfigured();
         var tenant = await RequireTenantAsync(command.TenantId, cancellationToken);
         EnsureExistingPaidSubscription(tenant);
+        await EnsurePaddleCustomerForTenantAsync(tenant, cancellationToken);
 
         var subscriptionIdBefore = tenant.PaddleSubscriptionId;
         var subscription = await LoadLiveSubscriptionAsync(tenant, cancellationToken);
@@ -1236,17 +1236,21 @@ internal sealed class PaddleBillingService(
         }
     }
 
-    private async Task EnsurePaddleCustomerForOperatorAsync(
-        Tenant tenant,
-        string operatorEmail,
-        CancellationToken cancellationToken)
+    private static string RequireTenantBillingEmail(Tenant tenant)
     {
-        if (string.IsNullOrWhiteSpace(operatorEmail))
+        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
-            throw new InvalidOperationException("Signed-in operator email is required.");
+            throw new InvalidOperationException("Workspace billing owner email is not configured.");
         }
 
-        var normalizedEmail = operatorEmail.Trim();
+        return tenant.AdminContactEmail.Trim();
+    }
+
+    private async Task EnsurePaddleCustomerForTenantAsync(
+        Tenant tenant,
+        CancellationToken cancellationToken)
+    {
+        var normalizedEmail = RequireTenantBillingEmail(tenant);
         var customData = new Dictionary<string, string>
         {
             ["tenant_id"] = tenant.Id.ToString(),

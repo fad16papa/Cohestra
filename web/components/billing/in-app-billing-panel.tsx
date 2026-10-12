@@ -57,6 +57,7 @@ type InAppBillingPanelProps = {
   shellBillingStatus: string;
   shellTrialEndsAt: string | null;
   isComplimentary?: boolean;
+  billingOwnerEmail?: string | null;
   onRefreshShell: () => Promise<void>;
 };
 
@@ -150,9 +151,10 @@ export function InAppBillingPanel({
   shellBillingStatus,
   shellTrialEndsAt,
   isComplimentary = false,
+  billingOwnerEmail = null,
   onRefreshShell,
 }: InAppBillingPanelProps) {
-  const { authFetch, profile } = useAuth();
+  const { authFetch } = useAuth();
   const [details, setDetails] = useState<BillingDetails | null>(null);
   const [billingConfigured, setBillingConfigured] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -178,7 +180,6 @@ export function InAppBillingPanel({
     setContactPhoneError(null);
   }, []);
 
-  const operatorEmail = profile?.email ?? "";
   const loadGeneration = useRef(0);
 
   const loadBasicCapability = useCallback(async () => {
@@ -365,6 +366,8 @@ export function InAppBillingPanel({
   }
 
   const contact = details?.contact;
+  const billingEmail =
+    contact?.email?.trim() || billingOwnerEmail?.trim() || "";
   const subscription = details?.subscription;
   const invoices = details?.invoices ?? [];
   const configured = billingConfigured ?? details?.summary.billingConfigured ?? false;
@@ -528,13 +531,13 @@ export function InAppBillingPanel({
                   <span className="text-xs text-text-muted-warm">Email</span>
                   <input
                     type="email"
-                    value={operatorEmail}
+                    value={billingEmail}
                     readOnly
                     disabled
                     className="w-full rounded-lg border border-border-warm bg-muted/30 px-3 py-2 text-sm text-text-muted-warm"
                   />
                   <p className="text-xs text-text-muted-warm">
-                    Billing uses your signed-in account email.
+                    Billing notifications are sent to the workspace billing owner.
                   </p>
                 </label>
                 <PhoneCountrySelect
@@ -596,7 +599,7 @@ export function InAppBillingPanel({
                   </p>
                   <p className="flex items-center gap-2">
                     <Mail className="size-4 text-text-muted-warm" aria-hidden />
-                    {operatorEmail || contact?.email?.trim() || "—"}
+                    {billingEmail || "—"}
                   </p>
                   <p className="flex items-center gap-2">
                     <Phone className="size-4 text-text-muted-warm" aria-hidden />

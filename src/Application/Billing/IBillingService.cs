@@ -48,6 +48,7 @@ public interface IBillingService
         string operatorEmail,
         CancellationToken cancellationToken = default);
 
+    /// <param name="email">Ignored. Paddle recipient is <c>Tenant.AdminContactEmail</c>.</param>
     Task UpdateBillingContactAsync(
         Guid tenantId,
         string operatorEmail,
