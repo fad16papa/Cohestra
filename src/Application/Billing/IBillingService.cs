@@ -11,6 +11,14 @@ public interface IBillingService
         CreateCheckoutSessionCommand command,
         CancellationToken cancellationToken = default);
 
+    Task<PreviewPlanChangeDto> PreviewPlanChangeAsync(
+        PreviewPlanChangeCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<ConfirmPlanChangeDto> ConfirmPlanChangeAsync(
+        ConfirmPlanChangeCommand command,
+        CancellationToken cancellationToken = default);
+
     Task<PortalSessionDto> CreatePortalSessionAsync(
         CreatePortalSessionCommand command,
         CancellationToken cancellationToken = default);
@@ -103,6 +111,52 @@ public sealed record CreateCheckoutSessionCommand(
     string AdminEmail,
     string SuccessUrl,
     string CancelUrl);
+
+public sealed record BillingMoneyDto(long AmountMinor, string Currency);
+
+public sealed record PreviewPlanChangeCommand(
+    Guid TenantId,
+    string TenantSlug,
+    TenantPlan Plan,
+    BillingInterval Interval);
+
+public sealed record PreviewPlanChangeDto(
+    string CurrentPlan,
+    string CurrentInterval,
+    string TargetPlan,
+    string TargetInterval,
+    string? Currency,
+    BillingMoneyDto? Credit,
+    BillingMoneyDto? DueNow,
+    BillingMoneyDto? NextRecurringAmount,
+    DateTimeOffset? NextBilledAt,
+    bool ProviderPreviewAvailable,
+    bool Deferred,
+    string PreviewState,
+    string ReviewCopy,
+    string ConfirmLabel);
+
+public sealed record ConfirmPlanChangeCommand(
+    Guid TenantId,
+    string TenantSlug,
+    TenantPlan Plan,
+    BillingInterval Interval,
+    string? PreviewState,
+    string SuccessUrl,
+    string CancelUrl);
+
+public sealed record ConfirmPlanChangeDto(
+    string SuccessMessage,
+    string RedirectUrl,
+    bool CompletedInApp,
+    BillingMoneyDto? AmountCharged,
+    string? Currency,
+    string? TransactionId,
+    string? InvoiceReference,
+    DateTimeOffset? NextBilledAt,
+    DateTimeOffset? TrialEndsAt,
+    bool TrialIncluded,
+    IReadOnlyList<string>? Warnings = null);
 
 public sealed record CheckoutSessionDto(
     string CheckoutUrl,

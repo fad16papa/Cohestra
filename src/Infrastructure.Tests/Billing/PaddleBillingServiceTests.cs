@@ -472,49 +472,78 @@ public sealed class PaddleBillingServiceTests
     }
 
     [Fact]
-    public async Task Checkout_trialing_pro_monthly_to_annual_uses_do_not_bill()
+    public async Task Confirm_trialing_pro_monthly_to_annual_uses_do_not_bill()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
         var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Monthly, "trialing");
         var service = PaddleBillingTestHarness.CreateService(db, client);
 
-        var session = await service.CreateCheckoutSessionAsync(AnnualPro(tenant.Id));
+        var result = await PreviewAndConfirmAsync(service, tenant.Id, TenantPlan.Pro, BillingInterval.Annual);
 
-        Assert.True(session.CompletedInApp);
+        Assert.True(result.CompletedInApp);
+        Assert.Equal("pri_pro_a", client.LastPreviewPriceId);
         Assert.Equal("pri_pro_a", client.LastUpdatePriceId);
         Assert.Equal("immediately", client.LastUpdateEffectiveFrom);
+        Assert.Equal("do_not_bill", client.LastPreviewProrationBillingMode);
         Assert.Equal("do_not_bill", client.LastUpdateProrationBillingMode);
-        Assert.Contains("will not be charged", session.TrialDisclaimer, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
+        Assert.Equal(0, client.CreateSubscriptionCalls);
+        Assert.Equal("sub_existing", db.Tenants.Single(t => t.Id == tenant.Id).PaddleSubscriptionId);
         Assert.Equal(BillingInterval.Annual, db.Tenants.Single(t => t.Id == tenant.Id).BillingInterval);
+        Assert.Equal(BillingStatus.Trialing, db.Tenants.Single(t => t.Id == tenant.Id).BillingStatus);
     }
 
     [Fact]
-    public async Task Checkout_active_pro_monthly_to_annual_uses_prorated_immediately()
+    public async Task Confirm_active_pro_monthly_to_annual_uses_prorated_immediately()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
         var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Monthly, "active");
         var service = PaddleBillingTestHarness.CreateService(db, client);
 
-        var session = await service.CreateCheckoutSessionAsync(AnnualPro(tenant.Id));
+        var result = await PreviewAndConfirmAsync(service, tenant.Id, TenantPlan.Pro, BillingInterval.Annual);
 
-        Assert.True(session.CompletedInApp);
+        Assert.True(result.CompletedInApp);
+        Assert.Equal("Yearly billing is active.", result.SuccessMessage);
+        Assert.Null(result.AmountCharged);
         Assert.Equal("pri_pro_a", client.LastUpdatePriceId);
+        Assert.Equal("prorated_immediately", client.LastPreviewProrationBillingMode);
         Assert.Equal("prorated_immediately", client.LastUpdateProrationBillingMode);
-        Assert.Contains("Yearly billing starts now", session.TrialDisclaimer, StringComparison.Ordinal);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
+        Assert.Equal(0, client.CreateSubscriptionCalls);
+        Assert.Equal("sub_existing", db.Tenants.Single(t => t.Id == tenant.Id).PaddleSubscriptionId);
     }
 
     [Fact]
-    public async Task Checkout_active_core_monthly_to_pro_monthly_keeps_next_period_proration()
+    public async Task Confirm_active_core_monthly_to_pro_monthly_keeps_next_period_proration()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
         var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Core, BillingInterval.Monthly, "active");
         var service = PaddleBillingTestHarness.CreateService(db, client);
 
-        var session = await service.CreateCheckoutSessionAsync(Checkout(tenant.Id) with { Plan = TenantPlan.Pro });
+        await PreviewAndConfirmAsync(service, tenant.Id, TenantPlan.Pro, BillingInterval.Monthly);
 
         Assert.Equal("pri_pro_m", client.LastUpdatePriceId);
+        Assert.Equal("prorated_next_billing_period", client.LastPreviewProrationBillingMode);
         Assert.Equal("prorated_next_billing_period", client.LastUpdateProrationBillingMode);
         Assert.Equal(TenantPlan.Pro, db.Tenants.Single(t => t.Id == tenant.Id).Plan);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
+        Assert.Equal("sub_existing", db.Tenants.Single(t => t.Id == tenant.Id).PaddleSubscriptionId);
+    }
+
+    [Fact]
+    public async Task Checkout_immediate_existing_subscription_requires_preview()
+    {
+        await using var db = PaddleBillingTestHarness.CreateDb();
+        var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Monthly, "active");
+        var service = PaddleBillingTestHarness.CreateService(db, client);
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CreateCheckoutSessionAsync(AnnualPro(tenant.Id)));
+
+        Assert.Contains("billing review", ex.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(client.LastUpdatePriceId);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
+        Assert.Equal(0, client.PreviewSubscriptionCalls);
     }
 
     [Fact]
@@ -547,7 +576,7 @@ public sealed class PaddleBillingServiceTests
     }
 
     [Fact]
-    public async Task Checkout_upgrade_maps_provider_400_without_leaking_detail()
+    public async Task Confirm_upgrade_maps_provider_400_without_leaking_detail()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
         var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Pro, BillingInterval.Monthly, "active");
@@ -558,42 +587,43 @@ public sealed class PaddleBillingServiceTests
         var service = PaddleBillingTestHarness.CreateService(db, client);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.CreateCheckoutSessionAsync(AnnualPro(tenant.Id)));
+            PreviewAndConfirmAsync(service, tenant.Id, TenantPlan.Pro, BillingInterval.Annual));
 
         Assert.Contains("Could not update your subscription", ex.Message, StringComparison.Ordinal);
         Assert.DoesNotContain("secret paddle", ex.Message, StringComparison.Ordinal);
         Assert.Equal(BillingInterval.Monthly, db.Tenants.Single(t => t.Id == tenant.Id).BillingInterval);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
     }
 
     [Fact]
-    public async Task Checkout_trialing_core_monthly_to_annual_uses_do_not_bill()
+    public async Task Confirm_trialing_core_monthly_to_annual_uses_do_not_bill()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
         var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Core, BillingInterval.Monthly, "trialing");
         var service = PaddleBillingTestHarness.CreateService(db, client);
 
-        var session = await service.CreateCheckoutSessionAsync(
-            Checkout(tenant.Id) with { Plan = TenantPlan.Core, Interval = BillingInterval.Annual });
+        await PreviewAndConfirmAsync(service, tenant.Id, TenantPlan.Core, BillingInterval.Annual);
 
         Assert.Equal("pri_core_a", client.LastUpdatePriceId);
         Assert.Equal("do_not_bill", client.LastUpdateProrationBillingMode);
-        Assert.Contains("will not be charged", session.TrialDisclaimer, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(BillingStatus.Trialing, db.Tenants.Single(t => t.Id == tenant.Id).BillingStatus);
         Assert.Equal(BillingInterval.Annual, db.Tenants.Single(t => t.Id == tenant.Id).BillingInterval);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
+        Assert.Equal("sub_existing", db.Tenants.Single(t => t.Id == tenant.Id).PaddleSubscriptionId);
     }
 
     [Fact]
-    public async Task Checkout_active_core_monthly_to_annual_uses_prorated_immediately()
+    public async Task Confirm_active_core_monthly_to_annual_uses_prorated_immediately()
     {
         await using var db = PaddleBillingTestHarness.CreateDb();
         var (tenant, client) = SeedSubscribedTenant(db, TenantPlan.Core, BillingInterval.Monthly, "active");
         var service = PaddleBillingTestHarness.CreateService(db, client);
 
-        await service.CreateCheckoutSessionAsync(
-            Checkout(tenant.Id) with { Plan = TenantPlan.Core, Interval = BillingInterval.Annual });
+        await PreviewAndConfirmAsync(service, tenant.Id, TenantPlan.Core, BillingInterval.Annual);
 
         Assert.Equal("pri_core_a", client.LastUpdatePriceId);
         Assert.Equal("prorated_immediately", client.LastUpdateProrationBillingMode);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
     }
 
     [Fact]
@@ -982,7 +1012,7 @@ public sealed class PaddleBillingServiceTests
     [InlineData(429, null, "Billing is busy")]
     [InlineData(409, null, "cannot be changed right now")]
     [InlineData(503, null, "temporarily unavailable")]
-    public async Task Checkout_upgrade_maps_retryable_provider_failures(
+    public async Task Confirm_upgrade_maps_retryable_provider_failures(
         int status,
         string? code,
         string expected)
@@ -993,11 +1023,12 @@ public sealed class PaddleBillingServiceTests
         var service = PaddleBillingTestHarness.CreateService(db, client);
 
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.CreateCheckoutSessionAsync(AnnualPro(tenant.Id)));
+            PreviewAndConfirmAsync(service, tenant.Id, TenantPlan.Pro, BillingInterval.Annual));
 
         Assert.Contains(expected, ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("secret paddle", ex.Message, StringComparison.Ordinal);
         Assert.Equal(BillingInterval.Monthly, db.Tenants.Single(t => t.Id == tenant.Id).BillingInterval);
+        Assert.Equal(0, client.CreateCheckoutTransactionCalls);
     }
 
     private static (Tenant Tenant, FakePaddleApiClient Client) SeedSubscribedTenant(
@@ -1052,6 +1083,25 @@ public sealed class PaddleBillingServiceTests
         var updated = db.Tenants.Single(t => t.Id == tenant.Id);
         Assert.Equal(expectedInterval, updated.BillingInterval);
         Assert.Equal(tenant.Plan, updated.Plan);
+    }
+
+    private static async Task<ConfirmPlanChangeDto> PreviewAndConfirmAsync(
+        IBillingService service,
+        Guid tenantId,
+        TenantPlan plan,
+        BillingInterval interval)
+    {
+        var preview = await service.PreviewPlanChangeAsync(
+            new PreviewPlanChangeCommand(tenantId, "studio", plan, interval));
+        return await service.ConfirmPlanChangeAsync(
+            new ConfirmPlanChangeCommand(
+                tenantId,
+                "studio",
+                plan,
+                interval,
+                preview.PreviewState,
+                "https://studio.localhost/dashboard?billing=success&session_id={CHECKOUT_SESSION_ID}",
+                "https://studio.localhost/billing/checkout?canceled=1"));
     }
 
     private static CreateCheckoutSessionCommand MonthlyPro(Guid tenantId) =>

@@ -168,14 +168,34 @@ internal sealed class PaddleApiClient : IPaddleApiClient
         SendRequiredAsync<PaddleSubscription>(
             HttpMethod.Patch,
             $"subscriptions/{subscriptionId}",
-            new PaddleSubscriptionUpdate
-            {
-                Items = [new PaddlePriceQuantity { PriceId = priceId, Quantity = 1 }],
-                EffectiveFrom = effectiveFrom,
-                ProrationBillingMode = prorationBillingMode,
-                CustomData = customData?.ToDictionary(static pair => pair.Key, static pair => pair.Value),
-            },
+            BuildSubscriptionItemUpdate(priceId, effectiveFrom, prorationBillingMode, customData),
             cancellationToken);
+
+    public Task<PaddleSubscriptionPreview> PreviewSubscriptionUpdateAsync(
+        string subscriptionId,
+        string priceId,
+        string effectiveFrom,
+        string prorationBillingMode,
+        IReadOnlyDictionary<string, string>? customData = null,
+        CancellationToken cancellationToken = default) =>
+        SendRequiredAsync<PaddleSubscriptionPreview>(
+            HttpMethod.Patch,
+            $"subscriptions/{subscriptionId}/preview",
+            BuildSubscriptionItemUpdate(priceId, effectiveFrom, prorationBillingMode, customData),
+            cancellationToken);
+
+    private static PaddleSubscriptionUpdate BuildSubscriptionItemUpdate(
+        string priceId,
+        string effectiveFrom,
+        string prorationBillingMode,
+        IReadOnlyDictionary<string, string>? customData) =>
+        new()
+        {
+            Items = [new PaddlePriceQuantity { PriceId = priceId, Quantity = 1 }],
+            EffectiveFrom = effectiveFrom,
+            ProrationBillingMode = prorationBillingMode,
+            CustomData = customData?.ToDictionary(static pair => pair.Key, static pair => pair.Value),
+        };
 
     public Task<PaddleSubscription> EndTrialNowAsync(
         string subscriptionId,

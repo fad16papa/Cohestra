@@ -3,9 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 import {
   BILLING_RECONCILE_REASONS,
   checkoutReconcileKey,
+  confirmPlanChangeWithAuth,
   createBillingCheckoutWithAuth,
   createBillingPortalSession,
   createCheckoutReconcileGate,
+  previewPlanChangeWithAuth,
   reconcileBillingFromProviderWithAuth,
   resolveCheckoutReturnTrigger,
   shouldRequestBillingProviderSync,
@@ -199,6 +201,96 @@ describe("createBillingPortalSession", () => {
     await expect(createBillingPortalSession(authFetch, returnUrl)).resolves.toBe(
       "https://sandbox-customer-portal.paddle.com/s"
     );
+  });
+});
+
+describe("previewPlanChangeWithAuth", () => {
+  it("posts only plan and interval", async () => {
+    const authFetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(JSON.parse(String(init?.body))).toEqual({
+        plan: "pro",
+        interval: "annual",
+      });
+      return new Response(
+        JSON.stringify({
+          currentPlan: "Pro",
+          currentInterval: "Monthly",
+          targetPlan: "Pro",
+          targetInterval: "Annual",
+          currency: "USD",
+          credit: { amountMinor: 1500, currency: "USD" },
+          dueNow: { amountMinor: 8400, currency: "USD" },
+          nextRecurringAmount: { amountMinor: 9900, currency: "USD" },
+          nextBilledAt: "2027-10-12T00:00:00Z",
+          providerPreviewAvailable: true,
+          deferred: false,
+          previewState: "abc",
+          reviewCopy: "Yearly billing starts now.",
+          confirmLabel: "Confirm yearly billing",
+        }),
+        { status: 200 }
+      );
+    });
+
+    await expect(
+      previewPlanChangeWithAuth(authFetch, { plan: "pro", interval: "annual" })
+    ).resolves.toMatchObject({
+      ok: true,
+      result: {
+        credit: { amountMinor: 1500, currency: "USD" },
+        confirmLabel: "Confirm yearly billing",
+      },
+    });
+  });
+
+  it("does not invent money when optional provider fields are missing", async () => {
+    const authFetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          currentPlan: "Pro",
+          currentInterval: "Monthly",
+          targetPlan: "Pro",
+          targetInterval: "Annual",
+          providerPreviewAvailable: true,
+          deferred: false,
+          previewState: "abc",
+          reviewCopy: "Yearly billing starts now.",
+          confirmLabel: "Confirm yearly billing",
+        }),
+        { status: 200 }
+      )
+    );
+
+    const result = await previewPlanChangeWithAuth(authFetch, { plan: "pro", interval: "annual" });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.result.credit).toBeNull();
+      expect(result.result.dueNow).toBeNull();
+      expect(result.result.nextRecurringAmount).toBeNull();
+    }
+  });
+});
+
+describe("confirmPlanChangeWithAuth", () => {
+  it("maps a stale-preview conflict", async () => {
+    const authFetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          title: "Billing state changed",
+          detail:
+            "Your billing state changed while you were reviewing this change. Review the updated billing details and try again.",
+        }),
+        { status: 409 }
+      )
+    );
+
+    await expect(
+      confirmPlanChangeWithAuth(authFetch, {
+        plan: "pro",
+        interval: "annual",
+        previewState: "stale",
+      })
+    ).resolves.toMatchObject({ ok: false, conflict: true });
   });
 });
 

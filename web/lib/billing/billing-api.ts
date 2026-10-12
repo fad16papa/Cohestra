@@ -1,4 +1,11 @@
 import { getPublicApiBaseUrl } from "@/lib/api";
+import {
+  PREVIEW_FAILURE_COPY,
+  STALE_PREVIEW_COPY,
+  type PlanChangeConfirmResult,
+  type PlanChangePreview,
+  type ProviderMoney,
+} from "@/lib/billing/plan-change-review";
 
 export type BillingUsage = {
   seatsUsed: number;
@@ -210,6 +217,161 @@ async function syncBillingFromProviderWithAuth(
   }
 
   return mapBillingSummary(raw);
+}
+
+export async function previewPlanChangeWithAuth(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  payload: { plan: "core" | "pro"; interval: "monthly" | "annual" }
+): Promise<
+  | { ok: true; result: PlanChangePreview }
+  | { ok: false; message: string }
+> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/billing/subscription/change-preview`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        plan: payload.plan,
+        interval: payload.interval,
+      }),
+    }
+  );
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    return { ok: false, message: parseProblem(raw) || PREVIEW_FAILURE_COPY };
+  }
+
+  const preview = mapPlanChangePreview(raw);
+  if (!preview) {
+    return { ok: false, message: PREVIEW_FAILURE_COPY };
+  }
+
+  return { ok: true, result: preview };
+}
+
+export async function confirmPlanChangeWithAuth(
+  authFetch: (input: string, init?: RequestInit) => Promise<Response>,
+  payload: {
+    plan: "core" | "pro";
+    interval: "monthly" | "annual";
+    previewState: string;
+    successUrl?: string;
+    cancelUrl?: string;
+  }
+): Promise<
+  | { ok: true; result: PlanChangeConfirmResult }
+  | { ok: false; conflict: boolean; message: string }
+> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/admin/billing/subscription/change`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        plan: payload.plan,
+        interval: payload.interval,
+        previewState: payload.previewState,
+        successUrl: payload.successUrl,
+        cancelUrl: payload.cancelUrl,
+      }),
+    }
+  );
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (response.status === 409) {
+    return { ok: false, conflict: true, message: parseProblem(raw) || STALE_PREVIEW_COPY };
+  }
+
+  if (!response.ok) {
+    return { ok: false, conflict: false, message: parseProblem(raw) };
+  }
+
+  const result = mapPlanChangeConfirm(raw);
+  if (!result) {
+    return { ok: false, conflict: false, message: "Could not confirm this plan change." };
+  }
+
+  return { ok: true, result };
+}
+
+function parseMoney(raw: unknown): ProviderMoney | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const amount = record.amountMinor ?? record.AmountMinor;
+  const currency = record.currency ?? record.Currency;
+  if (typeof amount !== "number" || !Number.isInteger(amount) || typeof currency !== "string" || !currency.trim()) {
+    return null;
+  }
+
+  return { amountMinor: amount, currency };
+}
+
+function mapPlanChangePreview(raw: Record<string, unknown>): PlanChangePreview | null {
+  const currentPlan = raw.currentPlan ?? raw.CurrentPlan;
+  const currentInterval = raw.currentInterval ?? raw.CurrentInterval;
+  const targetPlan = raw.targetPlan ?? raw.TargetPlan;
+  const targetInterval = raw.targetInterval ?? raw.TargetInterval;
+  const previewState = raw.previewState ?? raw.PreviewState;
+  const reviewCopy = raw.reviewCopy ?? raw.ReviewCopy;
+  const confirmLabel = raw.confirmLabel ?? raw.ConfirmLabel;
+  if (
+    typeof currentPlan !== "string"
+    || typeof currentInterval !== "string"
+    || typeof targetPlan !== "string"
+    || typeof targetInterval !== "string"
+    || typeof previewState !== "string"
+    || typeof reviewCopy !== "string"
+    || typeof confirmLabel !== "string"
+  ) {
+    return null;
+  }
+
+  const currency = raw.currency ?? raw.Currency;
+  const nextBilledAt = raw.nextBilledAt ?? raw.NextBilledAt;
+  return {
+    currentPlan,
+    currentInterval,
+    targetPlan,
+    targetInterval,
+    currency: typeof currency === "string" ? currency : null,
+    credit: parseMoney(raw.credit ?? raw.Credit),
+    dueNow: parseMoney(raw.dueNow ?? raw.DueNow),
+    nextRecurringAmount: parseMoney(raw.nextRecurringAmount ?? raw.NextRecurringAmount),
+    nextBilledAt: typeof nextBilledAt === "string" ? nextBilledAt : null,
+    providerPreviewAvailable: Boolean(raw.providerPreviewAvailable ?? raw.ProviderPreviewAvailable),
+    deferred: Boolean(raw.deferred ?? raw.Deferred),
+    previewState,
+    reviewCopy,
+    confirmLabel,
+  };
+}
+
+function mapPlanChangeConfirm(raw: Record<string, unknown>): PlanChangeConfirmResult | null {
+  const successMessage = raw.successMessage ?? raw.SuccessMessage;
+  const redirectUrl = raw.redirectUrl ?? raw.RedirectUrl;
+  if (typeof successMessage !== "string" || typeof redirectUrl !== "string") {
+    return null;
+  }
+
+  const currency = raw.currency ?? raw.Currency;
+  const transactionId = raw.transactionId ?? raw.TransactionId;
+  const invoiceReference = raw.invoiceReference ?? raw.InvoiceReference;
+  const nextBilledAt = raw.nextBilledAt ?? raw.NextBilledAt;
+  return {
+    successMessage,
+    redirectUrl,
+    completedInApp: Boolean(raw.completedInApp ?? raw.CompletedInApp),
+    amountCharged: parseMoney(raw.amountCharged ?? raw.AmountCharged),
+    currency: typeof currency === "string" ? currency : null,
+    transactionId: typeof transactionId === "string" ? transactionId : null,
+    invoiceReference: typeof invoiceReference === "string" ? invoiceReference : null,
+    nextBilledAt: typeof nextBilledAt === "string" ? nextBilledAt : null,
+  };
 }
 
 export async function createBillingCheckoutWithAuth(

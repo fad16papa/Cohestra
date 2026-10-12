@@ -288,7 +288,7 @@ development_status:
   19-1-uat-droplet-deploy-and-smoke: in-progress
   19-2-https-edge-security-header-verify: review
   19-3-recaptcha-production-enablement: ready-for-dev
-  19-4-paddle-billing-uat-on-droplet: ready-for-dev
+  19-4-paddle-billing-uat-on-droplet: in-progress
   19-5-operator-core-flows-launch-signoff: ready-for-dev
   epic-19-retrospective: optional
 

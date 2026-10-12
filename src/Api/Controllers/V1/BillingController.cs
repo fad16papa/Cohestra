@@ -212,6 +212,122 @@ public class BillingController(
         }
     }
 
+    [HttpPost("subscription/change-preview")]
+    [ProducesResponseType(typeof(PreviewPlanChangeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<PreviewPlanChangeResponse>> PreviewPlanChange(
+        [FromBody] PreviewPlanChangeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var context = await ResolveBillingMutationContextAsync(request.Plan, request.Interval, cancellationToken);
+        if (context.Error is not null)
+        {
+            return context.Error;
+        }
+
+        try
+        {
+            var preview = await billingService.PreviewPlanChangeAsync(
+                new PreviewPlanChangeCommand(
+                    context.TenantId,
+                    context.TenantSlug,
+                    context.Plan,
+                    context.Interval),
+                cancellationToken);
+            return Ok(MapPreview(preview));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BillingBadRequest("Plan change preview unavailable", ex.Message);
+        }
+    }
+
+    [HttpPost("subscription/change")]
+    [ProducesResponseType(typeof(ConfirmPlanChangeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
+    public async Task<ActionResult<ConfirmPlanChangeResponse>> ConfirmPlanChange(
+        [FromBody] ConfirmPlanChangeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var context = await ResolveBillingMutationContextAsync(request.Plan, request.Interval, cancellationToken);
+        if (context.Error is not null)
+        {
+            return context.Error;
+        }
+
+        var publicBaseUrl = publicWebOptions.Value.BaseUrl;
+        var verifiedCustomDomain = await billingService.GetVerifiedCustomDomainAsync(
+            context.TenantId,
+            cancellationToken);
+        var successUrl = string.IsNullOrWhiteSpace(request.SuccessUrl)
+            ? BillingReturnUrl.TenantPath(
+                publicBaseUrl,
+                context.TenantSlug,
+                "/settings/billing?billing=success")
+            : request.SuccessUrl!;
+        var cancelUrl = string.IsNullOrWhiteSpace(request.CancelUrl)
+            ? BillingReturnUrl.TenantPath(
+                publicBaseUrl,
+                context.TenantSlug,
+                "/billing/checkout")
+            : request.CancelUrl!;
+
+        if (!BillingReturnUrl.IsAllowed(successUrl, publicBaseUrl, context.TenantSlug, verifiedCustomDomain))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid success URL",
+                Detail = "Success URL must stay on the current workspace host.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
+
+        if (!BillingReturnUrl.IsAllowed(cancelUrl, publicBaseUrl, context.TenantSlug, verifiedCustomDomain))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid cancel URL",
+                Detail = "Cancel URL must stay on the current workspace host.",
+                Status = StatusCodes.Status400BadRequest,
+            });
+        }
+
+        try
+        {
+            var result = await billingService.ConfirmPlanChangeAsync(
+                new ConfirmPlanChangeCommand(
+                    context.TenantId,
+                    context.TenantSlug,
+                    context.Plan,
+                    context.Interval,
+                    request.PreviewState,
+                    successUrl,
+                    cancelUrl),
+                cancellationToken);
+            return Ok(MapConfirm(result));
+        }
+        catch (BillingStateConflictException ex)
+        {
+            return StatusCode(
+                StatusCodes.Status409Conflict,
+                new ProblemDetails
+                {
+                    Title = "Billing state changed",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status409Conflict,
+                });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BillingBadRequest("Plan change unavailable", ex.Message);
+        }
+    }
+
     [HttpPost("portal")]
     [ProducesResponseType(typeof(PortalSessionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -455,6 +571,57 @@ public class BillingController(
         }
     }
 
+    private async Task<(
+        Guid TenantId,
+        string TenantSlug,
+        TenantPlan Plan,
+        BillingInterval Interval,
+        ActionResult? Error)> ResolveBillingMutationContextAsync(
+        string? planValue,
+        string? intervalValue,
+        CancellationToken cancellationToken)
+    {
+        if (!currentTenant.IsResolved
+            || currentTenant.TenantId is not Guid tenantId
+            || string.IsNullOrWhiteSpace(currentTenant.Slug))
+        {
+            return (Guid.Empty, string.Empty, TenantPlan.Basic, BillingInterval.Monthly, Forbid());
+        }
+
+        if (!TryParsePlan(planValue, out var plan) || plan is not (TenantPlan.Core or TenantPlan.Pro))
+        {
+            return (tenantId, currentTenant.Slug, TenantPlan.Basic, BillingInterval.Monthly, BadRequest(new ProblemDetails
+            {
+                Title = "Invalid plan",
+                Detail = "Plan must be Core or Pro.",
+                Status = StatusCodes.Status400BadRequest,
+            }));
+        }
+
+        if (!TryParseInterval(intervalValue, out var interval))
+        {
+            return (tenantId, currentTenant.Slug, plan, BillingInterval.Monthly, BadRequest(new ProblemDetails
+            {
+                Title = "Invalid interval",
+                Detail = "Interval must be monthly or annual.",
+                Status = StatusCodes.Status400BadRequest,
+            }));
+        }
+
+        var denied = await EnsureBillingAccessAsync(tenantId, cancellationToken);
+        if (denied is not null)
+        {
+            return (tenantId, currentTenant.Slug, plan, interval, denied);
+        }
+
+        if (!paddleOptions.Value.IsConfigured)
+        {
+            return (tenantId, currentTenant.Slug, plan, interval, BillingUnavailable());
+        }
+
+        return (tenantId, currentTenant.Slug, plan, interval, null);
+    }
+
     private string? GetOperatorEmail() =>
         User.FindFirst(JwtRegisteredClaimNames.Email)?.Value
         ?? User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
@@ -533,6 +700,40 @@ public class BillingController(
                     invoice.PdfUrl,
                     invoice.HostedInvoiceUrl))
                 .ToList());
+
+    private static PreviewPlanChangeResponse MapPreview(PreviewPlanChangeDto preview) =>
+        new(
+            preview.CurrentPlan,
+            preview.CurrentInterval,
+            preview.TargetPlan,
+            preview.TargetInterval,
+            preview.Currency,
+            MapMoney(preview.Credit),
+            MapMoney(preview.DueNow),
+            MapMoney(preview.NextRecurringAmount),
+            preview.NextBilledAt,
+            preview.ProviderPreviewAvailable,
+            preview.Deferred,
+            preview.PreviewState,
+            preview.ReviewCopy,
+            preview.ConfirmLabel);
+
+    private static ConfirmPlanChangeResponse MapConfirm(ConfirmPlanChangeDto result) =>
+        new(
+            result.SuccessMessage,
+            result.RedirectUrl,
+            result.CompletedInApp,
+            MapMoney(result.AmountCharged),
+            result.Currency,
+            result.TransactionId,
+            result.InvoiceReference,
+            result.NextBilledAt,
+            result.TrialEndsAt,
+            result.TrialIncluded,
+            result.Warnings);
+
+    private static BillingMoneyResponse? MapMoney(BillingMoneyDto? money) =>
+        money is null ? null : new BillingMoneyResponse(money.AmountMinor, money.Currency);
 
     private static BillingSummaryResponse MapSummary(BillingSummaryDto summary) =>
         new(
