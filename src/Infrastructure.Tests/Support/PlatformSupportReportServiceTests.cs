@@ -34,8 +34,8 @@ public sealed class PlatformSupportReportServiceTests
         var weekStart = StartOfUtcWeek(now);
 
         db.SupportIssues.AddRange(
-            CreateIssue(tenantA, "SUP20260816000001", "alpha", "Alpha", SupportIssueStatus.Open, weekStart.AddHours(1)),
-            CreateIssue(tenantB, "SUP20260816000002", "beta", "Beta", SupportIssueStatus.Resolved, weekStart.AddHours(2)),
+            CreateIssue(tenantA, "SUP20260816000001", "alpha", "Alpha", SupportIssueStatus.Open, InPeriodCreatedAt(weekStart, now, 1)),
+            CreateIssue(tenantB, "SUP20260816000002", "beta", "Beta", SupportIssueStatus.Resolved, InPeriodCreatedAt(weekStart, now, 2)),
             CreateIssue(tenantA, "SUP20260816000003", "alpha", "Alpha", SupportIssueStatus.Closed, weekStart.AddDays(-10)));
         await db.SaveChangesAsync();
 
@@ -64,7 +64,7 @@ public sealed class PlatformSupportReportServiceTests
                 "delta",
                 "Delta",
                 SupportIssueStatus.Open,
-                weekStart.AddHours(3)));
+                InPeriodCreatedAt(weekStart, now, 3)));
         await db.SaveChangesAsync();
 
         var service = new PlatformSupportReportService(db);
@@ -75,6 +75,58 @@ public sealed class PlatformSupportReportServiceTests
         Assert.Contains("SUP20260816000004", text);
         Assert.Contains("delta", text);
         Assert.DoesNotContain("screenshot", text, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(59)]
+    [InlineData(60)]
+    [InlineData(119)]
+    [InlineData(120)]
+    [InlineData(179)]
+    [InlineData(180)]
+    public void InPeriodCreatedAt_stays_inside_weekly_window_on_early_monday_utc(int minutesAfterMonday)
+    {
+        // Fixed Monday 00:00 UTC — not UtcNow — so this proof is not wall-clock sensitive.
+        var weekStart = new DateTimeOffset(2026, 10, 12, 0, 0, 0, TimeSpan.Zero);
+        Assert.Equal(DayOfWeek.Monday, weekStart.UtcDateTime.DayOfWeek);
+
+        var now = weekStart.AddMinutes(minutesAfterMonday);
+        foreach (var sequence in new[] { 1, 2, 3 })
+        {
+            var createdAt = InPeriodCreatedAt(weekStart, now, sequence);
+            Assert.True(createdAt >= weekStart, $"sequence {sequence} is before weekStart");
+            Assert.True(createdAt <= now, $"sequence {sequence} is after synthetic now");
+        }
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void Former_hour_offsets_are_future_during_early_monday_utc(int hoursAfterMonday)
+    {
+        var weekStart = new DateTimeOffset(2026, 10, 12, 0, 0, 0, TimeSpan.Zero);
+        var now = weekStart.AddMinutes(30);
+
+        var former = weekStart.AddHours(hoursAfterMonday);
+        Assert.True(former > now);
+
+        var corrected = InPeriodCreatedAt(weekStart, now, hoursAfterMonday);
+        Assert.True(corrected >= weekStart);
+        Assert.True(corrected <= now);
+    }
+
+    [Fact]
+    public void InPeriodCreatedAt_keeps_requested_offsets_once_elapsed_time_covers_them()
+    {
+        var weekStart = new DateTimeOffset(2026, 10, 12, 0, 0, 0, TimeSpan.Zero);
+        var now = weekStart.AddHours(10);
+
+        Assert.Equal(weekStart.AddMinutes(1), InPeriodCreatedAt(weekStart, now, 1));
+        Assert.Equal(weekStart.AddMinutes(2), InPeriodCreatedAt(weekStart, now, 2));
+        Assert.Equal(weekStart.AddMinutes(3), InPeriodCreatedAt(weekStart, now, 3));
     }
 
     private static SupportIssue CreateIssue(
@@ -107,6 +159,23 @@ public sealed class PlatformSupportReportServiceTests
         var utcDate = now.UtcDateTime.Date;
         var daysSinceMonday = ((int)utcDate.DayOfWeek + 6) % 7;
         return new DateTimeOffset(utcDate.AddDays(-daysSinceMonday), TimeSpan.Zero);
+    }
+
+    /// <summary>
+    /// Timestamp guaranteed to sit inside the weekly window [weekStart, now].
+    /// Candidates that would land after <paramref name="now"/> clamp to <paramref name="now"/>,
+    /// so early-Monday UTC (00:00–03:00) cannot seed future fixtures.
+    /// </summary>
+    private static DateTimeOffset InPeriodCreatedAt(DateTimeOffset weekStart, DateTimeOffset now, int sequence)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(sequence, 1);
+        if (now < weekStart)
+        {
+            throw new ArgumentOutOfRangeException(nameof(now), now, "now must be on or after weekStart.");
+        }
+
+        var candidate = weekStart.AddMinutes(sequence);
+        return candidate <= now ? candidate : now;
     }
 
     private static CohestraDbContext CreateDb()
