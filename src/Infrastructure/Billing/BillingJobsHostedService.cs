@@ -1,13 +1,9 @@
-using System.Text.Json;
 using Cohestra.Application.Outbox;
 using Cohestra.Application.Tenants;
 using Cohestra.Domain.Billing;
-using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
-using Cohestra.Infrastructure.Outbox;
 using Cohestra.Infrastructure.Persistence;
-using Cohestra.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -216,24 +212,14 @@ public sealed class BillingJobsHostedService(
             return Task.CompletedTask;
         }
 
-        var billingUrl = TenantPublicWebUrlBuilder.BuildTenantPath(
-            publicWebOptions.BaseUrl,
-            tenant.Slug,
-            "/settings/billing");
-        var billingLine = $"Manage billing at {billingUrl}";
-
-        var plainBody = $"Your Cohestra trial ends on {trialEnd:MMMM d, yyyy}. {billingLine}";
-        var htmlBody =
-            $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p><a href=\"{billingUrl}\">Manage billing</a> in your workspace.</p>";
-        EnqueueBillingNotification(
+        BillingNotificationComposer.EnqueueTrialReminder(
             outboxPublisher,
             tenant,
-            BillingNotificationNoticeTypes.TrialReminder,
-            $"Trial ending soon — {tenant.Name}",
-            plainBody,
-            htmlBody,
-            $"billing:trial-reminder:{tenant.Id}:{now:yyyy-MM-dd}",
+            trialEnd,
+            publicWebOptions,
             now);
+        tenant.LastTrialReminderSentAt = now;
+        tenant.UpdatedAt = now;
         return Task.CompletedTask;
     }
 
@@ -272,15 +258,9 @@ public sealed class BillingJobsHostedService(
                 return Task.CompletedTask;
             }
 
-            EnqueueBillingNotification(
-                outboxPublisher,
-                tenant,
-                BillingNotificationNoticeTypes.PastDue,
-                "Payment past due",
-                "Your last payment did not succeed. Update your payment method to keep full access.",
-                "<p>Your last payment did not succeed. Update your payment method to keep full access.</p>",
-                $"billing:past-due:{tenant.Id}:{now:yyyy-MM-dd}",
-                now);
+            BillingNotificationComposer.EnqueuePastDue(outboxPublisher, tenant, now);
+            tenant.LastPastDueNoticeAt = now;
+            tenant.UpdatedAt = now;
             return Task.CompletedTask;
         }
 
@@ -291,15 +271,9 @@ public sealed class BillingJobsHostedService(
                 return Task.CompletedTask;
             }
 
-            EnqueueBillingNotification(
-                outboxPublisher,
-                tenant,
-                BillingNotificationNoticeTypes.OnHold,
-                "Workspace on hold",
-                "Billing is on hold. The workspace is read-only until payment is restored.",
-                "<p>Billing is on hold. The workspace is read-only until payment is restored.</p>",
-                $"billing:on-hold:{tenant.Id}:{now:yyyy-MM-dd}",
-                now);
+            BillingNotificationComposer.EnqueueOnHold(outboxPublisher, tenant, now);
+            tenant.LastOnHoldNoticeAt = now;
+            tenant.UpdatedAt = now;
         }
 
         return Task.CompletedTask;
@@ -342,65 +316,12 @@ public sealed class BillingJobsHostedService(
                 return Task.CompletedTask;
             }
 
-            EnqueueBillingNotification(
-                outboxPublisher,
-                tenant,
-                BillingNotificationNoticeTypes.Dormancy,
-                $"Inactive workspace — {tenant.Name}",
-                "Your free Basic workspace will archive in 7 days without admin activity or public registrations.",
-                "<p>Your free Basic workspace will archive in 7 days without admin activity or public registrations.</p>",
-                $"billing:dormancy:{tenant.Id}",
-                now);
+            BillingNotificationComposer.EnqueueDormancy(outboxPublisher, tenant, now);
+            tenant.LastDormancyWarningAt = now;
+            tenant.UpdatedAt = now;
         }
 
         return Task.CompletedTask;
     }
 
-    private static void EnqueueBillingNotification(
-        IOutboxPublisher outboxPublisher,
-        Tenant tenant,
-        string noticeType,
-        string subject,
-        string plainBody,
-        string htmlBody,
-        string dedupeKey,
-        DateTimeOffset now)
-    {
-        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
-        {
-            return;
-        }
-
-        var payload = JsonSerializer.Serialize(new BillingNotificationOutboxPayload(
-            tenant.Id,
-            noticeType,
-            tenant.AdminContactEmail.Trim(),
-            subject,
-            plainBody,
-            htmlBody));
-
-        outboxPublisher.Enqueue(
-            tenant.Id,
-            OutboxMessageTypes.BillingNotification,
-            payload,
-            dedupeKey);
-
-        switch (noticeType)
-        {
-            case BillingNotificationNoticeTypes.TrialReminder:
-                tenant.LastTrialReminderSentAt = now;
-                break;
-            case BillingNotificationNoticeTypes.PastDue:
-                tenant.LastPastDueNoticeAt = now;
-                break;
-            case BillingNotificationNoticeTypes.OnHold:
-                tenant.LastOnHoldNoticeAt = now;
-                break;
-            case BillingNotificationNoticeTypes.Dormancy:
-                tenant.LastDormancyWarningAt = now;
-                break;
-        }
-
-        tenant.UpdatedAt = now;
-    }
 }

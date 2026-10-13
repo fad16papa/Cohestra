@@ -64,7 +64,8 @@ internal static class PaddleBillingTestHarness
     internal static PaddleBillingService CreateService(
         CohestraDbContext db,
         FakePaddleApiClient? client = null,
-        PaddleSettings? settings = null)
+        PaddleSettings? settings = null,
+        IOutboxPublisher? outboxPublisher = null)
     {
         return new PaddleBillingService(
             db,
@@ -73,8 +74,8 @@ internal static class PaddleBillingTestHarness
             client ?? new FakePaddleApiClient(),
             new NoopPublishedSiteCache(),
             Options.Create(new SiteLandingSeedSettings()),
-            new NoopOutboxPublisher(),
-            Options.Create(new PublicWebOptions()),
+            outboxPublisher ?? new NoopOutboxPublisher(),
+            Options.Create(new PublicWebOptions { BaseUrl = "https://app.cohestra.test" }),
             NullLogger<PaddleBillingService>.Instance);
     }
 
@@ -120,6 +121,21 @@ internal static class PaddleBillingTestHarness
             string? dedupeKey = null,
             DateTimeOffset? nextAttemptAt = null)
         {
+        }
+    }
+
+    internal sealed class CapturingOutboxPublisher : IOutboxPublisher
+    {
+        public List<(Guid TenantId, string MessageType, string PayloadJson, string? DedupeKey)> Messages { get; } = [];
+
+        public void Enqueue(
+            Guid tenantId,
+            string messageType,
+            string payloadJson,
+            string? dedupeKey = null,
+            DateTimeOffset? nextAttemptAt = null)
+        {
+            Messages.Add((tenantId, messageType, payloadJson, dedupeKey));
         }
     }
 }

@@ -84,9 +84,7 @@ internal static class BillingNotificationComposer
             html.Append(" access until then.</p>");
         }
 
-        plain.Append("No charge today — your saved payment method will be billed at the new price from that date. ");
         plain.Append($"Manage billing at {billingUrl}.");
-        html.Append("<p>No charge today — your saved payment method will be billed at the new price from that date.</p>");
         html.Append("<p><a href=\"");
         html.Append(billingUrl);
         html.Append("\">Manage billing</a></p>");
@@ -171,12 +169,10 @@ internal static class BillingNotificationComposer
 
         var plain =
             $"Your {tenant.Name} workspace is now on the {planName} plan. "
-            + $"Your next invoice will reflect the {planName} price. "
             + $"Manage billing at {billingUrl}.";
 
         var html =
             $"<p>Your workspace is now on the <strong>{planName}</strong> plan.</p>"
-            + $"<p>Your next invoice will reflect the {planName} price.</p>"
             + $"<p><a href=\"{billingUrl}\">Manage billing</a></p>";
 
         Enqueue(
@@ -205,6 +201,93 @@ internal static class BillingNotificationComposer
         tenant.ScheduledPlan is TenantPlan.Core or TenantPlan.Pro
         && tenant.ScheduledPlanEffectiveAt is not null
         && tenant.ScheduledPlanEffectiveAt > DateTimeOffset.UtcNow;
+
+    internal static void EnqueueTrialReminder(
+        IOutboxPublisher outboxPublisher,
+        Tenant tenant,
+        DateTimeOffset trialEnd,
+        PublicWebOptions publicWebOptions,
+        DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            return;
+        }
+
+        var billingUrl = BuildBillingUrl(publicWebOptions, tenant.Slug);
+        Enqueue(
+            outboxPublisher,
+            tenant,
+            BillingNotificationNoticeTypes.TrialReminder,
+            $"Trial ending soon — {tenant.Name}",
+            $"Your Cohestra trial ends on {trialEnd:MMMM d, yyyy}. Manage billing at {billingUrl}",
+            $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p><a href=\"{billingUrl}\">Manage billing</a> in your workspace.</p>",
+            $"billing:trial-reminder:{tenant.Id}:{now:yyyy-MM-dd}",
+            now);
+    }
+
+    internal static void EnqueuePastDue(
+        IOutboxPublisher outboxPublisher,
+        Tenant tenant,
+        DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            return;
+        }
+
+        Enqueue(
+            outboxPublisher,
+            tenant,
+            BillingNotificationNoticeTypes.PastDue,
+            "Workspace access at risk",
+            "Your Cohestra workspace may lose full access because billing is past due. Open Settings → Billing to restore access.",
+            "<p>Your Cohestra workspace may lose full access because billing is past due. Open Settings → Billing to restore access.</p>",
+            $"billing:past-due:{tenant.Id}:{now:yyyy-MM-dd}",
+            now);
+    }
+
+    internal static void EnqueueOnHold(
+        IOutboxPublisher outboxPublisher,
+        Tenant tenant,
+        DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            return;
+        }
+
+        Enqueue(
+            outboxPublisher,
+            tenant,
+            BillingNotificationNoticeTypes.OnHold,
+            "Workspace on hold",
+            "Billing is on hold. The workspace is read-only until payment is restored.",
+            "<p>Billing is on hold. The workspace is read-only until payment is restored.</p>",
+            $"billing:on-hold:{tenant.Id}:{now:yyyy-MM-dd}",
+            now);
+    }
+
+    internal static void EnqueueDormancy(
+        IOutboxPublisher outboxPublisher,
+        Tenant tenant,
+        DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        {
+            return;
+        }
+
+        Enqueue(
+            outboxPublisher,
+            tenant,
+            BillingNotificationNoticeTypes.Dormancy,
+            $"Inactive workspace — {tenant.Name}",
+            "Your free Basic workspace will archive in 7 days without admin activity or public registrations.",
+            "<p>Your free Basic workspace will archive in 7 days without admin activity or public registrations.</p>",
+            $"billing:dormancy:{tenant.Id}",
+            now);
+    }
 
     private static void AppendLimitWarningCopy(
         StringBuilder plain,
