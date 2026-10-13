@@ -272,7 +272,7 @@ public sealed class BillingEmailOwnershipTests
                 "studio",
                 TenantPlan.Core,
                 BillingInterval.Monthly,
-                previewState: null,
+                PreviewState: null,
                 "https://studio.localhost/dashboard?billing=success",
                 "https://studio.localhost/billing/checkout?canceled=1"));
 
