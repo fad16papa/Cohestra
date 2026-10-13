@@ -187,6 +187,26 @@ public sealed class BillingEmailOwnershipTests
     }
 
     [Fact]
+    public void Empty_admin_contact_does_not_enqueue_or_count_as_sent()
+    {
+        var publisher = new PaddleBillingTestHarness.CapturingOutboxPublisher();
+        var tenant = OwnerTenant(TenantPlan.Pro);
+        tenant.AdminContactEmail = " ";
+
+        Assert.False(BillingNotificationComposer.EnqueuePastDue(publisher, tenant, DateTimeOffset.UtcNow));
+        Assert.False(BillingNotificationComposer.EnqueueOnHold(publisher, tenant, DateTimeOffset.UtcNow));
+        Assert.False(BillingNotificationComposer.EnqueueDormancy(publisher, tenant, DateTimeOffset.UtcNow));
+        Assert.False(
+            BillingNotificationComposer.EnqueueTrialReminder(
+                publisher,
+                tenant,
+                DateTimeOffset.UtcNow.AddDays(3),
+                new PublicWebOptions { BaseUrl = "https://app.cohestra.test" },
+                DateTimeOffset.UtcNow));
+        Assert.Empty(publisher.Messages);
+    }
+
+    [Fact]
     public void F_Retained_notifications_use_admin_contact_email()
     {
         var publisher = new PaddleBillingTestHarness.CapturingOutboxPublisher();

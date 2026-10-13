@@ -202,7 +202,7 @@ internal static class BillingNotificationComposer
         && tenant.ScheduledPlanEffectiveAt is not null
         && tenant.ScheduledPlanEffectiveAt > DateTimeOffset.UtcNow;
 
-    internal static void EnqueueTrialReminder(
+    internal static bool EnqueueTrialReminder(
         IOutboxPublisher outboxPublisher,
         Tenant tenant,
         DateTimeOffset trialEnd,
@@ -211,7 +211,7 @@ internal static class BillingNotificationComposer
     {
         if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
-            return;
+            return false;
         }
 
         var billingUrl = BuildBillingUrl(publicWebOptions, tenant.Slug);
@@ -224,16 +224,17 @@ internal static class BillingNotificationComposer
             $"<p>Your trial ends on <strong>{trialEnd:MMMM d, yyyy}</strong>.</p><p><a href=\"{billingUrl}\">Manage billing</a> in your workspace.</p>",
             $"billing:trial-reminder:{tenant.Id}:{now:yyyy-MM-dd}",
             now);
+        return true;
     }
 
-    internal static void EnqueuePastDue(
+    internal static bool EnqueuePastDue(
         IOutboxPublisher outboxPublisher,
         Tenant tenant,
         DateTimeOffset now)
     {
         if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
-            return;
+            return false;
         }
 
         Enqueue(
@@ -245,16 +246,17 @@ internal static class BillingNotificationComposer
             "<p>Your Cohestra workspace may lose full access because billing is past due. Open Settings → Billing to restore access.</p>",
             $"billing:past-due:{tenant.Id}:{now:yyyy-MM-dd}",
             now);
+        return true;
     }
 
-    internal static void EnqueueOnHold(
+    internal static bool EnqueueOnHold(
         IOutboxPublisher outboxPublisher,
         Tenant tenant,
         DateTimeOffset now)
     {
         if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
-            return;
+            return false;
         }
 
         Enqueue(
@@ -266,16 +268,17 @@ internal static class BillingNotificationComposer
             "<p>Billing is on hold. The workspace is read-only until payment is restored.</p>",
             $"billing:on-hold:{tenant.Id}:{now:yyyy-MM-dd}",
             now);
+        return true;
     }
 
-    internal static void EnqueueDormancy(
+    internal static bool EnqueueDormancy(
         IOutboxPublisher outboxPublisher,
         Tenant tenant,
         DateTimeOffset now)
     {
         if (string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
         {
-            return;
+            return false;
         }
 
         Enqueue(
@@ -287,6 +290,7 @@ internal static class BillingNotificationComposer
             "<p>Your free Basic workspace will archive in 7 days without admin activity or public registrations.</p>",
             $"billing:dormancy:{tenant.Id}",
             now);
+        return true;
     }
 
     private static void AppendLimitWarningCopy(

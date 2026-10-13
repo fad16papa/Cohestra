@@ -212,14 +212,17 @@ public sealed class BillingJobsHostedService(
             return Task.CompletedTask;
         }
 
-        BillingNotificationComposer.EnqueueTrialReminder(
+        if (BillingNotificationComposer.EnqueueTrialReminder(
             outboxPublisher,
             tenant,
             trialEnd,
             publicWebOptions,
-            now);
-        tenant.LastTrialReminderSentAt = now;
-        tenant.UpdatedAt = now;
+            now))
+        {
+            tenant.LastTrialReminderSentAt = now;
+            tenant.UpdatedAt = now;
+        }
+
         return Task.CompletedTask;
     }
 
@@ -258,9 +261,12 @@ public sealed class BillingJobsHostedService(
                 return Task.CompletedTask;
             }
 
-            BillingNotificationComposer.EnqueuePastDue(outboxPublisher, tenant, now);
-            tenant.LastPastDueNoticeAt = now;
-            tenant.UpdatedAt = now;
+            if (BillingNotificationComposer.EnqueuePastDue(outboxPublisher, tenant, now))
+            {
+                tenant.LastPastDueNoticeAt = now;
+                tenant.UpdatedAt = now;
+            }
+
             return Task.CompletedTask;
         }
 
@@ -271,9 +277,11 @@ public sealed class BillingJobsHostedService(
                 return Task.CompletedTask;
             }
 
-            BillingNotificationComposer.EnqueueOnHold(outboxPublisher, tenant, now);
-            tenant.LastOnHoldNoticeAt = now;
-            tenant.UpdatedAt = now;
+            if (BillingNotificationComposer.EnqueueOnHold(outboxPublisher, tenant, now))
+            {
+                tenant.LastOnHoldNoticeAt = now;
+                tenant.UpdatedAt = now;
+            }
         }
 
         return Task.CompletedTask;
@@ -316,9 +324,11 @@ public sealed class BillingJobsHostedService(
                 return Task.CompletedTask;
             }
 
-            BillingNotificationComposer.EnqueueDormancy(outboxPublisher, tenant, now);
-            tenant.LastDormancyWarningAt = now;
-            tenant.UpdatedAt = now;
+            if (BillingNotificationComposer.EnqueueDormancy(outboxPublisher, tenant, now))
+            {
+                tenant.LastDormancyWarningAt = now;
+                tenant.UpdatedAt = now;
+            }
         }
 
         return Task.CompletedTask;
