@@ -44,6 +44,9 @@ public sealed class BillingNotificationComposerScheduleTests
         Assert.Contains("yearly to monthly", message.PlainBody, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("from Pro to Pro", message.PlainBody, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Billing interval change scheduled", message.Subject, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("No charge today", message.PlainBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("billed at the new price", message.PlainBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("invoice", message.PlainBody, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class CapturingOutboxPublisher : IOutboxPublisher
