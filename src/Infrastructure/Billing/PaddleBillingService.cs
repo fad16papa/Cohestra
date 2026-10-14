@@ -335,6 +335,7 @@ internal sealed class PaddleBillingService(
         await EnsurePaddleCustomerForTenantAsync(tenant, cancellationToken);
 
         var hasPhoneUpdate = phoneCountry is not null || phoneLocal is not null;
+        string? normalizedPhone = null;
         if (hasPhoneUpdate)
         {
             var localDigits = string.IsNullOrWhiteSpace(phoneLocal) ? string.Empty : phoneLocal.Trim();
@@ -352,7 +353,8 @@ internal sealed class PaddleBillingService(
                     throw new InvalidOperationException(validationError);
                 }
 
-                if (string.IsNullOrWhiteSpace(PhoneCountrySupport.NormalizePhone(localDigits, country)))
+                normalizedPhone = PhoneCountrySupport.NormalizePhone(localDigits, country);
+                if (string.IsNullOrWhiteSpace(normalizedPhone))
                 {
                     throw new InvalidOperationException("Enter a valid mobile number.");
                 }
@@ -380,12 +382,7 @@ internal sealed class PaddleBillingService(
 
         if (hasPhoneUpdate)
         {
-            var localDigits = string.IsNullOrWhiteSpace(phoneLocal) ? string.Empty : phoneLocal.Trim();
-            tenant.BillingContactPhone = localDigits.Length == 0
-                ? null
-                : PhoneCountrySupport.NormalizePhone(
-                    localDigits,
-                    PhoneCountrySupport.ResolveIsoCountryCode(phoneCountry));
+            tenant.BillingContactPhone = normalizedPhone;
         }
 
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
