@@ -1,0 +1,8 @@
+[Unit]
+Description=Alert: existing-site HTTP-01 renew failed
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+ExecStart=/bin/bash -c 'echo RESULT=RENEW_ALERT; logger -t cohestra-existing-site-http01 "renew failed — check journalctl -u cohestra-existing-site-http01-renew.service"; if command -v mail >/dev/null && [[ -n "${COHESTRA_OPS_MAIL:-}" ]]; then journalctl -u cohestra-existing-site-http01-renew.service -n 80 | mail -s "Cohestra existing-site cert renew failed" "$COHESTRA_OPS_MAIL"; fi'

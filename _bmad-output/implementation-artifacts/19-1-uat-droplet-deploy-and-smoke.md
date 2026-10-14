@@ -149,3 +149,47 @@ Cloud Agent has **no SSH**. Public checks only (no secrets):
 
 Tracker stays **in-progress / not done**. This probe does **not** replace droplet smoke (`uat-smoke.sh`), owner SSH acceptance, or the Mandatory Code Review Loop close. Public stack is **not** proven to be PR #404 HEAD `47ebb1b5`.
 
+## Owner UAT evidence (2026-10-11)
+
+Attributed to the owner droplet console. This agent did not SSH and did not invent script output.
+
+| Item | Owner report |
+|------|----------------|
+| Checkout + API `GIT_SHA` | `f293650d3ab3b536e159c2888f562b124540f26f` (= `origin/main`; CI `38065729824`) |
+| API / web image IDs | `sha256:5c69a9aa…fbaf154` / `sha256:63ac14b3…4a287bf` — IDs only; **build provenance still BLOCKED** |
+| `uat-smoke.sh` | 10 passed, 0 failed |
+| `verify-existing-app.sh` | 6 passed, 0 failed |
+| Seeds / captcha bypass | absent (expected) |
+| Paddle classify | SANDBOX (19.4, not a 19.1 close gate) |
+
+Independent public probe the same day: existing + UAT `/ready` Healthy with **trusted** TLS after the owner renew.
+
+Still **BLOCKED** for close: DigitalOcean cloud firewall inbound 22/80/443 (missing rule-list paste ≠ FAIL); first-operator `/register` (walk prepared, not executed, no invented sign-off); live OCI revision (LABEL in #438, running images unlabeled). Preflight **PASS** 17/0/1 (recaptcha warn until 19.3). Migration IDs **PASS** 50/50. See addendum below. **Do not mark done.**
+
+## Owner ops paste (2026-10-11 ~09:26 UTC)
+
+Attributed to `/home/deploy/cohestra` at `f293650d`. This agent did not SSH.
+
+| Gate | Status | Owner value |
+|------|--------|-------------|
+| `__EFMigrationsHistory` | **PASS** | 50 pasted IDs match 50 repo Up() files. `AddSitePagePreviousPublishedSnapshot` is in both (earlier 49-count was a `Snapshot` grep miss). |
+| Resources / `uat-compose ps` / stats | **PASS** | 3.8 Gi RAM, 2.0 Gi avail; 77 G disk 44%; all five `cohestra-uat-*` healthy; loopback 3100/5100/8180; postgres/redis unpublished |
+| Redacted API logs | **PASS** (window) | Outbox + default-tenant EXISTS; no secrets in the 80-line tail |
+| Image IDs + `Created` + `GIT_SHA` | **PARTIAL** | Same sha256 as earlier; Created 2026-10-10T16:25Z; env SHA matches checkout. No OCI revision label |
+| `ufw` | **inactive** | Does **not** satisfy planning AC “firewall 22, 80, 443 only” |
+| MOTD / zombies | Informational | Restart required + 5 zombies. **Do not reboot** for this story |
+
+Tracker stays **in-progress / not done**. Full matrix: `epic-19-1-19-2-acceptance-2026-10-11.md`.
+
+## Owner preflight paste (2026-10-11 ~09:53–09:54 UTC)
+
+From `/home/deploy/cohestra` at deployed `f293650d`. Both runs **17 passed / 1 failed / 1 warning.**
+
+- **FAIL:** leftover Stripe lines are still **uncommented**. Names only: SecretKey, PublishableKey, WebhookSecret, four Price*, TrialPeriodDays. A trailing comment on a live assignment does not disable it. Use `sed` to prefix `# ` (see acceptance matrix).
+- **WARN:** reCAPTCHA disabled — expected until 19.3.
+- **PASS:** PUBLIC_BASE_URL, secrets present (not printed), seeds/DEV_TENANT_SLUG off, ports isolated, Paddle sandbox configured.
+
+Follow-up ~09:56: `sed` commented `Stripe__*` after `.env.bak.stripe-*`; preflight **17/0/1** → **PASS**.
+
+Follow-up ~10:05: owner `remote-deploy` of **main**. Smoke **10/0**. api/web healthy (new); Cohestra nginx/postgres/redis not recreated. OCI revision **empty** (expected). Existing + UAT `/ready` Healthy. **Do not mark done.**
+

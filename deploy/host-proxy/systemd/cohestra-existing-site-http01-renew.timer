@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly HTTP-01 renew for thesocialcollectivesg.com only
+
+[Timer]
+OnCalendar=Mon *-*-* 03:15:00
+Persistent=true
+AccuracySec=5min
+Unit=cohestra-existing-site-http01-renew.service
+
+[Install]
+WantedBy=timers.target

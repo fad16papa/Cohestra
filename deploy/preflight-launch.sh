@@ -102,8 +102,21 @@ else
   warn "reCAPTCHA disabled — enable before public signup (Story 19.3)"
 fi
 
-if [[ -n "${Stripe__SecretKey:-}" || -n "${Stripe__WebhookSecret:-}" ]]; then
+stripe_leftover_names=()
+while IFS= read -r stripe_name; do
+  [[ -z "$stripe_name" ]] && continue
+  if [[ -n "${!stripe_name:-}" ]]; then
+    stripe_leftover_names+=("$stripe_name")
+  fi
+done < <(compgen -e | grep '^Stripe__' || true)
+if [[ "${#stripe_leftover_names[@]}" -gt 0 ]]; then
   fail "Stripe keys must not be set — billing is Paddle (Epic 29 / Story 19.4)"
+  echo "   comment or delete every Stripe__ line in .env (a # must be the first non-space character)"
+  for stripe_name in "${stripe_leftover_names[@]}"; do
+    echo "   leftover_name=${stripe_name} (value not printed)"
+  done
+else
+  pass "No Stripe__* leftovers in the environment"
 fi
 
 if [[ "${COMPOSE_PROJECT_NAME:-}" == "cohestra-infra-uat" ]]; then

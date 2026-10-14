@@ -357,6 +357,65 @@ else
   fail "Missing deploy/host-proxy/prove-edge-tls-wildcard.sh"
 fi
 
+RENEW_HTTP01="$ROOT_DIR/deploy/host-proxy/renew-existing-site-http01.sh"
+if [[ -f "$RENEW_HTTP01" ]]; then
+  if grep -q -- '--cert-name "$EXISTING_CERT_NAME"' "$RENEW_HTTP01" \
+    && grep -q 'thesocialcollectivesg.com' "$RENEW_HTTP01" \
+    && grep -q 'fingerprint_live_fullchain' "$RENEW_HTTP01" \
+    && grep -q 'nginx -t' "$RENEW_HTTP01" \
+    && grep -q 'nginx -s reload' "$RENEW_HTTP01" \
+    && grep -q 'COHESTRA_AUTHORIZE_EXISTING_RENEW' "$RENEW_HTTP01" \
+    && ! grep -q -- '--deploy-hook' "$RENEW_HTTP01" \
+    && ! grep -q 'renew-letsencrypt.sh' "$RENEW_HTTP01" \
+    && ! grep -q 'force-recreate' "$RENEW_HTTP01"; then
+    pass "renew-existing-site-http01.sh renews existing lineage on the host (no certbot deploy-hook)"
+  else
+    fail "renew-existing-site-http01.sh must compare fingerprints on the host and never use a certbot deploy-hook"
+  fi
+else
+  fail "Missing deploy/host-proxy/renew-existing-site-http01.sh"
+fi
+
+RENEW_HTTP01_TEST="$ROOT_DIR/deploy/host-proxy/renew-existing-site-http01.test.sh"
+if [[ -f "$RENEW_HTTP01_TEST" ]]; then
+  if bash "$RENEW_HTTP01_TEST"; then
+    pass "renew-existing-site-http01 mocked tests (renew / no-op / certbot fail / nginx -t fail)"
+  else
+    fail "renew-existing-site-http01 mocked tests failed"
+  fi
+else
+  fail "Missing deploy/host-proxy/renew-existing-site-http01.test.sh"
+fi
+
+RENEW_TIMER="$ROOT_DIR/deploy/host-proxy/systemd/cohestra-existing-site-http01-renew.timer"
+RENEW_SVC="$ROOT_DIR/deploy/host-proxy/systemd/cohestra-existing-site-http01-renew.service"
+if [[ -f "$RENEW_TIMER" && -f "$RENEW_SVC" ]]; then
+  if grep -q 'WantedBy=timers.target' "$RENEW_TIMER" \
+    && grep -q 'Persistent=true' "$RENEW_TIMER" \
+    && grep -q 'User=deploy' "$RENEW_SVC" \
+    && grep -q 'renew-existing-site-http01.sh' "$RENEW_SVC" \
+    && ! grep -q 'uat.cohestra.app' "$RENEW_SVC" "$RENEW_TIMER"; then
+    pass "existing-site HTTP-01 systemd units are system timers (survive logout/reboot) and exclude UAT"
+  else
+    fail "existing-site renew systemd units must be system-level and existing-site only"
+  fi
+else
+  fail "Missing deploy/host-proxy/systemd existing-site HTTP-01 units"
+fi
+
+ZZ_PERSIST="$ROOT_DIR/deploy/host-proxy/prove-zz-vhost-persist.sh"
+if [[ -f "$ZZ_PERSIST" ]]; then
+  if grep -q 'zz-cohestra-uat.conf' "$ZZ_PERSIST" \
+    && grep -q 'PERSISTENCE=' "$ZZ_PERSIST" \
+    && ! grep -vE '^[[:space:]]*(#|echo )' "$ZZ_PERSIST" | grep -Eq 'nginx -s reload|compose up|force-recreate|certonly|certbot renew'; then
+    pass "prove-zz-vhost-persist.sh is read-only (inspect bind vs container-only, no reload/renew)"
+  else
+    fail "prove-zz-vhost-persist.sh must stay read-only and never reload or renew"
+  fi
+else
+  fail "Missing deploy/host-proxy/prove-zz-vhost-persist.sh"
+fi
+
 FLIP_HTTPS="$ROOT_DIR/deploy/host-proxy/flip-public-base-https.sh"
 if [[ -f "$FLIP_HTTPS" ]]; then
   if grep -q 'https://uat.cohestra.app' "$FLIP_HTTPS" \
@@ -511,6 +570,61 @@ if grep -qE '^[[:space:]]*GIT_SHA:[[:space:]]*\$\{GIT_SHA:-\}[[:space:]]*$' "$CO
   pass "API compose receives GIT_SHA from \${GIT_SHA:-} with no hardcoded SHA"
 else
   fail "API service must pass GIT_SHA: \${GIT_SHA:-} and must not hardcode a SHA"
+fi
+
+API_DOCKERFILE="$ROOT_DIR/src/Api/Dockerfile"
+WEB_DOCKERFILE="$ROOT_DIR/web/Dockerfile"
+if grep -q 'LABEL org.opencontainers.image.revision="${GIT_SHA}"' "$API_DOCKERFILE" \
+  && grep -q 'ARG GIT_SHA=' "$API_DOCKERFILE"; then
+  pass "API image declares OCI revision LABEL from GIT_SHA ARG"
+else
+  fail "API Dockerfile must LABEL org.opencontainers.image.revision from GIT_SHA"
+fi
+if grep -q 'LABEL org.opencontainers.image.revision="${GIT_SHA}"' "$WEB_DOCKERFILE" \
+  && grep -q 'ARG GIT_SHA=' "$WEB_DOCKERFILE"; then
+  pass "web image declares OCI revision LABEL from GIT_SHA ARG"
+else
+  fail "web Dockerfile must LABEL org.opencontainers.image.revision from GIT_SHA"
+fi
+if awk '
+  /container_name: cohestra-uat-api/ { api=1 }
+  api && /build:/ { b=1 }
+  b && /GIT_SHA: \$\{GIT_SHA:-\}/ { arg=1 }
+  api && /environment:/ { exit }
+  END { exit(arg ? 0 : 1) }
+' "$COMPOSE" \
+  && awk '
+  /container_name: cohestra-uat-web/ { web=1 }
+  web && /build:/ { b=1 }
+  b && /GIT_SHA: \$\{GIT_SHA:-\}/ { arg=1 }
+  web && /environment:/ { exit }
+  END { exit(arg ? 0 : 1) }
+' "$COMPOSE"; then
+  pass "api and web compose build args pass GIT_SHA"
+else
+  fail "api and web build.args must pass GIT_SHA: \${GIT_SHA:-}"
+fi
+
+PREFLIGHT="$ROOT_DIR/deploy/preflight-launch.sh"
+if [[ -f "$PREFLIGHT" ]] \
+  && grep -q "compgen -e" "$PREFLIGHT" \
+  && grep -q "leftover_name=" "$PREFLIGHT" \
+  && grep -q 'grep '\''^Stripe__'\' "$PREFLIGHT"; then
+  pass "preflight refuses any leftover Stripe__* names without printing values"
+else
+  fail "preflight must scan all Stripe__* env names and print leftover_name= only"
+fi
+
+COMPARE="$ROOT_DIR/deploy/compare-ef-migration-ids.sh"
+if [[ -x "$COMPARE" ]] || [[ -f "$COMPARE" ]]; then
+  if bash "$COMPARE" --self-test >/tmp/compare-ef-self-test.out; then
+    pass "EF migration ID compare self-test"
+  else
+    fail "EF migration ID compare self-test"
+    cat /tmp/compare-ef-self-test.out || true
+  fi
+else
+  fail "missing deploy/compare-ef-migration-ids.sh"
 fi
 
 echo ""

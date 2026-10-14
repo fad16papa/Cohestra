@@ -273,6 +273,25 @@ development_status:
   epic-18-retrospective: done
 
   # Epic 19 — unblocked 2026-08-23 after Epic 29. Do not put Stripe keys on the droplet.
+  # 2026-10-11 acceptance (additive; do not close 19.1/19.2):
+  # Owner console: droplet SHA + API GIT_SHA = f293650d; smoke 10/0; existing-app 6/0;
+  # wildcard TLS 9/0; existing cert renewed; Paddle SANDBOX; recaptcha off.
+  # Public probe: both hosts trusted HTTPS. After 09:26: migrations/resources/logs
+  # pasted; zz EXPORT_ONLY; still missing DO firewall + OCI provenance + BIND/accept.
+  # Evidence: epic-19-1-19-2-acceptance-2026-10-11.md. Production NO-GO.
+  # 2026-10-11 later: certbot deploy-hook docker exec is invalid; host-side
+  # renew script + mocked tests. Timer not installed. 19.1/19.2 still open.
+  # 2026-10-11 ~09:26 owner paste (no SSH): PERSISTENCE=EXPORT_ONLY (zz in
+  # container, no bind, persist export + snapshot). Migrations 50/50 MATCH
+  # after 09:37 ID paste (49-count was Snapshot grep miss). Resources/logs PASS.
+  # ufw inactive — DO cloud firewall still BLOCKED. Image Created + GIT_SHA
+  # = PARTIAL; OCI LABEL wired for next authorized rebuild only.
+  # #438 16855e7c CI SUCCESS 38129452967. Preflight 09:53 FAIL (Stripe
+  # leftovers still uncommented 09:54; 09:56 sed + preflight 17/0/1 PASS.
+  # ~10:05 main remote-deploy: smoke 10/0; api/web recreated; edge nginx
+  # untouched; OCI revision empty. DO firewall + first-operator BLOCKED.
+  # Do not close.
+  # Do not recreate nginx. Do not install timer. Do not merge without owner.
   # 2026-09-06: Existing UAT droplet Healthy. 19.1 blocked on owner-workstation
   # SSH (~/.ssh/cohestra_uat via ssh-agent). Paddle sandbox preserved; live cutover later.
   # Isolation review on 95e5bd0 found BLOCKER/MAJOR; patches applied, story stays in-progress.

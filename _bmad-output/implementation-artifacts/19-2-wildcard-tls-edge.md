@@ -62,14 +62,16 @@ bash deploy/host-proxy/persist-cohestra-vhost.sh
 
 ## Acceptance checklist
 
-- [ ] `EXISTING APP PRE-TLS BASELINE: PASS`
-- [ ] HTTP Host `uat.cohestra.app` + `creativorare.uat.cohestra.app` → Cohestra
-- [ ] Cert SAN: `uat.cohestra.app` + `*.uat.cohestra.app`
-- [ ] `https://uat.cohestra.app/ready` Healthy
-- [ ] `https://creativorare.uat.cohestra.app/register/sunday-dragon-highlander-2` renders
-- [ ] `https://thesocialcollectivesg.com/ready` unchanged cert + Healthy
-- [ ] Tenant URLs emit `*.uat.cohestra.app` not `*.cohestra.app`
-- [ ] Security headers verified (`verify-security-headers.sh`)
+- [x] `EXISTING APP PRE-TLS BASELINE: PASS` — owner `verify-existing-app.sh` 6/0 on 2026-10-11 (after renew)
+- [x] HTTP Host `uat.cohestra.app` + `creativorare.uat.cohestra.app` → Cohestra — public 2026-10-11
+- [x] Cert SAN: `uat.cohestra.app` + `*.uat.cohestra.app` — public + owner wildcard proof 9/0
+- [x] `https://uat.cohestra.app/ready` Healthy — public + owner
+- [x] `https://creativorare.uat.cohestra.app/register/sunday-dragon-highlander-2` renders — public **200** Cohestra chrome (activity archived / unavailable; `og:url` on `*.uat`)
+- [x] `https://thesocialcollectivesg.com/ready` Healthy with **trusted** TLS — owner renew 2026-10-11 04:45 GMT; public notAfter 2027-01-09; UAT wildcard **unchanged**
+- [x] Tenant URLs emit `*.uat.cohestra.app` not `*.cohestra.app` — `TenantPublicWebUrlBuilder` + live `og:url`
+- [x] Security headers verified — owner `verify-security-headers.sh` (inside smoke 10/0) + public singleton headers
+
+Durable `zz-cohestra-uat.conf` bind remains **CONDITIONAL / EXPORT_ONLY** (owner 2026-10-11 ~09:26 inspect from `/home/deploy/cohestra` at `f293650d`): vhost is in the container writable layer; **no** zz bind; host export + snapshot exist. Recreate of `lead-generation-crm-nginx-1` would drop UAT HTTPS. Owner has **not** accepted EXPORT_ONLY as the close workaround and has **not** authorized a nginx-only bind. Live `cohestra_uat_edge` aliases are **[]**. Authorized bind plan: `epic-19-nginx-zz-bind-execution-plan-2026-10-11.md`. Existing-site HTTP-01 timer is **designed, not installed, not operational**. Certbot deploy-hook/`docker exec` design was **incorrect** and is replaced by a host-side fingerprint + `nginx -t`/reload script. Tracker stays **review / not done**. See `epic-19-1-19-2-acceptance-2026-10-11.md` and `epic-19-zz-vhost-persistence-2026-10-11.md`.
 
 ## Live state at story start (2026-09-12)
 
@@ -95,4 +97,5 @@ Owner SSH checkboxes above remain **unchecked**. Tracker stays **review / not do
 
 ## Renewal
 
-**MANUAL-ACCEPTED** for UAT until DNS provider automation exists.
+**MANUAL-ACCEPTED** for UAT wildcard until DNS provider automation exists.  
+Existing-site HTTP-01 timer: designed in `epic-19-existing-site-http01-renew-timer-2026-10-11.md` — **do not install** without owner authorization.

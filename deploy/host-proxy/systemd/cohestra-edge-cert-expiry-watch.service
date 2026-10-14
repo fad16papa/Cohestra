@@ -1,0 +1,8 @@
+[Unit]
+Description=Watch existing-site and UAT cert expiry (no renew)
+OnFailure=cohestra-existing-site-http01-renew-alert.service
+
+[Service]
+Type=oneshot
+User=deploy
+ExecStart=/home/deploy/cohestra/deploy/host-proxy/watch-edge-cert-expiry.sh --min-days 21
