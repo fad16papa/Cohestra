@@ -3,8 +3,8 @@
 ## Hand-off Brief
 
 1. **What happened.** CreativoRare Cohestra UI shows Pro / Active / Yearly. Paddle sandbox portal on the same subscription suffix `89pse8` shows **Cohestra Core US$153.99/year**.
-2. **Where the case stands.** Canonical sandbox V2 prices now exist. All four GET read-backs passed. UAT `.env` still points at obsolete trial=NONE prices. Subscription `89pse8` is still on Core annual `$153.99` (item suffix `3wkz62r6`).
-3. **What's needed next.** Owner-authorized **UAT Four-Price Env Mapping Switch** only. Do not PATCH the subscription or rewrite `Tenant.Plan` in that gate.
+2. **Where the case stands.** UAT `.env` and `cohestra-uat-api` now use canonical V2 price IDs. Subscription `89pse8` is still on obsolete Core annual `$153.99` (item suffix `3wkz62r6`). `lead-generation-crm` was not touched.
+3. **What's needed next.** Read-only Paddle **preview** of same-subscription item change to Pro Annual V2 `m754cd`. Do not PATCH until that preview is reviewed and separately authorized.
 
 ## Case Info
 
@@ -12,7 +12,7 @@
 | ----- | ----- |
 | Ticket | Story 19.4 UAT Paddle catalog mapping |
 | Date opened | 2026-10-13 |
-| Status | Open — V2 catalog created; env mapping switch not authorized |
+| Status | Open — V2 env mapping applied; subscription still obsolete Core annual |
 | System | main `1e2745e754d2033263d496067ed8a5d604df5a9d` |
 | Evidence sources | Code on that SHA; tenant SQL; prior sandbox GET; owner portal/checkout screenshots |
 
@@ -87,7 +87,7 @@ Resolved V2 IDs (GET, all active, 30-day card-required trial):
 | PRO MONTHLY V2 | `pri_01m4x7bwwg0mpg0skgxwjfxne5` | 29.99 | month |
 | PRO ANNUAL V2 | `pri_01m4x7bza2hj3kbmgy5mm754cd` | 305.93 | year |
 
-**Detail:** Env switch has not run. Live item `3wkz62r6` **is** the current `PriceCoreAnnual` slot. Cohestra therefore maps CreativoRare's provider price to Core Annual. The Pro UI is not explained by env ProAnnual pointing at the Core price. Remaining explanations: scheduled-downgrade keep-Pro, `custom_data` unused because price mapped, or stale tenant row. CreativoRare stays on obsolete Core annual until a later owner-authorized same-subscription PATCH to Pro Annual V2 `m754cd`.
+**Detail:** Live item `3wkz62r6` **was** the pre-switch `PriceCoreAnnual` slot. After the 2026-10-14 env switch it no longer matches any env slot, so `TryMapPrice` falls back to `custom_data` until the PATCH gate. CreativoRare stays on obsolete Core annual `$153.99` until a later owner-authorized same-subscription PATCH to Pro Annual V2 `m754cd`.
 
 ## Missing evidence
 
@@ -95,7 +95,7 @@ Resolved V2 IDs (GET, all active, 30-day card-required trial):
 
 ## Working classification
 
-Primary: **C obsolete sandbox price** on the **live item** (Core-named $153.99/year), and that item **is** UAT `Paddle__PriceCoreAnnual`. Hypothesis A (env ProAnnual wired to the Core price) is **refuted**. The Pro UI is leftover tenant/schedule behavior, not a wrong ProAnnual ID.
+Primary: **C obsolete sandbox price** on the **live item** (Core-named $153.99/year). That item **was** UAT `Paddle__PriceCoreAnnual` before the env switch. Hypothesis A (env ProAnnual wired to the Core price) is **refuted**. The Pro UI is leftover tenant/schedule behavior, not a wrong ProAnnual ID.
 
 Code defect E is not selected: mapping order is correct; a Pro UI with a Core-priced subscription is explained by env slot identity or the downgrade-schedule / custom_data fallback.
 
@@ -103,12 +103,12 @@ Code defect E is not selected: mapping order is correct; a Pro UI with a Core-pr
 
 1. Classify which env slot owns `…3wkz62r6`. **Done** — CoreAnnual obsolete `$153.99`.
 2. Discover whether canonical $152.92 / $305.93 prices already exist. **They did not.** Created V2 under existing products.
-3. Point UAT env at V2 suffixes. **Not executed** — next owner gate.
-4. Reconcile the **existing** subscription `89pse8` to Pro Annual V2 `m754cd` only with later owner authorization. Same customer/subscription ids. Do not create a second subscription. Do not change `Tenant.Plan` first to hide drift.
+3. Point UAT env at V2 suffixes. **Done** 2026-10-14T12:55:44Z. Backup `.env.bak.canonical-v2-20261014T125544Z`. Container env suffixes `6es9vc` / `drhkr4` / `jfxne5` / `m754cd` PASS. `lead-generation-crm` stayed up.
+4. Reconcile the **existing** subscription `89pse8` to Pro Annual V2 `m754cd` only after a read-only preview and later owner authorization. Same customer/subscription ids. Do not create a second subscription. Do not change `Tenant.Plan` first to hide drift.
 5. Then re-sync tenant from provider price id.
 
-Env mapping switch alone does **not** change portal product/amount on `89pse8`. After env remap, `TryMapPrice` will miss `3wkz62r6` and fall back to `custom_data` until the PATCH gate.
+Product policy for active same-frequency upgrade is `effective_from=immediately` + `proration_billing_mode=prorated_next_billing_period` (difference on next invoice, not an immediate charge). Preview first.
 
 ## Mutations this run
 
-Sandbox catalog only: four new active prices. No `.env` edit, no subscription PATCH, no tenant SQL.
+Sandbox catalog create + UAT `.env` four-price remap + `cohestra-uat-api` recreate. No subscription PATCH. No tenant SQL. No `lead-generation-crm` change.
