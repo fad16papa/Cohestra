@@ -4,7 +4,7 @@
 
 1. **What happened.** CreativoRare Cohestra UI shows Pro / Active / Yearly. Paddle sandbox portal on the same subscription suffix `89pse8` shows **Cohestra Core US$153.99/year**.
 2. **Where the case stands.** Transaction classification **PASS**. `vwd86w` created/billed `2026-10-12T13:40Z`, grand `29199` USD, origin `subscription_update`. Classified **HISTORICAL**. No txn in the 2026-10-14 PATCH window. Immediate charge **NONE**. Live item still `m754cd`.
-3. **What's needed next.** Final authenticated Settings → Billing acceptance. Do not PATCH again. Do not archive old prices. Do not close Story 19.4.
+3. **What's needed next.** Final authenticated Settings → Billing acceptance is **BLOCKED**: Cloud Agent has no CreativoRare owner session (`fad16papa@gmail.com`). Provider/tenant correction remains PASS. Do not close Story 19.4 on provider evidence alone.
 
 ## Case Info
 
@@ -12,7 +12,7 @@
 | ----- | ----- |
 | Ticket | Story 19.4 UAT Paddle catalog mapping |
 | Date opened | 2026-10-13 |
-| Status | Open — correction + txn classification PASS; Billing UI acceptance next |
+| Status | Open — UI acceptance blocked on owner-authenticated evidence |
 | System | main `1e2745e754d2033263d496067ed8a5d604df5a9d` |
 | Evidence sources | Code on that SHA; tenant SQL; prior sandbox GET; owner portal/checkout screenshots |
 
