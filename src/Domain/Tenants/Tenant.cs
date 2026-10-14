@@ -13,6 +13,12 @@ public sealed class Tenant
     /// <summary>Contact email captured at provision (membership/invite lands Epic 12).</summary>
     public string? AdminContactEmail { get; set; }
 
+    /// <summary>
+    /// Workspace billing-contact mobile in E.164. Owned by Cohestra because
+    /// Paddle Customer has no first-class phone field.
+    /// </summary>
+    public string? BillingContactPhone { get; set; }
+
     public TenantPlan Plan { get; set; } = TenantPlan.Basic;
 
     public TenantStatus Status { get; set; } = TenantStatus.Active;

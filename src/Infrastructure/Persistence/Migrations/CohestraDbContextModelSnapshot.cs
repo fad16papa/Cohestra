@@ -1058,6 +1058,10 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("ArchivedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("BillingContactPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("BillingInterval")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
