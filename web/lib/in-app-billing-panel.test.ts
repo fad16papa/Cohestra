@@ -10,10 +10,20 @@ import { BILLING_UNAVAILABLE_COPY } from "@/lib/billing/billing-api";
 import type { BillingDetails } from "@/lib/billing/billing-details-api";
 import type { BillingSummary } from "@/lib/billing/billing-api";
 
+type AuthFetch = (input: string, init?: RequestInit) => Promise<Response>;
+type BillingContactPayload = {
+  name?: string;
+  email?: string;
+  phoneCountry?: string;
+  phoneLocal?: string;
+};
+
 const billingMocks = vi.hoisted(() => ({
   configured: true as boolean,
   details: null as BillingDetails | null,
-  updateContact: vi.fn(async () => undefined),
+  updateContact: vi.fn(
+    async (_authFetch: AuthFetch, _payload: BillingContactPayload) => undefined
+  ),
 }));
 
 function summary(partial: Partial<BillingSummary> = {}): BillingSummary {
@@ -72,7 +82,8 @@ vi.mock("@/lib/billing/billing-details-api", () => ({
   cancelSubscriptionWithAuth: vi.fn(),
   cancelScheduledPlanChangeWithAuth: vi.fn(),
   resumeSubscriptionWithAuth: vi.fn(),
-  updateBillingContactWithAuth: (...args: unknown[]) => billingMocks.updateContact(...args),
+  updateBillingContactWithAuth: (authFetch: AuthFetch, payload: BillingContactPayload) =>
+    billingMocks.updateContact(authFetch, payload),
 }));
 
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
