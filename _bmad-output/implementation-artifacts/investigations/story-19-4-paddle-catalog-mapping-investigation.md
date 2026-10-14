@@ -3,8 +3,8 @@
 ## Hand-off Brief
 
 1. **What happened.** CreativoRare Cohestra UI shows Pro / Active / Yearly. Paddle sandbox portal on the same subscription suffix `89pse8` shows **Cohestra Core US$153.99/year**.
-2. **Where the case stands.** UAT `.env` and `cohestra-uat-api` now use canonical V2 price IDs. Subscription `89pse8` is still on obsolete Core annual `$153.99` (item suffix `3wkz62r6`). `lead-generation-crm` was not touched.
-3. **What's needed next.** Formal preview gate **PASS** (owner post-preview GET: live item still `kz62r6`, customer `2wjy4p`, one relevant subscription). Same-subscription PATCH waits for exact owner phrase: `I authorize STORY 19.4 SAME-SUBSCRIPTION PRO ANNUAL V2 PATCH`.
+2. **Where the case stands.** One authorized sandbox PATCH moved `89pse8` from Core `kz62r6` to Pro Annual V2 `m754cd`. Same customer `2wjy4p`. Tenant remains Pro / Annual / Active. Outbox `billing.notification` rows in the last 20 minutes: 0. A completed `subscription_update` transaction suffix `vwd86w` is **not yet dated**, so immediate-charge PASS is not closed.
+3. **What's needed next.** Read-only GET of subscription transactions (especially `vwd86w` created_at / totals). Do not PATCH again. Do not archive old prices. Next product gate after charge classify: authenticated Billing UI.
 
 ## Case Info
 
@@ -12,7 +12,7 @@
 | ----- | ----- |
 | Ticket | Story 19.4 UAT Paddle catalog mapping |
 | Date opened | 2026-10-13 |
-| Status | Open — preview PASS; PATCH not authorized |
+| Status | Open — PATCH applied; immediate-charge txn vwd86w unclassified |
 | System | main `1e2745e754d2033263d496067ed8a5d604df5a9d` |
 | Evidence sources | Code on that SHA; tenant SQL; prior sandbox GET; owner portal/checkout screenshots |
 
@@ -109,13 +109,19 @@ Resolved V2 IDs (GET, all active, 30-day card-required trial):
 | Result | charge `30443` USD (`$304.43`) |
 | Credit | `0` |
 
+### Finding 11: Authorized PATCH applied 2026-10-14
+
+**Evidence:** Owner droplet run. `PATCH_COUNT 1`. Post GET: item `m754cd`, product Cohestra Pro, `305.93` / year, `custom_data.plan=Pro`, same `89pse8` / `2wjy4p`, relevant count 1, `scheduled_change` none, `next_billed_at` still `2027-10-12T18:06:23.629Z`. Tenant Pro / Annual / Active. Outbox 0.
+
+**Residual:** transaction list includes `completed` / `subscription_update` suffix `vwd86w` with no `created_at` printed. Immediate-charge success criterion is **open** until that txn is dated.
+
 ## Missing evidence
 
-None required for the PATCH gate. Optional: next-transaction line items if owner wants the `$304.43` vs `$305.93` breakdown.
+`vwd86w` created_at / billed_at / totals. Paddle inbox (financial email). Authenticated Billing UI.
 
 ## Working classification
 
-Primary: **C obsolete sandbox price** on the **live item**, plus **stale tenant Pro** against provider/custom_data Core. Hypothesis A is **refuted**. The Pro UI is leftover tenant state. Env switch makes `custom_data.plan=Core` the active fallback until PATCH.
+Provider and tenant are now both Pro Annual on canonical V2 `m754cd`. Remaining gate risk is whether `vwd86w` is a new immediate charge from this PATCH.
 
 Code defect E is not selected: mapping order is correct; a Pro UI with a Core-priced subscription is explained by env slot identity or the downgrade-schedule / custom_data fallback.
 
@@ -124,11 +130,11 @@ Code defect E is not selected: mapping order is correct; a Pro UI with a Core-pr
 1. Classify which env slot owns `…3wkz62r6`. **Done** — CoreAnnual obsolete `$153.99`.
 2. Discover whether canonical $152.92 / $305.93 prices already exist. **They did not.** Created V2 under existing products.
 3. Point UAT env at V2 suffixes. **Done** 2026-10-14T12:55:44Z. Backup `.env.bak.canonical-v2-20261014T125544Z`. Container env suffixes `6es9vc` / `drhkr4` / `jfxne5` / `m754cd` PASS. `lead-generation-crm` stayed up.
-4. Reconcile the **existing** subscription `89pse8` to Pro Annual V2 `m754cd` only with owner authorization. Same customer/subscription ids. Set `custom_data.plan=Pro`. Do not create a second subscription. Do not change `Tenant.Plan` first to hide drift. Preview reviewed: no immediate txn; `$304.43` on next invoice.
-5. Then re-sync tenant from provider price id.
+4. Reconcile the **existing** subscription `89pse8` to Pro Annual V2 `m754cd`. **Done** (one PATCH). Same ids. `custom_data.plan=Pro`.
+5. Tenant already Pro; webhook wait showed no `ScheduledPlan`. Alignment printed PASS. Do not write tenant SQL.
 
 Product policy for active same-frequency upgrade is `effective_from=immediately` + `proration_billing_mode=prorated_next_billing_period` (difference on next invoice, not an immediate charge). Preview first.
 
 ## Mutations this run
 
-Sandbox catalog create + UAT `.env` four-price remap + `cohestra-uat-api` recreate. No subscription PATCH. No tenant SQL. No `lead-generation-crm` change.
+Sandbox catalog create; UAT `.env` four-price remap; one same-subscription PATCH `kz62r6` → `m754cd`. No tenant SQL. No old-price archival. No `lead-generation-crm` change.
