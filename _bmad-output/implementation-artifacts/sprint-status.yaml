@@ -1,5 +1,6 @@
 # generated: 2026-06-16
-# last_updated: 2026-10-10
+# last_updated: 2026-10-14
+# 19.4 done — merged PR #447 at cbc52a61 / main 7e655a0b; post-merge CI 38601073681 green; owner UAT phone + billing accepted. Production NO-GO. Epic 19 remains in-progress (19.1/19.2/19.3/19.5).
 # 44.1 done — merged PR #412 at fa68a424 / main ee71efbd; post-merge CI green
 # 44.2 done — merged PR #414 at 42504409 / main 4cc59432; post-merge CI green
 # 44.3 done — merged PR #416 at 03580b49 / main 65e68eed; post-merge CI green
@@ -70,7 +71,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-10-10
+last_updated: 2026-10-14
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -279,16 +280,13 @@ development_status:
   # 2026-10-08 independent public probe (no SSH): https://uat.cohestra.app/ready Healthy,
   # HTTP→HTTPS 301, wildcard SAN uat + *.uat, webhook 400 missing signature.
   # Do NOT mark 19.1/19.2 done — product acceptance + BMAD close still required.
-  # 19.4 blocked on PR #404 deploy + sandbox UAT walk, not on missing public URL/TLS.
-  # Merge gate 2026-10-08: PR #404 HEAD 47ebb1b5 CI green — MERGE READY, not merged.
-  # Execution plan: 19-4-paddle-sandbox-uat-execution-plan-2026-10-08.md (stop before charge).
-  # 19.4 execution 2026-10-08: BLOCKED — no owner merge auth, SSH denied, no Paddle dashboard.
-  # Evidence: 19-4-sandbox-uat-execution-2026-10-08.md. Production NO-GO. Do not mark done.
+  # 19.4 done 2026-10-14 — closeout story-19-4-final-uat-closeout.md. Production NO-GO.
+  # Do NOT mark 19.1/19.2 done — product acceptance + BMAD close still required.
   epic-19: in-progress
   19-1-uat-droplet-deploy-and-smoke: in-progress
   19-2-https-edge-security-header-verify: review
   19-3-recaptcha-production-enablement: ready-for-dev
-  19-4-paddle-billing-uat-on-droplet: in-progress
+  19-4-paddle-billing-uat-on-droplet: done
   19-5-operator-core-flows-launch-signoff: ready-for-dev
   epic-19-retrospective: optional
 

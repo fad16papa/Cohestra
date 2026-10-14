@@ -1,20 +1,24 @@
 ---
 epic: 19
 story: 4
-status: in-progress
+status: done
 ---
 
 # Story 19.4: Paddle billing UAT on droplet
 
-Status: in-progress — Option A (Paddle preview → same-subscription PATCH) is in implementation. Do **not** mark done. Live sandbox mutation is not authorized from this step. Still blocked on **owner UAT deploy + sandbox lifecycle walk** after the implementation PR is reviewed. Uses existing **sandbox** credentials only.
+Status: **done** — 2026-10-14. Canonical closeout: `story-19-4-final-uat-closeout.md`.
 
-Code-side webhook retry, refund ingest, and credential isolation landed 2026-10-08 on the Paddle billing remediation branch. **Do not mark this story done** until droplet sandbox UAT + Mandatory Code Review Loop + product acceptance complete.
+Merged implementation HEAD `cbc52a616e1ce4e7a43d8d9933d7b2fd66f7e80a` (PR #447) is on main `7e655a0b44ffd102f0c0c4e7b761598435cac6bc`. Post-merge CI `38601073681` SUCCESS. Owner UAT accepted Billing #1–#6 and BillingContactPhone persistence. Production remains **NO-GO**.
 
 Sandbox walk script (do not execute live; sandbox credentials only): `19-4-paddle-sandbox-uat-execution-plan-2026-10-08.md`.
 
+### Closeout record (2026-10-14)
+
+Owner-authorized UAT acceptance completed. See `story-19-4-final-uat-closeout.md`. Historical 2026-10-08 halt no longer applies.
+
 ### Dev Agent Record (2026-10-08)
 
-**Halt** (`bmad-dev-story`): no owner merge authorization; no droplet SSH (`Permission denied (publickey)`); no Paddle dashboard. Real sandbox scenarios **not** executed. Evidence: `19-4-sandbox-uat-execution-2026-10-08.md`. Do **not** mark done.
+**Halt** (`bmad-dev-story`): no owner merge authorization; no droplet SSH (`Permission denied (publickey)`); no Paddle dashboard. Real sandbox scenarios **not** executed. Evidence: `19-4-sandbox-uat-execution-2026-10-08.md`. Superseded by 2026-10-14 closeout.
 
 ## Story
 
@@ -75,7 +79,9 @@ Webhook URL: `https://<uat-host>/api/v1/system/paddle/webhook`
 
 Independent public probe 2026-10-08 (no SSH, no secrets): `https://uat.cohestra.app/ready` Healthy; HTTP→HTTPS 301; cert SAN `uat.cohestra.app` + `*.uat.cohestra.app`; `POST /api/v1/system/paddle/webhook` returns **400 Missing Paddle-Signature** (secret is configured on the live UAT API; unsigned posts are rejected). Tracker 19.1/19.2 are **not** closed — this does not replace product acceptance.
 
-Still required before 19.4 acceptance:
+The following items were the 2026-10-08 remaining list. They are **satisfied** by later merged implementation, owner-authorized sandbox correction, and 2026-10-14 UAT acceptance. Kept as historical checklist:
+
+Historical list (satisfied):
 
 1. Owner-authorized merge of PR #404, then deploy that HEAD to the UAT droplet (current public stack is **not** proven to be `47ebb1b5`)  
 2. Paddle sandbox notification destination: `https://uat.cohestra.app/api/v1/system/paddle/webhook` including **adjustment.created** and **adjustment.updated** (plus existing subscription/transaction events)  
