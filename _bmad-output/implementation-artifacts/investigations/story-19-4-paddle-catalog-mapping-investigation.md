@@ -4,7 +4,7 @@
 
 1. **What happened.** CreativoRare Cohestra UI shows Pro / Active / Yearly. Paddle sandbox portal on the same subscription suffix `89pse8` shows **Cohestra Core US$153.99/year**.
 2. **Where the case stands.** UAT `.env` and `cohestra-uat-api` now use canonical V2 price IDs. Subscription `89pse8` is still on obsolete Core annual `$153.99` (item suffix `3wkz62r6`). `lead-generation-crm` was not touched.
-3. **What's needed next.** Read-only Paddle **preview** of same-subscription item change to Pro Annual V2 `m754cd`. Do not PATCH until that preview is reviewed and separately authorized.
+3. **What's needed next.** Owner-authorized same-subscription PATCH of `89pse8` to Pro Annual V2 `m754cd`, including `custom_data.plan=Pro`. Preview already reviewed: no immediate transaction; next-invoice charge `$304.43`.
 
 ## Case Info
 
@@ -12,7 +12,7 @@
 | ----- | ----- |
 | Ticket | Story 19.4 UAT Paddle catalog mapping |
 | Date opened | 2026-10-13 |
-| Status | Open — V2 env mapping applied; subscription still obsolete Core annual |
+| Status | Open — preview PASS; PATCH not authorized |
 | System | main `1e2745e754d2033263d496067ed8a5d604df5a9d` |
 | Evidence sources | Code on that SHA; tenant SQL; prior sandbox GET; owner portal/checkout screenshots |
 
@@ -89,13 +89,33 @@ Resolved V2 IDs (GET, all active, 30-day card-required trial):
 
 **Detail:** Live item `3wkz62r6` **was** the pre-switch `PriceCoreAnnual` slot. After the 2026-10-14 env switch it no longer matches any env slot, so `TryMapPrice` falls back to `custom_data` until the PATCH gate. CreativoRare stays on obsolete Core annual `$153.99` until a later owner-authorized same-subscription PATCH to Pro Annual V2 `m754cd`.
 
+### Finding 9: Tenant is Pro; provider item and custom_data are Core
+
+**Evidence:** 2026-10-14 preview script. Tenant `plan=Pro` `interval=Annual` `billing=Active` `ScheduledPlan` empty. Live item `kz62r6`. `custom_data={"plan":"Core","interval":"Annual","tenant_slug":"creativorare"}`.
+
+**Detail:** After env switch, `TryMapPrice` misses `kz62r6` and falls back to `custom_data` → Core. Next webhook would treat Pro→Core as a paid downgrade and set `ScheduledPlan=Core`, not immediately rewrite `Plan`. `ScheduledPlan` is still empty, so that webhook has not landed yet.
+
+### Finding 10: Pro Annual V2 preview — no immediate charge
+
+**Evidence:** `PATCH /subscriptions/…89pse8/preview` with `immediately` + `prorated_next_billing_period` to `pri_01m4x7bza2hj3kbmgy5mm754cd`.
+
+| Field | Value |
+| ----- | ----- |
+| Preview item | `m754cd` Pro Annual V2 |
+| Status | active |
+| Immediate transaction | NO |
+| Next billed at | unchanged `2027-10-12T18:06:23.629Z` |
+| Next transaction | YES |
+| Result | charge `30443` USD (`$304.43`) |
+| Credit | `0` |
+
 ## Missing evidence
 
-`custom_data.plan`; tenant `ScheduledPlan`.
+None required for the PATCH gate. Optional: next-transaction line items if owner wants the `$304.43` vs `$305.93` breakdown.
 
 ## Working classification
 
-Primary: **C obsolete sandbox price** on the **live item** (Core-named $153.99/year). That item **was** UAT `Paddle__PriceCoreAnnual` before the env switch. Hypothesis A (env ProAnnual wired to the Core price) is **refuted**. The Pro UI is leftover tenant/schedule behavior, not a wrong ProAnnual ID.
+Primary: **C obsolete sandbox price** on the **live item**, plus **stale tenant Pro** against provider/custom_data Core. Hypothesis A is **refuted**. The Pro UI is leftover tenant state. Env switch makes `custom_data.plan=Core` the active fallback until PATCH.
 
 Code defect E is not selected: mapping order is correct; a Pro UI with a Core-priced subscription is explained by env slot identity or the downgrade-schedule / custom_data fallback.
 
@@ -104,7 +124,7 @@ Code defect E is not selected: mapping order is correct; a Pro UI with a Core-pr
 1. Classify which env slot owns `…3wkz62r6`. **Done** — CoreAnnual obsolete `$153.99`.
 2. Discover whether canonical $152.92 / $305.93 prices already exist. **They did not.** Created V2 under existing products.
 3. Point UAT env at V2 suffixes. **Done** 2026-10-14T12:55:44Z. Backup `.env.bak.canonical-v2-20261014T125544Z`. Container env suffixes `6es9vc` / `drhkr4` / `jfxne5` / `m754cd` PASS. `lead-generation-crm` stayed up.
-4. Reconcile the **existing** subscription `89pse8` to Pro Annual V2 `m754cd` only after a read-only preview and later owner authorization. Same customer/subscription ids. Do not create a second subscription. Do not change `Tenant.Plan` first to hide drift.
+4. Reconcile the **existing** subscription `89pse8` to Pro Annual V2 `m754cd` only with owner authorization. Same customer/subscription ids. Set `custom_data.plan=Pro`. Do not create a second subscription. Do not change `Tenant.Plan` first to hide drift. Preview reviewed: no immediate txn; `$304.43` on next invoice.
 5. Then re-sync tenant from provider price id.
 
 Product policy for active same-frequency upgrade is `effective_from=immediately` + `proration_billing_mode=prorated_next_billing_period` (difference on next invoice, not an immediate charge). Preview first.
