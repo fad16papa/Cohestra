@@ -27,6 +27,9 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(tenant => tenant.AdminContactEmail)
             .HasMaxLength(320);
 
+        builder.Property(tenant => tenant.BillingContactPhone)
+            .HasMaxLength(20);
+
         builder.Property(tenant => tenant.Plan)
             .HasConversion<string>()
             .HasMaxLength(20)

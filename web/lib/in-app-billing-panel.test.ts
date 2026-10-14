@@ -10,9 +10,20 @@ import { BILLING_UNAVAILABLE_COPY } from "@/lib/billing/billing-api";
 import type { BillingDetails } from "@/lib/billing/billing-details-api";
 import type { BillingSummary } from "@/lib/billing/billing-api";
 
+type AuthFetch = (input: string, init?: RequestInit) => Promise<Response>;
+type BillingContactPayload = {
+  name?: string;
+  email?: string;
+  phoneCountry?: string;
+  phoneLocal?: string;
+};
+
 const billingMocks = vi.hoisted(() => ({
   configured: true as boolean,
   details: null as BillingDetails | null,
+  updateContact: vi.fn(
+    async (_authFetch: AuthFetch, _payload: BillingContactPayload) => undefined
+  ),
 }));
 
 function summary(partial: Partial<BillingSummary> = {}): BillingSummary {
@@ -71,7 +82,8 @@ vi.mock("@/lib/billing/billing-details-api", () => ({
   cancelSubscriptionWithAuth: vi.fn(),
   cancelScheduledPlanChangeWithAuth: vi.fn(),
   resumeSubscriptionWithAuth: vi.fn(),
-  updateBillingContactWithAuth: vi.fn(),
+  updateBillingContactWithAuth: (authFetch: AuthFetch, payload: BillingContactPayload) =>
+    billingMocks.updateContact(authFetch, payload),
 }));
 
 import { InAppBillingPanel } from "@/components/billing/in-app-billing-panel";
@@ -300,5 +312,78 @@ describe("InAppBillingPanel presentation", () => {
       "owner@example.com"
     );
     expect(rootEl.textContent).not.toMatch(/signed-in@cohestra.local/);
+  });
+
+  it("renders a persisted E.164 billing phone and reloads it after save", async () => {
+    billingMocks.details = {
+      summary: summary(),
+      contact: {
+        name: "CreativoRare",
+        email: "owner@example.com",
+        phone: "+6591234567",
+      },
+      paymentMethod: null,
+      subscription: {
+        cancelAtPeriodEnd: false,
+        currentPeriodEnd: null,
+        scheduledPlan: null,
+        scheduledPlanEffectiveAt: null,
+      },
+      invoices: [],
+    };
+
+    await act(async () => {
+      root.render(
+        createElement(InAppBillingPanel, {
+          shellPlan: "Pro",
+          shellBillingStatus: "Active",
+          shellTrialEndsAt: null,
+          billingOwnerEmail: "owner@example.com",
+          onRefreshShell: async () => undefined,
+        })
+      );
+    });
+    await flush();
+
+    expect(rootEl.textContent).toMatch(/\+65/);
+    expect(rootEl.textContent).toMatch(/9123/);
+    expect(rootEl.textContent).not.toMatch(/—\s*$/);
+
+    const edit = Array.from(rootEl.querySelectorAll("button")).find((button) =>
+      /update information/i.test(button.textContent ?? "")
+    );
+    expect(edit).toBeTruthy();
+    await act(async () => {
+      edit!.click();
+    });
+    await flush();
+
+    const localInput = rootEl.querySelector("input[type='tel']") as HTMLInputElement | null;
+    expect(localInput?.value.replace(/\s/g, "")).toBe("91234567");
+
+    billingMocks.updateContact.mockImplementationOnce(async () => {
+      billingMocks.details = {
+        ...billingMocks.details!,
+        contact: {
+          name: "CreativoRare",
+          email: "owner@example.com",
+          phone: "+6591234567",
+        },
+      };
+    });
+
+    const save = Array.from(rootEl.querySelectorAll("button")).find((button) =>
+      /^save$/i.test(button.textContent ?? "")
+    );
+    expect(save).toBeTruthy();
+    await act(async () => {
+      save!.click();
+    });
+    await flush();
+
+    expect(billingMocks.updateContact).toHaveBeenCalled();
+    expect(rootEl.textContent).toMatch(/\+65/);
+    expect(rootEl.textContent).toMatch(/9123/);
+    expect(rootEl.textContent).not.toMatch(/Update information[\s\S]*—/);
   });
 });

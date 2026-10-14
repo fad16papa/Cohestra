@@ -296,8 +296,10 @@ internal sealed class PaddleBillingService(
 
         await EnsurePaddleCustomerForTenantAsync(tracked, cancellationToken);
 
-        var contact = await FetchPaddleContactAsync(tracked.PaddleCustomerId!, cancellationToken)
-            ?? BuildLocalContact(tracked);
+        var contact = WithLocalBillingPhone(
+            await FetchPaddleContactAsync(tracked.PaddleCustomerId!, cancellationToken)
+                ?? BuildLocalContact(tracked),
+            tracked);
         var paymentMethod = await FetchDefaultPaymentMethodAsync(tracked.PaddleCustomerId!, cancellationToken);
         var subscription = await FetchSubscriptionDetailsAsync(tracked, cancellationToken)
             ?? BuildLocalSubscription(tracked);
@@ -333,6 +335,7 @@ internal sealed class PaddleBillingService(
         await EnsurePaddleCustomerForTenantAsync(tenant, cancellationToken);
 
         var hasPhoneUpdate = phoneCountry is not null || phoneLocal is not null;
+        string? normalizedPhone = null;
         if (hasPhoneUpdate)
         {
             var localDigits = string.IsNullOrWhiteSpace(phoneLocal) ? string.Empty : phoneLocal.Trim();
@@ -350,7 +353,8 @@ internal sealed class PaddleBillingService(
                     throw new InvalidOperationException(validationError);
                 }
 
-                if (string.IsNullOrWhiteSpace(PhoneCountrySupport.NormalizePhone(localDigits, country)))
+                normalizedPhone = PhoneCountrySupport.NormalizePhone(localDigits, country);
+                if (string.IsNullOrWhiteSpace(normalizedPhone))
                 {
                     throw new InvalidOperationException("Enter a valid mobile number.");
                 }
@@ -374,6 +378,11 @@ internal sealed class PaddleBillingService(
         {
             logger.LogWarning(ex, "Billing contact update failed for tenant {TenantId}", tenant.Id);
             throw new InvalidOperationException("Could not update billing contact.");
+        }
+
+        if (hasPhoneUpdate)
+        {
+            tenant.BillingContactPhone = normalizedPhone;
         }
 
         tenant.UpdatedAt = DateTimeOffset.UtcNow;
@@ -1568,8 +1577,11 @@ internal sealed class PaddleBillingService(
     private static BillingPlanLimitsDto MapPlanLimits(PlanLimits limits) =>
         new(limits.Seats, limits.Communities, limits.PublishedActivities, limits.RegistrationsPerMonth);
 
+    private static BillingContactDto WithLocalBillingPhone(BillingContactDto contact, Tenant tenant) =>
+        contact with { Phone = tenant.BillingContactPhone };
+
     private static BillingContactDto BuildLocalContact(Tenant tenant) =>
-        new(tenant.Name, tenant.AdminContactEmail ?? string.Empty, null);
+        new(tenant.Name, tenant.AdminContactEmail ?? string.Empty, tenant.BillingContactPhone);
 
     private static BillingSubscriptionDetailsDto? BuildLocalSubscription(Tenant tenant)
     {

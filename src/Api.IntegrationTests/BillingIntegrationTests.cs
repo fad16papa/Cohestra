@@ -16,6 +16,32 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
     private IntegrationTestWebApplicationFactory Factory => fixture.Factory;
 
     [SkippableFact]
+    public async Task TenantAdmin_GetDetails_ReturnsPersistedBillingContactPhone()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+        await IntegrationTestHelpers.EnsureDefaultTenantProPlanAsync(Factory.Services);
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var row = await db.Tenants.FirstAsync(tenant => tenant.Id == TenantIds.Default);
+            row.BillingContactPhone = "+6591234567";
+            await db.SaveChangesAsync();
+        }
+
+        using var client = Factory.CreateClient();
+        var token = await IntegrationTestHelpers.LoginAsOperatorAsync(client);
+        IntegrationTestHelpers.UseBearerToken(client, token);
+
+        using var response = await client.GetAsync("/api/v1/admin/billing/details");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var details = await response.Content.ReadFromJsonAsync<BillingDetailsResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(details);
+        Assert.Equal("+6591234567", details.Contact?.Phone);
+    }
+
+    [SkippableFact]
     public async Task TenantAdmin_GetBilling_ReturnsUsageAndPlanLimits()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
