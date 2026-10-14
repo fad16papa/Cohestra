@@ -3,8 +3,8 @@
 ## Hand-off Brief
 
 1. **What happened.** CreativoRare Cohestra UI shows Pro / Active / Yearly. Paddle sandbox portal on the same subscription suffix `89pse8` shows **Cohestra Core US$153.99/year**.
-2. **Where the case stands.** One authorized sandbox PATCH moved `89pse8` from Core `kz62r6` to Pro Annual V2 `m754cd`. Same customer `2wjy4p`. Tenant remains Pro / Annual / Active. Outbox `billing.notification` rows in the last 20 minutes: 0. A completed `subscription_update` transaction suffix `vwd86w` is **not yet dated**, so immediate-charge PASS is not closed.
-3. **What's needed next.** Read-only GET of subscription transactions (especially `vwd86w` created_at / totals). Do not PATCH again. Do not archive old prices. Next product gate after charge classify: authenticated Billing UI.
+2. **Where the case stands.** Same-subscription correction **PASS**. `89pse8` is Pro Annual V2 `m754cd`. `vwd86w` billed `2026-10-12` (`$291.99`), not today. No 2026-10-14 transaction. Immediate charge **NONE**.
+3. **What's needed next.** Authenticated Billing UI + lifecycle acceptance. Do not archive old prices. Do not close Story 19.4. Production remains NO-GO.
 
 ## Case Info
 
@@ -12,7 +12,7 @@
 | ----- | ----- |
 | Ticket | Story 19.4 UAT Paddle catalog mapping |
 | Date opened | 2026-10-13 |
-| Status | Open — PATCH applied; immediate-charge txn vwd86w unclassified |
+| Status | Open — same-subscription correction PASS; Billing UI acceptance next |
 | System | main `1e2745e754d2033263d496067ed8a5d604df5a9d` |
 | Evidence sources | Code on that SHA; tenant SQL; prior sandbox GET; owner portal/checkout screenshots |
 
@@ -113,15 +113,15 @@ Resolved V2 IDs (GET, all active, 30-day card-required trial):
 
 **Evidence:** Owner droplet run. `PATCH_COUNT 1`. Post GET: item `m754cd`, product Cohestra Pro, `305.93` / year, `custom_data.plan=Pro`, same `89pse8` / `2wjy4p`, relevant count 1, `scheduled_change` none, `next_billed_at` still `2027-10-12T18:06:23.629Z`. Tenant Pro / Annual / Active. Outbox 0.
 
-**Residual:** transaction list includes `completed` / `subscription_update` suffix `vwd86w` with no `created_at` printed. Immediate-charge success criterion is **open** until that txn is dated.
+**Residual closed:** `vwd86w` created/billed `2026-10-12T13:40Z`, grand `29199` USD. Not this PATCH. No txn dated 2026-10-14.
 
 ## Missing evidence
 
-`vwd86w` created_at / billed_at / totals. Paddle inbox (financial email). Authenticated Billing UI.
+Authenticated Billing UI + lifecycle acceptance. Paddle inbox not inspected.
 
 ## Working classification
 
-Provider and tenant are now both Pro Annual on canonical V2 `m754cd`. Remaining gate risk is whether `vwd86w` is a new immediate charge from this PATCH.
+Provider and tenant are both Pro Annual on canonical V2 `m754cd`. Immediate-charge criterion **PASS**. Story 19.4 stays OPEN pending Billing UI acceptance.
 
 Code defect E is not selected: mapping order is correct; a Pro UI with a Core-priced subscription is explained by env slot identity or the downgrade-schedule / custom_data fallback.
 
