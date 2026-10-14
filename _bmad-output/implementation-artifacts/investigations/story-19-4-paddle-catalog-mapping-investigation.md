@@ -67,17 +67,35 @@ Old `$14.99` / `$153.99` / `$29.99` / `$306.99` trial=NONE prices were left acti
 
 ### Finding 8: Env and live item are still the obsolete catalog
 
-**Evidence:** Prior four-price GET + `SLOT_MATCH CoreAnnual` on item `3wkz62r6`.
+**Evidence:** Prior four-price GET + `SLOT_MATCH CoreAnnual` on item `3wkz62r6`. Read-only resolve 2026-10-14 printed current env suffixes and full V2 IDs.
 
-**Detail:** Env switch has not run. CreativoRare remains on obsolete Core annual until a later owner-authorized same-subscription PATCH to Pro Annual V2 `m754cd`.
+Current UAT `.env` slots (obsolete catalog):
+
+| Slot | Env suffix | Notes |
+| ---- | ---------- | ----- |
+| `Paddle__PriceCoreMonthly` | `erv34a` | old trial=NONE $14.99 |
+| `Paddle__PriceCoreAnnual` | `kz62r6` | old trial=NONE $153.99; **same as live item `3wkz62r6`** |
+| `Paddle__PriceProMonthly` | `mh2b84` | old trial=NONE $29.99 |
+| `Paddle__PriceProAnnual` | `46q4gy` | old trial=NONE $306.99 |
+
+Resolved V2 IDs (GET, all active, 30-day card-required trial):
+
+| Slot | Full price ID | Amount | Interval |
+| ---- | ------------- | ------ | -------- |
+| CORE MONTHLY V2 | `pri_01m4x7btd32z57bxb0kb6es9vc` | 14.99 | month |
+| CORE ANNUAL V2 | `pri_01m4x7bvaeb52f5hf1shdrhkr4` | 152.92 | year |
+| PRO MONTHLY V2 | `pri_01m4x7bwwg0mpg0skgxwjfxne5` | 29.99 | month |
+| PRO ANNUAL V2 | `pri_01m4x7bza2hj3kbmgy5mm754cd` | 305.93 | year |
+
+**Detail:** Env switch has not run. Live item `3wkz62r6` **is** the current `PriceCoreAnnual` slot. Cohestra therefore maps CreativoRare's provider price to Core Annual. The Pro UI is not explained by env ProAnnual pointing at the Core price. Remaining explanations: scheduled-downgrade keep-Pro, `custom_data` unused because price mapped, or stale tenant row. CreativoRare stays on obsolete Core annual until a later owner-authorized same-subscription PATCH to Pro Annual V2 `m754cd`.
 
 ## Missing evidence
 
-Full `pri_…` IDs for the four V2 suffixes (resolve via GET, do not invent); current `.env` four slot suffixes; `custom_data.plan`; tenant `ScheduledPlan`.
+`custom_data.plan`; tenant `ScheduledPlan`.
 
-## Working classification (not final)
+## Working classification
 
-Primary: **C obsolete sandbox price** on the **live item** (Core-named $153.99/year). Whether Cohestra Pro is **A env ProAnnual wired to that Core price** vs **custom_data/stale tenant while item maps to CoreAnnual** is **unconfirmed** until slot match.
+Primary: **C obsolete sandbox price** on the **live item** (Core-named $153.99/year), and that item **is** UAT `Paddle__PriceCoreAnnual`. Hypothesis A (env ProAnnual wired to the Core price) is **refuted**. The Pro UI is leftover tenant/schedule behavior, not a wrong ProAnnual ID.
 
 Code defect E is not selected: mapping order is correct; a Pro UI with a Core-priced subscription is explained by env slot identity or the downgrade-schedule / custom_data fallback.
 
