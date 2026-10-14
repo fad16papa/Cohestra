@@ -77,12 +77,12 @@ Independent public probe 2026-10-08 (no SSH, no secrets): `https://uat.cohestra.
 
 Still required before 19.4 acceptance:
 
-1. Owner-authorized merge of PR #404, then deploy that HEAD to the UAT droplet (current public stack is **not** proven to be `47ebb1b5`)  
-2. Paddle sandbox notification destination: `https://uat.cohestra.app/api/v1/system/paddle/webhook` including **adjustment.created** and **adjustment.updated** (plus existing subscription/transaction events)  
-3. Default payment link: `https://uat.cohestra.app/billing/paddle-return`  
-4. Owner sandbox `pri_…` / client token already implied if overlay works; classify on droplet without printing values  
-5. Owner decisions on refund entitlement revoke / partial refunds / chargeback reverse **and** cross-event delayed chargeback after payment recovery (escalation doc)  
-6. Owner Paddle dashboard sandbox onboarding Step 02 (website/checkout domain approval for `uat.cohestra.app` / `*.uat.cohestra.app`)  
+1. Owner-authorized merge of PR #404, then deploy that HEAD to the UAT droplet (current public stack is **not** proven to be `47ebb1b5`). Reconciliation addendum (2026-10-10): PR #404 **is merged** at `69814fc3` (ancestor of `origin/main` `f293650d`). Item 1’s remaining work is **deploy + classify + sandbox walk**, not merge. October 8 execution evidence (`19-4-sandbox-uat-execution-2026-10-08.md`) stays BLOCKED/historical. Public unsigned webhook still **400**. Deployed SHA still unproven. Production **NO-GO**.
+2. Paddle sandbox notification destination: `https://uat.cohestra.app/api/v1/system/paddle/webhook` including **adjustment.created** and **adjustment.updated** (plus existing subscription/transaction events)
+3. Default payment link: `https://uat.cohestra.app/billing/paddle-return`
+4. Owner sandbox `pri_…` / client token already implied if overlay works; classify on droplet without printing values
+5. Owner decisions on refund entitlement revoke / partial refunds / chargeback reverse **and** cross-event delayed chargeback after payment recovery (escalation doc)
+6. Owner Paddle dashboard sandbox onboarding Step 02 (website/checkout domain approval for `uat.cohestra.app` / `*.uat.cohestra.app`)
 7. No Cloud Agent SSH or Paddle dashboard access in this environment  
 
 **Residual launch risk (in-scope to test, not to invent policy):** delayed approved chargeback (`new event_id`) after a later paid recovery can re-enter PastDue. Same-event retries are idempotent.  
