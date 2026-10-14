@@ -4,7 +4,7 @@
 
 1. **What happened.** CreativoRare Cohestra UI shows Pro / Active / Yearly. Paddle sandbox portal on the same subscription suffix `89pse8` shows **Cohestra Core US$153.99/year**.
 2. **Where the case stands.** UAT `.env` and `cohestra-uat-api` now use canonical V2 price IDs. Subscription `89pse8` is still on obsolete Core annual `$153.99` (item suffix `3wkz62r6`). `lead-generation-crm` was not touched.
-3. **What's needed next.** Formal preview gate is **blocked on post-preview live GET** (STEP 5). Preview call itself targeted `m754cd`, immediate txn NO, next-invoice charge `$304.43`. Do not PATCH until STEP 5 is unchanged and separately authorized.
+3. **What's needed next.** Formal preview gate **PASS** (owner post-preview GET: live item still `kz62r6`, customer `2wjy4p`, one relevant subscription). Same-subscription PATCH waits for exact owner phrase: `I authorize STORY 19.4 SAME-SUBSCRIPTION PRO ANNUAL V2 PATCH`.
 
 ## Case Info
 
@@ -12,7 +12,7 @@
 | ----- | ----- |
 | Ticket | Story 19.4 UAT Paddle catalog mapping |
 | Date opened | 2026-10-13 |
-| Status | Open — preview call succeeded; formal gate blocked on post-preview GET |
+| Status | Open — preview PASS; PATCH not authorized |
 | System | main `1e2745e754d2033263d496067ed8a5d604df5a9d` |
 | Evidence sources | Code on that SHA; tenant SQL; prior sandbox GET; owner portal/checkout screenshots |
 
