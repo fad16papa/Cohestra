@@ -222,6 +222,9 @@ jobs:
       - name: UAT OTP mailbox contract
         run: bash deploy/uat-otp-mailbox.test.sh
 
+      - name: UAT recaptcha dual-layer contract
+        run: bash deploy/validate-uat-recaptcha.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest
