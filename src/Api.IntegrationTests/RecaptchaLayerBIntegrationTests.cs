@@ -42,7 +42,7 @@ public sealed class RecaptchaLayerBIntegrationTests : IAsyncLifetime
     }
 
     [SkippableFact]
-    public async Task LayerB_official_test_key_accepts_dummy_token()
+    public async Task LayerB_isolated_enabled_recaptcha_accepts_dummy_token()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);
 
