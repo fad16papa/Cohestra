@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy UAT
 
 on:
   workflow_run:
@@ -11,30 +11,146 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-production
+  group: deploy-uat
   cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
-    name: Deploy to DigitalOcean droplet
+    name: Deploy accepted SHA to UAT
     runs-on: ubuntu-latest
+    environment: uat
     if: >
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
+    env:
+      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
     steps:
+      - name: Refuse unpinned TARGET_SHA
+        env:
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
+            exit 1
+          fi
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
+            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
+            exit 1
+          fi
+
+      - name: Checkout accepted SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ env.TARGET_SHA }}
+
+      - name: Fail closed if UAT secrets are missing
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+        run: bash deploy/fail-closed-uat-secrets.sh
+
+      - name: Record deploy dispatch evidence
+        run: bash deploy/record-uat-deploy-dispatch.sh
+
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
+        env:
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+          DEPLOY_SHA: ${{ env.TARGET_SHA }}
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           port: 22
           command_timeout: 30m
+          envs: DROPLET_DEPLOY_PATH,DEPLOY_SHA
           script: |
             set -euo pipefail
-            DEPLOY_PATH="${{ secrets.DROPLET_DEPLOY_PATH }}"
+            if [[ ! "${DEPLOY_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              echo "REFUSE: autonomous UAT deploy requires a 40-character DEPLOY_SHA"
+              exit 1
+            fi
+            DEPLOY_SHA="${DEPLOY_SHA,,}"
+            DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+            DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-}"
             if [[ -z "$DEPLOY_PATH" ]]; then
-              DEPLOY_PATH="$HOME/cohestra"
+              DEPLOY_PATH="/home/deploy/cohestra"
             fi
             cd "$DEPLOY_PATH"
+            git fetch origin "$DEPLOY_BRANCH"
+            if ! git cat-file -e "${DEPLOY_SHA}^{commit}" 2>/dev/null; then
+              echo "REFUSE: DEPLOY_SHA is not present after fetching origin/${DEPLOY_BRANCH}"
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$DEPLOY_SHA" "origin/$DEPLOY_BRANCH"; then
+              echo "REFUSE: DEPLOY_SHA is not on origin/${DEPLOY_BRANCH}"
+              exit 1
+            fi
+            git reset --hard "$DEPLOY_SHA"
+            PRE_SHA="$(git rev-parse HEAD)"
+            echo "EXPECTED_SHA=${DEPLOY_SHA}"
+            echo "DEPLOYED_SHA=${PRE_SHA}"
+            if [[ "$PRE_SHA" != "$DEPLOY_SHA" ]]; then
+              echo "REFUSE: EXPECTED_SHA != DEPLOYED_SHA before remote-deploy"
+              exit 1
+            fi
             bash deploy/remote-deploy.sh
+            POST_SHA="$(git rev-parse HEAD)"
+            echo "EXPECTED_SHA=${DEPLOY_SHA}"
+            echo "DEPLOYED_SHA=${POST_SHA}"
+            if [[ "$POST_SHA" != "$DEPLOY_SHA" ]]; then
+              echo "REFUSE: EXPECTED_SHA != DEPLOYED_SHA"
+              exit 1
+            fi
+
+      - name: Fetch host acceptance JSON
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+          TARGET_SHA: ${{ env.TARGET_SHA }}
+        run: bash deploy/fetch-uat-acceptance.sh
+
+      - name: Public UAT smoke
+        env:
+          UAT_PUBLIC_BASE_URL: ${{ secrets.UAT_PUBLIC_BASE_URL }}
+        run: |
+          if [[ -z "${UAT_PUBLIC_BASE_URL:-}" ]]; then
+            UAT_PUBLIC_BASE_URL=https://uat.cohestra.app
+          fi
+          export UAT_PUBLIC_BASE_URL
+          bash deploy/public-uat-smoke.sh
+
+      - name: Remove secret-like evidence before upload
+        if: always()
+        run: |
+          set -euo pipefail
+          removed=0
+          for f in artifacts/uat-acceptance.json artifacts/uat-public-smoke.json artifacts/uat-deploy-dispatch.json; do
+            if [[ -f "$f" ]] && grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN' "$f"; then
+              rm -f "$f"
+              echo "REFUSE: removed secret-like $f"
+              removed=1
+            fi
+          done
+          if [[ "$removed" -eq 1 ]]; then
+            exit 1
+          fi
+
+      - name: Upload UAT evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uat-deploy-evidence
+          path: |
+            artifacts/uat-deploy-dispatch.json
+            artifacts/uat-acceptance.json
+            artifacts/uat-public-smoke.json
+          if-no-files-found: warn

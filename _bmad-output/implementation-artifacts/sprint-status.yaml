@@ -1,6 +1,8 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-15
-# 19.1/19.2 done 2026-10-15 — live UAT smoke + TLS/headers. 19.4 remains done. 19.3 owner reCAPTCHA gate. 19.5 ready after 19.3. Production NO-GO.
+# Epic 45 created 2026-10-15 — Autonomous Delivery & UAT Acceptance. 45.1 in-progress.
+# 19.3 remains ready-for-dev; execution waits for Epic 45 deploy/acceptance (dual-layer recaptcha). Do not SSH.
+# 19.1/19.2 done 2026-10-15 — live UAT smoke + TLS/headers. 19.4 remains done. 19.5 ready after 19.3. Production NO-GO.
 # 19.4 done — merged PR #447 at cbc52a61 / main 7e655a0b; post-merge CI 38601073681 green; owner UAT phone + billing accepted. Production NO-GO. Epic 19 remains in-progress (19.3/19.5).
 # 44.1 done — merged PR #412 at fa68a424 / main ee71efbd; post-merge CI green
 # 44.2 done — merged PR #414 at 42504409 / main 4cc59432; post-merge CI green
@@ -282,6 +284,7 @@ development_status:
   # HTTP→HTTPS 301, wildcard SAN uat + *.uat, webhook 400 missing signature.
   # 19.4 done 2026-10-14 — closeout story-19-4-final-uat-closeout.md.
   # 19.1/19.2 done 2026-10-15 — epic-19-post-19-4-reconciliation-investigation.md. Production NO-GO.
+  # 19.3 AC course-corrected 2026-10-15: dual-layer machine evidence via Epic 45. Manual live CAPTCHA solve is not required.
   epic-19: in-progress
   19-1-uat-droplet-deploy-and-smoke: done
   19-2-https-edge-security-header-verify: done
@@ -463,6 +466,19 @@ development_status:
   44-8-support-severity: done
   44-9-deployment-version-health-read-only: done
   epic-44-retrospective: done
+
+  # Epic 45 — Autonomous Delivery & UAT Acceptance System
+  # Source: planning-artifacts/epics-autonomous-delivery.md
+  epic-45: in-progress
+  45-1-uat-github-environment-deployment-control-plane: in-progress
+  45-2-on-droplet-autonomous-acceptance-probe: in-progress
+  45-3-autonomous-uat-deploy-acceptance-workflow: in-progress
+  45-4-autonomous-browser-acceptance-harness: ready-for-dev
+  45-5-autonomous-authenticated-session-otp-mailbox: ready-for-dev
+  45-6-recaptcha-automation-contract: ready-for-dev
+  45-7-story-acceptance-evidence-contract: ready-for-dev
+  45-8-autonomous-bmad-delivery-loop: ready-for-dev
+  epic-45-retrospective: optional
 
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done

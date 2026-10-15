@@ -195,6 +195,24 @@ jobs:
       - name: Validate isolated UAT compose
         run: bash deploy/validate-uat-isolation.sh
 
+      - name: Validate UAT deploy workflow contract
+        run: bash deploy/validate-deploy-uat-workflow.sh
+
+      - name: Fail-closed UAT secret contract
+        run: bash deploy/fail-closed-uat-secrets.test.sh
+
+      - name: Accepted-SHA reset contract
+        run: bash deploy/reset-accepted-sha.test.sh
+
+      - name: UAT acceptance probe contract
+        run: bash deploy/uat-acceptance.test.sh
+
+      - name: Public UAT smoke contract
+        run: bash deploy/public-uat-smoke.test.sh
+
+      - name: Fetch UAT acceptance fail-closed contract
+        run: bash deploy/fetch-uat-acceptance.test.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest
