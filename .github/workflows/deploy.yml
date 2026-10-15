@@ -29,7 +29,7 @@ jobs:
       TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Checkout accepted SHA
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ env.TARGET_SHA }}
 
@@ -45,7 +45,7 @@ jobs:
         run: bash deploy/record-uat-deploy-dispatch.sh
 
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
         env:
           DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
           DEPLOY_SHA: ${{ env.TARGET_SHA }}
@@ -58,15 +58,22 @@ jobs:
           envs: DROPLET_DEPLOY_PATH,DEPLOY_SHA
           script: |
             set -euo pipefail
+            if [[ -z "${DEPLOY_SHA:-}" ]]; then
+              echo "REFUSE: autonomous UAT deploy requires DEPLOY_SHA"
+              exit 1
+            fi
             DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-}"
             if [[ -z "$DEPLOY_PATH" ]]; then
               DEPLOY_PATH="$HOME/cohestra"
             fi
             cd "$DEPLOY_PATH"
             bash deploy/remote-deploy.sh
-            echo "DEPLOYED_SHA=$(git rev-parse HEAD)"
-            if [[ -n "${DEPLOY_SHA:-}" && "$(git rev-parse HEAD)" != "$DEPLOY_SHA" ]]; then
-              echo "REFUSE: deployed HEAD does not match accepted DEPLOY_SHA"
+            EXPECTED_SHA="${DEPLOY_SHA}"
+            DEPLOYED_SHA="$(git rev-parse HEAD)"
+            echo "EXPECTED_SHA=${EXPECTED_SHA}"
+            echo "DEPLOYED_SHA=${DEPLOYED_SHA}"
+            if [[ "$EXPECTED_SHA" != "$DEPLOYED_SHA" ]]; then
+              echo "REFUSE: EXPECTED_SHA != DEPLOYED_SHA"
               exit 1
             fi
 
@@ -90,7 +97,7 @@ jobs:
 
       - name: Upload UAT evidence artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: uat-deploy-evidence
           path: |

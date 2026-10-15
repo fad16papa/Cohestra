@@ -96,6 +96,44 @@ else
   fail "workflow must upload uat-acceptance.json and uat-public-smoke.json"
 fi
 
+if grep -q 'TARGET_SHA:' "$WF" && grep -q 'workflow_run.head_sha' "$WF"; then
+  pass "TARGET_SHA is derived for workflow_run"
+else
+  fail "workflow must define TARGET_SHA from workflow_run.head_sha"
+fi
+
+if grep -q 'EXPECTED_SHA' "$WF" && grep -q 'EXPECTED_SHA != DEPLOYED_SHA' "$WF"; then
+  pass "post-deploy EXPECTED_SHA == DEPLOYED_SHA is asserted"
+else
+  fail "workflow must emit and assert EXPECTED_SHA == DEPLOYED_SHA"
+fi
+
+if grep -q 'autonomous UAT deploy requires DEPLOY_SHA' "$WF"; then
+  pass "Actions path refuses an empty DEPLOY_SHA"
+else
+  fail "Actions must never deploy an unpinned branch tip"
+fi
+
+if grep -q 'reset --hard origin/main' "$WF" || grep -q 'reset --hard "origin/$DEPLOY_BRANCH"' "$WF"; then
+  fail "workflow SSH script must not reset to a branch tip"
+else
+  pass "workflow SSH script does not reset to origin/main"
+fi
+
+if grep -q 'uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262' "$WF" \
+  && grep -q 'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' "$WF" \
+  && grep -q 'uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f' "$WF"; then
+  pass "deploy actions are pinned to reviewed commit SHAs"
+else
+  fail "deploy.yml actions must be pinned to exact commit SHAs"
+fi
+
+if grep -E 'uses: (actions/checkout|actions/upload-artifact|appleboy/ssh-action)@v' "$WF"; then
+  fail "deploy.yml must not use mutable action version tags"
+else
+  pass "deploy.yml does not use mutable action version tags"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1

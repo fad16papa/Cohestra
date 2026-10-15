@@ -64,15 +64,19 @@ describe("Story 44.9 version health source contract", () => {
 
   it("derives GIT_SHA after git reset and substitutes it into UAT compose", () => {
     const resetAt = RESET_SHA.indexOf('git reset --hard "origin/$DEPLOY_BRANCH"');
+    const exactResetAt = RESET_SHA.indexOf('git reset --hard "$sha"');
     const sourceAt = DEPLOY.indexOf("reset-accepted-sha.sh");
     const callAt = DEPLOY.indexOf("reset_accepted_sha");
     const shaAt = DEPLOY.indexOf('GIT_SHA="$(git rev-parse HEAD)"');
     const exportAt = DEPLOY.indexOf("export GIT_SHA");
     expect(resetAt).toBeGreaterThan(-1);
+    expect(exactResetAt).toBeGreaterThan(-1);
+    expect(RESET_SHA).toContain("merge-base --is-ancestor");
     expect(sourceAt).toBeGreaterThan(-1);
     expect(callAt).toBeGreaterThan(sourceAt);
     expect(shaAt).toBeGreaterThan(callAt);
     expect(exportAt).toBeGreaterThan(shaAt);
+    expect(DEPLOY).not.toContain('git reset --hard "origin/$DEPLOY_BRANCH"');
     expect(COMPOSE).toMatch(/GIT_SHA:\s*\$\{GIT_SHA:-\}/);
     expect(COMPOSE).not.toMatch(/GIT_SHA:\s*[0-9a-fA-F]{7,}/);
     expect(COMPOSE).toContain("127.0.0.1:${API_HOST_PORT:-5100}:8080");

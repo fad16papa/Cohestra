@@ -510,6 +510,20 @@ else
   fail "remote-deploy must reset via reset-accepted-sha.sh then derive/export GIT_SHA"
 fi
 
+if grep -q 'git reset --hard "origin/$DEPLOY_BRANCH"' "$DEPLOY"; then
+  fail "remote-deploy must not reset to origin/\$DEPLOY_BRANCH directly"
+else
+  pass "remote-deploy does not reset to a branch tip directly"
+fi
+
+if grep -q 'git reset --hard "$sha"' "$RESET_SHA" \
+  && grep -q 'merge-base --is-ancestor' "$RESET_SHA" \
+  && grep -qE '\[0-9a-fA-F\]\{40\}' "$RESET_SHA"; then
+  pass "accepted-SHA helper pins a 40-character ancestor SHA"
+else
+  fail "reset-accepted-sha.sh must validate 40-char SHA, ancestry, and reset to that SHA"
+fi
+
 if grep -q 'uat-acceptance.sh' "$DEPLOY"; then
   pass "remote-deploy runs the sanitized acceptance probe"
 else

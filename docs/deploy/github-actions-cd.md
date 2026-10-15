@@ -12,8 +12,10 @@ push / merge to main
     → Deploy UAT (Environment `uat`, concurrency `deploy-uat`)
     → fail-closed secret names
     → SSH with a dedicated Actions deploy key
-    → deploy/remote-deploy.sh (isolation + compose build + smoke)
-    → uat-deploy-dispatch.json artifact
+    → DEPLOY_SHA=<accepted CI SHA> via appleboy envs (never an unpinned branch tip)
+    → deploy/remote-deploy.sh resets to that SHA only if it is on origin/main
+    → EXPECTED_SHA == DEPLOYED_SHA or fail closed
+    → uat-deploy-dispatch.json (result=dispatched; later artifacts own deployed/accepted)
 ```
 
 | Workflow | File | Trigger |
@@ -73,7 +75,13 @@ ssh-keygen -t ed25519 -C "github-actions-uat-deploy" -f ~/.ssh/cohestra-uat-gha 
 3. **Deploy UAT** starts automatically.
 4. Download the `uat-deploy-dispatch` artifact for the SHA. Later stories add `uat-acceptance.json`.
 
-`workflow_run` deploys `github.event.workflow_run.head_sha` (the accepted main SHA), not an unrelated default-branch pointer.
+`workflow_run` pins `TARGET_SHA=github.event.workflow_run.head_sha` and passes it as `DEPLOY_SHA` through appleboy `envs`. The droplet must reset to that exact 40-character SHA after proving it is an ancestor of `origin/main`. If main has advanced to SHA B after CI accepted SHA A, UAT still deploys A or fails closed. It must never silently deploy B.
+
+Actions never deploy an unpinned branch tip. Empty `DEPLOY_SHA` is refused on the GitHub Actions path. The droplet helper may still reset to `origin/$DEPLOY_BRANCH` only for an explicit manual operator run that does not set `DEPLOY_SHA`.
+
+The SSH step emits non-secret `EXPECTED_SHA` / `DEPLOYED_SHA` and fails if they differ.
+
+Third-party actions in `deploy.yml` are pinned to reviewed commit SHAs (`actions/checkout`, `actions/upload-artifact`, `appleboy/ssh-action`). Permissions stay `contents: read`. Concurrency stays `deploy-uat` and must never share a group with production.
 
 ---
 
@@ -115,6 +123,7 @@ Cohestra UAT loopback binds stay `127.0.0.1:3100 / 5100 / 8180`.
 | Deploy: `cd: ... No such file` | Set `DROPLET_DEPLOY_PATH` or finish `droplet-init.sh` once |
 | Deploy: `git fetch` fails | Droplet read-only GitHub deploy key for `git fetch` (separate from Actions SSH) |
 | Deploy: `.env is missing` | Create droplet `.env` from `.env.uat.example` (one-time host bootstrap) |
+| `REFUSE: DEPLOY_SHA…` / `EXPECTED_SHA != DEPLOYED_SHA` | Actions tried to deploy an unpinned or drifted SHA. Re-run from the accepted CI SHA; do not reset to `origin/main` by hand unless this is an explicit manual operator deploy. |
 | Live Paddle / production | Refused. This workflow is UAT only. |
 
 Agents should read the Actions log and artifacts instead of asking for droplet stdout.
@@ -126,4 +135,4 @@ Agents should read the Actions log and artifacts instead of asking for droplet s
 - [digitalocean-uat.md](./digitalocean-uat.md) — host runbook
 - [sendgrid-production.md](./sendgrid-production.md) — email setup
 - `_bmad-output/planning-artifacts/epic-45-uat-secret-bootstrap-matrix.md` — secret names only
-- `_bmad-output/planning-artifacts/autonomous-merge-policy.md` — merge proposal (not approved by default)
+- `_bmad-output/planning-artifacts/autonomous-merge-policy.md` — approved for non-production/UAT; privilege expansion remains owner-gated; production NO-GO

@@ -2,7 +2,7 @@
 id: 45.1
 key: 45-1-uat-github-environment-deployment-control-plane
 title: UAT GitHub Environment + deployment control plane
-status: done
+status: in-progress
 epic: 45
 created: 2026-10-15
 baseline_commit: bdd6d42269cf7dcd08e97850b068eee8865b43c7
@@ -10,7 +10,7 @@ baseline_commit: bdd6d42269cf7dcd08e97850b068eee8865b43c7
 
 # Story 45.1: UAT GitHub Environment + deployment control plane
 
-Status: done
+Status: in-progress — exact-SHA + action-pinning correction after owner merge-policy approval
 
 DONE requires the Mandatory Code Review Loop on the final HEAD.
 
@@ -51,6 +51,16 @@ so that **Cursor never needs droplet SSH and routine deploys need no owner shell
    **And** docs tell the owner to populate Environment `uat` names only
    **And** production remains NO-GO
 
+6. **Given** CI accepted SHA A
+   **When** Deploy UAT executes after main has advanced to SHA B
+   **Then** UAT still deploys SHA A, or the job fails closed
+   **And** it never silently deploys SHA B
+
+7. **Given** the Actions UAT path
+   **When** `DEPLOY_SHA` is missing or not a 40-character hexadecimal SHA on the allowed branch
+   **Then** deploy is refused
+   **And** `EXPECTED_SHA` / `DEPLOYED_SHA` are emitted and must match
+
 ## Tasks / Subtasks
 
 - [x] Task 1: Rewrite deploy workflow (AC 1, 3, 4)
@@ -79,6 +89,9 @@ Reuse `remote-deploy.sh`. Do not add Cursor SSH. Do not print secrets. Do not cr
 - `deploy/fail-closed-uat-secrets.sh`
 - `deploy/fail-closed-uat-secrets.test.sh`
 - `deploy/record-uat-deploy-dispatch.sh`
+- `deploy/reset-accepted-sha.sh`
+- `deploy/reset-accepted-sha.test.sh`
+- `deploy/remote-deploy.sh`
 - `deploy/validate-deploy-uat-workflow.sh`
 - `.github/workflows/ci.yml` (call new validators)
 - `docs/deploy/github-actions-cd.md`

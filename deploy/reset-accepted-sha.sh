@@ -4,6 +4,7 @@
 
 reset_accepted_sha() {
   local sha="${DEPLOY_SHA:-}"
+  local actual
   DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 
   if [[ -z "$sha" ]]; then
@@ -11,10 +12,11 @@ reset_accepted_sha() {
     return 0
   fi
 
-  if [[ ! "$sha" =~ ^[0-9a-fA-F]{40}([0-9a-fA-F]{24})?$ ]]; then
-    echo "REFUSE: DEPLOY_SHA must be a full git object id"
+  if [[ ! "$sha" =~ ^[0-9a-fA-F]{40}$ ]]; then
+    echo "REFUSE: DEPLOY_SHA must be a full 40-character hexadecimal Git SHA"
     return 1
   fi
+  sha="${sha,,}"
 
   if ! git cat-file -e "${sha}^{commit}" 2>/dev/null; then
     echo "REFUSE: DEPLOY_SHA is not present after fetching origin/${DEPLOY_BRANCH}"
@@ -27,4 +29,11 @@ reset_accepted_sha() {
   fi
 
   git reset --hard "$sha"
+  actual="$(git rev-parse HEAD)"
+  echo "EXPECTED_SHA=${sha}"
+  echo "DEPLOYED_SHA=${actual}"
+  if [[ "$actual" != "$sha" ]]; then
+    echo "REFUSE: DEPLOYED_SHA does not match EXPECTED_SHA"
+    return 1
+  fi
 }
