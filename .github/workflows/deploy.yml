@@ -48,13 +48,14 @@ jobs:
         uses: appleboy/ssh-action@v1.2.2
         env:
           DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+          DEPLOY_SHA: ${{ env.TARGET_SHA }}
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           port: 22
           command_timeout: 30m
-          envs: DROPLET_DEPLOY_PATH
+          envs: DROPLET_DEPLOY_PATH,DEPLOY_SHA
           script: |
             set -euo pipefail
             DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-}"
@@ -64,6 +65,10 @@ jobs:
             cd "$DEPLOY_PATH"
             bash deploy/remote-deploy.sh
             echo "DEPLOYED_SHA=$(git rev-parse HEAD)"
+            if [[ -n "${DEPLOY_SHA:-}" && "$(git rev-parse HEAD)" != "$DEPLOY_SHA" ]]; then
+              echo "REFUSE: deployed HEAD does not match accepted DEPLOY_SHA"
+              exit 1
+            fi
 
       - name: Upload UAT deploy dispatch evidence
         if: always()

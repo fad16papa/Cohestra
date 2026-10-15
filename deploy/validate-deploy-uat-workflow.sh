@@ -60,10 +60,16 @@ else
   pass "DROPLET_DEPLOY_PATH is not interpolated into the SSH script body"
 fi
 
-if grep -q 'envs: DROPLET_DEPLOY_PATH' "$WF"; then
-  pass "DROPLET_DEPLOY_PATH passed via appleboy envs"
+if grep -q 'envs: DROPLET_DEPLOY_PATH,DEPLOY_SHA' "$WF"; then
+  pass "DROPLET_DEPLOY_PATH and DEPLOY_SHA passed via appleboy envs"
 else
-  fail "appleboy must receive DROPLET_DEPLOY_PATH via envs"
+  fail "appleboy must receive DROPLET_DEPLOY_PATH and DEPLOY_SHA via envs"
+fi
+
+if grep -q 'DEPLOY_SHA: ${{ env.TARGET_SHA }}' "$WF" || grep -q 'DEPLOY_SHA: \${{ env.TARGET_SHA }}' "$WF"; then
+  pass "DEPLOY_SHA is the accepted TARGET_SHA"
+else
+  fail "workflow must set DEPLOY_SHA from TARGET_SHA"
 fi
 
 if grep -q 'uat-deploy-dispatch' "$WF"; then

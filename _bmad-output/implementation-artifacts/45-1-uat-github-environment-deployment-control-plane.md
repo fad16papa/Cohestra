@@ -58,7 +58,9 @@ so that **Cursor never needs droplet SSH and routine deploys need no owner shell
 - [x] Task 3: Dispatch evidence JSON + upload-artifact (AC 4)
 - [x] Task 4: Isolation/workflow contract assertions in CI (AC 1)
 - [x] Task 5: Update `docs/deploy/github-actions-cd.md` (AC 5)
-- [ ] Task 6: Build/test + story record + exact-HEAD review (open until CI + review)
+- [x] Task 6: CI contract tests added
+- [x] Task 7: Review of `8d65d985` found MAJOR SHA mismatch — patched via `DEPLOY_SHA` + `reset-accepted-sha.sh`
+- [ ] Task 8: Exact-HEAD re-review of the patch HEAD (open until CI + review)
 
 ## Dev Notes
 

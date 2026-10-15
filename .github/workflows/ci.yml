@@ -201,6 +201,12 @@ jobs:
       - name: Fail-closed UAT secret contract
         run: bash deploy/fail-closed-uat-secrets.test.sh
 
+      - name: Accepted-SHA reset contract
+        run: bash deploy/reset-accepted-sha.test.sh
+
+      - name: UAT acceptance probe contract
+        run: bash deploy/uat-acceptance.test.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

@@ -471,7 +471,7 @@ development_status:
   # Source: planning-artifacts/epics-autonomous-delivery.md
   epic-45: in-progress
   45-1-uat-github-environment-deployment-control-plane: in-progress
-  45-2-on-droplet-autonomous-acceptance-probe: ready-for-dev
+  45-2-on-droplet-autonomous-acceptance-probe: in-progress
   45-3-autonomous-uat-deploy-acceptance-workflow: ready-for-dev
   45-4-autonomous-browser-acceptance-harness: ready-for-dev
   45-5-autonomous-authenticated-session-otp-mailbox: ready-for-dev

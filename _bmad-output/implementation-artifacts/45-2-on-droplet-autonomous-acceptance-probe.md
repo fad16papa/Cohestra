@@ -2,7 +2,7 @@
 id: 45.2
 key: 45-2-on-droplet-autonomous-acceptance-probe
 title: On-droplet autonomous acceptance probe
-status: ready-for-dev
+status: in-progress
 epic: 45
 created: 2026-10-15
 ---
@@ -14,6 +14,14 @@ created: 2026-10-15
 As a **control-plane agent**,
 I want **a sanitized JSON probe on the droplet after deploy**,
 so that **runtime proof is an artifact, not owner paste**.
+
+## Implementation (this PR)
+
+- `deploy/uat-acceptance.sh` writes sanitized `uat-acceptance.json`
+- `--classify-only` is the CI contract path (no droplet)
+- Runtime mode probes compose + loopback `/ready` + HTTPS + CRM when those URLs exist
+- Secret values are refused if they would appear in JSON
+- GitHub upload of the host file is Story 45.3
 
 ## Acceptance Criteria
 

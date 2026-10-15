@@ -23,10 +23,15 @@ fi
 echo "== Deploy isolated cohestra-uat =="
 echo "Path:   $ROOT_DIR"
 echo "Branch: $DEPLOY_BRANCH"
+if [[ -n "${DEPLOY_SHA:-}" ]]; then
+  echo "Accepted SHA: ${DEPLOY_SHA}"
+fi
 echo "Commit before pull: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
 git fetch origin "$DEPLOY_BRANCH"
-git reset --hard "origin/$DEPLOY_BRANCH"
+# shellcheck disable=SC1091
+source "$ROOT_DIR/deploy/reset-accepted-sha.sh"
+reset_accepted_sha || exit 1
 
 echo "Commit after pull:  $(git rev-parse --short HEAD)"
 

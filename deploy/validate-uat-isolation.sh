@@ -493,17 +493,21 @@ fi
 rm -f "$EDGE_TMP"
 
 DEPLOY="$ROOT_DIR/deploy/remote-deploy.sh"
-if [[ -f "$DEPLOY" ]] \
-  && grep -q 'git reset --hard "origin/$DEPLOY_BRANCH"' "$DEPLOY" \
+RESET_SHA="$ROOT_DIR/deploy/reset-accepted-sha.sh"
+if [[ -f "$DEPLOY" && -f "$RESET_SHA" ]] \
+  && grep -q 'git reset --hard "origin/$DEPLOY_BRANCH"' "$RESET_SHA" \
+  && grep -q 'reset-accepted-sha.sh' "$DEPLOY" \
+  && grep -q 'reset_accepted_sha' "$DEPLOY" \
   && awk '
-    /git reset --hard "origin\/\$DEPLOY_BRANCH"/ { reset=1 }
+    /reset-accepted-sha\.sh/ { sourced=1 }
+    sourced && /reset_accepted_sha/ { reset=1 }
     reset && /GIT_SHA="\$\(git rev-parse HEAD\)"/ { derived=1 }
     derived && /export GIT_SHA/ { exported=1 }
-    END { exit(reset && derived && exported ? 0 : 1) }
+    END { exit(sourced && reset && derived && exported ? 0 : 1) }
   ' "$DEPLOY"; then
-  pass "remote-deploy derives and exports GIT_SHA after git reset"
+  pass "remote-deploy derives and exports GIT_SHA after accepted-SHA reset"
 else
-  fail "remote-deploy must derive/export GIT_SHA after git reset --hard"
+  fail "remote-deploy must reset via reset-accepted-sha.sh then derive/export GIT_SHA"
 fi
 
 if grep -qE '^[[:space:]]*GIT_SHA:[[:space:]]*\$\{GIT_SHA:-\}[[:space:]]*$' "$COMPOSE" \
