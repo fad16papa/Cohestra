@@ -108,6 +108,18 @@ else
   fail "workflow must fail closed if TARGET_SHA is not a 40-character SHA"
 fi
 
+if grep -qE 'workflow_run\.head_sha \|\| github\.sha' "$WF"; then
+  fail "workflow_run TARGET_SHA must not fall back to github.sha"
+else
+  pass "workflow_run TARGET_SHA does not fall back to github.sha"
+fi
+
+if grep -q 'TARGET_SHA must equal workflow_run.head_sha' "$WF"; then
+  pass "workflow_run TARGET_SHA is bound to head_sha"
+else
+  fail "workflow_run must refuse TARGET_SHA that is not head_sha"
+fi
+
 if grep -q 'EXPECTED_SHA' "$WF" && grep -q 'EXPECTED_SHA != DEPLOYED_SHA' "$WF"; then
   pass "post-deploy EXPECTED_SHA == DEPLOYED_SHA is asserted"
 else

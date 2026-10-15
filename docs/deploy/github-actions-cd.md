@@ -40,7 +40,7 @@ Do **not** upload the owner workstation key (`~/.ssh/cohestra_uat`) to GitHub or
 | `DROPLET_HOST` | Yes | Droplet host |
 | `DROPLET_USER` | Yes | SSH user (`deploy`) |
 | `DROPLET_SSH_KEY` | Yes | Dedicated Actions private key |
-| `DROPLET_DEPLOY_PATH` | No | Default `$HOME/cohestra` |
+| `DROPLET_DEPLOY_PATH` | No | Default `/home/deploy/cohestra` |
 
 Later Epic 45 stories add automation-login and mailbox names to the same Environment. Not required for 45.1.
 
