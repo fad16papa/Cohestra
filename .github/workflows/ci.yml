@@ -195,6 +195,12 @@ jobs:
       - name: Validate isolated UAT compose
         run: bash deploy/validate-uat-isolation.sh
 
+      - name: Validate UAT deploy workflow contract
+        run: bash deploy/validate-deploy-uat-workflow.sh
+
+      - name: Fail-closed UAT secret contract
+        run: bash deploy/fail-closed-uat-secrets.test.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

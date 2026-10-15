@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy UAT
 
 on:
   workflow_run:
@@ -11,30 +11,64 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-production
+  group: deploy-uat
   cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
-    name: Deploy to DigitalOcean droplet
+    name: Deploy accepted SHA to UAT
     runs-on: ubuntu-latest
+    environment: uat
     if: >
       github.event_name == 'workflow_dispatch' ||
       github.event.workflow_run.conclusion == 'success'
+    env:
+      TARGET_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
     steps:
+      - name: Checkout accepted SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET_SHA }}
+
+      - name: Fail closed if UAT secrets are missing
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+        run: bash deploy/fail-closed-uat-secrets.sh
+
+      - name: Record deploy dispatch evidence
+        run: bash deploy/record-uat-deploy-dispatch.sh
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.2
+        env:
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           port: 22
           command_timeout: 30m
+          envs: DROPLET_DEPLOY_PATH
           script: |
             set -euo pipefail
-            DEPLOY_PATH="${{ secrets.DROPLET_DEPLOY_PATH }}"
+            DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-}"
             if [[ -z "$DEPLOY_PATH" ]]; then
               DEPLOY_PATH="$HOME/cohestra"
             fi
             cd "$DEPLOY_PATH"
             bash deploy/remote-deploy.sh
+            echo "DEPLOYED_SHA=$(git rev-parse HEAD)"
+
+      - name: Upload UAT deploy dispatch evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uat-deploy-dispatch
+          path: artifacts/uat-deploy-dispatch.json
+          if-no-files-found: warn
