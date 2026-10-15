@@ -2,7 +2,7 @@
 id: 45.5
 key: 45-5-autonomous-authenticated-session-otp-mailbox
 title: Autonomous authenticated session + OTP mailbox
-status: in-progress
+status: done
 epic: 45
 created: 2026-10-15
 ---
@@ -55,4 +55,4 @@ If names are unset, `--check-secrets` prints `MISSING_SECRET=<NAME>` and Playwri
 - [x] Task 2: Correlation match; ignore unrelated bodies (AC 1, 2)
 - [x] Task 3: Refuse personal mailbox addresses (AC 3)
 - [x] Task 4: Playwright OTP read when secrets exist; skip otherwise
-- [ ] Task 5: Exact-HEAD review + CI
+- [x] Task 5: Exact-HEAD review + CI + merge (PR #455 / main `7c327bb0`)

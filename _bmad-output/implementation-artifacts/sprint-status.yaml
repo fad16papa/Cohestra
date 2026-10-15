@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-15
-# Epic 45 created 2026-10-15 — Autonomous Delivery & UAT Acceptance. 45.1–45.4 and 45.7 done after #454 / main 4da8cdc7. 45.5 in-progress.
+# Epic 45 created 2026-10-15 — Autonomous Delivery & UAT Acceptance. 45.1–45.5 and 45.7 done. 45.7 live summary pass on Deploy UAT 38756717077 / 4da8cdc7. 45.6 in-progress.
 # 19.3 remains ready-for-dev; execution waits for Epic 45 deploy/acceptance (dual-layer recaptcha). Do not SSH.
 # 19.1/19.2 done 2026-10-15 — live UAT smoke + TLS/headers. 19.4 remains done. 19.5 ready after 19.3. Production NO-GO.
 # 19.4 done — merged PR #447 at cbc52a61 / main 7e655a0b; post-merge CI 38601073681 green; owner UAT phone + billing accepted. Production NO-GO. Epic 19 remains in-progress (19.3/19.5).
@@ -474,8 +474,8 @@ development_status:
   45-2-on-droplet-autonomous-acceptance-probe: done
   45-3-autonomous-uat-deploy-acceptance-workflow: done
   45-4-autonomous-browser-acceptance-harness: done
-  45-5-autonomous-authenticated-session-otp-mailbox: in-progress
-  45-6-recaptcha-automation-contract: ready-for-dev
+  45-5-autonomous-authenticated-session-otp-mailbox: done
+  45-6-recaptcha-automation-contract: in-progress
   45-7-story-acceptance-evidence-contract: done
   45-8-autonomous-bmad-delivery-loop: ready-for-dev
   epic-45-retrospective: optional
