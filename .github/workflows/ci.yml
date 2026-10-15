@@ -213,6 +213,9 @@ jobs:
       - name: Fetch UAT acceptance fail-closed contract
         run: bash deploy/fetch-uat-acceptance.test.sh
 
+      - name: UAT Playwright harness contract
+        run: bash deploy/validate-uat-playwright.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

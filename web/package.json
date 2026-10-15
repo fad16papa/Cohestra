@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:uat": "playwright test -c playwright.uat.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
