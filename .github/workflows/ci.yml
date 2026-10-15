@@ -219,6 +219,9 @@ jobs:
       - name: UAT acceptance summary contract
         run: bash deploy/uat-acceptance-summary.test.sh
 
+      - name: UAT OTP mailbox contract
+        run: bash deploy/uat-otp-mailbox.test.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

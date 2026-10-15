@@ -15,9 +15,12 @@ After these are populated, routine UAT deploy/acceptance must not require owner 
 | `UAT_AUTO_BASIC_PASSWORD` | Dedicated `uat-auto-basic` password | Environment `uat` | Yes — 45.4 |
 | `UAT_AUTO_PRO_EMAIL` | Dedicated `uat-auto-pro` operator email | Environment `uat` | Yes — 45.4 authenticated Pro flows |
 | `UAT_AUTO_PRO_PASSWORD` | Dedicated `uat-auto-pro` password | Environment `uat` | Yes — 45.4 |
-| `UAT_OTP_MAILBOX_HOST` | Dedicated UAT E2E mailbox API/IMAP host | Environment `uat` | Yes — 45.5 (after provider pick) |
-| `UAT_OTP_MAILBOX_USER` | Dedicated mailbox username | Environment `uat` | Yes — 45.5 |
-| `UAT_OTP_MAILBOX_SECRET` | Dedicated mailbox API token or IMAP secret | Environment `uat` | Yes — 45.5 |
+| `UAT_OTP_MAILBOX_HOST` | Dedicated UAT IMAP host (TLS 993) | Environment `uat` | Yes — 45.5 live OTP |
+| `UAT_OTP_MAILBOX_USER` | Dedicated mailbox username | Environment `uat` | Yes — 45.5 live OTP |
+| `UAT_OTP_MAILBOX_SECRET` | Dedicated mailbox IMAP secret | Environment `uat` | Yes — 45.5 live OTP |
+| `UAT_OTP_MAILBOX_ADDRESS` | Dedicated recipient address if it differs from the IMAP user | Environment `uat` | No — defaults to `UAT_OTP_MAILBOX_USER` |
+
+**45.5 provider pick (minimal secure option):** a **dedicated IMAP mailbox** using the names above. No new vendor. No Mailosaur. No personal Gmail/Outlook. If these names are unset, Deploy UAT skips the OTP test and prints `MISSING_SECRET=<NAME>` only from `--check-secrets`. Values stay out of chat.
 
 ## Not in this matrix
 
