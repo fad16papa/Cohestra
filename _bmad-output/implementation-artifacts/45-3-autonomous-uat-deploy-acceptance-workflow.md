@@ -2,7 +2,7 @@
 id: 45.3
 key: 45-3-autonomous-uat-deploy-acceptance-workflow
 title: Autonomous UAT deploy + acceptance workflow
-status: ready-for-dev
+status: in-progress
 epic: 45
 created: 2026-10-15
 ---

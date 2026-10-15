@@ -207,6 +207,12 @@ jobs:
       - name: UAT acceptance probe contract
         run: bash deploy/uat-acceptance.test.sh
 
+      - name: Public UAT smoke contract
+        run: bash deploy/public-uat-smoke.test.sh
+
+      - name: Fetch UAT acceptance fail-closed contract
+        run: bash deploy/fetch-uat-acceptance.test.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

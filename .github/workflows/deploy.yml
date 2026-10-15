@@ -70,10 +70,31 @@ jobs:
               exit 1
             fi
 
-      - name: Upload UAT deploy dispatch evidence
+      - name: Fetch host acceptance JSON
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+        run: bash deploy/fetch-uat-acceptance.sh
+
+      - name: Public UAT smoke
+        env:
+          UAT_PUBLIC_BASE_URL: ${{ secrets.UAT_PUBLIC_BASE_URL }}
+        run: |
+          if [[ -z "${UAT_PUBLIC_BASE_URL:-}" ]]; then
+            UAT_PUBLIC_BASE_URL=https://uat.cohestra.app
+          fi
+          export UAT_PUBLIC_BASE_URL
+          bash deploy/public-uat-smoke.sh
+
+      - name: Upload UAT evidence artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: uat-deploy-dispatch
-          path: artifacts/uat-deploy-dispatch.json
+          name: uat-deploy-evidence
+          path: |
+            artifacts/uat-deploy-dispatch.json
+            artifacts/uat-acceptance.json
+            artifacts/uat-public-smoke.json
           if-no-files-found: warn

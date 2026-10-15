@@ -67,4 +67,8 @@ echo "== Smoke checks =="
 bash deploy/uat-smoke.sh
 
 echo ""
+echo "== Acceptance probe =="
+bash "$ROOT_DIR/deploy/uat-acceptance.sh" --out "$ROOT_DIR/artifacts/uat-acceptance.json"
+
+echo ""
 echo "Deploy finished successfully."

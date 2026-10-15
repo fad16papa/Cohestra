@@ -510,6 +510,12 @@ else
   fail "remote-deploy must reset via reset-accepted-sha.sh then derive/export GIT_SHA"
 fi
 
+if grep -q 'uat-acceptance.sh' "$DEPLOY"; then
+  pass "remote-deploy runs the sanitized acceptance probe"
+else
+  fail "remote-deploy must run deploy/uat-acceptance.sh after smoke"
+fi
+
 if grep -qE '^[[:space:]]*GIT_SHA:[[:space:]]*\$\{GIT_SHA:-\}[[:space:]]*$' "$COMPOSE" \
   && ! grep -qiE 'GIT_SHA:[[:space:]]*[0-9a-fA-F]{7,}' "$COMPOSE"; then
   pass "API compose receives GIT_SHA from \${GIT_SHA:-} with no hardcoded SHA"

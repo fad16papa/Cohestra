@@ -78,6 +78,24 @@ else
   fail "workflow must upload uat-deploy-dispatch evidence"
 fi
 
+if grep -q 'fetch-uat-acceptance.sh' "$WF"; then
+  pass "host acceptance JSON is fetched"
+else
+  fail "workflow must fetch uat-acceptance.json"
+fi
+
+if grep -q 'public-uat-smoke.sh' "$WF"; then
+  pass "public UAT smoke is invoked"
+else
+  fail "workflow must run public-uat-smoke.sh"
+fi
+
+if grep -q 'uat-acceptance.json' "$WF" && grep -q 'uat-public-smoke.json' "$WF"; then
+  pass "acceptance and public-smoke artifacts are listed"
+else
+  fail "workflow must upload uat-acceptance.json and uat-public-smoke.json"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1

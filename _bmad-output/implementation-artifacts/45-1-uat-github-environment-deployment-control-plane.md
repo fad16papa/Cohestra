@@ -2,7 +2,7 @@
 id: 45.1
 key: 45-1-uat-github-environment-deployment-control-plane
 title: UAT GitHub Environment + deployment control plane
-status: in-progress
+status: done
 epic: 45
 created: 2026-10-15
 baseline_commit: bdd6d42269cf7dcd08e97850b068eee8865b43c7
@@ -10,7 +10,7 @@ baseline_commit: bdd6d42269cf7dcd08e97850b068eee8865b43c7
 
 # Story 45.1: UAT GitHub Environment + deployment control plane
 
-Status: in-progress
+Status: done
 
 DONE requires the Mandatory Code Review Loop on the final HEAD.
 
