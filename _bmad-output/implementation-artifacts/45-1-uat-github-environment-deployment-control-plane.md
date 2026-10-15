@@ -2,7 +2,7 @@
 id: 45.1
 key: 45-1-uat-github-environment-deployment-control-plane
 title: UAT GitHub Environment + deployment control plane
-status: in-progress
+status: done
 epic: 45
 created: 2026-10-15
 baseline_commit: bdd6d42269cf7dcd08e97850b068eee8865b43c7
@@ -10,9 +10,9 @@ baseline_commit: bdd6d42269cf7dcd08e97850b068eee8865b43c7
 
 # Story 45.1: UAT GitHub Environment + deployment control plane
 
-Status: in-progress — exact-SHA + action-pinning correction after owner merge-policy approval
+Status: done — merged PR #450 at `10738f5f` / main `0f2f5d66`. Exact-head CI 38744496092 green. Grok 4.6 review PASS (BLOCKER=0, MAJOR=0).
 
-DONE requires the Mandatory Code Review Loop on the final HEAD.
+The control-plane HEAD that passed review is `10738f5f`. Do not treat older SHAs as evidence.
 
 ## Story
 
@@ -70,7 +70,7 @@ so that **Cursor never needs droplet SSH and routine deploys need no owner shell
 - [x] Task 5: Update `docs/deploy/github-actions-cd.md` (AC 5)
 - [x] Task 6: CI contract tests added
 - [x] Task 7: Review of `8d65d985` found MAJOR SHA mismatch — patched via `DEPLOY_SHA` + `reset-accepted-sha.sh`
-- [ ] Task 8: Exact-HEAD re-review of the patch HEAD (open until CI + review)
+- [x] Task 8: Exact-HEAD re-review of `10738f5f` PASS (BLOCKER=0, MAJOR=0); merged as PR #450 / main `0f2f5d66`
 
 ## Dev Notes
 

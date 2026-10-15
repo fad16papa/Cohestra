@@ -470,7 +470,7 @@ development_status:
   # Epic 45 — Autonomous Delivery & UAT Acceptance System
   # Source: planning-artifacts/epics-autonomous-delivery.md
   epic-45: in-progress
-  45-1-uat-github-environment-deployment-control-plane: in-progress
+  45-1-uat-github-environment-deployment-control-plane: done
   45-2-on-droplet-autonomous-acceptance-probe: in-progress
   45-3-autonomous-uat-deploy-acceptance-workflow: in-progress
   45-4-autonomous-browser-acceptance-harness: ready-for-dev

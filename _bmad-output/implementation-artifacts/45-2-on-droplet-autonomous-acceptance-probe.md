@@ -19,7 +19,9 @@ so that **runtime proof is an artifact, not owner paste**.
 
 - `deploy/uat-acceptance.sh` writes sanitized `uat-acceptance.json`
 - `--classify-only` is the CI contract path (no droplet)
-- Runtime mode probes compose + loopback `/ready` + HTTPS + CRM when those URLs exist
+- Runtime mode probes compose + loopback `/ready` + HTTPS + CRM + API `GIT_SHA` when those exist
+- Tenant/provider alignment is classified (UAT HTTPS public base + non-live Paddle)
+- Outbox and migration stay `not_in_anonymous_probe` (no authenticated ops query from this probe)
 - Secret values are refused if they would appear in JSON
 - GitHub upload of the host file is Story 45.3
 
