@@ -2,7 +2,7 @@
 id: 45.8
 key: 45-8-autonomous-bmad-delivery-loop
 title: Autonomous BMAD delivery loop
-status: in-progress
+status: done
 epic: 45
 created: 2026-10-15
 ---

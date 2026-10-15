@@ -18,13 +18,19 @@ FACTORY="$ROOT_DIR/src/Api.IntegrationTests/Infrastructure/RecaptchaLayerBWebApp
 [[ -f "$LAYER_B" ]] || fail "missing Layer B isolated integration tests"
 [[ -f "$FACTORY" ]] || fail "missing Layer B factory"
 grep -q 'does not solve a live Google challenge' "$LAYER_A" || fail "Layer A must refuse to solve the live challenge"
-grep -q 'OfficialTestSecretKey' "$FACTORY" || fail "Layer B must use official Google v2 test keys"
-grep -q '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe' "$COMPOSE" && fail "official test secret must not appear in docker-compose.uat.yml"
-grep -q '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI' "$COMPOSE" && fail "official test site key must not appear in docker-compose.uat.yml"
-grep -q '6LeIxAcT' "$UAT_ENV" && fail "official test keys must not appear in .env.uat.example"
+grep -q 'IsolatedOfficialBehaviorHandler' "$FACTORY" || fail "Layer B must stub siteverify instead of embedding Google keys"
+grep -q 'layer-b-isolated-placeholder' "$FACTORY" || fail "Layer B must use a non-Google placeholder secret"
+# Split so this script does not contain a contiguous official-key prefix.
+OFFICIAL_TEST_KEY_PREFIX="6LeIx"
+OFFICIAL_TEST_KEY_PREFIX+="AcT"
+if grep -R -n --exclude-dir=.git --exclude-dir=bin --exclude-dir=obj -E "$OFFICIAL_TEST_KEY_PREFIX" \
+  "$FACTORY" "$LAYER_B" "$COMPOSE" "$UAT_ENV" "$ROOT_DIR/src/Api.IntegrationTests" \
+  "$ROOT_DIR/docker-compose.uat.yml" "$ROOT_DIR/.env.uat.example"; then
+  fail "official Google recaptcha test keys must not appear in UAT or Layer B source"
+fi
 grep -q 'SelfServeSignup__Recaptcha__Enabled: \${SelfServeSignup__Recaptcha__Enabled:-false}' "$COMPOSE" \
   || fail "UAT compose must not default recaptcha on"
 grep -q 'TestBypassToken' "$COMPOSE" && fail "UAT compose must not set a recaptcha bypass token"
-pass "Layer A/B contract: isolated test keys, live UAT not weakened"
+pass "Layer A/B contract: isolated stub, live UAT not weakened, no embedded Google keys"
 
 echo "uat-recaptcha contract OK"
