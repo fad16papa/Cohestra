@@ -26,6 +26,8 @@ git -C "$TMP/remote" commit -q -m two
 SECOND="$(git -C "$TMP/remote" rev-parse HEAD)"
 
 git clone -q "$TMP/remote" "$TMP/local"
+git -C "$TMP/local" config user.email test@example.com
+git -C "$TMP/local" config user.name testd
 cd "$TMP/local"
 git fetch -q origin main
 DEPLOY_BRANCH=main
