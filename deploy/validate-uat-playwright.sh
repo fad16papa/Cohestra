@@ -23,6 +23,11 @@ grep -q 'retain-on-failure' "$CFG" || fail "failure artifacts (trace/screenshot)
 grep -q 'https://uat.cohestra.app' "$CFG" && fail "do not hardcode the UAT host in the Playwright config"
 grep -q 'test.skip' "$AUTH" || fail "authenticated flow must skip without dedicated secrets"
 grep -q 'UAT_AUTO_BASIC_EMAIL' "$AUTH" || fail "authenticated flow must use dedicated automation env names"
+HELPER="$ROOT_DIR/web/e2e-uat/otp-mailbox.ts"
+[[ -f "$HELPER" ]] || fail "missing web/e2e-uat/otp-mailbox.ts"
+grep -q 'UAT_OTP_MAILBOX_HOST' "$HELPER" || fail "mailbox helper must read Environment uat names"
+grep -q 'personal mailbox credentials are forbidden' "$HELPER" || fail "mailbox helper must refuse personal inboxes"
+grep -q 'readSignupOtp' "$AUTH" || fail "authenticated UAT must use the dedicated OTP mailbox helper"
 pass "UAT Playwright contract"
 
 echo "uat-playwright contract OK"
