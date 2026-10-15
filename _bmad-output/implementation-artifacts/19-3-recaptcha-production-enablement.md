@@ -1,7 +1,7 @@
 ---
 epic: 19
 story: 3
-status: ready-for-dev
+status: in-progress
 created: 2026-10-15
 updated: 2026-10-15
 acceptance_method: epic-45-dual-layer
@@ -9,7 +9,7 @@ acceptance_method: epic-45-dual-layer
 
 # Story 19.3: reCAPTCHA production enablement
 
-Status: **ready-for-dev** — execution paused on the manual SSH path. Resume through Epic 45 automation. This is **not** production cutover.
+Status: **in-progress** — Epic 45 harness is live. Layer B isolated OTP path is in CI. Layer A waits for real UAT recaptcha keys on the droplet `.env`. This is **not** production cutover.
 
 Signup implementation already exists. This story is UAT-domain key configuration + automated rebuild + **machine-verifiable** dual-layer acceptance.
 
@@ -29,7 +29,7 @@ Do **not** mark this story done until Layer A and Layer B artifacts pass on an a
 A manual human solve of the live Google challenge is **not** required for machine acceptance. That is not a security reduction.
 
 - **Layer A** proves real UAT configuration, widget render, CSP, and negative rejects. It does **not** solve the challenge.
-- **Layer B** proves the positive signup → OTP → session path using **official Google reCAPTCHA v2 test keys** on an isolated CI/automation stack only.
+- **Layer B** proves the positive signup → OTP → session path on an isolated CI stack. Official Google v2 test-key *behavior* is stubbed (`IsolatedOfficialBehaviorHandler`); official keys are not stored in the repo (GitGuardian).
 
 Forbidden: CAPTCHA-solving services; disabling recaptcha on real UAT; writing test keys into live UAT or production; owner SSH/copy-paste as the evidence path.
 
@@ -65,9 +65,9 @@ Do **not** solve the real human challenge on this layer.
 
 Machine-verifiable on CI ephemeral stack or a clearly isolated automation deployment:
 
-1. Official Google reCAPTCHA v2 test keys only.
-2. Valid test CAPTCHA → signup → OTP retrieve → OTP verify → authenticated handoff → onboarding.
-3. Test keys never substituted into normal UAT or production.
+1. Isolated enabled-recaptcha stub (official test-key behavior; no Google keys in source).
+2. Dummy CAPTCHA token → signup → OTP retrieve from FakeEmailSender → OTP verify → authenticated `/admin/me` → `/auth/onboarding`.
+3. Stub/keys never substituted into normal UAT or production.
 
 ## Evidence
 
