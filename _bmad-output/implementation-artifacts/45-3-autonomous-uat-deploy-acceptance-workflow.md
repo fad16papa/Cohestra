@@ -2,7 +2,7 @@
 id: 45.3
 key: 45-3-autonomous-uat-deploy-acceptance-workflow
 title: Autonomous UAT deploy + acceptance workflow
-status: in-progress
+status: in-progress — owner bootstrap confirmed; first autonomous deploy pending this merge's CI
 epic: 45
 created: 2026-10-15
 ---
