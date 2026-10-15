@@ -189,6 +189,24 @@ port_isolation = {
     "apiNotPublicEdge": ports["apiHostPort"] not in forbidden_ports,
 }
 
+def api_git_sha() -> str | None:
+    script = root_path / "deploy" / "uat-compose.sh"
+    if not script.is_file():
+        return None
+    try:
+        raw = subprocess.check_output(
+            ["bash", str(script), "exec", "-T", "api", "printenv", "GIT_SHA"],
+            cwd=root,
+            text=True,
+            timeout=15,
+        ).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    if re.fullmatch(r"[0-9a-fA-F]{40}", raw):
+        return raw.lower()
+    return None
+
+
 runtime = {
     "mode": "classify_only" if classify_only else "runtime",
     "compose": {"available": False} if classify_only else compose_health(),
@@ -225,6 +243,7 @@ if not classify_only:
         }
     else:
         runtime["sharedCrm"] = {"healthy": None, "http": 0, "reason": "EXISTING_APP_PUBLIC_URL missing"}
+    runtime["apiGitSha"] = api_git_sha()
 
 failures: list[str] = []
 if recaptcha["bypassTokenAbsent"] is False:
@@ -238,6 +257,20 @@ if not port_isolation["nginxNotPublicEdge"] or not port_isolation["webNotPublicE
 paddle = classify_paddle(env)
 if paddle["refusedForUat"]:
     failures.append("live_paddle")
+
+tenant_provider = {
+    "publicBaseHttps": public_base.startswith("https://"),
+    "publicBaseLooksLikeUat": "uat." in public_base.lower(),
+    "paddleEnvironment": paddle["environment"],
+    "aligned": public_base.startswith("https://") and "uat." in public_base.lower() and not paddle["refusedForUat"],
+}
+if public_base and not tenant_provider["aligned"]:
+    failures.append("tenant_provider_misaligned")
+
+ops = {
+    "outbox": "not_in_anonymous_probe",
+    "migrations": "not_in_anonymous_probe",
+}
 
 if not classify_only:
     compose = runtime["compose"]
@@ -271,7 +304,8 @@ payload = {
         "bypassTokensAbsent": recaptcha["bypassTokenAbsent"] and recaptcha["webTestTokenAbsent"],
         "portIsolation": port_isolation,
     },
-    "provider": {"paddle": paddle},
+    "provider": {"paddle": paddle, "tenantAlignment": tenant_provider},
+    "ops": ops,
 }
 
 text = json.dumps(payload, indent=2) + "\n"

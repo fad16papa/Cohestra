@@ -45,6 +45,10 @@ assert p["security"]["recaptcha"]["secretConfigured"] is True
 assert p["security"]["recaptcha"]["bypassTokenAbsent"] is True
 assert p["provider"]["paddle"]["apiKey"] == "sandbox"
 assert p["provider"]["paddle"]["refusedForUat"] is False
+assert p["provider"]["tenantAlignment"]["aligned"] is True
+assert p["ops"]["outbox"] == "not_in_anonymous_probe"
+assert p["ops"]["migrations"] == "not_in_anonymous_probe"
+assert "apiGitSha" in p["runtime"]
 text = open(sys.argv[1], encoding="utf-8").read()
 for leak in (
     "super-secret-db-password-123",
