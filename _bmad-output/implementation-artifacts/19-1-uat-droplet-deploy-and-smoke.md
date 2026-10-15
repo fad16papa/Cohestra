@@ -1,13 +1,13 @@
 ---
 epic: 19
 story: 1
-status: ready-for-dev
+status: done
 baseline_commit: 60ab47b69947d7307374e1b993a56546683c0783
 ---
 
 # Story 19.1: UAT droplet deploy and stack smoke
 
-Status: ready-for-dev
+Status: **done** — 2026-10-15. Evidence: `investigations/epic-19-post-19-4-reconciliation-investigation.md`.
 
 ## Story
 
@@ -147,5 +147,5 @@ Cloud Agent has **no SSH**. Public checks only (no secrets):
 | `https://uat.cohestra.app/ready` | **200** Healthy (`postgres`, `redis`, `default-tenant`) |
 | `http://uat.cohestra.app/ready` | **301** → `https://uat.cohestra.app/ready` (`X-Cohestra-Edge-Vhost: uat`) |
 
-Tracker stays **in-progress / not done**. This probe does **not** replace droplet smoke (`uat-smoke.sh`), owner SSH acceptance, or the Mandatory Code Review Loop close. Public stack is **not** proven to be PR #404 HEAD `47ebb1b5`.
+**Closeout 2026-10-15:** Public smoke (`/ready`, home, onboarding, `/signup`, `/pricing`, legal) PASS. Public 3100/5100/8180/5432/6379 timeout. Compose locks seed flags false. Shared CRM Healthy. 19.4 billing UAT completed on this droplet. Story **done**.
 

@@ -1,6 +1,6 @@
 # Story 19.2 — Wildcard TLS on shared edge
 
-**Status:** review  
+**Status:** done — 2026-10-15. Evidence: `investigations/epic-19-post-19-4-reconciliation-investigation.md`.  
 **Epic:** 19  
 **Branch:** `cursor/epic-19-wildcard-tls-a139`
 
@@ -62,14 +62,14 @@ bash deploy/host-proxy/persist-cohestra-vhost.sh
 
 ## Acceptance checklist
 
-- [ ] `EXISTING APP PRE-TLS BASELINE: PASS`
-- [ ] HTTP Host `uat.cohestra.app` + `creativorare.uat.cohestra.app` → Cohestra
-- [ ] Cert SAN: `uat.cohestra.app` + `*.uat.cohestra.app`
-- [ ] `https://uat.cohestra.app/ready` Healthy
-- [ ] `https://creativorare.uat.cohestra.app/register/sunday-dragon-highlander-2` renders
-- [ ] `https://thesocialcollectivesg.com/ready` unchanged cert + Healthy
-- [ ] Tenant URLs emit `*.uat.cohestra.app` not `*.cohestra.app`
-- [ ] Security headers verified (`verify-security-headers.sh`)
+- [x] `EXISTING APP PRE-TLS BASELINE: PASS`
+- [x] HTTP Host `uat.cohestra.app` + `creativorare.uat.cohestra.app` → Cohestra
+- [x] Cert SAN: `uat.cohestra.app` + `*.uat.cohestra.app`
+- [x] `https://uat.cohestra.app/ready` Healthy
+- [x] `https://creativorare.uat.cohestra.app/register/sunday-dragon-highlander-2` renders
+- [x] `https://thesocialcollectivesg.com/ready` unchanged cert + Healthy
+- [x] Tenant URLs emit `*.uat.cohestra.app` not `*.cohestra.app`
+- [x] Security headers verified (`verify-security-headers.sh`) apex + tenant 2026-10-15
 
 ## Live state at story start (2026-09-12)
 
@@ -91,7 +91,7 @@ Cloud Agent has **no SSH**. Public TLS checks only (no secrets):
 | `https://creativorare.uat.cohestra.app/` | **200**, same wildcard cert, HSTS `max-age=31536000`, CSP includes Paddle **sandbox** origins |
 | Tenant SNI | Serves UAT wildcard, not `thesocialcollectivesg.com` |
 
-Owner SSH checkboxes above remain **unchecked**. Tracker stays **review / not done**. This probe does **not** replace `prove-edge-tls-wildcard.sh`, existing-app regression, or BMAD close. Apex `cohestra.app` cert expiry is **unrelated** (shared droplet serves another site cert).
+**Closeout 2026-10-15:** Apex + tenant `verify-security-headers.sh` PASS with HSTS. HTTP 301 to HTTPS. Wildcard SAN confirmed. Tenant register 200. CRM cert unchanged, no Cohestra edge header. Story **done**.
 
 ## Renewal
 
