@@ -35,6 +35,13 @@ if grep -qiE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----' "$out"; then
 fi
 pass "no key-material markers in failure output"
 
+if DROPLET_HOST='   ' DROPLET_USER=deploy DROPLET_SSH_KEY=placeholder \
+  bash "$SCRIPT" >"$out" 2>&1; then
+  fail "whitespace-only secrets must fail closed"
+fi
+grep -q 'MISSING_SECRET=DROPLET_HOST' "$out" || fail "whitespace-only HOST must be named"
+pass "whitespace-only secrets fail closed"
+
 if ! DROPLET_HOST=example.invalid DROPLET_USER=deploy DROPLET_SSH_KEY=placeholder \
   bash "$SCRIPT" >"$out"; then
   fail "present required secrets must pass"

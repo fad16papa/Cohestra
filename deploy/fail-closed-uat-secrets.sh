@@ -14,7 +14,9 @@ required=(DROPLET_HOST DROPLET_USER DROPLET_SSH_KEY)
 missing=()
 
 for name in "${required[@]}"; do
-  if [[ -z "${!name:-}" ]]; then
+  val="${!name:-}"
+  val="${val//[[:space:]]/}"
+  if [[ -z "$val" ]]; then
     missing+=("$name")
   fi
 done

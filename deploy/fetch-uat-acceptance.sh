@@ -34,15 +34,24 @@ mkdir -p "$(dirname "$OUT")"
 scp -i "$KEY" -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new \
   "${DROPLET_USER}@${DROPLET_HOST}:${REMOTE_FILE}" "$OUT"
 
-python3 - "$OUT" <<'PY'
-import json, sys
-path = sys.argv[1]
-payload = json.load(open(path, encoding="utf-8"))
-if not isinstance(payload, dict) or "result" not in payload:
-    raise SystemExit("fetched file is not an acceptance payload")
+python3 - "$OUT" "${TARGET_SHA:-}" <<'PY'
+import json, os, sys
+path, target_sha = sys.argv[1], sys.argv[2].strip().lower()
 text = open(path, encoding="utf-8").read()
 for needle in ("BEGIN OPENSSH PRIVATE KEY", "BEGIN RSA PRIVATE KEY", "-----BEGIN"):
     if needle in text:
+        os.remove(path)
         raise SystemExit("REFUSE: fetched artifact looks like key material")
+payload = json.loads(text)
+if not isinstance(payload, dict) or "result" not in payload:
+    os.remove(path)
+    raise SystemExit("fetched file is not an acceptance payload")
+payload_sha = str(payload.get("sha") or "").strip().lower()
+if target_sha and payload_sha != target_sha:
+    os.remove(path)
+    raise SystemExit("REFUSE: fetched acceptance SHA does not match TARGET_SHA")
+if payload.get("result") != "pass":
+    raise SystemExit(f"REFUSE: fetched acceptance result={payload.get('result')}")
 print(f"FETCHED_UAT_ACCEPTANCE_RESULT={payload.get('result')}")
+print(f"FETCHED_UAT_ACCEPTANCE_SHA={payload_sha}")
 PY

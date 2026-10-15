@@ -26,4 +26,8 @@ if UAT_PUBLIC_BASE_URL=http://uat.cohestra.app bash "$SCRIPT" --dry-run "$TMP/ht
 fi
 pass "non-https public smoke is refused"
 
+grep -q 'class NoRedirect' "$SCRIPT" || fail "public smoke must refuse redirects"
+grep -q 'HTTPRedirectHandler' "$SCRIPT" || fail "public smoke must override redirect handling"
+pass "public smoke does not follow redirects"
+
 echo "public-uat-smoke contract OK"

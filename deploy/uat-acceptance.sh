@@ -246,6 +246,10 @@ if not classify_only:
     ready = runtime.get("ready") or {}
     if not ready.get("nginxLoopbackHealthy"):
         failures.append("nginx_loopback_unhealthy")
+    if not ready.get("apiLoopbackHealthy"):
+        failures.append("api_loopback_unhealthy")
+if deploy_sha and sha and sha.lower() != deploy_sha.lower():
+    failures.append("sha_mismatch")
 
 result = "classify_only" if classify_only and not failures else ("fail" if failures else "pass")
 

@@ -13,7 +13,8 @@ push / merge to main
     → fail-closed secret names
     → SSH with a dedicated Actions deploy key
     → DEPLOY_SHA=<accepted CI SHA> via appleboy envs (never an unpinned branch tip)
-    → deploy/remote-deploy.sh resets to that SHA only if it is on origin/main
+    → SSH pins origin to that SHA *before* invoking on-disk remote-deploy.sh
+    → deploy/remote-deploy.sh re-asserts the same SHA
     → EXPECTED_SHA == DEPLOYED_SHA or fail closed
     → uat-deploy-dispatch.json (result=dispatched; later artifacts own deployed/accepted)
 ```

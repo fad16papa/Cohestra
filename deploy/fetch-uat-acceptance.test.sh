@@ -20,4 +20,10 @@ if grep -qiE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----' "$out"; then
 fi
 pass "fetch fails closed with secret NAMES only"
 
+grep -q 'fetched acceptance SHA does not match TARGET_SHA' "$SCRIPT" \
+  || fail "fetch must bind the artifact SHA to TARGET_SHA"
+grep -q 'os.remove(path)' "$SCRIPT" \
+  || fail "fetch must delete a secret-like or mismatched artifact"
+pass "fetch binds TARGET_SHA and deletes unsafe artifacts"
+
 echo "fetch-uat-acceptance contract OK"

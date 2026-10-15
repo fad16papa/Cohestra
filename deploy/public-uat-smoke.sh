@@ -34,11 +34,17 @@ paths = ["/ready", "/", "/signup"]
 checks = []
 failures = []
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+opener = urllib.request.build_opener(NoRedirect)
+
 def probe(path: str) -> dict:
     url = base + path
     req = urllib.request.Request(url, method="GET")
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with opener.open(req, timeout=15) as resp:
             body = resp.read().decode("utf-8", "replace")[:400]
             code = resp.status
     except urllib.error.HTTPError as exc:

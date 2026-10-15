@@ -102,14 +102,20 @@ else
   fail "workflow must define TARGET_SHA from workflow_run.head_sha"
 fi
 
+if grep -q 'TARGET_SHA must be a full 40-character hexadecimal Git SHA' "$WF"; then
+  pass "runner refuses a missing or non-40-character TARGET_SHA"
+else
+  fail "workflow must fail closed if TARGET_SHA is not a 40-character SHA"
+fi
+
 if grep -q 'EXPECTED_SHA' "$WF" && grep -q 'EXPECTED_SHA != DEPLOYED_SHA' "$WF"; then
   pass "post-deploy EXPECTED_SHA == DEPLOYED_SHA is asserted"
 else
   fail "workflow must emit and assert EXPECTED_SHA == DEPLOYED_SHA"
 fi
 
-if grep -q 'autonomous UAT deploy requires DEPLOY_SHA' "$WF"; then
-  pass "Actions path refuses an empty DEPLOY_SHA"
+if grep -q 'autonomous UAT deploy requires a 40-character DEPLOY_SHA' "$WF"; then
+  pass "Actions path refuses an empty or non-40-character DEPLOY_SHA"
 else
   fail "Actions must never deploy an unpinned branch tip"
 fi
@@ -118,6 +124,29 @@ if grep -q 'reset --hard origin/main' "$WF" || grep -q 'reset --hard "origin/$DE
   fail "workflow SSH script must not reset to a branch tip"
 else
   pass "workflow SSH script does not reset to origin/main"
+fi
+
+if awk '
+  /script: \|/ { in_script=1 }
+  in_script && /git reset --hard "\$DEPLOY_SHA"/ { reset=NR }
+  in_script && /bash deploy\/remote-deploy.sh/ { deploy=NR }
+  END { exit(reset && deploy && reset < deploy ? 0 : 1) }
+' "$WF"; then
+  pass "SSH pins DEPLOY_SHA before invoking on-disk remote-deploy.sh"
+else
+  fail "workflow must git reset --hard DEPLOY_SHA before remote-deploy.sh"
+fi
+
+if grep -q 'DEPLOY_PATH="/home/deploy/cohestra"' "$WF"; then
+  pass "SSH default path matches the documented deploy user home"
+else
+  fail "workflow default DROPLET_DEPLOY_PATH must be /home/deploy/cohestra"
+fi
+
+if grep -q 'removed secret-like' "$WF"; then
+  pass "secret-like evidence is removed before artifact upload"
+else
+  fail "workflow must delete secret-like evidence files before upload"
 fi
 
 if grep -q 'uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262' "$WF" \
