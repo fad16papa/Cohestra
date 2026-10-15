@@ -16,7 +16,9 @@ push / merge to main
     → SSH pins origin to that SHA *before* invoking on-disk remote-deploy.sh
     → deploy/remote-deploy.sh re-asserts the same SHA
     → EXPECTED_SHA == DEPLOYED_SHA or fail closed
-    → uat-deploy-dispatch.json (result=dispatched; later artifacts own deployed/accepted)
+    → uat-deploy-dispatch.json (result=dispatched)
+    → uat-acceptance.json + public smoke + Playwright
+    → acceptance-summary.json (story, sha, deployment, runtime, browser, security, provider, tests, result)
 ```
 
 | Workflow | File | Trigger |
@@ -74,7 +76,7 @@ ssh-keygen -t ed25519 -C "github-actions-uat-deploy" -f ~/.ssh/cohestra-uat-gha 
 1. Merge to **`main`**.
 2. Wait for **CI** green.
 3. **Deploy UAT** starts automatically.
-4. Download the `uat-deploy-dispatch` artifact for the SHA. Later stories add `uat-acceptance.json`.
+4. Download `uat-acceptance-summary` (`acceptance-summary.json`) plus the detailed deploy and Playwright artifacts. Missing required sections is FAIL, never a fake PASS.
 
 `workflow_run` pins `TARGET_SHA=github.event.workflow_run.head_sha` and passes it as `DEPLOY_SHA` through appleboy `envs`. The droplet must reset to that exact 40-character SHA after proving it is an ancestor of `origin/main`. If main has advanced to SHA B after CI accepted SHA A, UAT still deploys A or fails closed. It must never silently deploy B.
 
@@ -82,7 +84,7 @@ Actions never deploy an unpinned branch tip. Empty `DEPLOY_SHA` is refused on th
 
 The SSH step emits non-secret `EXPECTED_SHA` / `DEPLOYED_SHA` and fails if they differ.
 
-Third-party actions in `deploy.yml` are pinned to reviewed commit SHAs (`actions/checkout`, `actions/upload-artifact`, `appleboy/ssh-action`). Permissions stay `contents: read`. Concurrency stays `deploy-uat` and must never share a group with production.
+Third-party actions in `deploy.yml` are pinned to reviewed commit SHAs (`actions/checkout`, `actions/upload-artifact`, `actions/download-artifact`, `appleboy/ssh-action`, `actions/setup-node`). Permissions stay `contents: read`. Concurrency stays `deploy-uat` and must never share a group with production.
 
 ---
 

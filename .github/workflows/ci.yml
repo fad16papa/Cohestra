@@ -216,6 +216,9 @@ jobs:
       - name: UAT Playwright harness contract
         run: bash deploy/validate-uat-playwright.sh
 
+      - name: UAT acceptance summary contract
+        run: bash deploy/uat-acceptance-summary.test.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest
