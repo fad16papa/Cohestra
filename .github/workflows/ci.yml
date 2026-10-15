@@ -225,6 +225,9 @@ jobs:
       - name: UAT recaptcha dual-layer contract
         run: bash deploy/validate-uat-recaptcha.sh
 
+      - name: Autonomous delivery loop contract
+        run: bash deploy/validate-autonomous-loop.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest
