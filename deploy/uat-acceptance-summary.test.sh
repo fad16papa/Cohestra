@@ -170,6 +170,24 @@ assert all(k in p for k in ("story", "sha", "deployment", "runtime", "browser", 
 PY
 pass "missing Playwright artifact is FAIL with all sections still present"
 
+write_ok_inputs "$TMP/dispatchdrift"
+python3 - "$TMP/dispatchdrift/artifacts/uat-deploy-dispatch.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+p["sha"] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+json.dump(p, open(sys.argv[1], "w"), indent=2)
+PY
+if run_summary "$TMP/dispatchdrift" "$TMP/summary-dispatch.json" >"$TMP/dispatch.out" 2>"$TMP/dispatch.err"; then
+  fail "dispatch SHA drift must fail closed"
+fi
+python3 - "$TMP/summary-dispatch.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+assert p["result"] == "fail"
+assert "dispatch_sha_mismatch" in p["failures"], p
+PY
+pass "dispatch SHA must match TARGET_SHA"
+
 write_ok_inputs "$TMP/secret"
 python3 - "$TMP/secret/artifacts/uat-acceptance.json" <<'PY'
 import json, sys

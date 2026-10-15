@@ -210,6 +210,9 @@ def build() -> dict:
     bound = target_sha.strip().lower()
     if bound and sha and bound != sha:
         failures.append("sha_mismatch")
+    dispatch_sha = str((dispatch or {}).get("sha") or "").strip().lower()
+    if bound and dispatch_sha and dispatch_sha != bound:
+        failures.append("dispatch_sha_mismatch")
 
     if acceptance is None:
         failures.append("missing_artifact:uat-acceptance.json")
