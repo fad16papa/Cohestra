@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-15
-# Epic 45 created 2026-10-15 — Autonomous Delivery & UAT Acceptance. 45.1 in-progress.
+# Epic 45 created 2026-10-15 — Autonomous Delivery & UAT Acceptance. 45.1 done (PR #450 / 10738f5f / main 0f2f5d66). 45.2 probe fields merged PR #451 / 94c98c11. Live Deploy UAT 38746166030 OWNER_GATE=missing_protected_secret (DROPLET_HOST, DROPLET_USER, DROPLET_SSH_KEY).
 # 19.3 remains ready-for-dev; execution waits for Epic 45 deploy/acceptance (dual-layer recaptcha). Do not SSH.
 # 19.1/19.2 done 2026-10-15 — live UAT smoke + TLS/headers. 19.4 remains done. 19.5 ready after 19.3. Production NO-GO.
 # 19.4 done — merged PR #447 at cbc52a61 / main 7e655a0b; post-merge CI 38601073681 green; owner UAT phone + billing accepted. Production NO-GO. Epic 19 remains in-progress (19.3/19.5).
