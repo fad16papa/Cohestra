@@ -2,7 +2,7 @@
 id: 45.2
 key: 45-2-on-droplet-autonomous-acceptance-probe
 title: On-droplet autonomous acceptance probe
-status: in-progress
+status: done
 epic: 45
 created: 2026-10-15
 ---

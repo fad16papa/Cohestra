@@ -2,7 +2,7 @@
 id: 45.4
 key: 45-4-autonomous-browser-acceptance-harness
 title: Autonomous browser acceptance harness
-status: ready-for-dev
+status: in-progress
 epic: 45
 created: 2026-10-15
 ---
@@ -31,3 +31,13 @@ so that **ordinary regression does not need manual screenshots**.
    **When** the suite runs
    **Then** production/dev seed shortcuts stay off
    **And** the owner personal login is not used
+
+## Implementation (this PR)
+
+- `web/playwright.uat.config.ts` reads `UAT_PUBLIC_BASE_URL` (no hardcoded host)
+- Viewports `1440×900` and `390×844`
+- Anonymous specs in `web/e2e-uat/anonymous.spec.ts`
+- Authenticated spec skips unless dedicated `UAT_AUTO_BASIC_*` env is present
+- Deploy UAT job `browser` runs after deploy, Environment `uat`, `contents: read`
+- Failure artifacts: screenshot, video, trace (`retain-on-failure`)
+- Repo contract: `deploy/validate-uat-playwright.sh`

@@ -163,16 +163,23 @@ fi
 
 if grep -q 'uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262' "$WF" \
   && grep -q 'uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' "$WF" \
-  && grep -q 'uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f' "$WF"; then
+  && grep -q 'uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f' "$WF" \
+  && grep -q 'uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' "$WF"; then
   pass "deploy actions are pinned to reviewed commit SHAs"
 else
   fail "deploy.yml actions must be pinned to exact commit SHAs"
 fi
 
-if grep -E 'uses: (actions/checkout|actions/upload-artifact|appleboy/ssh-action)@v' "$WF"; then
+if grep -E 'uses: (actions/checkout|actions/upload-artifact|actions/setup-node|appleboy/ssh-action)@v' "$WF"; then
   fail "deploy.yml must not use mutable action version tags"
 else
   pass "deploy.yml does not use mutable action version tags"
+fi
+
+if grep -q 'name: UAT browser acceptance' "$WF" && grep -q 'test:e2e:uat' "$WF"; then
+  pass "Deploy UAT runs the UAT Playwright harness after deploy"
+else
+  fail "workflow must run npm run test:e2e:uat after a successful deploy"
 fi
 
 echo "Passed: ${PASS} | Failed: ${FAIL}"

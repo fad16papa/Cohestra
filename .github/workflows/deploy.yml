@@ -154,3 +154,67 @@ jobs:
             artifacts/uat-acceptance.json
             artifacts/uat-public-smoke.json
           if-no-files-found: warn
+
+  browser:
+    name: UAT browser acceptance
+    needs: deploy
+    runs-on: ubuntu-latest
+    environment: uat
+    env:
+      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - name: Refuse unpinned TARGET_SHA
+        env:
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
+            exit 1
+          fi
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
+            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
+            exit 1
+          fi
+
+      - name: Checkout accepted SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ env.TARGET_SHA }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Run anonymous UAT Playwright
+        working-directory: web
+        env:
+          UAT_PUBLIC_BASE_URL: ${{ secrets.UAT_PUBLIC_BASE_URL }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${UAT_PUBLIC_BASE_URL:-}" ]]; then
+            UAT_PUBLIC_BASE_URL=https://uat.cohestra.app
+          fi
+          export UAT_PUBLIC_BASE_URL
+          npm run test:e2e:uat
+
+      - name: Upload Playwright evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uat-playwright-evidence
+          path: |
+            web/test-results/**
+            web/playwright-report/**
+          if-no-files-found: warn
