@@ -28,3 +28,11 @@ Port audit on the same job: "Host has no swap" and "Prefer sequential / off-host
 ## Repair
 
 Sequential `build api` then `build web` then `up -d --no-build`. Raise SSH `command_timeout` to 60m. Do not resize the droplet. Production NO-GO.
+
+## Follow-on (Confirmed) — Deploy UAT `38939912298`
+
+Sequential YAML was on GHA (`command_timeout: 60m`) but the droplet never reached compose:
+
+`fatal: unable to access 'https://github.com/fad16papa/Cohestra.git/': Could not resolve host: github.com` (git status 128).
+
+Likely leftover DNS from the previous parallel-build OOM. Live `/ready` later returned Healthy (old stack recovered). `gh workflow dispatch` is 403 from this agent; next merge retriggers Deploy UAT. Git fetch now retries 6× with low-speed abort.

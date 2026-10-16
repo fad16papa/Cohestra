@@ -48,6 +48,13 @@ else
   fail "workflow must call deploy/remote-deploy.sh"
 fi
 
+if grep -q 'git fetch origin "$DEPLOY_BRANCH"' "$WF" \
+  && grep -q 'failed after retries' "$WF"; then
+  pass "SSH git fetch retries transient droplet DNS failures"
+else
+  fail "workflow SSH must retry git fetch origin before refusing"
+fi
+
 if grep -qE 'command_timeout:[[:space:]]*60m' "$WF"; then
   pass "SSH command_timeout is 60m for sequential on-droplet image builds"
 else

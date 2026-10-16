@@ -33,7 +33,22 @@ if [[ -n "${DEPLOY_SHA:-}" ]]; then
 fi
 echo "Commit before pull: $(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
-git fetch origin "$DEPLOY_BRANCH"
+export GIT_TERMINAL_PROMPT=0
+export GIT_HTTP_LOW_SPEED_LIMIT=1000
+export GIT_HTTP_LOW_SPEED_TIME=30
+fetch_ok=0
+for attempt in 1 2 3 4 5 6; do
+  if git fetch origin "$DEPLOY_BRANCH"; then
+    fetch_ok=1
+    break
+  fi
+  echo "WARN: git fetch origin/${DEPLOY_BRANCH} attempt ${attempt} failed"
+  sleep 20
+done
+if [[ "$fetch_ok" != 1 ]]; then
+  echo "REFUSE: git fetch origin/${DEPLOY_BRANCH} failed after retries"
+  exit 1
+fi
 # shellcheck disable=SC1091
 source "$ROOT_DIR/deploy/reset-accepted-sha.sh"
 reset_accepted_sha || exit 1
