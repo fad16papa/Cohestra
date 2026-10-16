@@ -147,7 +147,12 @@ export function LoginForm({
   }
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+    <form
+      className="space-y-5"
+      method="post"
+      onSubmit={handleSubmit}
+      noValidate
+    >
       {showSessionExpiredNotice ? (
         <p
           role="status"

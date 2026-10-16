@@ -76,33 +76,37 @@ async function loginOnWorkspace(
   password: string,
 ) {
   const response = await page.goto(`${origin}/login`, {
-    waitUntil: "domcontentloaded",
+    waitUntil: "networkidle",
   });
   expect(response?.ok()).toBeTruthy();
-  await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: /sign in to workspace/i }).click();
+  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  const submit = page.getByRole("button", { name: /sign in to workspace/i });
+  await expect(submit).toBeEnabled();
+  await page.locator("form").evaluate((form) => {
+    form.setAttribute("method", "post");
+  });
+  await page.locator("#email").fill(email);
+  await page.locator("#password").fill(password);
+  await submit.click();
   await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 20_000 });
   await expect(page.locator("main, [role='main']").first()).toBeVisible();
 }
 
-async function apiLogin(
-  request: APIRequestContext,
-  origin: string,
-  email: string,
-  password: string,
-): Promise<string> {
-  const response = await request.post(`${origin}/api/v1/auth/login`, {
-    data: { email, password },
+async function sessionAccessToken(page: Page): Promise<string> {
+  const token = await page.evaluate(() => {
+    const raw = window.localStorage.getItem("auth_session");
+    if (!raw) {
+      return "";
+    }
+    try {
+      const parsed = JSON.parse(raw) as { accessToken?: string };
+      return typeof parsed.accessToken === "string" ? parsed.accessToken : "";
+    } catch {
+      return "";
+    }
   });
-  expect(response.ok(), `login ${response.status()}`).toBeTruthy();
-  const body = (await response.json()) as {
-    accessToken?: string;
-    AccessToken?: string;
-  };
-  const token = body.accessToken ?? body.AccessToken;
-  expect(token, "login returned an access token").toBeTruthy();
-  return token!;
+  expect(token, "auth_session access token after login").toBeTruthy();
+  return token;
 }
 
 function authHeaders(token: string): Record<string, string> {
@@ -338,7 +342,6 @@ test.describe("19.5 operator core flows", () => {
 
   test("Pro create, publish, share, register, dedup, CSV, and campaign test-send", async ({
     page,
-    request,
   }, testInfo) => {
     test.skip(
       !proEmail || !proPassword,
@@ -348,7 +351,9 @@ test.describe("19.5 operator core flows", () => {
     test.setTimeout(180_000);
 
     const origin = workspaceOrigin(proSlug);
-    const token = await apiLogin(request, origin, proEmail, proPassword);
+    await loginOnWorkspace(page, origin, proEmail, proPassword);
+    const request = page.request;
+    const token = await sessionAccessToken(page);
     const me = await request.get(`${origin}/api/v1/admin/me`, { headers: authHeaders(token) });
     expect(me.ok(), `admin/me ${me.status()}`).toBeTruthy();
 
@@ -375,7 +380,6 @@ test.describe("19.5 operator core flows", () => {
       );
       secondId = second.id;
 
-      await loginOnWorkspace(page, origin, proEmail, proPassword);
       await page.goto(`${origin}/activities/${first.id}`, { waitUntil: "domcontentloaded" });
       const shareTab = page.getByRole("tab", { name: /share kit/i });
       if (await shareTab.isVisible()) {
