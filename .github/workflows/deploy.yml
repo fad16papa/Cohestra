@@ -272,7 +272,7 @@ jobs:
       - name: Build acceptance-summary.json
         env:
           TARGET_SHA: ${{ env.TARGET_SHA }}
-          ACCEPTANCE_STORY: epic-45
+          ACCEPTANCE_STORY: "19.3"
         run: bash deploy/uat-acceptance-summary.sh
 
       - name: Remove secret-like summary

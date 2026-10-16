@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-15
-# Epic 45 created 2026-10-15 — Autonomous Delivery & UAT Acceptance. 45.1–45.8 done. Layer B official Google test keys removed after GitGuardian incident 38248970. 19.3 remains OPEN (real UAT recaptcha keys). Production NO-GO.
+# Epic 45 created 2026-10-15 — Autonomous Delivery & UAT Acceptance. 45.1–45.8 done. 19.3 in-progress: owner recaptcha gate resolved; Layer A awaits Deploy UAT web rebuild. Production NO-GO.
 # 19.3 remains ready-for-dev; execution waits for Epic 45 deploy/acceptance (dual-layer recaptcha). Do not SSH.
 # 19.1/19.2 done 2026-10-15 — live UAT smoke + TLS/headers. 19.4 remains done. 19.5 ready after 19.3. Production NO-GO.
 # 19.4 done — merged PR #447 at cbc52a61 / main 7e655a0b; post-merge CI 38601073681 green; owner UAT phone + billing accepted. Production NO-GO. Epic 19 remains in-progress (19.3/19.5).

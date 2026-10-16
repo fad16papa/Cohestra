@@ -246,6 +246,14 @@ if not classify_only:
     runtime["apiGitSha"] = api_git_sha()
 
 failures: list[str] = []
+if recaptcha["serverEnabled"] is False:
+    failures.append("recaptcha_server_disabled")
+if recaptcha["webEnabled"] is False:
+    failures.append("recaptcha_web_disabled")
+if recaptcha["secretConfigured"] is False:
+    failures.append("recaptcha_secret_missing")
+if recaptcha["siteKeyConfigured"] is False:
+    failures.append("recaptcha_site_key_missing")
 if recaptcha["bypassTokenAbsent"] is False:
     failures.append("recaptcha_bypass_token_present")
 if recaptcha["webTestTokenAbsent"] is False:
