@@ -202,6 +202,56 @@ public sealed class ActivityServiceCommunityDefaultTests
     }
 
     [Fact]
+    public async Task CreateAsync_CommunityDefaultWithNullFields_StillCreatesWithoutPrefill()
+    {
+        await using var dbContext = CreateDbContext();
+        var templateId = Guid.NewGuid();
+        var now = DateTimeOffset.UtcNow;
+
+        dbContext.Communities.Add(new Community
+        {
+            Id = Guid.NewGuid(),
+            Name = "Youth",
+            DefaultFormTemplateId = templateId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        dbContext.Categories.Add(new Category
+        {
+            Id = Guid.NewGuid(),
+            Name = "Tennis",
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        dbContext.TenantFormTemplates.Add(new TenantFormTemplate
+        {
+            Id = templateId,
+            Name = "Broken recipe",
+            FormSchema = new ActivityFormSchema
+            {
+                Version = 1,
+                Fields = null!,
+            },
+            CreatedAt = now,
+            UpdatedAt = now,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext);
+        var created = await service.CreateAsync(
+            new CreateActivityRequest(
+                "Summer Clinic",
+                "Tennis",
+                "Weekly",
+                "Court A",
+                "Youth",
+                Status: "draft"));
+
+        Assert.Equal("Summer Clinic", created.Name);
+        Assert.NotEqual(Guid.Empty, created.Id);
+    }
+
+    [Fact]
     public async Task PublishAsync_CoreTenantWithProStepsDraft_ThrowsFormSchemaPlanLocked()
     {
         await using var dbContext = CreateDbContext();
