@@ -18,6 +18,8 @@ FACTORY="$ROOT_DIR/src/Api.IntegrationTests/Infrastructure/RecaptchaLayerBWebApp
 [[ -f "$LAYER_B" ]] || fail "missing Layer B isolated integration tests"
 [[ -f "$FACTORY" ]] || fail "missing Layer B factory"
 grep -q 'does not solve a live Google challenge' "$LAYER_A" || fail "Layer A must refuse to solve the live challenge"
+grep -q 'empty CAPTCHA token is rejected' "$LAYER_A" || fail "Layer A must probe empty CAPTCHA against live UAT"
+grep -q 'invalid CAPTCHA token is rejected' "$LAYER_A" || fail "Layer A must probe invalid CAPTCHA against live UAT"
 grep -q 'IsolatedOfficialBehaviorHandler' "$FACTORY" || fail "Layer B must stub siteverify instead of embedding Google keys"
 grep -q 'layer-b-isolated-placeholder' "$FACTORY" || fail "Layer B must use a non-Google placeholder secret"
 # Split so this script does not contain a contiguous official-key prefix.

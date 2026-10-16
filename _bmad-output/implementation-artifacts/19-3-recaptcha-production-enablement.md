@@ -9,18 +9,18 @@ acceptance_method: epic-45-dual-layer
 
 # Story 19.3: reCAPTCHA production enablement
 
-Status: **in-progress** — Epic 45 harness is live. Layer B isolated OTP path is in CI. Layer A waits for real UAT recaptcha keys on the droplet `.env`. This is **not** production cutover.
+Status: **in-progress** — owner recaptcha gate resolved (names on droplet `.env`). Layer B isolated OTP path is on main (#459). Layer A runs on the next Deploy UAT web rebuild. This is **not** production cutover.
 
 Signup implementation already exists. This story is UAT-domain key configuration + automated rebuild + **machine-verifiable** dual-layer acceptance.
 
-## Current UAT state (2026-10-15)
+## Current UAT state (2026-10-16)
 
-- `https://uat.cohestra.app/signup` returns 200.
-- Signup HTML has **no** grecaptcha script and **no** widget. reCAPTCHA is **off**.
-- `docker-compose.uat.yml` defaults `SelfServeSignup__Recaptcha__Enabled=false` and `NEXT_PUBLIC_RECAPTCHA_ENABLED=false`.
-- API `ASPNETCORE_ENVIRONMENT=Production`: disabled captcha accepts empty token (not a local bypass token).
+- Owner gate: real UAT recaptcha names installed privately in `/home/deploy/cohestra/.env`.
+- Values are never pasted. The sanitized probe must independently verify presence/booleans.
+- `NEXT_PUBLIC_*` are build-time; Deploy UAT must rebuild web after this commit.
+- `docker-compose.uat.yml` still defaults recaptcha **off** in git so a missing host env cannot silently enable a bypass.
 - Isolation contract refuses leftover `TestBypassToken` on UAT compose.
-- Code already supports enablement: `RecaptchaCheckbox`, `isRecaptchaEnabled`, `GoogleRecaptchaVerifier`.
+- Layer A Playwright now fails closed if the widget is missing (no skip).
 
 Do **not** mark this story done until Layer A and Layer B artifacts pass on an accepted SHA.
 

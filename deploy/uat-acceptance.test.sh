@@ -41,7 +41,9 @@ import json, sys
 p = json.load(open(sys.argv[1], encoding="utf-8"))
 assert p["result"] in {"pass", "classify_only"}, p
 assert p["security"]["recaptcha"]["serverEnabled"] is True
+assert p["security"]["recaptcha"]["webEnabled"] is True
 assert p["security"]["recaptcha"]["secretConfigured"] is True
+assert p["security"]["recaptcha"]["siteKeyConfigured"] is True
 assert p["security"]["recaptcha"]["bypassTokenAbsent"] is True
 assert p["provider"]["paddle"]["apiKey"] == "sandbox"
 assert p["provider"]["paddle"]["refusedForUat"] is False
@@ -62,6 +64,36 @@ for leak in (
     assert leak not in text, leak
 PY
 pass "classify-only passes and redacts secret values"
+
+cat >"$TMP/disabled.env" <<'ENV'
+PUBLIC_BASE_URL=https://uat.cohestra.app
+Paddle__ApiKey=pdl_sdbx_examplekeynotreal
+Paddle__ClientToken=test_exampleclient
+Paddle__WebhookSecret=whsec_super_secret_webhook
+Paddle__Environment=sandbox
+SelfServeSignup__Recaptcha__Enabled=false
+NEXT_PUBLIC_RECAPTCHA_ENABLED=false
+OperatorSeed__Enabled=false
+DemoDataSeed__Enabled=false
+LoadTestSeed__Enabled=false
+NGINX_HOST_PORT=8180
+WEB_HOST_PORT=3100
+API_HOST_PORT=5100
+ENV
+
+if bash "$SCRIPT" --classify-only --env "$TMP/disabled.env" --out "$TMP/disabled.json"; then
+  fail "disabled recaptcha must fail closed after 19.3"
+fi
+python3 - "$TMP/disabled.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+assert p["result"] == "fail"
+assert "recaptcha_server_disabled" in p["failures"]
+assert "recaptcha_web_disabled" in p["failures"]
+assert "recaptcha_secret_missing" in p["failures"]
+assert "recaptcha_site_key_missing" in p["failures"]
+PY
+pass "disabled recaptcha fails closed without leaking values"
 
 cat >>"$TMP/.env" <<'ENV'
 SelfServeSignup__Recaptcha__TestBypassToken=test-captcha-pass
