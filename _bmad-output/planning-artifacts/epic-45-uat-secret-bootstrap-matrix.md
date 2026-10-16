@@ -11,14 +11,14 @@ After these are populated, routine UAT deploy/acceptance must not require owner 
 | `DROPLET_SSH_KEY` | Private key of a **dedicated** GitHub Actions deploy key (not the owner workstation key, not a Cursor key) | Environment `uat` | Yes — 45.1 |
 | `DROPLET_DEPLOY_PATH` | Absolute checkout path on the droplet | Environment `uat` | No — defaults to `$HOME/cohestra` |
 | `UAT_PUBLIC_BASE_URL` | Public UAT origin for smoke/Playwright | Environment `uat` | Yes — 45.3/45.4 (may default to `https://uat.cohestra.app` in code until set) |
-| `UAT_AUTO_BASIC_EMAIL` | Dedicated `uat-auto-basic` operator email | Environment `uat` | Yes — 45.4 authenticated flows |
-| `UAT_AUTO_BASIC_PASSWORD` | Dedicated `uat-auto-basic` password | Environment `uat` | Yes — 45.4 |
-| `UAT_AUTO_PRO_EMAIL` | Dedicated `uat-auto-pro` operator email | Environment `uat` | Yes — 45.4 authenticated Pro flows |
-| `UAT_AUTO_PRO_PASSWORD` | Dedicated `uat-auto-pro` password | Environment `uat` | Yes — 45.4 |
-| `UAT_OTP_MAILBOX_HOST` | Dedicated UAT IMAP host (TLS 993) | Environment `uat` | Yes — 45.5 live OTP |
-| `UAT_OTP_MAILBOX_USER` | Dedicated mailbox username | Environment `uat` | Yes — 45.5 live OTP |
-| `UAT_OTP_MAILBOX_SECRET` | Dedicated mailbox IMAP secret | Environment `uat` | Yes — 45.5 live OTP |
-| `UAT_OTP_MAILBOX_ADDRESS` | Dedicated recipient address if it differs from the IMAP user | Environment `uat` | No — defaults to `UAT_OTP_MAILBOX_USER` |
+| `UAT_AUTO_BASIC_EMAIL` | Alias for an **existing** Basic UAT TenantAdmin (candidate tenant `default`) | Environment `uat` | Yes — 45.4 / 19.5 authenticated Basic flows |
+| `UAT_AUTO_BASIC_PASSWORD` | Password for that existing Basic operator | Environment `uat` | Yes — 45.4 / 19.5 |
+| `UAT_AUTO_PRO_EMAIL` | Alias for an **existing** Pro UAT TenantAdmin (candidate tenant `creativorare`) | Environment `uat` | Yes — 19.5 Pro flows |
+| `UAT_AUTO_PRO_PASSWORD` | Password for that existing Pro operator | Environment `uat` | Yes — 19.5 |
+| `UAT_OTP_MAILBOX_HOST` | Dedicated UAT IMAP host (TLS 993) | Environment `uat` | Yes — 45.5 live OTP only. **Not required for Story 19.5.** |
+| `UAT_OTP_MAILBOX_USER` | Dedicated mailbox username | Environment `uat` | Yes — 45.5 live OTP only. **Not required for Story 19.5.** |
+| `UAT_OTP_MAILBOX_SECRET` | Dedicated mailbox IMAP secret | Environment `uat` | Yes — 45.5 live OTP only. **Not required for Story 19.5.** |
+| `UAT_OTP_MAILBOX_ADDRESS` | Dedicated recipient address if it differs from the IMAP user | Environment `uat` | No — defaults to `UAT_OTP_MAILBOX_USER`. Not required for 19.5. |
 
 **45.5 provider pick (minimal secure option):** a **dedicated IMAP mailbox** using the names above. No new vendor. No Mailosaur. No personal Gmail/Outlook. If these names are unset, Deploy UAT skips the OTP test and prints `MISSING_SECRET=<NAME>` only from `--check-secrets`. Values stay out of chat.
 

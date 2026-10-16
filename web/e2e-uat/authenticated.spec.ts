@@ -8,7 +8,7 @@ const mailboxAddress =
 
 test.describe("45.4 authenticated UAT", () => {
   test("dedicated automation login when credentials exist", async ({ page }) => {
-    test.skip(!email || !password, "dedicated UAT automation credentials are not configured");
+    test.skip(!email || !password, "UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped");
     const response = await page.goto("/login", { waitUntil: "domcontentloaded" });
     expect(response?.ok()).toBeTruthy();
     await page.getByLabel(/email/i).fill(email);
