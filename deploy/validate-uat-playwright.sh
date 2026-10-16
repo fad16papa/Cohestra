@@ -44,6 +44,8 @@ grep -q 'otp-mailbox' "$CORE" && fail "19.5 must not import the OTP mailbox help
 grep -q 'UAT_OTP_MAILBOX' "$CORE" && fail "19.5 must not require OTP mailbox secrets"
 grep -q 'workspaceOrigin' "$CORE" || fail "19.5 must log in on the tenant host, not marketing apex"
 grep -q '/dashboard' "$CORE" || fail "19.5 dashboard must open /dashboard, not public home"
+grep -q 'networkidle' "$CORE" || fail "19.5 login must wait for hydration before submit"
+grep -q 'method="post"' "$ROOT_DIR/web/components/auth/login-form.tsx" || fail "login form must POST so a pre-hydration submit cannot put credentials in the query string"
 grep -q 'Basic website is Core-locked' "$CORE" || fail "19.5 must cover Basic website/stub lock"
 grep -q 'Pro website studio and public branding' "$CORE" || fail "19.5 must cover Pro website branding"
 grep -q 'Pro create, publish, share, register, dedup, CSV, and campaign test-send' "$CORE" || fail "19.5 must cover the canonical Pro mutating walk"
