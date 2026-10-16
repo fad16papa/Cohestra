@@ -495,9 +495,12 @@ test.describe("19.5 operator core flows", () => {
       if (await shareTab.isVisible()) {
         await shareTab.click();
       }
-      await expect(page.getByText(new RegExp(`/register/${first.slug}`))).toBeVisible({
-        timeout: 20_000,
-      });
+      // Share kit repeats the register path in the URL field, preview, and
+      // pack copy. Target the labeled input so Playwright strict mode does
+      // not fail on three matches.
+      const shareUrl = page.getByLabel("Public registration URL");
+      await expect(shareUrl).toBeVisible({ timeout: 20_000 });
+      await expect(shareUrl).toHaveValue(new RegExp(`/register/${first.slug}`));
 
       const registerPage = await request.get(`${origin}/register/${first.slug}`);
       expect(registerPage.ok()).toBeTruthy();
