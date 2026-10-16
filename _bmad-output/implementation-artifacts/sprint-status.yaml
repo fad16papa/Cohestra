@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-15
-# Epic 45 created 2026-10-15 — Autonomous Delivery & UAT Acceptance. 45.1–45.8 done. 19.3 in-progress: owner recaptcha gate resolved; Layer A awaits Deploy UAT web rebuild. Production NO-GO.
+# Epic 45 done. 19.3 done 2026-10-16 — live Deploy UAT 38911205011 / 26f594bc Layer A+B pass. 19.5 next. Production NO-GO.
 # 19.3 remains ready-for-dev; execution waits for Epic 45 deploy/acceptance (dual-layer recaptcha). Do not SSH.
 # 19.1/19.2 done 2026-10-15 — live UAT smoke + TLS/headers. 19.4 remains done. 19.5 ready after 19.3. Production NO-GO.
 # 19.4 done — merged PR #447 at cbc52a61 / main 7e655a0b; post-merge CI 38601073681 green; owner UAT phone + billing accepted. Production NO-GO. Epic 19 remains in-progress (19.3/19.5).
@@ -288,9 +288,9 @@ development_status:
   epic-19: in-progress
   19-1-uat-droplet-deploy-and-smoke: done
   19-2-https-edge-security-header-verify: done
-  19-3-recaptcha-production-enablement: in-progress
+  19-3-recaptcha-production-enablement: done
   19-4-paddle-billing-uat-on-droplet: done
-  19-5-operator-core-flows-launch-signoff: ready-for-dev
+  19-5-operator-core-flows-launch-signoff: in-progress
   epic-19-retrospective: optional
 
   epic-20: done
