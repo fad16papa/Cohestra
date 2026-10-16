@@ -60,6 +60,10 @@ SHA provenance on Deploy UAT `38944473091`: `targetSha == apiGitSha == b433f63e`
 
 Pro rooms PASS desktop+mobile. Mutating create still 500 (traceIds `0HNPBM1Q9SVNS`, `0HNPBM1Q9SVOD`). H1 refuted. H5 confirmed by code + timezone evidence.
 
+## Follow-up: 2026-10-16 #4
+
+Deploy UAT `38949897720` on `87ca9a1c`: SHA match. Create/publish PASS. Share kit input **attached** (value `/register/19-5-harness-a-…`) but `toBeVisible` timed out: inactive activity tabs stay in the DOM with `hidden`. Optional tab click after Overview load did not leave Share kit selected. Open `?tab=share`.
+
 ## Follow-up: 2026-10-16 #3
 
 Deploy UAT `38947776906` on `e26c30af`: SHA match. Create+publish PASS (H5 fix held).

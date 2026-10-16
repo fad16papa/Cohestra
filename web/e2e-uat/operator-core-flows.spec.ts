@@ -490,14 +490,16 @@ test.describe("19.5 operator core flows", () => {
       );
       secondId = second.id;
 
-      await page.goto(`${origin}/activities/${first.id}`, { waitUntil: "domcontentloaded" });
-      const shareTab = page.getByRole("tab", { name: /share kit/i });
-      if (await shareTab.isVisible()) {
-        await shareTab.click();
-      }
-      // Share kit repeats the register path in the URL field, preview, and
-      // pack copy. Target the labeled input so Playwright strict mode does
-      // not fail on three matches.
+      await page.goto(`${origin}/activities/${first.id}?tab=share`, {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(page.getByRole("tab", { name: /share kit/i })).toHaveAttribute(
+        "aria-selected",
+        "true",
+        { timeout: 20_000 },
+      );
+      // Share kit keeps inactive panels in the DOM with the hidden attribute.
+      // Open ?tab=share so the labeled URL input is actually visible.
       const shareUrl = page.getByLabel("Public registration URL");
       await expect(shareUrl).toBeVisible({ timeout: 20_000 });
       await expect(shareUrl).toHaveValue(new RegExp(`/register/${first.slug}`));
