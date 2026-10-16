@@ -524,6 +524,23 @@ else
   fail "reset-accepted-sha.sh must validate 40-char SHA, ancestry, and reset to that SHA"
 fi
 
+if grep -q 'up -d --build' "$DEPLOY"; then
+  fail "remote-deploy must not up -d --build (parallel api+web publish OOMs the droplet)"
+else
+  pass "remote-deploy does not up -d --build"
+fi
+
+if awk '
+  /uat-compose\.sh" build api/ { api=NR }
+  /uat-compose\.sh" build web/ { web=NR }
+  /up -d --no-build/ { up=NR }
+  END { exit(api && web && up && api < web && web < up ? 0 : 1) }
+' "$DEPLOY"; then
+  pass "remote-deploy builds api, then web, then up --no-build"
+else
+  fail "remote-deploy must sequential-build api, then web, then up --no-build"
+fi
+
 if grep -q 'uat-acceptance.sh' "$DEPLOY"; then
   pass "remote-deploy runs the sanitized acceptance probe"
 else

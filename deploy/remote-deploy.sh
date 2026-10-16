@@ -73,8 +73,14 @@ bash "$ROOT_DIR/deploy/uat-port-audit.sh"
 bash "$ROOT_DIR/deploy/validate-uat-isolation.sh"
 
 echo ""
-echo "== Docker compose build + up (project cohestra-uat) =="
-bash "$ROOT_DIR/deploy/uat-compose.sh" up -d --build
+echo "== Docker compose sequential build + up (project cohestra-uat) =="
+# Parallel compose --build compiles api and web together. On the 4 GB / 0-swap
+# droplet that hangs until appleboy command_timeout (Deploy UAT 38934206918:
+# simultaneous `dotnet publish` + `next build`, then 30m Run Command Timeout,
+# /ready left unreachable). Build one image at a time, then start without rebuild.
+bash "$ROOT_DIR/deploy/uat-compose.sh" build api
+bash "$ROOT_DIR/deploy/uat-compose.sh" build web
+bash "$ROOT_DIR/deploy/uat-compose.sh" up -d --no-build
 
 echo ""
 echo "== Smoke checks =="
