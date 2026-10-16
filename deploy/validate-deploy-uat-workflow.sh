@@ -48,6 +48,12 @@ else
   fail "workflow must call deploy/remote-deploy.sh"
 fi
 
+if grep -qE 'command_timeout:[[:space:]]*60m' "$WF"; then
+  pass "SSH command_timeout is 60m for sequential on-droplet image builds"
+else
+  fail "SSH command_timeout must be 60m (30m timed out mid api+web rebuild)"
+fi
+
 if grep -q 'workflow_run.head_sha' "$WF"; then
   pass "workflow_run uses head_sha"
 else
