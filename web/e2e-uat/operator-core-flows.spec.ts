@@ -245,6 +245,13 @@ async function ensureHarnessCommunity(
     return untemplated;
   }
 
+  // Pro cap exhausted and every community has a pin: still create against
+  // the first catalog row. Product prefill is fail-open so a corrupt pin
+  // cannot 500 POST /activities.
+  if (listed[0]?.name) {
+    return listed[0].name;
+  }
+
   expect(
     created.ok(),
     `create community ${HARNESS_COMMUNITY} ${created.status()} ${await created.text()}`,
