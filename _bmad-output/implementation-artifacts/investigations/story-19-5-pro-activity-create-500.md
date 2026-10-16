@@ -3,8 +3,8 @@ story: 19.5
 slug: story-19-5-pro-activity-create-500
 date: 2026-10-16
 status: open
-deploy_uat: 38930275247
-head: 268bbd74ce528d34855dd8352d4691cda67be8cb
+deploy_uat: 38944473091
+head: b433f63e7b8ddb22102862ac06d99f393824c6e3
 ---
 
 # Case: Pro mutating walk 500 on POST /api/v1/admin/activities
@@ -24,18 +24,15 @@ ActivitiesController maps only `InvalidOperationException` → 409. A 500 is the
 
 ## Hypotheses
 
-### H1 — First catalog community default-template clone throws (Open)
+### H1 — First catalog community default-template clone throws (Refuted)
 
-`ensureCatalog` reused `items[0]` from `/api/v1/admin/communities`. `ActivityService.CreateAsync` then calls `ApplyCommunityDefaultFormSchemaAsync`, which loads `Community.DefaultFormTemplateId`, clones `FormSchema`, and runs `FormFieldStepAssigner.ApplyMissingBuckets`.
+Deploy UAT `38944473091` on `b433f63e` (harness isolation + fail-open prefill live):
 
-Confirmed code paths that are **not** converted to 409:
+`create activity 500 community=19.5 Harness category=19.5 Category`
 
-- `JsonException` while serializing/deserializing the pinned template
-- `NullReferenceException` if cloned `Fields` is null (`foreach` in `ApplyMissingBuckets`)
-- EF materialization failure of corrupt template jsonb
-- `DbUpdateException` that is not a unique-slug violation after a cloned schema is attached
+Dashboard meter moved 2→3 communities on retry. Dedicated catalog was used. Product prefill is fail-open. Still 500.
 
-Resolution in this change: never reuse `items[0]`; find-or-create dedicated `19.5 Harness` / `19.5 Category` (no default template on create). Fail-open optional prefill so a corrupt pin cannot 500 create.
+Earlier repair (PR #465) still valuable: do not reuse `items[0]`; fail-open corrupt pins. It did not stop this 500.
 
 ### H2 — Payload/binding error (Refuted)
 
@@ -49,6 +46,20 @@ Same token/origin `GET /api/v1/admin/me` succeeded immediately before create.
 
 PR #464: Pro UI login PASS desktop+mobile on this SHA.
 
+### H5 — Npgsql timestamptz rejects Singapore-offset ScheduledStartsAt (Confirmed)
+
+CreativoRare dashboard: registration period resets Singapore. Harness `schedule: "Sat 10:00"` parses via `ActivityScheduleParser` to a DateTimeOffset with offset +08:00. `NormalizeScheduledStartsAt` converted explicit `ScheduledStartsAt` to UTC but left parsed values in the tenant offset.
+
+Npgsql `timestamp with time zone` accepts UTC DateTimeOffset only. In-memory tests cannot see this. Default-tenant UTC offset 0 would also not throw.
+
+Fix: persist parsed starts-at as UTC; EF conversion as belt-and-suspenders.
+
+## Follow-up: 2026-10-16 #2
+
+SHA provenance on Deploy UAT `38944473091`: `targetSha == apiGitSha == b433f63e`, `shaMatch: true`. Git fetch retry + sequential build PASS. Host acceptance PASS. Public smoke PASS.
+
+Pro rooms PASS desktop+mobile. Mutating create still 500 (traceIds `0HNPBM1Q9SVNS`, `0HNPBM1Q9SVOD`). H1 refuted. H5 confirmed by code + timezone evidence.
+
 ## Missing evidence
 
-UAT API logs for `traceId` `0HNPBK3NVLJ13` (no droplet SSH in this run). If H1 is wrong, the next Deploy UAT create failure will include `community=` / `category=` in the Playwright message.
+UAT API logs for those traceIds (no droplet SSH). Not required to ship the UTC persist fix.
