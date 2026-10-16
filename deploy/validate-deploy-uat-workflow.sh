@@ -183,6 +183,13 @@ else
   fail "workflow must run npm run test:e2e:uat after a successful deploy"
 fi
 
+if grep -q 'UAT_AUTO_BASIC_EMAIL' "$WF" && grep -q 'UAT_AUTO_PRO_EMAIL' "$WF" \
+  && grep -q 'UAT_AUTO_PRO_PASSWORD' "$WF"; then
+  pass "browser job receives Basic and Pro operator aliases"
+else
+  fail "browser job must pass UAT_AUTO_BASIC_* and UAT_AUTO_PRO_* aliases"
+fi
+
 if grep -q 'name: UAT acceptance summary' "$WF" && grep -q 'uat-acceptance-summary.sh' "$WF"; then
   pass "Deploy UAT builds acceptance-summary.json after deploy and browser"
 else
