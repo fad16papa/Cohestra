@@ -55,6 +55,7 @@ grep -q 'campaigns/send-test' "$CORE" || fail "19.5 campaign proof must use send
 grep -q 'admin/campaigns/send"' "$CORE" && fail "19.5 must not POST a campaign list blast"
 grep -q '/unpublish' "$CORE" || fail "19.5 must unpublish harness activities, not archive the tenant"
 grep -q 'Public registration URL' "$CORE" || fail "19.5 Share kit proof must use the labeled registration URL input"
+grep -q 'tab=share' "$CORE" || fail "19.5 Share kit proof must open the share tab so the URL input is visible"
 DEPLOY="$ROOT_DIR/.github/workflows/deploy.yml"
 grep -q 'UAT_AUTO_PRO_EMAIL' "$DEPLOY" || fail "Deploy UAT browser job must pass UAT_AUTO_PRO_EMAIL"
 grep -q 'UAT_AUTO_PRO_PASSWORD' "$DEPLOY" || fail "Deploy UAT browser job must pass UAT_AUTO_PRO_PASSWORD"
