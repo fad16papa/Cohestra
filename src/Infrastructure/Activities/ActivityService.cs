@@ -8,6 +8,7 @@ using Cohestra.Infrastructure.Registrations;
 using Cohestra.Infrastructure.Tenancy;
 using Cohestra.Infrastructure.Tenants;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
 
@@ -17,7 +18,8 @@ public sealed class ActivityService(
     CohestraDbContext dbContext,
     IOptions<PublicWebOptions> publicWebOptions,
     RedisPublicActivityCache publicActivityCache,
-    ICurrentTenant currentTenant) : IActivityService
+    ICurrentTenant currentTenant,
+    ILogger<ActivityService>? logger = null) : IActivityService
 {
     private const int DefaultPageSize = 25;
     private const int MaxPageSize = 100;
@@ -1280,28 +1282,40 @@ public sealed class ActivityService(
             return;
         }
 
-        var template = await dbContext.TenantFormTemplates
-            .AsNoTracking()
-            .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
-
-        if (template is null)
-        {
-            return;
-        }
-
-        var cloned = FormSchemaCloner.Clone(template.FormSchema);
-        FormFieldStepAssigner.ApplyMissingBuckets(cloned);
-
         try
         {
+            var template = await dbContext.TenantFormTemplates
+                .AsNoTracking()
+                .FirstOrDefaultAsync(item => item.Id == templateId, cancellationToken);
+
+            if (template?.FormSchema?.Fields is null)
+            {
+                return;
+            }
+
+            var cloned = FormSchemaCloner.Clone(template.FormSchema);
+            FormFieldStepAssigner.ApplyMissingBuckets(cloned);
+
             await EnsureFormSchemaPlanAllowedAsync(cloned, tenantId, cancellationToken);
+            activity.FormSchema = cloned;
         }
         catch (FormSchemaPlanLockedException)
         {
             return;
         }
-
-        activity.FormSchema = cloned;
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // Prefill is optional. A corrupt community default must not 500 activity create.
+            logger?.LogWarning(
+                ex,
+                "Skipping community default form template {TemplateId} while creating activity {ActivityId}",
+                templateId,
+                activity.Id);
+        }
     }
 
     private async Task EnsureFormSchemaPlanAllowedAsync(

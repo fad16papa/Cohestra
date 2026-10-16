@@ -26,7 +26,7 @@ internal static class FormFieldStepAssigner
 
     public static void ApplyMissingBuckets(ActivityFormSchema schema)
     {
-        if (schema.Meta is not { SplitIntoSteps: true })
+        if (schema.Meta is not { SplitIntoSteps: true } || schema.Fields is null)
         {
             return;
         }

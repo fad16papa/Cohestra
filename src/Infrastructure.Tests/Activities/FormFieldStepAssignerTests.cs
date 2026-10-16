@@ -75,4 +75,16 @@ public sealed class FormFieldStepAssignerTests
         Assert.Equal(FormFieldSteps.Identity, schema.Fields[0].Step);
         Assert.Equal(FormFieldSteps.Identity, schema.Fields[1].Step);
     }
+
+    [Fact]
+    public void ApplyMissingBuckets_NullFields_DoesNotThrow()
+    {
+        var schema = new ActivityFormSchema
+        {
+            Meta = new FormSchemaMeta { SplitIntoSteps = true },
+            Fields = null!,
+        };
+
+        FormFieldStepAssigner.ApplyMissingBuckets(schema);
+    }
 }

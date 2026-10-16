@@ -21,6 +21,9 @@ const proPassword = process.env.UAT_AUTO_PRO_PASSWORD ?? "";
 const basicSlug = process.env.UAT_AUTO_BASIC_SLUG?.trim() || "default";
 const proSlug = process.env.UAT_AUTO_PRO_SLUG?.trim() || "creativorare";
 
+const HARNESS_COMMUNITY = "19.5 Harness";
+const HARNESS_CATEGORY = "19.5 Category";
+
 const HARNESS_FORM_SCHEMA = {
   version: 1,
   fields: [
@@ -117,20 +120,136 @@ async function readJson(response: { json: () => Promise<unknown> }): Promise<Rec
   return (await response.json()) as Record<string, unknown>;
 }
 
-async function firstNamed(
+async function listNamedItems(
   request: APIRequestContext,
   origin: string,
   token: string,
   path: string,
-): Promise<string | null> {
+): Promise<Array<{ id: string; name: string }>> {
   const response = await request.get(`${origin}${path}`, { headers: authHeaders(token) });
   if (!response.ok()) {
-    return null;
+    return [];
   }
   const body = await readJson(response);
-  const items = (body.items ?? body.Items) as Array<{ name?: string; Name?: string }> | undefined;
-  const name = items?.[0]?.name ?? items?.[0]?.Name;
-  return typeof name === "string" && name.trim() ? name : null;
+  const items = (body.items ?? body.Items) as
+    | Array<{ id?: string; Id?: string; name?: string; Name?: string }>
+    | undefined;
+  return (items ?? [])
+    .map((item) => ({
+      id: String(item.id ?? item.Id ?? ""),
+      name: String(item.name ?? item.Name ?? "").trim(),
+    }))
+    .filter((item) => item.name.length > 0);
+}
+
+function findNamed(
+  items: Array<{ id: string; name: string }>,
+  desiredName: string,
+): { id: string; name: string } | undefined {
+  const wanted = desiredName.trim().toLowerCase();
+  return items.find((item) => item.name.toLowerCase() === wanted);
+}
+
+async function ensureNamedCategory(
+  request: APIRequestContext,
+  origin: string,
+  token: string,
+): Promise<string> {
+  const existing = findNamed(
+    await listNamedItems(request, origin, token, "/api/v1/admin/categories"),
+    HARNESS_CATEGORY,
+  );
+  if (existing) {
+    return existing.name;
+  }
+
+  const created = await request.post(`${origin}/api/v1/admin/categories`, {
+    headers: authHeaders(token),
+    data: { name: HARNESS_CATEGORY },
+  });
+  if (created.ok()) {
+    const body = await readJson(created);
+    return String(body.name ?? body.Name ?? HARNESS_CATEGORY);
+  }
+
+  const retry = findNamed(
+    await listNamedItems(request, origin, token, "/api/v1/admin/categories"),
+    HARNESS_CATEGORY,
+  );
+  if (retry) {
+    return retry.name;
+  }
+
+  expect(
+    created.ok(),
+    `create category ${HARNESS_CATEGORY} ${created.status()} ${await created.text()}`,
+  ).toBeTruthy();
+  return HARNESS_CATEGORY;
+}
+
+async function communityWithoutDefaultTemplate(
+  request: APIRequestContext,
+  origin: string,
+  token: string,
+  items: Array<{ id: string; name: string }>,
+): Promise<string | null> {
+  for (const item of items) {
+    if (!item.id) {
+      continue;
+    }
+    const detail = await request.get(`${origin}/api/v1/admin/communities/${item.id}`, {
+      headers: authHeaders(token),
+    });
+    if (!detail.ok()) {
+      continue;
+    }
+    const body = await readJson(detail);
+    const templateId = body.defaultFormTemplateId ?? body.DefaultFormTemplateId;
+    if (templateId == null || templateId === "") {
+      return item.name;
+    }
+  }
+  return null;
+}
+
+async function ensureHarnessCommunity(
+  request: APIRequestContext,
+  origin: string,
+  token: string,
+): Promise<string> {
+  const listed = await listNamedItems(request, origin, token, "/api/v1/admin/communities");
+  const existing = findNamed(listed, HARNESS_COMMUNITY);
+  if (existing) {
+    return existing.name;
+  }
+
+  const created = await request.post(`${origin}/api/v1/admin/communities`, {
+    headers: authHeaders(token),
+    data: { name: HARNESS_COMMUNITY },
+  });
+  if (created.ok()) {
+    const body = await readJson(created);
+    return String(body.name ?? body.Name ?? HARNESS_COMMUNITY);
+  }
+
+  const retry = findNamed(
+    await listNamedItems(request, origin, token, "/api/v1/admin/communities"),
+    HARNESS_COMMUNITY,
+  );
+  if (retry) {
+    return retry.name;
+  }
+
+  const untemplated = await communityWithoutDefaultTemplate(request, origin, token, listed);
+  if (untemplated) {
+    return untemplated;
+  }
+
+  expect(
+    created.ok(),
+    `create community ${HARNESS_COMMUNITY} ${created.status()} ${await created.text()}`,
+  ).toBeTruthy();
+  return HARNESS_COMMUNITY;
 }
 
 async function ensureCatalog(
@@ -138,29 +257,10 @@ async function ensureCatalog(
   origin: string,
   token: string,
 ): Promise<{ community: string; category: string }> {
-  let community = await firstNamed(request, origin, token, "/api/v1/admin/communities");
-  if (!community) {
-    const created = await request.post(`${origin}/api/v1/admin/communities`, {
-      headers: authHeaders(token),
-      data: { name: "19.5 Harness" },
-    });
-    expect(created.ok(), `create community ${created.status()} ${await created.text()}`).toBeTruthy();
-    const body = await readJson(created);
-    community = String(body.name ?? body.Name ?? "19.5 Harness");
-  }
-
-  let category = await firstNamed(request, origin, token, "/api/v1/admin/categories");
-  if (!category) {
-    const created = await request.post(`${origin}/api/v1/admin/categories`, {
-      headers: authHeaders(token),
-      data: { name: "19.5 Category" },
-    });
-    expect(created.ok(), `create category ${created.status()} ${await created.text()}`).toBeTruthy();
-    const body = await readJson(created);
-    category = String(body.name ?? body.Name ?? "19.5 Category");
-  }
-
-  return { community, category };
+  return {
+    community: await ensureHarnessCommunity(request, origin, token),
+    category: await ensureNamedCategory(request, origin, token),
+  };
 }
 
 async function createPublishedActivity(
@@ -181,7 +281,10 @@ async function createPublishedActivity(
       status: "draft",
     },
   });
-  expect(created.ok(), `create activity ${created.status()} ${await created.text()}`).toBeTruthy();
+  expect(
+    created.ok(),
+    `create activity ${created.status()} community=${catalog.community} category=${catalog.category} ${await created.text()}`,
+  ).toBeTruthy();
   const activity = await readJson(created);
   const id = String(activity.id ?? activity.Id);
   const slug = String(activity.slug ?? activity.Slug);
