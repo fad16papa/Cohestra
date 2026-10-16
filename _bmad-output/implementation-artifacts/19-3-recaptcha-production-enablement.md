@@ -1,15 +1,15 @@
 ---
 epic: 19
 story: 3
-status: in-progress
+status: done
 created: 2026-10-15
-updated: 2026-10-15
+updated: 2026-10-16
 acceptance_method: epic-45-dual-layer
 ---
 
 # Story 19.3: reCAPTCHA production enablement
 
-Status: **in-progress** — owner recaptcha gate resolved (names on droplet `.env`). Layer B isolated OTP path is on main (#459). Layer A runs on the next Deploy UAT web rebuild. This is **not** production cutover.
+Status: **done** — live Deploy UAT `38911205011` / `26f594bc`. Layer A + Layer B passed. This is **not** production cutover.
 
 Signup implementation already exists. This story is UAT-domain key configuration + automated rebuild + **machine-verifiable** dual-layer acceptance.
 

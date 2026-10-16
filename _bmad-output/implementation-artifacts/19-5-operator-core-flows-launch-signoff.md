@@ -1,13 +1,13 @@
 ---
 epic: 19
 story: 5
-status: ready-for-dev
+status: in-progress
 created: 2026-10-15
 ---
 
 # Story 19.5: Operator core flows and launch sign-off
 
-Status: **ready-for-dev**. Do not start the official walk until 19.3 dual-layer artifacts pass. 19.4 is CLOSED / FROZEN.
+Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN. Authenticated operator walks use Environment `uat` names `UAT_AUTO_BASIC_*` / `UAT_AUTO_PRO_*` and skip if absent.
 
 After Epic 45.4+, machine-verify every core flow that is machine-verifiable (Playwright/API). Stop only for a genuine subjective/product/business judgment. Do not require owner SSH or manual screenshots for ordinary regression.
 
