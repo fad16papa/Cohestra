@@ -60,6 +60,12 @@ SHA provenance on Deploy UAT `38944473091`: `targetSha == apiGitSha == b433f63e`
 
 Pro rooms PASS desktop+mobile. Mutating create still 500 (traceIds `0HNPBM1Q9SVNS`, `0HNPBM1Q9SVOD`). H1 refuted. H5 confirmed by code + timezone evidence.
 
+## Follow-up: 2026-10-16 #3
+
+Deploy UAT `38947776906` on `e26c30af`: SHA match. Create+publish PASS (H5 fix held).
+
+Share kit assertion FAIL — Playwright strict mode: `getByText(/\/register\/…/)` matched 3 elements. Product Share kit repeats the path in the URL field, preview, and pack copy. Harness should read `Public registration URL`.
+
 ## Missing evidence
 
 UAT API logs for those traceIds (no droplet SSH). Not required to ship the UTC persist fix.
