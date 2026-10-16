@@ -45,7 +45,10 @@ internal sealed class ActivityConfiguration : IEntityTypeConfiguration<Activity>
             .HasMaxLength(500)
             .IsRequired();
 
-        builder.Property(activity => activity.ScheduledStartsAt);
+        builder.Property(activity => activity.ScheduledStartsAt)
+            .HasConversion(
+                value => value.HasValue ? value.Value.ToUniversalTime() : value,
+                value => value);
 
         builder.Property(activity => activity.Location)
             .HasMaxLength(500)

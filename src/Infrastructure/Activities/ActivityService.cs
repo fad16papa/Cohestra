@@ -1248,7 +1248,10 @@ public sealed class ActivityService(
             return scheduledStartsAt.Value.ToUniversalTime();
         }
 
-        return ActivityScheduleParser.TryParseStartsAt(schedule, registrationTimeZoneId);
+        // Npgsql timestamptz accepts UTC DateTimeOffset only. Parsed wall times
+        // (e.g. Asia/Singapore +08:00) must be converted before SaveChanges.
+        return ActivityScheduleParser.TryParseStartsAt(schedule, registrationTimeZoneId)
+            ?.ToUniversalTime();
     }
 
     private async Task ApplyCommunityDefaultFormSchemaAsync(
