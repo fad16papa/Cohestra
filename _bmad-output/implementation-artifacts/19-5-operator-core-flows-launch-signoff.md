@@ -9,6 +9,20 @@ created: 2026-10-15
 
 Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
 
+## Live machine matrix (2026-10-16)
+
+Deploy UAT `38952447077` / SHA `756e408821ae4cf7bdd62753be5a07493f63dc87`
+(`shaMatch: true`). Host acceptance PASS. Public smoke PASS. Browser
+21 passed / 15 skipped / 0 unexpected.
+
+Presence only: `UAT_AUTO_PRO_*` configured (masked); `UAT_AUTO_BASIC_*`
+empty. Pro mutating walk PASS (create/publish/share/register/dedup/CSV/
+campaign `send-test`). Basic SKIP. OTP mailbox not required.
+
+`OWNER_GATE=lifecycle_disposable_tenant` — no disposable UAT tenant;
+never suspend/archive `default` or `creativorare`. Do not fabricate
+Operator/PM sign-off. Production NO-GO.
+
 Owner reports Environment `uat` aliases mapped for existing operators
 (`UAT_AUTO_PRO_*`, and `UAT_AUTO_BASIC_*` if a default TenantAdmin is
 known). Presence is proven by skip vs run on Deploy UAT — never by
@@ -47,16 +61,16 @@ From `epics-cohestra-enterprise.md` Story 19.5. Given at least one **Basic** and
 
 | # | Flow | Current evidence | Remaining |
 | - | ---- | ---------------- | --------- |
-| 1 | Dashboard metrics load | Pro `/dashboard` PASS on `38930275247`. Basic SKIP (aliases unmapped). | Basic live run after aliases exist |
-| 2 | Create activity → publish → share kit | FAIL 500 on create (`0HNPBK3NVLJ13`). Not scored PASS. | Dedicated `19.5 Harness` catalog + fail-open prefill, then rerun |
-| 3 | Public registration + client dedup | Blocked by create 500. Not scored PASS. | Same mutating walk |
-| 4 | Reports + CSV export (Pro) | Analytics room PASS. Weekly CSV blocked by create 500. | CSV on next mutating walk |
-| 5 | Campaign send test (Pro) + tenant branding | Campaigns room PASS (no blast). `send-test` blocked by create 500. Website branding PASS (`siteName` contains creativorare). | `send-test` on next mutating walk |
-| 6 | Website builder publish (Pro) or stub home (Basic) | Pro Website Studio PASS. Basic website/stub SKIP. | Basic live run |
+| 1 | Dashboard metrics load | Pro `/dashboard` PASS desktop+mobile on `38952447077`. Basic SKIP (aliases unmapped). | Basic live run after aliases exist |
+| 2 | Create activity → publish → share kit | PASS on `38952447077` mutating walk (desktop). | — |
+| 3 | Public registration + client dedup | PASS same walk (two 201s, same clientId). | — |
+| 4 | Reports + CSV export (Pro) | PASS analytics room + weekly CSV. | — |
+| 5 | Campaign send test (Pro) + tenant branding | PASS campaigns room + `send-test` (no blast). Website branding PASS. | — |
+| 6 | Website builder publish (Pro) or stub home (Basic) | Pro Website Studio PASS desktop+mobile. Basic website/stub SKIP. | Basic live run |
 | 7 | Suspended/archived tenant → maintenance or 404 | No disposable UAT tenant. Protected: `default`, `creativorare`. | `OWNER_GATE=lifecycle_disposable_tenant` |
 | — | Billing | 19.4 CLOSED — do not re-walk as a 19.5 blocker | Frozen PASS |
-| — | Authentication / settings | Pro login PASS desktop+mobile after #464 | Basic login still SKIP |
-| — | Checklist Operator + PM rows | Empty — do not fabricate | `OWNER_GATE=launch_signoff` after machine matrix |
+| — | Authentication / settings | Pro login PASS desktop+mobile | Basic login still SKIP |
+| — | Checklist Operator + PM rows | Empty — do not fabricate | After lifecycle + Basic, `OWNER_GATE=launch_signoff` |
 
 Also: SendGrid domain auth per `docs/deploy/sendgrid-production.md`, or documented defer with product approval.
 
