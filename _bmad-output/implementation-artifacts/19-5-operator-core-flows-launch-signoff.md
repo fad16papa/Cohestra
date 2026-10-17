@@ -9,6 +9,32 @@ created: 2026-10-15
 
 Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
 
+## Live machine matrix (2026-10-17) — Basic slug mismatch (credentials VALID)
+
+Deploy UAT `38999310722` / main `55791870`. Host deploy PASS. Browser
+21 passed / 5 skipped / 10 unexpected.
+
+BASIC CREDENTIALS: VALID (owner signed in on the live Basic workspace).
+BASIC TENANT: `picklemania`.
+FAILED TEST HOST: `default` (`default.uat.cohestra.app/login`).
+ROOT CAUSE: tenant slug mismatch. `OWNER_GATE=basic_credentials_invalid`
+is superseded.
+
+Presence: `UAT_AUTO_BASIC_EMAIL` / `UAT_AUTO_BASIC_PASSWORD` PRESENT /
+MASKED; tests RAN. Deploy UAT did not pass `UAT_AUTO_BASIC_SLUG`, so the
+harness fell back to `default`. Same mapped pair works at
+`https://picklemania.uat.cohestra.app/dashboard` (Plan = Basic).
+
+Repair: inject Environment `uat` vars `UAT_AUTO_BASIC_SLUG` and
+`UAT_AUTO_PRO_SLUG` into the Playwright job. Do not hardcode
+`picklemania`. Do not create a user/tenant or reset the password.
+
+Pro reconfirmed PASS. Separate 45.4 defect: `getByLabel(/password/i)`
+matches the Show-password control — not the 19.5 host mismatch.
+
+Protected: `picklemania`, `creativorare`, `default`. Do not
+suspend/archive any of them. Production NO-GO.
+
 ## Live machine matrix (2026-10-17) — Basic aliases mapped; fresh Deploy UAT required
 
 Owner reports Environment `uat` now has existing Basic operator aliases
@@ -106,9 +132,9 @@ From `epics-cohestra-enterprise.md` Story 19.5. Given at least one **Basic** and
 | 4 | Reports + CSV export (Pro) | PASS analytics room + weekly CSV. | — |
 | 5 | Campaign send test (Pro) + tenant branding | PASS campaigns room + `send-test` (no blast). Website branding PASS. | — |
 | 6 | Website builder publish (Pro) or stub home (Basic) | Pro Website Studio PASS desktop+mobile. Basic website/stub SKIP on `38955178032`. | Fresh Deploy UAT after 2026-10-17 Basic alias mapping |
-| 7 | Suspended/archived tenant → maintenance or 404 | No disposable UAT tenant. Protected: `default`, `creativorare`. | `OWNER_GATE=lifecycle_disposable_tenant` |
+| 7 | Suspended/archived tenant → maintenance or 404 | No disposable UAT tenant. Protected: `picklemania`, `creativorare`, `default`. | `OWNER_GATE=lifecycle_disposable_tenant` |
 | — | Billing | 19.4 CLOSED — do not re-walk as a 19.5 blocker | Frozen PASS |
-| — | Authentication / settings | Pro login PASS desktop+mobile | Fresh Basic login after 2026-10-17 alias mapping |
+| — | Authentication / settings | Pro login PASS desktop+mobile | Fresh Basic login on picklemania after `UAT_AUTO_BASIC_SLUG` is injected |
 | — | Checklist Operator + PM rows | Empty — do not fabricate | After lifecycle + Basic, `OWNER_GATE=launch_signoff` |
 
 Also: SendGrid domain auth per `docs/deploy/sendgrid-production.md`, or documented defer with product approval.

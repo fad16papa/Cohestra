@@ -3,16 +3,30 @@ import { mailboxSecretsPresent, readSignupOtp } from "./otp-mailbox";
 
 const email = process.env.UAT_AUTO_BASIC_EMAIL ?? "";
 const password = process.env.UAT_AUTO_BASIC_PASSWORD ?? "";
+const basicSlug = process.env.UAT_AUTO_BASIC_SLUG?.trim() || "default";
 const mailboxAddress =
   process.env.UAT_OTP_MAILBOX_ADDRESS ?? process.env.UAT_OTP_MAILBOX_USER ?? "";
+
+function workspaceOrigin(slug: string): string {
+  const base = process.env.UAT_PUBLIC_BASE_URL ?? "";
+  if (!base) {
+    throw new Error("UAT_PUBLIC_BASE_URL is required");
+  }
+  const url = new URL(base);
+  if (!url.hostname.startsWith(`${slug}.`)) {
+    url.hostname = `${slug}.${url.hostname}`;
+  }
+  return url.origin;
+}
 
 test.describe("45.4 authenticated UAT", () => {
   test("dedicated automation login when credentials exist", async ({ page }) => {
     test.skip(!email || !password, "UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped");
-    const response = await page.goto("/login", { waitUntil: "domcontentloaded" });
+    const origin = workspaceOrigin(basicSlug);
+    const response = await page.goto(`${origin}/login`, { waitUntil: "domcontentloaded" });
     expect(response?.ok()).toBeTruthy();
-    await page.getByLabel(/email/i).fill(email);
-    await page.getByLabel(/password/i).fill(password);
+    await page.locator("#email").fill(email);
+    await page.locator("#password").fill(password);
     await page.getByRole("button", { name: /sign in|log in|continue/i }).click();
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 20_000 });
   });
