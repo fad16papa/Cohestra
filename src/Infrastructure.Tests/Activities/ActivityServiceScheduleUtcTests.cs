@@ -17,10 +17,16 @@ public sealed class ActivityServiceScheduleUtcTests
     [Fact]
     public void TryParseStartsAt_SingaporeWeekday_HasNonUtcOffset()
     {
-        var parsed = ActivityScheduleParser.TryParseStartsAt("Sat 10:00", "Asia/Singapore");
+        var saturdayUtc = new DateTimeOffset(2026, 10, 17, 3, 0, 0, TimeSpan.Zero);
+        var parsed = ActivityScheduleParser.TryParseStartsAt(
+            "Sat 10:00",
+            "Asia/Singapore",
+            saturdayUtc);
 
         Assert.NotNull(parsed);
-        Assert.NotEqual(TimeSpan.Zero, parsed!.Value.Offset);
+        Assert.Equal(TimeSpan.FromHours(8), parsed!.Value.Offset);
+        Assert.Equal(10, parsed.Value.Hour);
+        Assert.Equal(DayOfWeek.Saturday, parsed.Value.DayOfWeek);
     }
 
     [Fact]

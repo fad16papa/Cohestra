@@ -32,9 +32,14 @@ Fresh Deploy UAT is required to score:
 - Basic campaigns Pro-lock
 - Responsive desktop 1440×900 and mobile 390×844
 
-Do not count SKIP as PASS. OTP mailbox is not required. Application
-behavior is unchanged; this file is the legitimate tracker update that
-re-triggers CI → main → Deploy UAT.
+Do not count SKIP as PASS. OTP mailbox is not required.
+
+CI `38998378356` on tracker HEAD `cae6a6c1` failed two Saturday-host
+schedule tests: `DateTimeOffset.TryParse(AssumeUniversal)` treated
+`Sat 10:00` as UTC. Parser now matches weekday/week-Saturday patterns
+before generic DateTimeOffset parse so tenant `Asia/Singapore` wall
+time is preserved. See
+`investigations/story-19-5-sat-schedule-utc-parse.md`.
 
 Pro acceptance is preserved from `38952447077` / `38955178032` unless a
 genuine regression appears.

@@ -30,43 +30,9 @@ internal static partial class ActivityScheduleParser
         var timeZone = ActivityScheduleTimeZone.Resolve(registrationTimeZoneId);
         var trimmed = schedule.Trim();
 
-        if (DateTimeOffset.TryParse(
-                trimmed,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-                out var parsedOffset))
-        {
-            return parsedOffset;
-        }
-
-        if (DateTime.TryParseExact(
-                trimmed,
-                DisplayDateTimeFormat,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.AllowWhiteSpaces,
-                out var displayParsed))
-        {
-            return ToOffsetInTimeZone(displayParsed, timeZone);
-        }
-
-        if (DateTime.TryParse(
-                trimmed,
-                CultureInfo.GetCultureInfo("en-US"),
-                DateTimeStyles.AllowWhiteSpaces,
-                out var parsedEnUs))
-        {
-            return ToOffsetInTimeZone(parsedEnUs, timeZone);
-        }
-
-        if (DateTime.TryParse(
-                trimmed,
-                CultureInfo.InvariantCulture,
-                DateTimeStyles.AllowWhiteSpaces,
-                out var parsedInvariant))
-        {
-            return ToOffsetInTimeZone(parsedInvariant, timeZone);
-        }
-
+        // Weekday-only strings such as "Sat 10:00" must not go through
+        // DateTimeOffset.TryParse(AssumeUniversal). On a Saturday host that
+        // API succeeds and returns UTC, skipping the tenant wall-clock path.
         var weekMatch = WeekSaturdayPattern().Match(trimmed);
         if (weekMatch.Success &&
             int.TryParse(weekMatch.Groups[1].Value, out var weekNum) &&
@@ -106,6 +72,43 @@ internal static partial class ActivityScheduleParser
 
             var target = localDate.AddDays(daysUntil).AddHours(hour).AddMinutes(minute);
             return ToOffsetInTimeZone(target, timeZone);
+        }
+
+        if (DateTimeOffset.TryParse(
+                trimmed,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out var parsedOffset))
+        {
+            return parsedOffset;
+        }
+
+        if (DateTime.TryParseExact(
+                trimmed,
+                DisplayDateTimeFormat,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AllowWhiteSpaces,
+                out var displayParsed))
+        {
+            return ToOffsetInTimeZone(displayParsed, timeZone);
+        }
+
+        if (DateTime.TryParse(
+                trimmed,
+                CultureInfo.GetCultureInfo("en-US"),
+                DateTimeStyles.AllowWhiteSpaces,
+                out var parsedEnUs))
+        {
+            return ToOffsetInTimeZone(parsedEnUs, timeZone);
+        }
+
+        if (DateTime.TryParse(
+                trimmed,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.AllowWhiteSpaces,
+                out var parsedInvariant))
+        {
+            return ToOffsetInTimeZone(parsedInvariant, timeZone);
         }
 
         return null;
