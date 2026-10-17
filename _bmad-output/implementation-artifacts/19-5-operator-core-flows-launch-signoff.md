@@ -7,7 +7,36 @@ created: 2026-10-15
 
 # Story 19.5: Operator core flows and launch sign-off
 
-Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
+Status: **in-progress**. Machine acceptance PASS. Waiting for Operator + PM
+sign-off. Do not fabricate those signatures. Production remains NO-GO.
+
+## Live machine matrix (2026-10-17) — lifecycle PASS / OWNER_GATE=launch_signoff
+
+Deploy UAT `39011680830` / main `e01674664111eae02b61b2863e5d7a201b7a9833`.
+shaMatch PASS. Browser 31 passed / 5 skipped / 0 unexpected.
+
+Live inputs (Environment `uat`):
+
+- Variable `UAT_AUTO_LIFECYCLE_ENABLED=true`
+- Secret `UAT_AUTO_PLATFORM_ADMIN_EMAIL` PRESENT / MASKED
+- Secret `UAT_AUTO_PLATFORM_ADMIN_PASSWORD` PRESENT / MASKED
+
+No secret values are recorded here. Host `platformAdminSeed` remained
+false. First login passed, so one-shot bootstrap was correctly
+`NOT REQUIRED`. Role exclusivity PASS.
+
+Disposable tenant from this run only:
+`uat-19-5-lifecycle-e0167466-11680830` — Basic / Complimentary / Free.
+Suspend + public maintenance PASS. Reactivate PASS. Archive + public
+404 PASS (independently rechecked). Audits:
+TenantCreated, TenantSuspended, TenantReactivated, TenantArchived.
+Protected hosts `default`, `picklemania`, and `creativorare` stayed
+HTTP 200 with no maintenance copy. Paddle mutation NONE.
+
+45.4 PASS. Basic PASS. Pro PASS. Lifecycle PASS.
+`OWNER_GATE=launch_signoff`. Story 19.5 stays in-progress until real
+Operator + PM sign-off. After close: set
+`UAT_AUTO_LIFECYCLE_ENABLED=false` and rotate the dedicated aliases.
 
 ## Live machine matrix (2026-10-17) — first-use PlatformAdmin bootstrap required
 
