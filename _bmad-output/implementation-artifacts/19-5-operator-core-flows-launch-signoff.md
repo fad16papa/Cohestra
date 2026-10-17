@@ -9,6 +9,21 @@ created: 2026-10-15
 
 Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
 
+## Live machine matrix (2026-10-17) — Deploy UAT `39001637293` slug still empty
+
+Main `dc175eb1` / Deploy UAT `39001637293`. Host deploy PASS. Browser
+failed because `UAT_AUTO_BASIC_SLUG=` and `UAT_AUTO_PRO_SLUG=` were
+empty at injection time, so the harness fell back to `default` again.
+Credentials remain VALID. 45.4 no longer hits Show-password strict-mode;
+it failed on the same default-host login.
+
+Workflow now also reads Environment secrets as fallback
+(`vars || secrets`) in case the slug was stored with the other
+`UAT_AUTO_*` secrets. Do not hardcode `picklemania`. If both sources
+are empty on the next run, `OWNER_GATE=basic_tenant_slug_mapping`.
+
+Pro rooms + mutating walk PASS on this run. Production NO-GO.
+
 ## Live machine matrix (2026-10-17) — Basic slug mismatch (credentials VALID)
 
 Deploy UAT `38999310722` / main `55791870`. Host deploy PASS. Browser
