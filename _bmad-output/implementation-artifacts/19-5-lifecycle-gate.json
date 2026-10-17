@@ -1,0 +1,7 @@
+{
+  "story": "19.5",
+  "lifecycleOpen": true,
+  "authorizedEnvironment": "uat",
+  "slugPrefix": "uat-19-5-lifecycle-",
+  "protectedSlugs": ["default", "picklemania", "creativorare"]
+}

@@ -9,6 +9,16 @@ created: 2026-10-15
 
 Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
 
+## Live machine matrix (2026-10-17) — lifecycle automation authorized
+
+Deploy UAT `39004625819` / main `830adc140d3aa45edd9df70af8664789b25c2296`.
+Browser 31 passed / 5 skipped / 0 unexpected. Basic PASS on picklemania.
+Pro PASS. 45.4 login PASS. Remaining machine AC is lifecycle.
+
+Owner authorized a dedicated UAT PlatformAdmin identity and opt-in
+lifecycle job. Protected tenants stay refused. Production NO-GO.
+After live lifecycle PASS: `OWNER_GATE=launch_signoff`.
+
 ## Live machine matrix (2026-10-17) — Basic PASS on picklemania
 
 Deploy UAT `39003393683` / main `0e1281e9`. Host deploy PASS.

@@ -246,11 +246,135 @@ jobs:
             web/playwright-report/**
           if-no-files-found: warn
 
+  lifecycle:
+    name: UAT Story 19.5 lifecycle acceptance
+    needs:
+      - deploy
+      - browser
+    runs-on: ubuntu-latest
+    environment: uat
+    env:
+      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - name: Refuse unpinned TARGET_SHA
+        env:
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
+            exit 1
+          fi
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
+            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
+            exit 1
+          fi
+
+      - name: Checkout accepted SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ env.TARGET_SHA }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+
+      - name: Gate and run lifecycle harness
+        id: harness
+        env:
+          UAT_PUBLIC_BASE_URL: ${{ secrets.UAT_PUBLIC_BASE_URL }}
+          UAT_AUTO_LIFECYCLE_ENABLED: ${{ vars.UAT_AUTO_LIFECYCLE_ENABLED }}
+          UAT_AUTO_PLATFORM_ADMIN_EMAIL: ${{ secrets.UAT_AUTO_PLATFORM_ADMIN_EMAIL }}
+          UAT_AUTO_PLATFORM_ADMIN_PASSWORD: ${{ secrets.UAT_AUTO_PLATFORM_ADMIN_PASSWORD }}
+          GITHUB_ENVIRONMENT: uat
+        run: |
+          set -euo pipefail
+          if [[ -z "${UAT_PUBLIC_BASE_URL:-}" ]]; then
+            UAT_PUBLIC_BASE_URL=https://uat.cohestra.app
+          fi
+          export UAT_PUBLIC_BASE_URL
+          export LIFECYCLE_EVIDENCE_PATH=artifacts/19-5-lifecycle.json
+          mkdir -p artifacts
+          set +e
+          node --experimental-strip-types --experimental-default-type=module --no-warnings \
+            web/e2e-uat/lifecycle/run.ts
+          code=$?
+          set -e
+          if [[ "$code" -eq 78 ]]; then
+            echo "needs_bootstrap=true" >> "$GITHUB_OUTPUT"
+            echo "harness_code=78" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "needs_bootstrap=false" >> "$GITHUB_OUTPUT"
+          echo "harness_code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
+
+      - name: Bootstrap dedicated PlatformAdmin when missing
+        if: steps.harness.outputs.needs_bootstrap == 'true'
+        uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
+        env:
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+          UAT_AUTO_LIFECYCLE_ENABLED: ${{ vars.UAT_AUTO_LIFECYCLE_ENABLED }}
+          UAT_AUTO_PLATFORM_ADMIN_EMAIL: ${{ secrets.UAT_AUTO_PLATFORM_ADMIN_EMAIL }}
+          UAT_AUTO_PLATFORM_ADMIN_PASSWORD: ${{ secrets.UAT_AUTO_PLATFORM_ADMIN_PASSWORD }}
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: 22
+          command_timeout: 10m
+          envs: DROPLET_DEPLOY_PATH,UAT_AUTO_LIFECYCLE_ENABLED,UAT_AUTO_PLATFORM_ADMIN_EMAIL,UAT_AUTO_PLATFORM_ADMIN_PASSWORD
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-/home/deploy/cohestra}"
+            cd "$DEPLOY_PATH"
+            bash deploy/uat-platform-admin-oneshot.sh
+
+      - name: Retry lifecycle harness after bootstrap
+        if: steps.harness.outputs.needs_bootstrap == 'true'
+        env:
+          UAT_PUBLIC_BASE_URL: ${{ secrets.UAT_PUBLIC_BASE_URL }}
+          UAT_AUTO_LIFECYCLE_ENABLED: ${{ vars.UAT_AUTO_LIFECYCLE_ENABLED }}
+          UAT_AUTO_PLATFORM_ADMIN_EMAIL: ${{ secrets.UAT_AUTO_PLATFORM_ADMIN_EMAIL }}
+          UAT_AUTO_PLATFORM_ADMIN_PASSWORD: ${{ secrets.UAT_AUTO_PLATFORM_ADMIN_PASSWORD }}
+          GITHUB_ENVIRONMENT: uat
+          LIFECYCLE_BOOTSTRAP_ATTEMPTED: "true"
+        run: |
+          set -euo pipefail
+          if [[ -z "${UAT_PUBLIC_BASE_URL:-}" ]]; then
+            UAT_PUBLIC_BASE_URL=https://uat.cohestra.app
+          fi
+          export UAT_PUBLIC_BASE_URL
+          export LIFECYCLE_EVIDENCE_PATH=artifacts/19-5-lifecycle.json
+          mkdir -p artifacts
+          node --experimental-strip-types --experimental-default-type=module --no-warnings \
+            web/e2e-uat/lifecycle/run.ts
+
+      - name: Refuse secret-like lifecycle evidence
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -f artifacts/19-5-lifecycle.json ]] && grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN|password|Bearer ' artifacts/19-5-lifecycle.json; then
+            rm -f artifacts/19-5-lifecycle.json
+            echo "REFUSE: removed secret-like artifacts/19-5-lifecycle.json"
+            exit 1
+          fi
+
+      - name: Upload lifecycle evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uat-19-5-lifecycle-evidence
+          path: artifacts/19-5-lifecycle.json
+          if-no-files-found: warn
+
   evidence:
     name: UAT acceptance summary
     needs:
       - deploy
       - browser
+      - lifecycle
     if: always() && needs.deploy.result != 'skipped'
     runs-on: ubuntu-latest
     environment: uat

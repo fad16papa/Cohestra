@@ -145,6 +145,15 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     KnownProxies = { },
 });
 
+if (PlatformAdminSeedOneShot.IsRequested(app.Configuration))
+{
+    PlatformAdminSeedOneShot.EnsureAllowed(app.Configuration);
+    await ApplyMigrationsAsync(app);
+    await PlatformAdminSeeder.SeedAsync(app.Services);
+    app.Logger.LogInformation("PlatformAdmin one-shot seed finished; exiting without hosting HTTP.");
+    return;
+}
+
 await ApplyMigrationsAsync(app);
 LogStartupSeedConfiguration(app);
 await OperatorSeeder.SeedAsync(app.Services);
