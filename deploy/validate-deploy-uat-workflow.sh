@@ -222,6 +222,21 @@ else
   fail "workflow must upload acceptance-summary.json"
 fi
 
+
+if grep -q 'name: UAT Story 19.5 lifecycle acceptance' "$WF" \
+  && grep -q 'UAT_AUTO_LIFECYCLE_ENABLED' "$WF" \
+  && grep -q 'UAT_AUTO_PLATFORM_ADMIN_EMAIL' "$WF"; then
+  pass "Deploy UAT has an opt-in Story 19.5 lifecycle job"
+else
+  fail "workflow must include opt-in Story 19.5 lifecycle acceptance"
+fi
+
+if grep -q 'id-token: write' "$WF" || grep -q 'contents: write' "$WF"; then
+  fail "workflow must not add write permissions for lifecycle automation"
+else
+  pass "lifecycle job does not add write permissions"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1

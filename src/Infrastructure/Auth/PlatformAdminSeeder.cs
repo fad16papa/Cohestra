@@ -44,7 +44,7 @@ public static class PlatformAdminSeeder
             if (!await RoleExclusivity.CanAssignPlatformAdminAsync(userManager, existingUser, logger))
             {
                 throw new InvalidOperationException(
-                    $"PlatformAdmin seed blocked for {seedSettings.Email}: user already has TenantAdmin (roles are mutually exclusive).");
+                    "PlatformAdmin seed blocked: user already has TenantAdmin (roles are mutually exclusive).");
             }
 
             var addResult = await userManager.AddToRoleAsync(existingUser, PlatformAdminRole);
@@ -76,7 +76,7 @@ public static class PlatformAdminSeeder
         {
             await userManager.DeleteAsync(user);
             throw new InvalidOperationException(
-                $"Failed to seed platform admin account: email {seedSettings.Email} conflicts with TenantAdmin exclusivity.");
+                "Failed to seed platform admin account: email conflicts with TenantAdmin exclusivity.");
         }
 
         var roleResult = await userManager.AddToRoleAsync(user, PlatformAdminRole);
