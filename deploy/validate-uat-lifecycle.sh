@@ -133,6 +133,14 @@ else
   fail "19-5-lifecycle-gate.json must stay open and prefixed"
 fi
 
+
+TSCONFIG="$ROOT_DIR/web/tsconfig.json"
+if grep -q '"e2e-uat"' "$TSCONFIG"; then
+  pass "Next.tsconfig excludes the lifecycle harness"
+else
+  fail "web/tsconfig.json must exclude e2e-uat so next build does not typecheck the Node runner"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1
