@@ -65,6 +65,8 @@ grep -q 'vars.UAT_AUTO_BASIC_SLUG || secrets.UAT_AUTO_BASIC_SLUG' "$DEPLOY" || f
 grep -Fq 'picklemania' "$CORE" && fail "19.5 must not hardcode the Basic tenant slug"
 grep -q 'getByLabel(/password/i)' "$AUTH" && fail "authenticated UAT must not use a loose password label (Show-password collision)"
 grep -q 'locator("#password")' "$AUTH" || fail "authenticated UAT must fill the password input by id"
+grep -q 'sign in to workspace' "$AUTH" || fail "authenticated UAT must submit Sign in to workspace, not a broad continue match"
+grep -q 'networkidle' "$AUTH" || fail "authenticated UAT login must wait for hydration before submit"
 pass "UAT Playwright contract"
 
 echo "uat-playwright contract OK"

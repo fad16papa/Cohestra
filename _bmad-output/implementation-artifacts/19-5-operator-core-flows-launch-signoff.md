@@ -9,6 +9,28 @@ created: 2026-10-15
 
 Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
 
+## Live machine matrix (2026-10-17) — Basic PASS on picklemania
+
+Deploy UAT `39003393683` / main `0e1281e9`. Host deploy PASS.
+`UAT_AUTO_BASIC_SLUG` PRESENT / MASKED (Environment secret). Browser job
+FAILED only on leftover 45.4 `authenticated.spec.ts` (broad Sign-in
+button + `domcontentloaded` submit). Canonical 19.5 Basic tests RAN and
+PASSED on `picklemania.uat.cohestra.app` desktop 1440 and mobile 390:
+
+- login (implicit) PASS
+- dashboard PASS
+- activities PASS
+- website Core-lock + public stub PASS
+- campaigns Pro-lock PASS
+
+Pro rooms + mutating walk PASS (no regression). Do not count the 45.4
+failure as a Basic product FAIL. 45.4 login will use the same
+hydration + `Sign in to workspace` path as 19.5.
+
+`OWNER_GATE=lifecycle_disposable_tenant` — no disposable UAT tenant.
+Protected: `picklemania`, `creativorare`, `default`. Do not fabricate
+Operator/PM sign-off. Production NO-GO.
+
 ## Live machine matrix (2026-10-17) — Deploy UAT `39001637293` slug still empty
 
 Main `dc175eb1` / Deploy UAT `39001637293`. Host deploy PASS. Browser
@@ -141,15 +163,15 @@ From `epics-cohestra-enterprise.md` Story 19.5. Given at least one **Basic** and
 
 | # | Flow | Current evidence | Remaining |
 | - | ---- | ---------------- | --------- |
-| 1 | Dashboard metrics load | Pro `/dashboard` PASS desktop+mobile on `38952447077`. Basic SKIP on `38955178032` (predates alias mapping). | Fresh Deploy UAT after 2026-10-17 Basic alias mapping |
+| 1 | Dashboard metrics load | Pro `/dashboard` PASS. Basic `/dashboard` PASS desktop+mobile on `39003393683` (`picklemania`). | — |
 | 2 | Create activity → publish → share kit | PASS on `38952447077` mutating walk (desktop). | — |
 | 3 | Public registration + client dedup | PASS same walk (two 201s, same clientId). | — |
 | 4 | Reports + CSV export (Pro) | PASS analytics room + weekly CSV. | — |
 | 5 | Campaign send test (Pro) + tenant branding | PASS campaigns room + `send-test` (no blast). Website branding PASS. | — |
-| 6 | Website builder publish (Pro) or stub home (Basic) | Pro Website Studio PASS desktop+mobile. Basic website/stub SKIP on `38955178032`. | Fresh Deploy UAT after 2026-10-17 Basic alias mapping |
+| 6 | Website builder publish (Pro) or stub home (Basic) | Pro Website Studio PASS. Basic Core-lock + stub PASS desktop+mobile on `39003393683`. | — |
 | 7 | Suspended/archived tenant → maintenance or 404 | No disposable UAT tenant. Protected: `picklemania`, `creativorare`, `default`. | `OWNER_GATE=lifecycle_disposable_tenant` |
 | — | Billing | 19.4 CLOSED — do not re-walk as a 19.5 blocker | Frozen PASS |
-| — | Authentication / settings | Pro login PASS desktop+mobile | Fresh Basic login on picklemania after `UAT_AUTO_BASIC_SLUG` is injected |
+| — | Authentication / settings | Pro login PASS. Basic login PASS on picklemania (`39003393683`). | — |
 | — | Checklist Operator + PM rows | Empty — do not fabricate | After lifecycle + Basic, `OWNER_GATE=launch_signoff` |
 
 Also: SendGrid domain auth per `docs/deploy/sendgrid-production.md`, or documented defer with product approval.
