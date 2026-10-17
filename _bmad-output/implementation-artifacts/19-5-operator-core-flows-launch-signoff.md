@@ -9,6 +9,40 @@ created: 2026-10-15
 
 Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
 
+## Live machine matrix (2026-10-17) — Basic aliases mapped; fresh Deploy UAT required
+
+Owner reports Environment `uat` now has existing Basic operator aliases
+mapped privately as `UAT_AUTO_BASIC_EMAIL` and `UAT_AUTO_BASIC_PASSWORD`.
+Do not print values. Do not create another Basic user or tenant. Do not
+reset the Basic password.
+
+Last Deploy UAT `38955178032` on main `1cc39375` predates that mapping.
+On that run Basic still SKIP (`UAT_AUTO_BASIC_EMAIL/PASSWORD are not
+mapped`). GitHub Environment secret listing may remain 403. Presence is
+proven only by masked Actions injection and skip-vs-run: expected
+`UAT_AUTO_BASIC_EMAIL` PRESENT / MASKED and `UAT_AUTO_BASIC_PASSWORD`
+PRESENT / MASKED, with Basic tests RUN (not SKIP).
+
+Fresh Deploy UAT is required to score:
+
+- Basic login (tenant-host `/login` → `/dashboard`)
+- Basic dashboard
+- Basic activities
+- Basic website Core-lock and/or public stub home
+- Basic campaigns Pro-lock
+- Responsive desktop 1440×900 and mobile 390×844
+
+Do not count SKIP as PASS. OTP mailbox is not required. Application
+behavior is unchanged; this file is the legitimate tracker update that
+re-triggers CI → main → Deploy UAT.
+
+Pro acceptance is preserved from `38952447077` / `38955178032` unless a
+genuine regression appears.
+
+`OWNER_GATE=lifecycle_disposable_tenant` remains after Basic PASS — no
+disposable UAT tenant; never suspend/archive `default` or `creativorare`.
+Do not fabricate Operator/PM sign-off. Production NO-GO.
+
 ## Live machine matrix (2026-10-16)
 
 Deploy UAT `38952447077` / SHA `756e408821ae4cf7bdd62753be5a07493f63dc87`
@@ -61,15 +95,15 @@ From `epics-cohestra-enterprise.md` Story 19.5. Given at least one **Basic** and
 
 | # | Flow | Current evidence | Remaining |
 | - | ---- | ---------------- | --------- |
-| 1 | Dashboard metrics load | Pro `/dashboard` PASS desktop+mobile on `38952447077`. Basic SKIP (aliases unmapped). | Basic live run after aliases exist |
+| 1 | Dashboard metrics load | Pro `/dashboard` PASS desktop+mobile on `38952447077`. Basic SKIP on `38955178032` (predates alias mapping). | Fresh Deploy UAT after 2026-10-17 Basic alias mapping |
 | 2 | Create activity → publish → share kit | PASS on `38952447077` mutating walk (desktop). | — |
 | 3 | Public registration + client dedup | PASS same walk (two 201s, same clientId). | — |
 | 4 | Reports + CSV export (Pro) | PASS analytics room + weekly CSV. | — |
 | 5 | Campaign send test (Pro) + tenant branding | PASS campaigns room + `send-test` (no blast). Website branding PASS. | — |
-| 6 | Website builder publish (Pro) or stub home (Basic) | Pro Website Studio PASS desktop+mobile. Basic website/stub SKIP. | Basic live run |
+| 6 | Website builder publish (Pro) or stub home (Basic) | Pro Website Studio PASS desktop+mobile. Basic website/stub SKIP on `38955178032`. | Fresh Deploy UAT after 2026-10-17 Basic alias mapping |
 | 7 | Suspended/archived tenant → maintenance or 404 | No disposable UAT tenant. Protected: `default`, `creativorare`. | `OWNER_GATE=lifecycle_disposable_tenant` |
 | — | Billing | 19.4 CLOSED — do not re-walk as a 19.5 blocker | Frozen PASS |
-| — | Authentication / settings | Pro login PASS desktop+mobile | Basic login still SKIP |
+| — | Authentication / settings | Pro login PASS desktop+mobile | Fresh Basic login after 2026-10-17 alias mapping |
 | — | Checklist Operator + PM rows | Empty — do not fabricate | After lifecycle + Basic, `OWNER_GATE=launch_signoff` |
 
 Also: SendGrid domain auth per `docs/deploy/sendgrid-production.md`, or documented defer with product approval.

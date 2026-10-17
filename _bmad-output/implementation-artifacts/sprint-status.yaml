@@ -1,5 +1,6 @@
 # generated: 2026-06-16
-# last_updated: 2026-10-16
+# last_updated: 2026-10-17
+# 19.5 in-progress: owner mapped existing Basic aliases on Environment uat (UAT_AUTO_BASIC_EMAIL/PASSWORD). Last Deploy UAT 38955178032 predates mapping. Fresh Deploy UAT required. Do not create users. Production NO-GO.
 # 19.5 in-progress: reuse existing UAT identities; OTP mailbox is not a 19.5 blocker. Production NO-GO.
 # Epic 45 done. 19.3 done 2026-10-16 — live Deploy UAT 38911205011 / 26f594bc Layer A+B pass. 19.5 next. Production NO-GO.
 # 19.3 remains ready-for-dev; execution waits for Epic 45 deploy/acceptance (dual-layer recaptcha). Do not SSH.
@@ -75,7 +76,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-10-16
+last_updated: 2026-10-17
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
