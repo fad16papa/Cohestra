@@ -1,8 +1,8 @@
 # Story 19.5 — first-use UAT PlatformAdmin bootstrap
 
-Status: **machine PASS**. Tracker/evidence only. No secret values.
-`OWNER_GATE=launch_signoff`. Story 19.5 remains in-progress until real
-Operator + PM sign-off.
+Status: **DONE**. Tracker/evidence only. No secret values.
+Operator sign-off APPROVED. PM sign-off APPROVED. Production cutover
+NOT AUTHORIZED. Historical machine evidence below is unchanged.
 
 ## Live first-use result (2026-10-17)
 

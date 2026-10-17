@@ -1,16 +1,45 @@
 ---
 epic: 19
 story: 5
-status: in-progress
+status: done
 created: 2026-10-15
 ---
 
 # Story 19.5: Operator core flows and launch sign-off
 
-Status: **in-progress**. Machine acceptance PASS. Waiting for Operator + PM
-sign-off. Do not fabricate those signatures. Production remains NO-GO.
+Status: **DONE**. Machine acceptance PASS. Lifecycle PASS.
+Production remains NO-GO.
 
-## Live machine matrix (2026-10-17) — lifecycle PASS / OWNER_GATE=launch_signoff
+## Human sign-off (2026-10-17)
+
+Recorded from the owner closeout directive on 2026-10-17. No individual
+names were supplied. No timestamps are invented beyond this Git commit.
+
+- Operator sign-off: **APPROVED**
+- PM sign-off: **APPROVED**
+- Production cutover: **NOT AUTHORIZED**
+- Machine acceptance: **PASS**
+- Lifecycle: **PASS**
+
+`OWNER_GATE=launch_signoff` is removed. Story 19.5 is DONE. Epic 19 is
+DONE. Production launch remains a separate future owner gate.
+
+After this closeout lands on main, Environment `uat` must keep
+`UAT_AUTO_LIFECYCLE_ENABLED=false`. Owner should then remove or rotate
+`UAT_AUTO_PLATFORM_ADMIN_EMAIL` and `UAT_AUTO_PLATFORM_ADMIN_PASSWORD`.
+
+## Epic 19 reconciliation
+
+- 19.1: DONE
+- 19.2: DONE
+- 19.3: DONE
+- 19.4: DONE
+- 19.5: DONE
+- epic-19: DONE
+- epic-19-retrospective: optional
+- Production: NO-GO
+
+## Live machine matrix (2026-10-17) — lifecycle PASS
 
 Deploy UAT `39011680830` / main `e01674664111eae02b61b2863e5d7a201b7a9833`.
 shaMatch PASS. Browser 31 passed / 5 skipped / 0 unexpected.
@@ -34,9 +63,8 @@ Protected hosts `default`, `picklemania`, and `creativorare` stayed
 HTTP 200 with no maintenance copy. Paddle mutation NONE.
 
 45.4 PASS. Basic PASS. Pro PASS. Lifecycle PASS.
-`OWNER_GATE=launch_signoff`. Story 19.5 stays in-progress until real
-Operator + PM sign-off. After close: set
-`UAT_AUTO_LIFECYCLE_ENABLED=false` and rotate the dedicated aliases.
+Historical machine evidence is unchanged. Human sign-off is recorded in
+the section above. Production remains NO-GO.
 
 ## Live machine matrix (2026-10-17) — first-use PlatformAdmin bootstrap required
 

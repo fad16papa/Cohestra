@@ -1,5 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-17
+# 19.5 DONE 2026-10-17: machine PASS on Deploy UAT 39011680830 / e0167466. Operator + PM sign-off APPROVED. Epic 19 DONE. Production cutover NOT AUTHORIZED. Production NO-GO.
 # 19.5 in-progress: Basic PASS on picklemania (39003393683 desktop+mobile). Pro PASS. OWNER_GATE=lifecycle_disposable_tenant. Production NO-GO.
 # 19.5 in-progress: owner mapped existing Basic aliases on Environment uat (UAT_AUTO_BASIC_EMAIL/PASSWORD). Last Deploy UAT 38955178032 predates mapping. Fresh Deploy UAT required. Do not create users. Production NO-GO.
 # 19.5 in-progress: reuse existing UAT identities; OTP mailbox is not a 19.5 blocker. Production NO-GO.
@@ -288,12 +289,14 @@ development_status:
   # 19.4 done 2026-10-14 — closeout story-19-4-final-uat-closeout.md.
   # 19.1/19.2 done 2026-10-15 — epic-19-post-19-4-reconciliation-investigation.md. Production NO-GO.
   # 19.3 AC course-corrected 2026-10-15: dual-layer machine evidence via Epic 45. Manual live CAPTCHA solve is not required.
-  epic-19: in-progress
+  # 19.5 done 2026-10-17 — machine PASS on Deploy UAT 39011680830 / e0167466;
+  # owner Operator + PM sign-off APPROVED. Production cutover NOT AUTHORIZED. Production NO-GO.
+  epic-19: done
   19-1-uat-droplet-deploy-and-smoke: done
   19-2-https-edge-security-header-verify: done
   19-3-recaptcha-production-enablement: done
   19-4-paddle-billing-uat-on-droplet: done
-  19-5-operator-core-flows-launch-signoff: in-progress
+  19-5-operator-core-flows-launch-signoff: done
   epic-19-retrospective: optional
 
   epic-20: done
