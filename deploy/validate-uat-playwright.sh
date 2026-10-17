@@ -59,6 +59,12 @@ grep -q 'tab=share' "$CORE" || fail "19.5 Share kit proof must open the share ta
 DEPLOY="$ROOT_DIR/.github/workflows/deploy.yml"
 grep -q 'UAT_AUTO_PRO_EMAIL' "$DEPLOY" || fail "Deploy UAT browser job must pass UAT_AUTO_PRO_EMAIL"
 grep -q 'UAT_AUTO_PRO_PASSWORD' "$DEPLOY" || fail "Deploy UAT browser job must pass UAT_AUTO_PRO_PASSWORD"
+grep -q 'UAT_AUTO_BASIC_SLUG' "$DEPLOY" || fail "Deploy UAT browser job must pass UAT_AUTO_BASIC_SLUG"
+grep -q 'UAT_AUTO_PRO_SLUG' "$DEPLOY" || fail "Deploy UAT browser job must pass UAT_AUTO_PRO_SLUG"
+grep -q 'vars.UAT_AUTO_BASIC_SLUG' "$DEPLOY" || fail "Basic slug must come from Environment vars, not a hardcoded tenant"
+grep -Fq 'picklemania' "$CORE" && fail "19.5 must not hardcode the Basic tenant slug"
+grep -q 'getByLabel(/password/i)' "$AUTH" && fail "authenticated UAT must not use a loose password label (Show-password collision)"
+grep -q 'locator("#password")' "$AUTH" || fail "authenticated UAT must fill the password input by id"
 pass "UAT Playwright contract"
 
 echo "uat-playwright contract OK"

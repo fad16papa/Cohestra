@@ -5,7 +5,9 @@ import { expect, test, type APIRequestContext, type Page } from "@playwright/tes
  *
  * UAT_AUTO_BASIC_* / UAT_AUTO_PRO_* are Environment `uat` aliases for
  * EXISTING isolated UAT TenantAdmins. They are not a requirement to
- * provision new users or mailboxes.
+ * provision new users or mailboxes. UAT_AUTO_BASIC_SLUG /
+ * UAT_AUTO_PRO_SLUG select the tenant host (fallbacks default /
+ * creativorare). Do not hardcode a live slug here.
  *
  * Canonical 19.5 login is email/password on the tenant host.
  * Signup OTP (Epic 45.5 / Story 19.3) is out of scope here.
