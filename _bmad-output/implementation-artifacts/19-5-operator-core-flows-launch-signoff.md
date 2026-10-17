@@ -9,6 +9,34 @@ created: 2026-10-15
 
 Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
 
+## Live machine matrix (2026-10-17) — Basic credentials rejected
+
+Deploy UAT `38999310722` / main `55791870`. Host deploy PASS (containers
+Healthy). Browser 21 passed / 5 skipped / 10 unexpected.
+
+Presence (masked Actions injection, values not printed):
+
+- `UAT_AUTO_BASIC_EMAIL`: PRESENT / MASKED (`***`, not empty)
+- `UAT_AUTO_BASIC_PASSWORD`: PRESENT / MASKED (`***`, not empty)
+- `UAT_AUTO_PRO_EMAIL` / `UAT_AUTO_PRO_PASSWORD`: PRESENT / MASKED
+
+Basic tests RAN (not SKIP). Canonical 19.5 login on
+`default.uat.cohestra.app/login` submitted email+password via `#email` /
+`#password` and stayed on `/login`. Product alert: `Invalid email or
+password.` Same on desktop 1440 and mobile 390. Do not print the
+mapped values. Do not create a user/tenant. Do not reset the password.
+
+`OWNER_GATE=basic_credentials_invalid` — rejected by the live default
+workspace; cannot remap aliases without owner secret intervention.
+
+Pro reconfirmed PASS on this run (rooms desktop+mobile; mutating walk
+desktop). 45.4 apex `/login` `getByLabel(/password/i)` is a separate
+harness strict-mode miss on the Show-password control — not the 19.5
+tenant-host failure.
+
+Lifecycle still blocked after Basic is remapped: no disposable tenant;
+never suspend/archive `default` or `creativorare`. Production NO-GO.
+
 ## Live machine matrix (2026-10-17) — Basic aliases mapped; fresh Deploy UAT required
 
 Owner reports Environment `uat` now has existing Basic operator aliases
