@@ -16,6 +16,8 @@ if (baseURL.includes("thesocialcollectivesg.com") || baseURL.includes("129.212.2
 
 export default defineConfig({
   testDir: "./e2e-uat",
+  testMatch: /.*\.spec\.ts/,
+  testIgnore: ["**/lifecycle/**"],
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,

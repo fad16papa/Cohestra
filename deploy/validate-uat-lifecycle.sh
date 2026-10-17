@@ -141,6 +141,14 @@ else
   fail "web/tsconfig.json must exclude e2e-uat so next build does not typecheck the Node runner"
 fi
 
+
+CFG="$ROOT_DIR/web/playwright.uat.config.ts"
+if grep -q 'testMatch' "$CFG" && grep -q 'testIgnore' "$CFG" && grep -q 'lifecycle' "$CFG"; then
+  pass "Playwright UAT ignores lifecycle unit tests"
+else
+  fail "playwright.uat.config.ts must ignore e2e-uat/lifecycle unit tests"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1

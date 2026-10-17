@@ -67,6 +67,9 @@ grep -q 'getByLabel(/password/i)' "$AUTH" && fail "authenticated UAT must not us
 grep -q 'locator("#password")' "$AUTH" || fail "authenticated UAT must fill the password input by id"
 grep -q 'sign in to workspace' "$AUTH" || fail "authenticated UAT must submit Sign in to workspace, not a broad continue match"
 grep -q 'networkidle' "$AUTH" || fail "authenticated UAT login must wait for hydration before submit"
+grep -q 'testMatch' "$CFG" || fail "UAT Playwright must set testMatch to *.spec.ts only"
+grep -q 'testIgnore' "$CFG" || fail "UAT Playwright must ignore non-spec files"
+grep -q 'lifecycle' "$CFG" || fail "UAT Playwright must ignore e2e-uat/lifecycle unit tests"
 pass "UAT Playwright contract"
 
 echo "uat-playwright contract OK"
