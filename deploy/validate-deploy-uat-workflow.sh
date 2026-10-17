@@ -203,11 +203,11 @@ else
   fail "browser job must pass UAT_AUTO_BASIC_* and UAT_AUTO_PRO_* aliases"
 fi
 
-if grep -q 'UAT_AUTO_BASIC_SLUG: ${{ vars.UAT_AUTO_BASIC_SLUG }}' "$WF" \
-  && grep -q 'UAT_AUTO_PRO_SLUG: ${{ vars.UAT_AUTO_PRO_SLUG }}' "$WF"; then
-  pass "browser job receives Basic and Pro tenant slugs from Environment vars"
+if grep -q 'UAT_AUTO_BASIC_SLUG: ${{ vars.UAT_AUTO_BASIC_SLUG || secrets.UAT_AUTO_BASIC_SLUG }}' "$WF" \
+  && grep -q 'UAT_AUTO_PRO_SLUG: ${{ vars.UAT_AUTO_PRO_SLUG || secrets.UAT_AUTO_PRO_SLUG }}' "$WF"; then
+  pass "browser job receives Basic and Pro tenant slugs from vars with secret fallback"
 else
-  fail "browser job must pass UAT_AUTO_BASIC_SLUG and UAT_AUTO_PRO_SLUG from vars"
+  fail "browser job must pass UAT_AUTO_BASIC_SLUG and UAT_AUTO_PRO_SLUG from vars or secrets"
 fi
 
 if grep -q 'name: UAT acceptance summary' "$WF" && grep -q 'uat-acceptance-summary.sh' "$WF"; then

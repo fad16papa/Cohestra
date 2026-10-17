@@ -218,10 +218,10 @@ jobs:
           UAT_PUBLIC_BASE_URL: ${{ secrets.UAT_PUBLIC_BASE_URL }}
           UAT_AUTO_BASIC_EMAIL: ${{ secrets.UAT_AUTO_BASIC_EMAIL }}
           UAT_AUTO_BASIC_PASSWORD: ${{ secrets.UAT_AUTO_BASIC_PASSWORD }}
-          UAT_AUTO_BASIC_SLUG: ${{ vars.UAT_AUTO_BASIC_SLUG }}
+          UAT_AUTO_BASIC_SLUG: ${{ vars.UAT_AUTO_BASIC_SLUG || secrets.UAT_AUTO_BASIC_SLUG }}
           UAT_AUTO_PRO_EMAIL: ${{ secrets.UAT_AUTO_PRO_EMAIL }}
           UAT_AUTO_PRO_PASSWORD: ${{ secrets.UAT_AUTO_PRO_PASSWORD }}
-          UAT_AUTO_PRO_SLUG: ${{ vars.UAT_AUTO_PRO_SLUG }}
+          UAT_AUTO_PRO_SLUG: ${{ vars.UAT_AUTO_PRO_SLUG || secrets.UAT_AUTO_PRO_SLUG }}
           UAT_OTP_MAILBOX_HOST: ${{ secrets.UAT_OTP_MAILBOX_HOST }}
           UAT_OTP_MAILBOX_USER: ${{ secrets.UAT_OTP_MAILBOX_USER }}
           UAT_OTP_MAILBOX_SECRET: ${{ secrets.UAT_OTP_MAILBOX_SECRET }}
