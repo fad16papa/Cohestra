@@ -9,6 +9,23 @@ created: 2026-10-15
 
 Status: **in-progress**. 19.3 dual-layer live artifacts passed (`38911205011` / `26f594bc`). 19.4 is CLOSED / FROZEN.
 
+## Live machine matrix (2026-10-17) — first-use PlatformAdmin bootstrap required
+
+Owner configured GitHub Environment `uat` after Deploy UAT `39009526569`:
+
+- `UAT_AUTO_LIFECYCLE_ENABLED=true` (Environment variable)
+- `UAT_AUTO_PLATFORM_ADMIN_EMAIL` (Environment secret)
+- `UAT_AUTO_PLATFORM_ADMIN_PASSWORD` (Environment secret)
+
+Values are not recorded here. The dedicated identity is brand new and is
+not assumed to exist. First live run is expected to 401/403, run
+`deploy/uat-platform-admin-oneshot.sh`, then retry login.
+
+`39009526569` skipped with `lifecycle_disabled` and is not lifecycle
+acceptance. Fresh Deploy UAT is required. Protected tenants remain
+refused. Production NO-GO. After live lifecycle PASS:
+`OWNER_GATE=launch_signoff`.
+
 ## Live machine matrix (2026-10-17) — lifecycle automation authorized
 
 Deploy UAT `39004625819` / main `830adc140d3aa45edd9df70af8664789b25c2296`.
