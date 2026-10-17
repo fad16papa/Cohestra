@@ -23,11 +23,17 @@ test.describe("45.4 authenticated UAT", () => {
   test("dedicated automation login when credentials exist", async ({ page }) => {
     test.skip(!email || !password, "UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped");
     const origin = workspaceOrigin(basicSlug);
-    const response = await page.goto(`${origin}/login`, { waitUntil: "domcontentloaded" });
+    const response = await page.goto(`${origin}/login`, { waitUntil: "networkidle" });
     expect(response?.ok()).toBeTruthy();
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    const submit = page.getByRole("button", { name: /sign in to workspace/i });
+    await expect(submit).toBeEnabled();
+    await page.locator("form").evaluate((form) => {
+      form.setAttribute("method", "post");
+    });
     await page.locator("#email").fill(email);
     await page.locator("#password").fill(password);
-    await page.getByRole("button", { name: /sign in|log in|continue/i }).click();
+    await submit.click();
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 20_000 });
   });
 });
