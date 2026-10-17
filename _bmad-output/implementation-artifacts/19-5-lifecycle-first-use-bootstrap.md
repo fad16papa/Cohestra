@@ -1,6 +1,26 @@
 # Story 19.5 — first-use UAT PlatformAdmin bootstrap
 
-Status: **in-progress**. Tracker/evidence only. No secret values.
+Status: **DONE**. Tracker/evidence only. No secret values.
+Operator sign-off APPROVED. PM sign-off APPROVED. Production cutover
+NOT AUTHORIZED. Historical machine evidence below is unchanged.
+
+## Live first-use result (2026-10-17)
+
+- Main: `e01674664111eae02b61b2863e5d7a201b7a9833`
+- Deploy UAT: `39011680830`
+- `UAT_AUTO_LIFECYCLE_ENABLED`: `true` (Environment variable)
+- PlatformAdmin email/password: PRESENT / MASKED
+- Initial login: PASS (identity already authenticated; 401/403 did not occur)
+- Bootstrap: NOT REQUIRED (oneshot steps skipped)
+- Retry login: not needed
+- Role exclusivity: PASS
+- Disposable tenant: `uat-19-5-lifecycle-e0167466-11680830`
+- Suspend / maintenance / reactivate / archive / archived 404: PASS
+- Audits: TenantCreated, TenantSuspended, TenantReactivated, TenantArchived
+- Protected tenant guard: PASS
+- Host `PlatformAdminSeed__Enabled`: false
+- Paddle mutation: NONE
+- Lifecycle: PASS
 
 ## Owner configuration (2026-10-17)
 
