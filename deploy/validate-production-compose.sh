@@ -347,8 +347,14 @@ if [[ -x "$WRAPPER" ]] || [[ -f "$WRAPPER" ]]; then
   set +e
   wrap_f="$(bash "$WRAPPER" -f docker-compose.uat.yml config 2>&1)"
   wrap_f_rc=$?
+  wrap_feq="$(bash "$WRAPPER" -f=docker-compose.uat.yml config 2>&1)"
+  wrap_feq_rc=$?
+  wrap_envf="$(bash "$WRAPPER" --env-file .env.uat.example config 2>&1)"
+  wrap_envf_rc=$?
   set -e
-  if [[ "$wrap_f_rc" -ne 0 ]] && grep -q 'REFUSE' <<<"$wrap_f"; then
+  if [[ "$wrap_f_rc" -ne 0 ]] && grep -q 'REFUSE' <<<"$wrap_f" \
+    && [[ "$wrap_feq_rc" -ne 0 ]] && grep -q 'REFUSE' <<<"$wrap_feq" \
+    && [[ "$wrap_envf_rc" -ne 0 ]] && grep -q 'REFUSE' <<<"$wrap_envf"; then
     pass "production-compose.sh refuses -f override"
   else
     fail "production-compose.sh must refuse extra -f compose files"
@@ -376,7 +382,9 @@ else
 fi
 
 GI="$ROOT_DIR/.gitignore"
-if [[ -f "$GI" ]] && grep -qE '^\.env\.production$' "$GI"; then
+if [[ -f "$GI" ]] && grep -qE '^\.env\.production$' "$GI" \
+  && grep -qE '^\.env\.production\.\*$' "$GI" \
+  && grep -qE '^!\.env\.production\.example$' "$GI"; then
   pass ".gitignore ignores .env.production"
 else
   fail ".gitignore must ignore .env.production (keep .env.production.example tracked)"
