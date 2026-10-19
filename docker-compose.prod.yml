@@ -1,14 +1,16 @@
-# Launch-hardening overlay — use with:
+# Launch-hardening overlay — local overlay only. NOT Production topology.
+# Use with:
 #   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Canonical Production compose is docker-compose.production.yml
+# (project cohestra-production, dedicated droplet). Never treat this overlay
+# as Production. Never run it on the UAT / lead-generation-crm host as Production.
 #
 # Enables reCAPTCHA on signup and disables demo/load seeds.
 # Keeps Development environment so local Docker credentials still work.
 #
-# For true production (DigitalOcean/UAT with real secrets), set in .env:
-#   ASPNETCORE_ENVIRONMENT=Production
-#   Jwt__SigningKey=<strong secret>
-#   POSTGRES_PASSWORD=<strong secret>
-# See docs/deploy/enterprise-launch-checklist.md
+# See docs/deploy/production-launch-program.md
+# PRODUCTION=NO-GO until the owner writes PRODUCTION CUTOVER: AUTHORIZED.
 
 services:
   api:

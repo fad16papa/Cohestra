@@ -5,6 +5,9 @@
 **/node_modules/
 **/.next/
 .env
+.env.production
+.env.production.*
+!.env.production.example
 *.user
 *.suo
 .DS_Store
