@@ -1,5 +1,6 @@
 # generated: 2026-06-16
-# last_updated: 2026-10-17
+# last_updated: 2026-10-19
+# Epic 46 PLANNED 2026-10-19 on main dedcb110. Production architecture/observability/DR/security/CD planned. Stories 46.1–46.15 backlog. Next 46.1. Production cutover NOT AUTHORIZED. Production NO-GO.
 # 19.5 DONE 2026-10-17: machine PASS on Deploy UAT 39011680830 / e0167466. Operator + PM sign-off APPROVED. Epic 19 DONE. Production cutover NOT AUTHORIZED. Production NO-GO.
 # 19.5 in-progress: Basic PASS on picklemania (39003393683 desktop+mobile). Pro PASS. OWNER_GATE=lifecycle_disposable_tenant. Production NO-GO.
 # 19.5 in-progress: owner mapped existing Basic aliases on Environment uat (UAT_AUTO_BASIC_EMAIL/PASSWORD). Last Deploy UAT 38955178032 predates mapping. Fresh Deploy UAT required. Do not create users. Production NO-GO.
@@ -29,8 +30,8 @@
 # project_key: NOKEY
 # tracking_system: file-system
 # story_location: _bmad-output/implementation-artifacts
-# initiative: Platform 0 (1–10) + Enterprise (11–29) + Registration Capture (30–32) + Live Proof Cinema (33) + Platform Production Support (44)
-# epics_source: epics.md (1–10) + epics-cohestra-enterprise.md (11–29) + epics-registration-capture.md (30–32) + epics-live-proof-cinema.md (33) + epics-platform-production-support.md (44)
+# initiative: Platform 0 (1–10) + Enterprise (11–29) + Registration Capture (30–32) + Live Proof Cinema (33) + Platform Production Support (44) + Autonomous UAT Delivery (45) + Production Launch Readiness (46)
+# epics_source: epics.md (1–10) + epics-cohestra-enterprise.md (11–29) + epics-registration-capture.md (30–32) + epics-live-proof-cinema.md (33) + epics-platform-production-support.md (44) + epics-autonomous-delivery.md (45) + epics-production-launch-readiness.md (46)
 
 # STATUS DEFINITIONS:
 # ==================
@@ -78,7 +79,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-10-17
+last_updated: 2026-10-19
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -486,6 +487,28 @@ development_status:
   45-8-autonomous-bmad-delivery-loop: done
   epic-45-retrospective: optional
 
+  # Epic 46 — Production Infrastructure, Observability & Launch Readiness
+  # Source: planning-artifacts/epics-production-launch-readiness.md
+  # Planning-only 2026-10-19. Do not start 46.1 in the planning PR.
+  # Production remains NO-GO until owner phrase PRODUCTION CUTOVER: AUTHORIZED.
+  epic-46: backlog
+  46-1-production-architecture-and-infrastructure-baseline: backlog
+  46-2-dedicated-production-host-and-network-hardening: backlog
+  46-3-github-production-environment-and-owner-gated-ci-cd: backlog
+  46-4-production-runtime-config-and-secrets-isolation: backlog
+  46-5-postgresql-backup-restore-and-dr: backlog
+  46-6-production-observability-instrumentation: backlog
+  46-7-metrics-dashboards-and-alerting: backlog
+  46-8-platform-admin-production-support-telemetry-integration: backlog
+  46-9-production-security-and-tenant-isolation-hardening: backlog
+  46-10-paddle-live-readiness: backlog
+  46-11-sendgrid-and-email-production-readiness: backlog
+  46-12-performance-capacity-and-load-acceptance: backlog
+  46-13-production-dns-tls-and-readiness-smoke: backlog
+  46-14-final-production-release-acceptance: backlog
+  46-15-production-cutover: backlog
+  epic-46-retrospective: optional
+
   # Owner product slice (not Epic 42.4 / not Epic 43)
   registration-responsive-tenant-website: done
 
@@ -860,7 +883,8 @@ action_items:
   - epic: 44
     action: "Serilog / OpenTelemetry pipeline remains a future observability epic candidate"
     owner: Architect
-    status: open
+    status: done
+    resolution: "Moved to Epic 46 Stories 46.6–46.7. Do not implement inside Epic 44."
   - epic: 44
     action: "Production usage review of Overview / Operations / Audits after operators use the console"
     owner: Operator
@@ -868,7 +892,18 @@ action_items:
   - epic: 44
     action: "UAT, droplet access, and live Paddle cutover remain Epic 19 — do not treat Epic 44 done as production ready"
     owner: Operator
+    status: done
+    resolution: "Epic 19 UAT accepted 2026-10-17. Production program is now Epic 46. Epic 44 done is still not Production GO."
+  - epic: 46
+    action: "Do not start Story 46.1 in the planning pass; Production remains NO-GO"
+    owner: Dev
+    status: done
+    resolution: "Planning PR only. Next implementation story is 46.1 after merge."
+  - epic: 46
+    action: "Owner must not infer Production GO from Epic 46 planning or story completion"
+    owner: Operator
     status: open
+    note: "Requires phrase PRODUCTION CUTOVER: AUTHORIZED"
   - epic: 44
     action: "Keep PlatformAdmin light-only frozen as a route override; do not reopen a global appearance lock"
     owner: Product
