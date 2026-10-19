@@ -234,6 +234,9 @@ jobs:
       - name: Production compose contract
         run: bash deploy/validate-production-compose.sh
 
+      - name: Production host contract
+        run: bash deploy/validate-production-host.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest
