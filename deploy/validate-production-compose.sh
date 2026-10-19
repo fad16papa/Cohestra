@@ -377,6 +377,15 @@ if [[ -x "$WRAPPER" ]] || [[ -f "$WRAPPER" ]]; then
   else
     fail "production-compose.sh must refuse run/exec and publish overrides"
   fi
+  set +e
+  wrap_out="$(bash "$WRAPPER" config -o /tmp/cohestra-prod-compose.yml 2>&1)"
+  wrap_out_rc=$?
+  set -e
+  if [[ "$wrap_out_rc" -ne 0 ]] && grep -q 'REFUSE' <<<"$wrap_out"; then
+    pass "production-compose.sh refuses config --output"
+  else
+    fail "production-compose.sh must refuse config --output/-o"
+  fi
 fi
 
 if [[ -f "$DOCS" ]] \

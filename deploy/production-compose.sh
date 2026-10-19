@@ -40,6 +40,11 @@ for arg in "$@"; do
       echo "Use the locked compose services; do not publish ad-hoc containers."
       exit 1
       ;;
+    --output|--output=*|-o|-o=*|-o?*|--verbose|--debug)
+      echo "REFUSE: do not pass --output/-o/--verbose/--debug to production-compose.sh."
+      echo "Interpolated compose must not be written or printed."
+      exit 1
+      ;;
     --publish|--publish=*|-P|--network|--network=*|-e|--env|--env=*|--project-directory|--project-directory=*)
       echo "REFUSE: do not pass publish, network, env, or project-directory overrides."
       echo "Production topology is locked to docker-compose.production.yml."

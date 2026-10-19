@@ -91,7 +91,7 @@ Cursor Grok 4.6
 
 ### Debug Log References
 
-- `bash deploy/validate-production-compose.sh` — 63/0 PASS (docker compose config parse deferred to CI; Docker not in this snapshot)
+- `bash deploy/validate-production-compose.sh` — 64/0 PASS (docker compose config parse deferred to CI; Docker not in this snapshot)
 - `bash deploy/validate-uat-isolation.sh` — 56/0 PASS
 - `bash deploy/validate-deploy-uat-workflow.sh` — 34/0 PASS
 - `git diff -- .github/workflows/deploy.yml docker-compose.uat.yml` — empty
