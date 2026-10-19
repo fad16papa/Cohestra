@@ -1,0 +1,222 @@
+name: cohestra-production
+
+# Canonical Cohestra Production topology (Epic 46 Story 46.1).
+#
+# Dedicated droplet only. NEVER run this project on the UAT / lead-generation-crm host.
+# NEVER: docker compose -f docker-compose.uat.yml as Production
+# NEVER: docker compose -f docker-compose.yml -f docker-compose.prod.yml as Production
+# docker-compose.prod.yml is a local overlay only.
+#
+# Compose project: cohestra-production
+# Public edge (this file): nginx :80. TLS / :443 is Story 46.13.
+# Postgres and Redis: internal network only — no host ports.
+# Background jobs stay in cohestra-prod-api (no worker service).
+# OTel collector is a contract container; app SDK / dashboards / alerts are 46.6 / 46.7.
+#
+# PRODUCTION=NO-GO until the owner writes PRODUCTION CUTOVER: AUTHORIZED.
+#
+# Usage (after 46.2 host exists; this story does not deploy):
+#   cp .env.production.example .env   # fill secrets on the host only
+#   bash deploy/production-compose.sh config
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cohestra-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cohestra}
+      POSTGRES_USER: ${POSTGRES_USER:-cohestra}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - production_internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cohestra} -d ${POSTGRES_DB:-cohestra}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: cohestra-prod-redis
+    restart: unless-stopped
+    environment:
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    volumes:
+      - redis_data:/data
+    networks:
+      - production_internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    container_name: cohestra-prod-api
+    build:
+      context: .
+      dockerfile: src/Api/Dockerfile
+    restart: unless-stopped
+    expose:
+      - "8080"
+    volumes:
+      - campaign_assets_data:/app/data/campaign-assets
+      - support_attachments_data:/app/data/support-attachments
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      GIT_SHA: ${GIT_SHA:-}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-cohestra};Username=${POSTGRES_USER:-cohestra};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env (min 32 chars)}
+      Jwt__Issuer: ${JWT_ISSUER:-cohestra}
+      Jwt__Audience: ${JWT_AUDIENCE:-cohestra-api}
+      OperatorSeed__Enabled: "false"
+      PlatformAdminSeed__Enabled: "false"
+      DemoDataSeed__Enabled: "false"
+      LoadTestSeed__Enabled: "false"
+      FollowUpDigest__Enabled: "false"
+      PublicWeb__BaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+      CampaignAssets__StoragePath: /app/data/campaign-assets
+      CampaignAssets__PublicApiBaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+      Support__AttachmentStoragePath: /app/data/support-attachments
+      Cors__AllowedOrigins__0: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+      SendGrid__ApiKey: ${SendGrid__ApiKey:?Set SendGrid__ApiKey in .env}
+      SendGrid__FromEmail: ${SendGrid__FromEmail:?Set SendGrid__FromEmail in .env}
+      SendGrid__FromName: ${SendGrid__FromName:-Cohestra}
+      SendGrid__RegistrationFromEmail: ${SendGrid__RegistrationFromEmail:-${SendGrid__FromEmail:?Set SendGrid__FromEmail in .env}}
+      SendGrid__RegistrationFromName: ${SendGrid__RegistrationFromName:-Cohestra}
+      SendGrid__UseSandbox: "false"
+      EmailBranding__WebsiteUrl: ${EmailBranding__WebsiteUrl:-${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}}
+      EmailBranding__FooterLegalName: ${EmailBranding__FooterLegalName:-Cohestra}
+      SiteLanding__SiteName: ${LANDING_SITE_NAME:-Cohestra}
+      SiteLanding__Tagline: ${LANDING_TAGLINE:-Community events. Meaningful connections.}
+      SiteLanding__Description: ${LANDING_DESCRIPTION:-Discover events, register in seconds, and stay connected with the communities you care about.}
+      SiteLanding__Eyebrow: ${LANDING_EYEBROW:-Community events platform}
+      SiteLanding__OperatorCtaLabel: ${LANDING_OPERATOR_CTA:-Operator sign in}
+      SiteLanding__PoweredByLabel: Cohestra
+      SiteLanding__AccentColor: "#2563eb"
+      LegalCompliance__TermsVersion: "2026-07-21"
+      LegalCompliance__PrivacyVersion: "2026-07-21"
+      SelfServeSignup__RegistrationClosed: ${SelfServeSignup__RegistrationClosed:-false}
+      SelfServeSignup__Recaptcha__Enabled: ${SelfServeSignup__Recaptcha__Enabled:-false}
+      SelfServeSignup__Recaptcha__SecretKey: ${SelfServeSignup__Recaptcha__SecretKey:-}
+      PublicSignupRateLimit__MaxSuccessfulPerHour: ${PublicSignupRateLimit__MaxSuccessfulPerHour:-5}
+      PublicSignupRateLimit__MaxSuccessfulPerDay: ${PublicSignupRateLimit__MaxSuccessfulPerDay:-20}
+      Paddle__ApiKey: ${Paddle__ApiKey:-}
+      Paddle__ClientToken: ${Paddle__ClientToken:-}
+      Paddle__WebhookSecret: ${Paddle__WebhookSecret:-}
+      Paddle__Environment: ${Paddle__Environment:-sandbox}
+      Paddle__AllowLive: "false"
+      Paddle__PriceCoreMonthly: ${Paddle__PriceCoreMonthly:-}
+      Paddle__PriceCoreAnnual: ${Paddle__PriceCoreAnnual:-}
+      Paddle__PriceProMonthly: ${Paddle__PriceProMonthly:-}
+      Paddle__PriceProAnnual: ${Paddle__PriceProAnnual:-}
+      Paddle__TrialPeriodDays: ${Paddle__TrialPeriodDays:-30}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otelcol:4318}
+    networks:
+      - production_internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    container_name: cohestra-prod-web
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+        NEXT_PUBLIC_LANDING_SITE_NAME: ${LANDING_SITE_NAME:-Cohestra}
+        NEXT_PUBLIC_LANDING_TAGLINE: ${LANDING_TAGLINE:-Community events. Meaningful connections.}
+        NEXT_PUBLIC_LANDING_DESCRIPTION: ${LANDING_DESCRIPTION:-Discover events, register in seconds, and stay connected with the communities you care about.}
+        NEXT_PUBLIC_LANDING_EYEBROW: ${LANDING_EYEBROW:-Community events platform}
+        NEXT_PUBLIC_LANDING_OPERATOR_CTA: ${LANDING_OPERATOR_CTA:-Operator sign in}
+        NEXT_PUBLIC_RECAPTCHA_ENABLED: ${NEXT_PUBLIC_RECAPTCHA_ENABLED:-false}
+        NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY:-}
+        NEXT_PUBLIC_PADDLE_RETURN_ORIGIN: ${NEXT_PUBLIC_PADDLE_RETURN_ORIGIN:-}
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      API_URL: http://api:8080
+    networks:
+      - production_internal
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: cohestra-prod-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ${NGINX_CONFIG_PATH:-./deploy/nginx/app.conf}:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - production_internal
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ready >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  otelcol:
+    image: otel/opentelemetry-collector-contrib:0.136.0
+    container_name: cohestra-prod-otelcol
+    restart: unless-stopped
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./deploy/otel/production-collector.yaml:/etc/otelcol/config.yaml:ro
+    expose:
+      - "4317"
+      - "4318"
+    networks:
+      - production_internal
+
+networks:
+  production_internal:
+    name: cohestra_production_internal
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: cohestra_production_postgres_data
+  redis_data:
+    name: cohestra_production_redis_data
+  campaign_assets_data:
+    name: cohestra_production_campaign_assets_data
+  support_attachments_data:
+    name: cohestra_production_support_attachments_data

@@ -231,6 +231,19 @@ jobs:
       - name: Autonomous delivery loop contract
         run: bash deploy/validate-autonomous-loop.sh
 
+      - name: Production compose contract
+        run: bash deploy/validate-production-compose.sh
+
+  production-compose:
+    name: Production compose contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Production compose contract
+        run: bash deploy/validate-production-compose.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

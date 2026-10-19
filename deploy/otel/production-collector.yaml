@@ -1,0 +1,27 @@
+# Production OpenTelemetry Collector contract (Story 46.1).
+# Receives OTLP. Does not run Grafana, Prometheus, Loki, Tempo, or alert routing.
+# Application SDK instrumentation is Story 46.6. Dashboards/alerts are Story 46.7.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
