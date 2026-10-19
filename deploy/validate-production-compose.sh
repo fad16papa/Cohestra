@@ -368,6 +368,15 @@ if [[ -x "$WRAPPER" ]] || [[ -f "$WRAPPER" ]]; then
   else
     fail "production-compose.sh must refuse COHESTRA_SHARED_HOST_UAT=true"
   fi
+  set +e
+  wrap_run="$(bash "$WRAPPER" run --publish 5432:5432 postgres 2>&1)"
+  wrap_run_rc=$?
+  set -e
+  if [[ "$wrap_run_rc" -ne 0 ]] && grep -q 'REFUSE' <<<"$wrap_run"; then
+    pass "production-compose.sh refuses ad-hoc run/publish"
+  else
+    fail "production-compose.sh must refuse run/exec and publish overrides"
+  fi
 fi
 
 if [[ -f "$DOCS" ]] \

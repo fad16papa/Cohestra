@@ -7,15 +7,20 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-uat_flag="${COHESTRA_SHARED_HOST_UAT:-}"
+normalize_flag() {
+  printf '%s' "${1:-}" | sed 's/#.*//' | tr -d '[:space:]' | tr -d \"\' | tr '[:upper:]' '[:lower:]'
+}
+
+uat_process="$(normalize_flag "${COHESTRA_SHARED_HOST_UAT:-}")"
+uat_file=""
 if [[ -f "$ROOT_DIR/.env" ]]; then
-  env_line="$(grep -E '^[[:space:]]*COHESTRA_SHARED_HOST_UAT=' "$ROOT_DIR/.env" | tail -n 1 || true)"
+  env_line="$(grep -E '^[[:space:]]*(export[[:space:]]+)?COHESTRA_SHARED_HOST_UAT=' "$ROOT_DIR/.env" | tail -n 1 || true)"
   if [[ -n "$env_line" ]]; then
-    uat_flag="${env_line#*=}"
+    uat_file="$(normalize_flag "${env_line#*=}")"
   fi
 fi
-uat_flag="$(printf '%s' "$uat_flag" | tr -d '[:space:]' | tr -d \"\' | tr '[:upper:]' '[:lower:]')"
-if [[ "$uat_flag" == "true" || "$uat_flag" == "1" || "$uat_flag" == "yes" ]]; then
+if [[ "$uat_process" == "true" || "$uat_process" == "1" || "$uat_process" == "yes" \
+   || "$uat_file" == "true" || "$uat_file" == "1" || "$uat_file" == "yes" ]]; then
   echo "REFUSE: Production compose must not run on the UAT shared host."
   echo "Unset COHESTRA_SHARED_HOST_UAT. Dedicated droplet only."
   exit 1
@@ -26,6 +31,19 @@ for arg in "$@"; do
   case "$arg" in
     config|convert)
       redact_config=1
+      ;;
+    --dry-run|--dry-run=*)
+      redact_config=1
+      ;;
+    run|exec)
+      echo "REFUSE: do not pass run/exec to production-compose.sh."
+      echo "Use the locked compose services; do not publish ad-hoc containers."
+      exit 1
+      ;;
+    --publish|--publish=*|-P|--network|--network=*|-e|--env|--env=*|--project-directory|--project-directory=*)
+      echo "REFUSE: do not pass publish, network, env, or project-directory overrides."
+      echo "Production topology is locked to docker-compose.production.yml."
+      exit 1
       ;;
     -p|--project-name|--project-name=*|-p=*|-p?* )
       echo "REFUSE: do not pass -p / --project-name to production-compose.sh."
@@ -62,7 +80,7 @@ fi
 
 export COMPOSE_PROJECT_NAME=cohestra-production
 # Prevent env-driven compose file merges from older Compose clients.
-unset COMPOSE_FILE COMPOSE_PROFILES || true
+unset COMPOSE_FILE COMPOSE_PROFILES COMPOSE_ENV_FILES || true
 compose=(docker compose --project-name cohestra-production -f "$ROOT_DIR/docker-compose.production.yml")
 
 # Never print interpolated secrets (config/convert dump resolved env).
