@@ -112,6 +112,13 @@ else
   fail "nginx must publish 80:80 (TLS 443 is Story 46.13)"
 fi
 
+if grep -q './deploy/nginx/app.conf:/etc/nginx/conf.d/default.conf' "$COMPOSE" \
+  && ! grep -q 'NGINX_CONFIG_PATH' "$COMPOSE"; then
+  pass "nginx config is pinned to deploy/nginx/app.conf"
+else
+  fail "Production nginx must pin ./deploy/nginx/app.conf (no NGINX_CONFIG_PATH override)"
+fi
+
 if grep -qE '443:' "$COMPOSE"; then
   fail "Story 46.1 must not publish 443 (TLS is 46.13)"
 else
@@ -152,7 +159,25 @@ else
 fi
 
 if grep -q -- '--requirepass' "$COMPOSE" && grep -q 'REDIS_PASSWORD' "$COMPOSE" && ! grep -qE -- '--requirepass[[:space:]]+[^$]' "$COMPOSE"; then
-  pass "Redis requirepass uses REDIS_PASSWORD variable"
+  set +e
+  python3 - "$COMPOSE" <<'PY'
+import sys
+lines = open(sys.argv[1]).read().splitlines()
+for i, line in enumerate(lines):
+    if "--requirepass" in line:
+        nxt = next((ln.strip() for ln in lines[i + 1:] if ln.strip()), "")
+        if "${REDIS_PASSWORD" not in nxt:
+            print("REQUIREPASS_NEXT", nxt)
+            sys.exit(1)
+sys.exit(0)
+PY
+  rp_rc=$?
+  set -e
+  if [[ "$rp_rc" -eq 0 ]]; then
+    pass "Redis requirepass uses REDIS_PASSWORD variable"
+  else
+    fail "Production Redis must requirepass \${REDIS_PASSWORD} (not a hardcoded password)"
+  fi
 else
   fail "Production Redis must requirepass \${REDIS_PASSWORD} (not a hardcoded password)"
 fi
@@ -189,10 +214,11 @@ else
   fail "Paddle live capability must stay false in 46.1"
 fi
 
-if grep -qE 'Paddle__Environment:.*sandbox' "$COMPOSE"; then
-  pass "Paddle environment defaults to sandbox"
+if grep -qE 'Paddle__Environment:[[:space:]]*sandbox[[:space:]]*$' "$COMPOSE" \
+  && ! grep -qE 'Paddle__Environment:.*\$' "$COMPOSE"; then
+  pass "Paddle environment is locked sandbox"
 else
-  fail "Paddle__Environment must default sandbox until 46.10"
+  fail "Paddle__Environment must be locked sandbox until 46.10 (not interpolatable)"
 fi
 
 if grep -q 'TestBypassToken\|NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN\|test-captcha-pass' "$COMPOSE"; then
@@ -245,6 +271,11 @@ if [[ -f "$ENV_EXAMPLE" ]]; then
   else
     pass ".env.production.example has names only (no secret-like values)"
   fi
+  if grep -qE '^[[:space:]]*#?[[:space:]]*PROD_DROPLET_' "$ENV_EXAMPLE"; then
+    fail "PROD_DROPLET_* host/SSH names must not be listed in the application env template (Story 46.3)"
+  else
+    pass "env example does not list PROD_DROPLET_* SSH/host secrets"
+  fi
   if grep -qE '^[[:space:]]*[A-Za-z0-9_.]+=[^#[:space:]]+' "$ENV_EXAMPLE"; then
     fail ".env.production.example must not assign values"
   else
@@ -285,10 +316,22 @@ else
   pass "No Production CD workflow"
 fi
 
+if grep -R --include='*.yml' -E '^[[:space:]]*environment:[[:space:]]*production[[:space:]]*$' "$ROOT_DIR/.github/workflows" >/dev/null 2>&1; then
+  fail "No GitHub Environment production may be referenced in 46.1 workflows"
+else
+  pass "No workflow references Environment production"
+fi
+
 if [[ -f "$WRAPPER" ]] && grep -q -- '--project-name cohestra-production' "$WRAPPER"; then
   pass "production-compose.sh locks project cohestra-production"
 else
   fail "deploy/production-compose.sh must force --project-name cohestra-production"
+fi
+
+if [[ -f "$WRAPPER" ]] && grep -q -- '--file' "$WRAPPER" && grep -q 'COHESTRA_SHARED_HOST_UAT' "$WRAPPER"; then
+  pass "production-compose.sh refuses extra compose files and UAT shared host"
+else
+  fail "production-compose.sh must refuse -f/--file and COHESTRA_SHARED_HOST_UAT=true"
 fi
 
 if [[ -x "$WRAPPER" ]] || [[ -f "$WRAPPER" ]]; then
@@ -300,6 +343,24 @@ if [[ -x "$WRAPPER" ]] || [[ -f "$WRAPPER" ]]; then
     pass "production-compose.sh refuses -p override"
   else
     fail "production-compose.sh must refuse -p / --project-name"
+  fi
+  set +e
+  wrap_f="$(bash "$WRAPPER" -f docker-compose.uat.yml config 2>&1)"
+  wrap_f_rc=$?
+  set -e
+  if [[ "$wrap_f_rc" -ne 0 ]] && grep -q 'REFUSE' <<<"$wrap_f"; then
+    pass "production-compose.sh refuses -f override"
+  else
+    fail "production-compose.sh must refuse extra -f compose files"
+  fi
+  set +e
+  wrap_uat="$(COHESTRA_SHARED_HOST_UAT=true bash "$WRAPPER" config 2>&1)"
+  wrap_uat_rc=$?
+  set -e
+  if [[ "$wrap_uat_rc" -ne 0 ]] && grep -q 'REFUSE' <<<"$wrap_uat"; then
+    pass "production-compose.sh refuses UAT shared-host flag"
+  else
+    fail "production-compose.sh must refuse COHESTRA_SHARED_HOST_UAT=true"
   fi
 fi
 
@@ -339,8 +400,7 @@ if command -v docker >/dev/null 2>&1; then
   unset POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail
   set -e
   if [[ "$yaml_rc" -ne 0 ]]; then
-    fail "docker compose config failed"
-    tail -n 20 "${cfg}.err" || true
+    fail "docker compose config failed (stderr suppressed to avoid secret leakage)"
   else
     pass "docker compose config parses"
     set +e
@@ -375,7 +435,7 @@ sys.exit(1 if failed else 0)
 PY
       render_rc=$?
     else
-      if grep -qE 'published: ["'\'']?5432' "$cfg" || grep -qE 'published: ["'\'']?6379' "$cfg"; then
+      if grep -qE 'published: ["'\'']?(5432|6379|443|8080|3000|4317|4318)' "$cfg"; then
         render_rc=1
       else
         render_rc=0
@@ -390,7 +450,11 @@ PY
   fi
   rm -f "$cfg" "${cfg}.err" "$cfg_json"
 else
-  pass "docker not present — skipped compose config parse (CI image has Docker)"
+  if [[ "${CI:-}" == "true" ]]; then
+    fail "docker required in CI to render Production compose config"
+  else
+    pass "docker not present — skipped compose config parse (CI image has Docker)"
+  fi
 fi
 
 echo ""
