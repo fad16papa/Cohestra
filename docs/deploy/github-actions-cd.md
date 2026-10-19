@@ -4,6 +4,8 @@ Automatic **UAT** deployment runs **after CI passes on `main`**, or manually via
 
 This is **not** production cutover. Production remains owner-authorized and NO-GO until a separate live gate.
 
+Canonical Production CD planning is Epic 46 (`docs/deploy/production-launch-program.md`). Do not extend this UAT workflow into Environment `production`.
+
 Cursor / Cloud Agent does **not** need droplet SSH. GitHub Actions is the execution plane. Agents read workflow logs and artifacts.
 
 ```
