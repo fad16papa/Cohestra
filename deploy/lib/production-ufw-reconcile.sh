@@ -236,9 +236,7 @@ for raw in added.splitlines():
         if mentions_ssh(rest) or not rest or (rest and rest[0].lower() in {"to", "proto", "any"}):
             denied = 1
         elif rest[0].lower() == "from":
-            frm = rest[1] if len(rest) > 1 else "Anywhere"
-            if is_world(frm) or mentions_ssh(rest):
-                denied = 1
+            denied = 1
         continue
     if action not in {"allow", "limit"}:
         if mentions_ssh(parts[i:]):

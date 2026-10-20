@@ -551,6 +551,18 @@ set -e
 [[ "$(cat "$deny_any_dir/active")" == "0" ]] || fail "deny from any must not enable UFW"
 pass "existing DENY from any refuses without appending ALLOW or enabling"
 
+deny_owner_dir="$WORKDIR/deny-owner"
+create_mock_ufw "$deny_owner_dir"
+echo 0 >"$deny_owner_dir/active"
+printf '%s\n' "ufw deny from ${OWNER}" >"$deny_owner_dir/added_extra"
+set +e
+deny_owner_out="$(PRODUCTION_SSH_SOURCES="$OWNER" run_reconcile "$deny_owner_dir" true 2>&1)"
+deny_owner_rc=$?
+set -e
+[[ "$deny_owner_rc" -ne 0 ]] || fail "deny from owner CIDR must refuse: $deny_owner_out"
+[[ "$(cat "$deny_owner_dir/active")" == "0" ]] || fail "deny from owner CIDR must not enable UFW"
+pass "existing DENY from owner CIDR refuses without enable"
+
 # Existing world-open SSH must refuse without mutation.
 world_exist_dir="$WORKDIR/world-exist"
 create_mock_ufw "$world_exist_dir"

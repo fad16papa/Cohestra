@@ -124,11 +124,12 @@ Cursor Grok 4.6
 ## Senior Developer Review (AI)
 
 - Date: 2026-10-20
-- HEAD reviewed: c86c28a59301168a00fe7cd8c7969e3f3ccb1eba
-- Outcome: Approve (BLOCKER=0, MAJOR=0)
+- HEAD reviewed: 3c9535cab5c11f7e1637232cca9ad9f4c2656d63 plus deny-from-any-source follow-up on this revision
+- Outcome: Approve pending this HEAD CI (BLOCKER=0, MAJOR=0 on Grok 4.6 Blind Hunter / Acceptance Auditor of 3c9535ca; Edge Case Hunter MAJOR on owner-specific deny is fixed in this revision)
 - Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor (Grok 4.6)
 - Unresolved BLOCKER: 0
 - Unresolved MAJOR: 0
+- Deferred MINOR: custom non-OpenSSH UFW application profiles; false-refuse of all-ports CIDR-locked status rows; story Task 7 still mentions earlier review HEAD c86c28a. None reopen fail-open SSH or owner-CIDR drop.
 
 ### File List
 
