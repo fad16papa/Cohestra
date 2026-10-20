@@ -68,13 +68,13 @@ fi
 ufw --force reset >/dev/null
 ufw default deny incoming
 ufw default allow outgoing
-if [[ -n "${PRODUCTION_SSH_SOURCES:-}" ]]; then
-  for cidr in ${PRODUCTION_SSH_SOURCES}; do
-    ufw allow from "$cidr" to any port 22 proto tcp
-  done
-else
-  ufw allow 22/tcp
+if [[ -z "${PRODUCTION_SSH_SOURCES:-}" ]]; then
+  echo "REFUSE: PRODUCTION_SSH_SOURCES is required; refusing to open 22/tcp to the world"
+  exit 1
 fi
+for cidr in ${PRODUCTION_SSH_SOURCES}; do
+  ufw allow from "$cidr" to any port 22 proto tcp
+done
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable

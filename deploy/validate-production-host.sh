@@ -83,6 +83,12 @@ else
   fail "Harden script must lock sshd/unattended-upgrades and refuse the UAT host"
 fi
 
+if grep -q 'PRODUCTION_SSH_SOURCES is required' "$HARDEN" && grep -q 'ufw allow from' "$HARDEN" && ! grep -qE 'ufw allow 22/tcp$' "$HARDEN"; then
+  pass "Harden script refuses world-open SSH and requires PRODUCTION_SSH_SOURCES"
+else
+  fail "Harden script must not open 22/tcp without SSH source CIDRs"
+fi
+
 if grep -q 'workloads_deployed=false' "$HARDEN" && ! grep -q 'docker compose' "$HARDEN"; then
   pass "Harden script does not deploy application workloads"
 else
@@ -174,6 +180,8 @@ if inv.get("name") != "cohestra-production":
     failed.append("name")
 if inv.get("public_ipv4") == uat:
     failed.append("ip_is_uat")
+if int(inv.get("droplet_id") or 0) == 581334322:
+    failed.append("id_is_uat")
 if int(inv.get("memory_mb") or 0) < 8192:
     failed.append("memory")
 if int(inv.get("vcpus") or 0) < 4:
