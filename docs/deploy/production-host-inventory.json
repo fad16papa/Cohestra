@@ -14,7 +14,14 @@
   "vpc_id": "9f82c79b-f2be-4496-ab35-1907bbdacf10",
   "firewall_name": "cohestra-production",
   "firewall_id": "ae8e7427-f92a-4479-b4dd-3365fa02def3",
+  "digitalocean_project": {
+    "owner_reported_name": "Cohestra",
+    "api_verification": "unverified_403_projects_scope",
+    "droplets_not_relocated_by_agent": true
+  },
+  "uat_droplet_id": 581334322,
   "uat_public_ipv4": "129.212.235.2",
+  "uat_vpc_id": "f5aa05ac-bf74-44d1-a5cb-50e3c6d7411f",
   "host_isolation": "distinct_from_uat",
   "ssh_sources": [
     "3.220.100.176/32",
@@ -29,9 +36,12 @@
   "provisioner_ipv4": "3.220.100.176",
   "ssh_password_authentication": "no",
   "ssh_key_authentication": "proven",
+  "owner_ssh_access": "not_verified",
+  "ssh_recovery_path": "digitalocean_droplet_console_unverified",
   "workloads_deployed": false,
   "option_a_postgres": true,
   "managed_postgres": false,
   "production_auto_deploy": false,
-  "hardened_utc": "2026-10-20T11:13:02Z"
+  "hardened_utc": "2026-10-20T11:13:02Z",
+  "owner_verification_utc": "2026-10-20T14:12:00Z"
 }

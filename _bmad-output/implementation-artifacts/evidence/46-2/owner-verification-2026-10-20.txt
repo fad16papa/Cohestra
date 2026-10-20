@@ -1,0 +1,85 @@
+story: 46.2
+kind: live_owner_verification
+head_at_check: 2f8ca268b4c802515c9653d0242f6b9a9b9df00d
+provision_not_rerun: true
+firewall_not_modified: true
+droplets_not_relocated: true
+
+digitalocean_project:
+  owner_reported: Cohestra
+  api: UNVERIFIED (GET /v2/projects returned 403; token lacks projects scope)
+  droplet_json_has_project_id: false
+
+production:
+  id: 610830617
+  name: cohestra-production
+  ipv4: 159.223.55.242
+  status: active
+  region: sgp1
+  plan: 8192/4/160 ubuntu-24-04-x64
+  vpc: 9f82c79b-f2be-4496-ab35-1907bbdacf10
+  tags: cohestra-production,epic-46,story-46-2
+
+uat:
+  id: 581334322
+  name: ubuntu-s-2vcpu-4gb-sgp1
+  ipv4: 129.212.235.2
+  status: active
+  vpc: f5aa05ac-bf74-44d1-a5cb-50e3c6d7411f
+  isolation: distinct_id_ip_and_vpc
+
+cloud_firewall:
+  name: cohestra-production
+  id: ae8e7427-f92a-4479-b4dd-3365fa02def3
+  status: succeeded
+  droplet_ids: [610830617]
+  uat_not_attached: true
+  inbound_22: eight provisioner /32s (never 0.0.0.0/0)
+  inbound_80_443: public
+  inbound_5432_6379_3000_8080: absent
+  uat_firewall: activitylead.creativorare still on 581334322 only
+
+live_public_probes_production_159.223.55.242:
+  22/tcp TimeoutError
+  80/tcp connect-ok recv-timeout (no HTTP banner; host listener UNVERIFIED this session)
+  443/tcp connect-ok recv-timeout (no TLS banner; host listener UNVERIFIED this session)
+  5432/tcp TimeoutError CLOSED
+  6379/tcp TimeoutError CLOSED
+  3000/tcp TimeoutError CLOSED
+  8080/tcp TimeoutError CLOSED
+  4317/tcp TimeoutError CLOSED
+  4318/tcp TimeoutError CLOSED
+
+live_public_probes_uat_129.212.235.2:
+  22/tcp open
+  80/tcp open
+  443/tcp open
+
+dns:
+  uat.cohestra.app -> 129.212.235.2
+  cohestra.app -> 129.212.235.2
+  www.cohestra.app -> 129.212.235.2
+  production_dns_cutover: none
+
+agent_ssh:
+  result: Connection timed out
+  note: Cloud Agent egress NAT no longer overlaps the recorded SSH /32s. Agent SSH is NOT owner SSH.
+
+owner_ssh_access: OWNER ACTION REQUIRED
+  windows_access: not_verified
+  current_22_sources: provisioner NAT /32s only
+  do_account_keys_present: cohestra-production-46-2 ; activitylead@cretivorare.com
+  recovery_path: DigitalOcean Droplet Console (browser) — not exercised this session
+
+host_ufw_this_session: UNVERIFIED (no SSH)
+host_sshd_this_session: UNVERIFIED (no SSH)
+unattended_updates_this_session: UNVERIFIED (no SSH)
+workloads_this_session: UNVERIFIED via SSH; no public app/data ports; no GitHub Environment production
+
+repo_freeze:
+  deploy.yml vs main: unchanged
+  docker-compose.uat.yml vs main: unchanged
+  deploy-production.yml: absent
+  github_environment_production: 404
+
+validate-production-host.sh: PASS 24/0 (contract + closed-port live probes)

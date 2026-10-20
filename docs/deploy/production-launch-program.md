@@ -50,7 +50,8 @@ Owner gate `droplet_purchase` is **APPROVED**. Cutover phrase is **GRANTED** and
 - SSH password authentication disabled after key proof.
 - Unattended security updates enabled. No application workload deploy in 46.2.
 - Public inventory: [production-host.md](./production-host.md) and [production-host-inventory.json](./production-host-inventory.json) (no credentials).
-- Next owner gate after 46.2: `production_secrets` (Story 46.3). Do not start 46.3 automatically.
+- Owner-reported DigitalOcean project: `Cohestra` (API project list is 403 with the current token). Droplet IDs/IPv4s unchanged after the reported project move.
+- Owner Windows SSH is **not verified**. Do not treat Cloud Agent SSH as owner access. Do not start 46.3 automatically. Next remaining owner gate after host acceptance: `production_secrets` (Story 46.3).
 
 ## Historical docs (do not follow for Production topology)
 

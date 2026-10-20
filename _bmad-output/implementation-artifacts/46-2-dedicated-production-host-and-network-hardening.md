@@ -8,6 +8,7 @@ created: 2026-10-19
 baseline_commit: 36601be5c0fa25deb801fa27d8a65e67d12e824a
 owner_gate: droplet_purchase
 owner_gate_status: APPROVED
+owner_ssh_access: OWNER_ACTION_REQUIRED
 cutover_authorization: GRANTED
 production_release_readiness: NOT_YET_COMPLETE
 ---
@@ -116,6 +117,7 @@ Cursor Grok 4.6
 - Review hardening: SSH CIDRs must be IPv4 /24-/32; UAT droplet id 581334322 is refused; firewall attach is exclusive and fail-closed; host `ufw` 22 is source-restricted; harden refuses the UAT address; unattended-upgrades enable is fail-closed.
 - PRODUCTION RELEASE READINESS remains NOT YET COMPLETE. Do not start 46.3. Do not merge without owner authorization.
 - Exact-HEAD Grok 4.6 review of `c86c28a59301168a00fe7cd8c7969e3f3ccb1eba`: BLOCKER=0, MAJOR=0, PASS. Deferred MINOR: ufw reset-before-sources on standalone harden; harden trusts provisioner CIDRs; validator is source-grep. No product/security residual that reopens AC3.
+- 2026-10-20 owner verification: droplet IDs/IPv4s/firewall unchanged after owner-reported DigitalOcean project move to `Cohestra`. Projects API is 403. Owner Windows SSH is not verified. Cloud firewall 22 remains provisioner `/32`s. Agent SSH timed out (NAT rotated). No firewall change applied.
 
 ## Senior Developer Review (AI)
 
@@ -150,7 +152,10 @@ Cursor Grok 4.6
 - _bmad-output/implementation-artifacts/evidence/46-2/dns-unchanged.txt
 - _bmad-output/implementation-artifacts/evidence/46-2/secret-scan.txt
 - _bmad-output/implementation-artifacts/evidence/46-2/validate-production-host.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/owner-verification-2026-10-20.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/owner-verification-validate.txt
 
 ### Change Log
 
 - 2026-10-20: Provisioned dedicated Production droplet 610830617 and recorded sanitized host evidence.
+- 2026-10-20: Owner verification — project membership API unverified (403); IDs/IPs/firewall unchanged; owner Windows SSH not verified; no firewall mutation.

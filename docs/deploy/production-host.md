@@ -11,6 +11,8 @@ Public facts live in [production-host-inventory.json](./production-host-inventor
 - `PRODUCTION CUTOVER: AUTHORIZED` does **not** waive remaining Epic 46 stories
 - Production release readiness: **NOT YET COMPLETE**
 - Story 46.3 (GitHub Environment `production`, app secrets, CD) is **not** this story
+- Owner SSH from a Windows workstation is **not verified**. Cloud Agent SSH is not owner proof.
+- DigitalOcean project membership for `Cohestra` is **owner-reported**. The API token used here cannot list projects (`403`). Droplet IDs and IPv4s were re-verified after the reported move.
 
 ## Plan (locked)
 
@@ -49,6 +51,47 @@ Host `ufw` allows 80/443 publicly and 22/tcp only from the same approved adminis
 3. Then `PasswordAuthentication no` is applied (`deploy/harden-production-host.sh`).
 4. Password authentication is proven failed.
 5. Private keys are **never** committed. Owners add their own public key in the DigitalOcean control panel if they need SSH after the provisioner session.
+
+### Owner Windows SSH (not yet verified)
+
+The live cloud firewall allows `22/tcp` only from the eight recorded provisioner `/32`s. That is not an owner office or home address. A Cloud Agent login, when it works, is **not** owner access.
+
+Do **not** open `22` to `0.0.0.0/0` or `::/0`.
+
+**Before any allowlist change**, confirm DigitalOcean Recovery Console still opens: Control Panel → Droplets → `cohestra-production` → Access → Launch Droplet Console.
+
+**Owner-supplied facts only (no secrets):**
+
+1. Public IPv4 or a `/24`–`/32` CIDR you will SSH from.
+2. An SSH **public** key, or confirmation to keep using the existing DigitalOcean account key named `activitylead@cretivorare.com` (fingerprint `bf:ab:6d:8f:d0:a4:54:9a:86:ac:7f:bc:85:07:8a:8c`).
+3. Explicit authorization to add that CIDR to the Production cloud firewall and host `ufw`.
+
+**Windows PowerShell checks (run on the owner PC):**
+
+```powershell
+# Public IPv4 to send as a /32 (not a secret)
+(Invoke-RestMethod -Uri 'https://ifconfig.me/ip').Trim()
+
+# Expected today: TcpTestSucceeded = False (22 is not allowlisted for your IP)
+Test-NetConnection -ComputerName 159.223.55.242 -Port 22
+
+# Expected today: timeout or permission denied. Do not paste private keys.
+ssh -o BatchMode=yes -o ConnectTimeout=8 -o PreferredAuthentications=publickey root@159.223.55.242
+
+# Fingerprint only, if a public key already exists
+if (Test-Path "$env:USERPROFILE\.ssh\id_ed25519.pub") { ssh-keygen -l -f "$env:USERPROFILE\.ssh\id_ed25519.pub" }
+if (Test-Path "$env:USERPROFILE\.ssh\id_rsa.pub") { ssh-keygen -l -f "$env:USERPROFILE\.ssh\id_rsa.pub" }
+```
+
+To create a new key on that PC (private key stays local):
+
+```powershell
+ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\cohestra-production-owner" -C "owner-windows"
+ssh-keygen -l -f "$env:USERPROFILE\.ssh\cohestra-production-owner.pub"
+Get-Content "$env:USERPROFILE\.ssh\cohestra-production-owner.pub"
+```
+
+Send only the public IPv4/CIDR and the `.pub` line or fingerprint. After you authorize the change, the allowlist update can be applied in a follow-up. It is **not** applied in this verification.
 
 ## Unattended security updates
 
