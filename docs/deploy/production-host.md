@@ -41,7 +41,7 @@ DigitalOcean cloud firewall `cohestra-production` (see `deploy/production-firewa
 | Inbound | 443/tcp | Public |
 | Inbound | 5432, 6379, 3000, 8080 | **Forbidden** |
 
-Host `ufw` allows 80/443 publicly and 22/tcp only from the same approved administration CIDRs as the cloud firewall. Postgres/Redis/application ports stay closed even if someone later publishes a Docker host port by mistake.
+Host `ufw` allows 80/443 publicly and 22/tcp only from the same approved administration CIDRs as the cloud firewall. `deploy/harden-production-host.sh` validates `PRODUCTION_SSH_SOURCES` (IPv4 `/24`–`/32`, never `0.0.0.0/0` or `::/0`) **before** any UFW mutation. Reconcile is additive and idempotent: it does **not** run `ufw --force reset` or `ufw disable`, it never removes the owner CIDR `116.86.142.14/32` or other already-authorized SSH sources, and a failed UFW command must not leave UFW disabled. Missing, empty, invalid, or world-open sources exit without touching the firewall. Postgres/Redis/application ports stay closed even if someone later publishes a Docker host port by mistake.
 
 80/443 are allowed now so Let's Encrypt / HTTP can work in 46.13. No public DNS cutover in 46.2.
 

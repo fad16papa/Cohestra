@@ -7,6 +7,9 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FW="$ROOT_DIR/deploy/production-firewall.desired.json"
 PROVISION="$ROOT_DIR/deploy/provision-production-droplet.sh"
 HARDEN="$ROOT_DIR/deploy/harden-production-host.sh"
+CIDR_LIB="$ROOT_DIR/deploy/lib/production-ssh-cidr.sh"
+UFW_LIB="$ROOT_DIR/deploy/lib/production-ufw-reconcile.sh"
+HARDEN_TEST="$ROOT_DIR/deploy/harden-production-host.test.sh"
 INVENTORY="$ROOT_DIR/docs/deploy/production-host-inventory.json"
 DOCS="$ROOT_DIR/docs/deploy/production-host.md"
 LAUNCH="$ROOT_DIR/docs/deploy/production-launch-program.md"
@@ -59,7 +62,7 @@ else
   fail "Provisioner must sample provisioner IPs without changing global IFS"
 fi
 
-if grep -q 'assert_ssh_cidr' "$PROVISION" && grep -q 'prefixlen < 24' "$PROVISION"; then
+if grep -q 'production_ssh_cidr_valid' "$PROVISION" && grep -q 'prefixlen < 24' "$CIDR_LIB"; then
   pass "SSH allowlist CIDRs must be IPv4 /24-/32"
 else
   fail "Provisioner must reject broad or non-IPv4 SSH CIDRs"
@@ -89,10 +92,32 @@ else
   fail "Harden script must lock sshd/unattended-upgrades and refuse the UAT host"
 fi
 
-if grep -q 'PRODUCTION_SSH_SOURCES is required' "$HARDEN" && grep -q 'ufw allow from' "$HARDEN" && ! grep -qE 'ufw allow 22/tcp$' "$HARDEN"; then
-  pass "Harden script refuses world-open SSH and requires PRODUCTION_SSH_SOURCES"
+if grep -q 'validate_production_ssh_sources' "$HARDEN" && grep -q 'reconcile_production_ufw' "$HARDEN" \
+  && grep -q 'PRODUCTION_SSH_SOURCES is required' "$CIDR_LIB" && grep -q 'allow from' "$UFW_LIB" \
+  && ! grep -qE 'ufw allow 22/tcp$' "$HARDEN" "$UFW_LIB" \
+  && ! grep -Eq '(^|[[:space:]])ufw[[:space:]]+(--force[[:space:]]+)?reset([[:space:]]|$)' "$HARDEN" "$UFW_LIB"; then
+  pass "Harden validates SSH sources before additive UFW reconcile (no reset, no world-open 22)"
 else
-  fail "Harden script must not open 22/tcp without SSH source CIDRs"
+  fail "Harden script must validate SSH CIDRs before UFW and must not reset or world-open 22"
+fi
+
+if grep -q '116.86.142.14/32' "$CIDR_LIB" && grep -q 'merge_owner_production_ssh_cidr' "$UFW_LIB" \
+  && grep -q 'Never drop' "$HARDEN"; then
+  pass "Owner SSH CIDR is merged and never dropped during UFW reconcile"
+else
+  fail "Harden reconcile must preserve owner CIDR 116.86.142.14/32"
+fi
+
+if [[ -f "$HARDEN_TEST" ]] && bash "$HARDEN_TEST"; then
+  pass "Harden UFW fail-closed behavioral tests"
+else
+  fail "Harden UFW fail-closed behavioral tests"
+fi
+
+if grep -q 'production-ssh-cidr.sh' "$PROVISION" && grep -q 'production-ufw-reconcile.sh' "$PROVISION"; then
+  pass "Provisioner copies fail-closed UFW libraries with the harden script"
+else
+  fail "Provisioner must copy production-ssh-cidr.sh and production-ufw-reconcile.sh to the droplet"
 fi
 
 if grep -q 'workloads_deployed=false' "$HARDEN" && ! grep -q 'docker compose' "$HARDEN"; then

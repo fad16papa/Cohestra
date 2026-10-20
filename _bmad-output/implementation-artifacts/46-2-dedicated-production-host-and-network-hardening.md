@@ -119,6 +119,7 @@ Cursor Grok 4.6
 - Exact-HEAD Grok 4.6 review of `c86c28a59301168a00fe7cd8c7969e3f3ccb1eba`: BLOCKER=0, MAJOR=0, PASS. Deferred MINOR: ufw reset-before-sources on standalone harden; harden trusts provisioner CIDRs; validator is source-grep. No product/security residual that reopens AC3.
 - 2026-10-20 owner verification: droplet IDs/IPv4s/firewall unchanged after owner-reported DigitalOcean project move to `Cohestra`. Projects API is 403. Owner Windows SSH is not verified. Cloud firewall 22 remains provisioner `/32`s. Agent SSH timed out (NAT rotated). No firewall change applied.
 - 2026-10-20 owner SSH acceptance: owner-reported PASS from `116.86.142.14/32` (key auth, password off, Recovery Console used). Agent independently confirmed that CIDR on the live cloud firewall and that 5432/6379/3000/8080 stay closed. Provisioner now merges `owner_ssh_cidrs` so a later reconcile cannot drop owner access. Host UFW and sshd this session remain owner-reported (agent SSH still timed out). 57/50 pending apt updates are a gated maintenance item, not applied.
+- 2026-10-20 fail-closed UFW correction: `harden-production-host.sh` now validates `PRODUCTION_SSH_SOURCES` (IPv4 `/24`–`/32`) before any UFW mutation. Unconditional `ufw --force reset` is removed. Reconcile is additive, preserves `116.86.142.14/32` and other authorized sources, and cannot disable UFW on failure. Mocked behavioral tests cover missing/empty/invalid/world-open/owner/multi/idempotent/failure/preserve/UAT. No live firewall, SSH, UAT, DNS, Paddle, or secret changes. Story remains at owner merge-authorization gate.
 
 ## Senior Developer Review (AI)
 
@@ -133,6 +134,9 @@ Cursor Grok 4.6
 
 - deploy/provision-production-droplet.sh
 - deploy/harden-production-host.sh
+- deploy/harden-production-host.test.sh
+- deploy/lib/production-ssh-cidr.sh
+- deploy/lib/production-ufw-reconcile.sh
 - deploy/validate-production-host.sh
 - deploy/production-firewall.desired.json
 - docs/deploy/production-host.md
@@ -162,3 +166,4 @@ Cursor Grok 4.6
 - 2026-10-20: Provisioned dedicated Production droplet 610830617 and recorded sanitized host evidence.
 - 2026-10-20: Owner verification — project membership API unverified (403); IDs/IPs/firewall unchanged; owner Windows SSH not verified; no firewall mutation.
 - 2026-10-20: Owner SSH acceptance recorded; provisioner preserves `owner_ssh_cidrs` on reconcile.
+- 2026-10-20: Fail-closed host UFW correction — validate SSH allowlist before mutation; additive idempotent reconcile; mocked behavioral tests. Do not merge without owner authorization.

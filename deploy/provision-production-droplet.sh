@@ -5,6 +5,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=lib/production-ssh-cidr.sh
+source "$ROOT_DIR/deploy/lib/production-ssh-cidr.sh"
 INVENTORY="$ROOT_DIR/docs/deploy/production-host-inventory.json"
 EVIDENCE_DIR="$ROOT_DIR/_bmad-output/implementation-artifacts/evidence/46-2"
 UAT_IP="129.212.235.2"
@@ -105,26 +107,13 @@ for cidr in "${ALLOWLIST[@]}"; do
   fi
 done
 ALLOWLIST=("${deduped[@]}")
-assert_ssh_cidr() {
-  local cidr="$1"
-  if [[ "$cidr" == "0.0.0.0/0" || "$cidr" == "::/0" ]]; then
+for cidr in "${ALLOWLIST[@]}"; do
+  if is_world_open_ssh_cidr "$cidr"; then
     die "SSH allowlist must not include 0.0.0.0/0 or ::/0"
   fi
-  python3 - "$cidr" <<'PY' || die "SSH allowlist entry is not a /24-/32 IPv4 CIDR"
-import ipaddress, sys
-raw = sys.argv[1]
-try:
-    net = ipaddress.ip_network(raw, strict=False)
-except ValueError:
-    raise SystemExit(1)
-if net.version != 4 or net.prefixlen < 24 or net.prefixlen > 32:
-    raise SystemExit(1)
-if any(ch in raw for ch in (";", " ", ",", "address:")):
-    raise SystemExit(1)
-PY
-}
-for cidr in "${ALLOWLIST[@]}"; do
-  assert_ssh_cidr "$cidr"
+  if ! production_ssh_cidr_valid "$cidr"; then
+    die "SSH allowlist entry is not a /24-/32 IPv4 CIDR"
+  fi
 done
 
 log "== Cohestra Production droplet provision (46.2) =="
@@ -289,8 +278,13 @@ done
 [[ "$key_ok" -eq 1 ]] || die "SSH key authentication failed before password disable"
 
 # Prove key works, then apply hardening (which disables password auth).
-scp "${SSH_OPTS[@]}" "$ROOT_DIR/deploy/harden-production-host.sh" "${USER}@${DROPLET_IP}:/tmp/harden-production-host.sh" >/dev/null
-HARDEN_OUT="$(ssh "${SSH_OPTS[@]}" "${USER}@${DROPLET_IP}" "PRODUCTION_SSH_SOURCES='${ALLOWLIST[*]}' bash /tmp/harden-production-host.sh && rm -f /tmp/harden-production-host.sh")"
+scp "${SSH_OPTS[@]}" \
+  "$ROOT_DIR/deploy/harden-production-host.sh" \
+  "$ROOT_DIR/deploy/lib/production-ssh-cidr.sh" \
+  "$ROOT_DIR/deploy/lib/production-ufw-reconcile.sh" \
+  "${USER}@${DROPLET_IP}:/tmp/" >/dev/null
+HARDEN_OUT="$(ssh "${SSH_OPTS[@]}" "${USER}@${DROPLET_IP}" \
+  "PRODUCTION_SSH_SOURCES='${ALLOWLIST[*]}' bash /tmp/harden-production-host.sh && rm -f /tmp/harden-production-host.sh /tmp/production-ssh-cidr.sh /tmp/production-ufw-reconcile.sh")"
 echo "$HARDEN_OUT" | grep -q HARDEN_OK || die "host harden script did not report HARDEN_OK"
 echo "$HARDEN_OUT" | grep -qiE 'passwordauthentication no' || die "sshd did not report PasswordAuthentication no"
 echo "$HARDEN_OUT" | grep -qx 'UNATTENDED=enabled' || die "unattended-upgrades is not enabled"
