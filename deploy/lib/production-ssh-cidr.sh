@@ -66,10 +66,16 @@ validate_production_ssh_sources() {
 
   local tokens=()
   local token
+  local glob_was_off=0
+  case "$-" in *f*) glob_was_off=1 ;; esac
+  set -f
   local IFS=$' \t\n,'
   # shellcheck disable=SC2206
   tokens=($raw)
   unset IFS
+  if [[ "$glob_was_off" -eq 0 ]]; then
+    set +f
+  fi
 
   if [[ ${#tokens[@]} -eq 0 ]]; then
     echo "REFUSE: PRODUCTION_SSH_SOURCES is required; refusing to open 22/tcp to the world" >&2
@@ -81,6 +87,10 @@ validate_production_ssh_sources() {
   for token in "${tokens[@]}"; do
     token="${token// /}"
     [[ -z "$token" ]] && continue
+    if [[ "$token" == *['*?[]']* ]]; then
+      echo "REFUSE: SSH allowlist entry is not an approved IPv4 /24-/32 CIDR" >&2
+      return 1
+    fi
     if is_world_open_ssh_cidr "$token"; then
       echo "REFUSE: SSH allowlist must not include 0.0.0.0/0 or ::/0" >&2
       return 1
@@ -117,10 +127,22 @@ owner_production_ssh_cidr() {
 # Read desired CIDRs from stdin (one per line). Always include the owner CIDR.
 # Never drops the owner CIDR from the desired set.
 merge_owner_production_ssh_cidr() {
-  local owner
-  owner="$(owner_production_ssh_cidr)" || return 1
-  local seen=" ${owner} "
-  echo "$owner"
+  local default_owner="$PRODUCTION_OWNER_SSH_CIDR_DEFAULT"
+  if ! production_ssh_cidr_valid "$default_owner"; then
+    echo "REFUSE: owner SSH CIDR is not an approved IPv4 /24-/32 CIDR" >&2
+    return 1
+  fi
+  default_owner="$(normalize_production_ssh_cidr "$default_owner")"
+  local seen=" ${default_owner} "
+  echo "$default_owner"
+  if [[ -n "${PRODUCTION_OWNER_SSH_CIDR-}" ]]; then
+    local extra
+    extra="$(owner_production_ssh_cidr)" || return 1
+    if [[ " ${seen} " != *" ${extra} "* ]]; then
+      seen+=" ${extra}"
+      echo "$extra"
+    fi
+  fi
   local cidr
   while IFS= read -r cidr; do
     [[ -z "$cidr" ]] && continue

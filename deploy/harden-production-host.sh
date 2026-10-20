@@ -15,7 +15,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _load_harden_lib() {
   local name="$1"
   local candidate
-  for candidate in "${SCRIPT_DIR}/lib/${name}" "${SCRIPT_DIR}/${name}"; do
+  for candidate in "${SCRIPT_DIR}/${name}" "${SCRIPT_DIR}/lib/${name}"; do
     if [[ -f "$candidate" ]]; then
       # shellcheck disable=SC1090
       source "$candidate"
@@ -43,9 +43,9 @@ refuse_if_uat_or_shared_host() {
   if [[ "${COHESTRA_HARDEN_SKIP_METADATA:-}" != "1" ]]; then
     meta_id="$(curl -fsS --max-time 3 http://169.254.169.254/metadata/v1/id 2>/dev/null || true)"
     meta_ip="$(curl -fsS --max-time 3 http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address 2>/dev/null || true)"
-    if command -v ip >/dev/null 2>&1; then
-      local_ips="$(ip -4 -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | tr '\n' ' ' || true)"
-    fi
+  fi
+  if command -v ip >/dev/null 2>&1; then
+    local_ips="$(ip -4 -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | tr '\n' ' ' || true)"
   fi
   if [[ "$meta_id" == "$UAT_DROPLET_ID" || "$meta_ip" == "$UAT_IP" || " $local_ips " == *" $UAT_IP "* ]]; then
     echo "REFUSE: this host is the UAT droplet"

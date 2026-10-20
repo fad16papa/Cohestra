@@ -66,16 +66,39 @@ case "$cmd" in
   status)
     if [[ "$(cat "$STATE/active")" == "1" ]]; then
       echo "Status: active"
+      echo ""
+      echo "To                         Action      From"
+      echo "--                         ------      ----"
+      if [[ -f "$STATE/rules" ]]; then
+        while IFS='|' read -r to frm; do
+          [[ -z "${to:-}" ]] && continue
+          printf '%-26s ALLOW       %s\n' "$to" "$frm"
+        done <"$STATE/rules"
+      fi
     else
       echo "Status: inactive"
     fi
-    echo ""
-    echo "To                         Action      From"
-    echo "--                         ------      ----"
+    ;;
+  show)
+    if [[ "${1-}" != "added" ]]; then
+      echo "mock-ufw: unhandled show $*" >&2
+      exit 1
+    fi
+    echo "Added user rules (see 'ufw status' for running firewall):"
     if [[ -f "$STATE/rules" ]]; then
       while IFS='|' read -r to frm; do
         [[ -z "${to:-}" ]] && continue
-        printf '%-26s ALLOW       %s\n' "$to" "$frm"
+        if [[ "$to" == "22/tcp" || "$to" == "OpenSSH" || "$to" == "22" ]]; then
+          if [[ "$frm" == "Anywhere" || "$frm" == "Anywhere (v6)" || "$frm" == "0.0.0.0/0" || "$frm" == "::/0" ]]; then
+            echo "ufw allow ${to}"
+          else
+            echo "ufw allow from ${frm} to any port 22 proto tcp"
+          fi
+        elif [[ "$to" == "80/tcp" ]]; then
+          echo "ufw allow 80/tcp"
+        elif [[ "$to" == "443/tcp" ]]; then
+          echo "ufw allow 443/tcp"
+        fi
       done <"$STATE/rules"
     fi
     ;;
@@ -345,7 +368,7 @@ echo 1 >"$fail_allow_dir/active"
 seed_rule "$fail_allow_dir" "22/tcp" "$OWNER"
 set +e
 fail_allow_out="$(
-  MOCK_UFW_FAIL_ON=allow PRODUCTION_SSH_SOURCES="$OWNER $SECOND" \
+  MOCK_UFW_FAIL_ON='allow from' PRODUCTION_SSH_SOURCES="$OWNER $SECOND" \
     run_reconcile "$fail_allow_dir" true 2>&1
 )"
 fail_allow_rc=$?
@@ -385,6 +408,89 @@ set -e
 [[ "$preserve2_rc" -eq 0 ]] || fail "second preserve run must succeed"
 grep -q "22/tcp|${EXTRA}" "$preserve_dir/rules" || fail "second run dropped a previously authorized SSH source"
 pass "later owner-only reconcile does not remove other authorized sources"
+
+# Owner CIDR is merged even when omitted from this run and UFW is empty.
+fresh_owner_dir="$WORKDIR/fresh-owner"
+create_mock_ufw "$fresh_owner_dir"
+set +e
+fresh_out="$(
+  PRODUCTION_SSH_SOURCES="$SECOND" run_reconcile "$fresh_owner_dir" true 2>&1
+)"
+fresh_rc=$?
+set -e
+[[ "$fresh_rc" -eq 0 ]] || fail "fresh UFW with non-owner sources must succeed: $fresh_out"
+grep -q "22/tcp|${OWNER}" "$fresh_owner_dir/rules" || fail "owner CIDR must be auto-merged onto an empty UFW"
+grep -q "22/tcp|${SECOND}" "$fresh_owner_dir/rules" || fail "requested SSH source must be added"
+assert_no_destructive "$fresh_owner_dir" "owner auto-merge"
+pass "empty UFW auto-merges owner CIDR 116.86.142.14/32"
+
+# Glob tokens must not expand into filenames.
+glob_dir="$WORKDIR/glob"
+create_mock_ufw "$glob_dir"
+set +e
+PRODUCTION_SSH_SOURCES='*' run_reconcile "$glob_dir" true >/dev/null 2>&1
+glob_rc=$?
+set -e
+[[ "$glob_rc" -ne 0 ]] || fail "glob SSH source must fail"
+assert_no_commands "$glob_dir" "glob SSH source"
+pass "glob SSH source tokens are rejected without UFW mutation"
+
+# Existing over-broad SSH CIDR must refuse without mutation.
+broad_exist_dir="$WORKDIR/broad-exist"
+create_mock_ufw "$broad_exist_dir"
+echo 1 >"$broad_exist_dir/active"
+seed_rule "$broad_exist_dir" "22/tcp" "10.0.0.0/8"
+set +e
+broad_exist_out="$(
+  PRODUCTION_SSH_SOURCES="$OWNER" run_reconcile "$broad_exist_dir" true 2>&1
+)"
+broad_exist_rc=$?
+set -e
+[[ "$broad_exist_rc" -ne 0 ]] || fail "existing /8 SSH source must refuse"
+[[ "$broad_exist_out" == *"broader than IPv4 /24-/32"* ]] || fail "over-broad existing SSH must be reported"
+if grep -Eq '(^| )(allow|enable|default|reset|disable|delete)( |$)' "$broad_exist_dir/commands"; then
+  fail "over-broad existing SSH refuse must not mutate UFW"
+fi
+assert_no_destructive "$broad_exist_dir" "over-broad existing SSH"
+pass "existing over-broad SSH CIDR refuses without mutating UFW"
+
+# OpenSSH Anywhere must be treated as world-open SSH.
+openssh_dir="$WORKDIR/openssh"
+create_mock_ufw "$openssh_dir"
+echo 1 >"$openssh_dir/active"
+seed_rule "$openssh_dir" "OpenSSH" "Anywhere"
+set +e
+openssh_out="$(
+  PRODUCTION_SSH_SOURCES="$OWNER" run_reconcile "$openssh_dir" true 2>&1
+)"
+openssh_rc=$?
+set -e
+[[ "$openssh_rc" -ne 0 ]] || fail "OpenSSH Anywhere must refuse"
+[[ "$openssh_out" == *"world-open SSH"* ]] || fail "OpenSSH Anywhere must be reported as world-open"
+if grep -Eq '(^| )(allow|enable|default|reset|disable|delete)( |$)' "$openssh_dir/commands"; then
+  fail "OpenSSH world-open refuse must not mutate UFW"
+fi
+pass "OpenSSH Anywhere is treated as world-open SSH"
+
+# Latent world-open rules while UFW is inactive must refuse before enable.
+latent_dir="$WORKDIR/latent"
+create_mock_ufw "$latent_dir"
+echo 0 >"$latent_dir/active"
+seed_rule "$latent_dir" "22/tcp" "Anywhere"
+set +e
+latent_out="$(
+  PRODUCTION_SSH_SOURCES="$OWNER" run_reconcile "$latent_dir" true 2>&1
+)"
+latent_rc=$?
+set -e
+[[ "$latent_rc" -ne 0 ]] || fail "inactive UFW with latent world-open SSH must refuse"
+[[ "$latent_out" == *"world-open SSH"* ]] || fail "latent world-open SSH must be reported"
+[[ "$(cat "$latent_dir/active")" == "0" ]] || fail "latent world-open refuse must not enable UFW"
+if grep -Eq '(^| )(allow|enable|default|reset|disable|delete)( |$)' "$latent_dir/commands"; then
+  fail "latent world-open refuse must not mutate UFW: $(tr '\n' ';' <"$latent_dir/commands")"
+fi
+assert_no_destructive "$latent_dir" "latent world-open SSH"
+pass "inactive UFW with latent world-open 22 refuses without enable"
 
 # Existing world-open SSH must refuse without mutation.
 world_exist_dir="$WORKDIR/world-exist"
