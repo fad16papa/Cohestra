@@ -65,6 +65,12 @@ else
   fail "Provisioner must reject broad or non-IPv4 SSH CIDRs"
 fi
 
+if grep -q 'owner_ssh_cidrs' "$PROVISION" && grep -q 'RECORDED_SOURCES' "$PROVISION"; then
+  pass "Provisioner merges recorded owner/admin SSH CIDRs on reconcile"
+else
+  fail "Provisioner must preserve owner_ssh_cidrs / inventory SSH sources"
+fi
+
 if grep -q 'UAT_DROPLET_ID' "$PROVISION" && grep -q 'equals UAT host' "$PROVISION"; then
   pass "Provisioner refuses UAT droplet id as well as IPv4"
 else
@@ -197,6 +203,14 @@ if inv.get("managed_postgres") is not False:
 sources = inv.get("ssh_sources") or []
 if "0.0.0.0/0" in sources or "::/0" in sources:
     failed.append("ssh_open")
+owner_cidrs = inv.get("owner_ssh_cidrs") or []
+if not owner_cidrs:
+    failed.append("owner_cidr_missing")
+for cidr in owner_cidrs:
+    if cidr in ("0.0.0.0/0", "::/0"):
+        failed.append("owner_cidr_open")
+    if cidr not in sources:
+        failed.append("owner_cidr_dropped")
 if failed:
     print("INVENTORY_FAIL " + " ".join(failed))
     sys.exit(1)

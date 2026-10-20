@@ -1,0 +1,39 @@
+story: 46.2
+kind: owner_reported_ssh_acceptance
+recorded_by: cloud_agent
+independently_reproduced_by_agent: false
+firewall_not_modified_by_agent: true
+provision_not_rerun: true
+
+owner_reported:
+  date: 2026-10-20
+  source_ipv4: 116.86.142.14
+  cloud_firewall: added 116.86.142.14/32 for tcp/22; eight prior provisioner /32s preserved
+  host_ufw: added 116.86.142.14 for tcp/22; ufw remained active
+  ssh: succeeded with existing personal ed25519 key
+  whoami: root
+  hostname: cohestra-production
+  ssh_connection: 116.86.142.14 -> 159.223.55.242:22
+  sshd_T:
+    permitrootlogin: without-password
+    pubkeyauthentication: yes
+    passwordauthentication: no
+    kbdinteractiveauthentication: no
+  recovery_console: authenticated
+  root_console_password: rotated_after_temporary_reset (value not recorded)
+
+agent_independent_checks_2026-10-20:
+  production_droplet: 610830617 159.223.55.242 active
+  uat_droplet: 581334322 129.212.235.2 active
+  cloud_firewall_owner_cidr_present: true
+  cloud_firewall_droplet_ids: [610830617]
+  cloud_firewall_22_not_0.0.0.0/0: true
+  public_5432_6379_3000_8080: TimeoutError
+  dns_uat.cohestra.app: 129.212.235.2
+  dns_cohestra.app: 129.212.235.2
+  agent_ssh: Connection timed out (egress NAT not on allowlist; not expanded)
+
+pending_security_updates:
+  owner_motd: 57 updates available, 50 security
+  interpretation: pending apt metadata / unattended-upgrades backlog on a new Ubuntu 24.04 host
+  action: separate owner-gated maintenance; do not install or reboot in 46.2

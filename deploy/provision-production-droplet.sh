@@ -77,6 +77,14 @@ if [[ ${#PROVISIONER_IPS[@]} -lt 1 ]]; then
 fi
 PROVISIONER_IP="${PROVISIONER_IPS[0]}"
 ALLOWLIST=()
+# Preserve previously recorded owner/admin CIDRs. A reconcile must not drop
+# authorized human access when provisioner egress NAT rotates.
+if [[ -f "$INVENTORY" ]]; then
+  mapfile -t RECORDED_SOURCES < <(jq -r '(.owner_ssh_cidrs // []) + (.ssh_sources // []) | .[]' "$INVENTORY")
+  for cidr in "${RECORDED_SOURCES[@]}"; do
+    [[ -n "$cidr" ]] && ALLOWLIST+=("$cidr")
+  done
+fi
 for ip in "${PROVISIONER_IPS[@]}"; do
   ALLOWLIST+=("${ip}/32")
 done
@@ -332,6 +340,10 @@ PY
 
 HOST_PROOF="$(ssh "${SSH_OPTS[@]}" "${USER}@${DROPLET_IP}" "sshd -T | awk 'tolower(\$1) ~ /passwordauthentication|pubkeyauthentication|permitrootlogin/ {print}'; echo MARKER=\$(cat /etc/cohestra-production-host | tr '\n' ' ')")"
 
+PREV_INV="{}"
+if [[ -f "$INVENTORY" ]]; then
+  PREV_INV="$(cat "$INVENTORY")"
+fi
 jq -n \
   --arg name "$DROPLET_NAME" \
   --argjson id "$DROPLET_ID" \
@@ -351,6 +363,7 @@ jq -n \
   --arg provisioner "$PROVISIONER_IP" \
   --argjson ssh_sources "$(printf '%s\n' "${ALLOWLIST[@]}" | jq -R . | jq -s .)" \
   --arg hardened_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --argjson prev "$PREV_INV" \
   '{
     story: "46.2",
     name: $name,
@@ -378,7 +391,11 @@ jq -n \
     managed_postgres: false,
     production_auto_deploy: false,
     hardened_utc: $hardened_utc
-  }' >"$INVENTORY"
+  } as $core
+  | $prev + $core
+  | .owner_ssh_cidrs = (($prev.owner_ssh_cidrs // []) )
+  | .ssh_sources = (((.owner_ssh_cidrs // []) + .ssh_sources) | unique)
+  ' >"$INVENTORY"
 
 # Sanitized evidence — no keys, tokens, or passwords.
 {

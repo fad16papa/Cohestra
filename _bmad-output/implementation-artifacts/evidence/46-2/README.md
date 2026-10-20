@@ -14,7 +14,8 @@ Public, sanitized host facts only.
 | `dns-unchanged.txt` | No DNS API mutation |
 | `secret-scan.txt` | No tokens/keys in committed evidence |
 | `validate-production-host.txt` | `deploy/validate-production-host.sh` output |
-| `owner-verification-2026-10-20.txt` | Live revalidation + owner SSH gate (not owner login proof) |
+| `owner-verification-2026-10-20.txt` | Earlier live revalidation when owner SSH was still pending |
+| `owner-ssh-acceptance-2026-10-20.txt` | Owner-reported Windows SSH PASS + independent firewall/port checks |
 
 Never commit:
 

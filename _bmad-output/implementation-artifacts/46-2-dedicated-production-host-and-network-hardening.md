@@ -8,7 +8,7 @@ created: 2026-10-19
 baseline_commit: 36601be5c0fa25deb801fa27d8a65e67d12e824a
 owner_gate: droplet_purchase
 owner_gate_status: APPROVED
-owner_ssh_access: OWNER_ACTION_REQUIRED
+owner_ssh_access: owner_reported_pass
 cutover_authorization: GRANTED
 production_release_readiness: NOT_YET_COMPLETE
 ---
@@ -118,6 +118,7 @@ Cursor Grok 4.6
 - PRODUCTION RELEASE READINESS remains NOT YET COMPLETE. Do not start 46.3. Do not merge without owner authorization.
 - Exact-HEAD Grok 4.6 review of `c86c28a59301168a00fe7cd8c7969e3f3ccb1eba`: BLOCKER=0, MAJOR=0, PASS. Deferred MINOR: ufw reset-before-sources on standalone harden; harden trusts provisioner CIDRs; validator is source-grep. No product/security residual that reopens AC3.
 - 2026-10-20 owner verification: droplet IDs/IPv4s/firewall unchanged after owner-reported DigitalOcean project move to `Cohestra`. Projects API is 403. Owner Windows SSH is not verified. Cloud firewall 22 remains provisioner `/32`s. Agent SSH timed out (NAT rotated). No firewall change applied.
+- 2026-10-20 owner SSH acceptance: owner-reported PASS from `116.86.142.14/32` (key auth, password off, Recovery Console used). Agent independently confirmed that CIDR on the live cloud firewall and that 5432/6379/3000/8080 stay closed. Provisioner now merges `owner_ssh_cidrs` so a later reconcile cannot drop owner access. Host UFW and sshd this session remain owner-reported (agent SSH still timed out). 57/50 pending apt updates are a gated maintenance item, not applied.
 
 ## Senior Developer Review (AI)
 
@@ -154,8 +155,10 @@ Cursor Grok 4.6
 - _bmad-output/implementation-artifacts/evidence/46-2/validate-production-host.txt
 - _bmad-output/implementation-artifacts/evidence/46-2/owner-verification-2026-10-20.txt
 - _bmad-output/implementation-artifacts/evidence/46-2/owner-verification-validate.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/owner-ssh-acceptance-2026-10-20.txt
 
 ### Change Log
 
 - 2026-10-20: Provisioned dedicated Production droplet 610830617 and recorded sanitized host evidence.
 - 2026-10-20: Owner verification — project membership API unverified (403); IDs/IPs/firewall unchanged; owner Windows SSH not verified; no firewall mutation.
+- 2026-10-20: Owner SSH acceptance recorded; provisioner preserves `owner_ssh_cidrs` on reconcile.

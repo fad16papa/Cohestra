@@ -11,8 +11,8 @@
       "protocol": "tcp",
       "ports": "22",
       "sources": "approved_admin_cidrs_only",
-      "source_count": 8,
-      "notes": "Eight observed provisioner egress /32s. Never 0.0.0.0/0 or ::/0."
+      "source_count": 9,
+      "notes": "Owner 116.86.142.14/32 plus eight provisioner egress /32s. Never 0.0.0.0/0 or ::/0. Independently confirmed on the live firewall 2026-10-20."
     },
     {
       "protocol": "tcp",

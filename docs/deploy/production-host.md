@@ -11,8 +11,9 @@ Public facts live in [production-host-inventory.json](./production-host-inventor
 - `PRODUCTION CUTOVER: AUTHORIZED` does **not** waive remaining Epic 46 stories
 - Production release readiness: **NOT YET COMPLETE**
 - Story 46.3 (GitHub Environment `production`, app secrets, CD) is **not** this story
-- Owner SSH from a Windows workstation is **not verified**. Cloud Agent SSH is not owner proof.
-- DigitalOcean project membership for `Cohestra` is **owner-reported**. The API token used here cannot list projects (`403`). Droplet IDs and IPv4s were re-verified after the reported move.
+- Owner Windows SSH: **owner-reported PASS** on 2026-10-20 (source `116.86.142.14/32`). Cloud Agent SSH is not owner proof.
+- DigitalOcean Recovery Console: **owner-reported PASS**. Root console password was rotated after a temporary reset (secret not recorded).
+- DigitalOcean project membership for `Cohestra` is **owner-confirmed**. The API token used here cannot list projects (`403`). Droplet IDs and IPv4s remain unchanged after the reported move.
 
 ## Plan (locked)
 
@@ -35,7 +36,7 @@ DigitalOcean cloud firewall `cohestra-production` (see `deploy/production-firewa
 
 | Direction | Port | Sources |
 | --- | --- | --- |
-| Inbound | 22/tcp | Approved administration CIDRs only (observed provisioner egress /32s + optional `PRODUCTION_SSH_ALLOWLIST`). Never `0.0.0.0/0` and never a regional AWS range. |
+| Inbound | 22/tcp | Approved administration CIDRs only (`owner_ssh_cidrs` + recorded sources + optional `PRODUCTION_SSH_ALLOWLIST` + observed provisioner `/32`s). Never `0.0.0.0/0` and never a regional AWS range. |
 | Inbound | 80/tcp | Public |
 | Inbound | 443/tcp | Public |
 | Inbound | 5432, 6379, 3000, 8080 | **Forbidden** |
@@ -52,46 +53,26 @@ Host `ufw` allows 80/443 publicly and 22/tcp only from the same approved adminis
 4. Password authentication is proven failed.
 5. Private keys are **never** committed. Owners add their own public key in the DigitalOcean control panel if they need SSH after the provisioner session.
 
-### Owner Windows SSH (not yet verified)
+### Owner Windows SSH (owner-reported PASS, 2026-10-20)
 
-The live cloud firewall allows `22/tcp` only from the eight recorded provisioner `/32`s. That is not an owner office or home address. A Cloud Agent login, when it works, is **not** owner access.
+Owner-observed from a Windows workstation (not independently reproduced by a Cloud Agent):
 
-Do **not** open `22` to `0.0.0.0/0` or `::/0`.
+- Source IPv4 `116.86.142.14` added as `116.86.142.14/32` on the DigitalOcean cloud firewall for TCP 22.
+- The eight existing provisioner SSH `/32`s were preserved.
+- Host `ufw` also allowed `116.86.142.14` on TCP 22 and stayed active.
+- SSH succeeded with the owner's existing personal Ed25519 key.
+- Remote `whoami` = `root`; `hostname` = `cohestra-production`.
+- `SSH_CONNECTION` source `116.86.142.14` → dest `159.223.55.242:22`.
+- `sshd -T`: `permitrootlogin without-password`, `pubkeyauthentication yes`, `passwordauthentication no`, `kbdinteractiveauthentication no`.
+- DigitalOcean Recovery Console authenticated the owner. A temporary root console password was rotated afterward (value not recorded).
 
-**Before any allowlist change**, confirm DigitalOcean Recovery Console still opens: Control Panel → Droplets → `cohestra-production` → Access → Launch Droplet Console.
+`owner_ssh_cidrs` in [production-host-inventory.json](./production-host-inventory.json) is the preserve-list. `deploy/provision-production-droplet.sh` merges those CIDRs on any later reconcile so a rotating provisioner NAT pool cannot drop owner access. Do **not** open `22` to `0.0.0.0/0` or `::/0`. Do not put this residential IP in application secrets or unrelated config.
 
-**Owner-supplied facts only (no secrets):**
+If the residential IP changes, add a new `/24`–`/32` CIDR to `owner_ssh_cidrs` and the live firewall; do not expand to the public internet.
 
-1. Public IPv4 or a `/24`–`/32` CIDR you will SSH from.
-2. An SSH **public** key, or confirmation to keep using the existing DigitalOcean account key named `activitylead@cretivorare.com` (fingerprint `bf:ab:6d:8f:d0:a4:54:9a:86:ac:7f:bc:85:07:8a:8c`).
-3. Explicit authorization to add that CIDR to the Production cloud firewall and host `ufw`.
+### Long-term administration (not implemented in 46.2)
 
-**Windows PowerShell checks (run on the owner PC):**
-
-```powershell
-# Public IPv4 to send as a /32 (not a secret)
-(Invoke-RestMethod -Uri 'https://ifconfig.me/ip').Trim()
-
-# Expected today: TcpTestSucceeded = False (22 is not allowlisted for your IP)
-Test-NetConnection -ComputerName 159.223.55.242 -Port 22
-
-# Expected today: timeout or permission denied. Do not paste private keys.
-ssh -o BatchMode=yes -o ConnectTimeout=8 -o PreferredAuthentications=publickey root@159.223.55.242
-
-# Fingerprint only, if a public key already exists
-if (Test-Path "$env:USERPROFILE\.ssh\id_ed25519.pub") { ssh-keygen -l -f "$env:USERPROFILE\.ssh\id_ed25519.pub" }
-if (Test-Path "$env:USERPROFILE\.ssh\id_rsa.pub") { ssh-keygen -l -f "$env:USERPROFILE\.ssh\id_rsa.pub" }
-```
-
-To create a new key on that PC (private key stays local):
-
-```powershell
-ssh-keygen -t ed25519 -f "$env:USERPROFILE\.ssh\cohestra-production-owner" -C "owner-windows"
-ssh-keygen -l -f "$env:USERPROFILE\.ssh\cohestra-production-owner.pub"
-Get-Content "$env:USERPROFILE\.ssh\cohestra-production-owner.pub"
-```
-
-Send only the public IPv4/CIDR and the `.pub` line or fingerprint. After you authorize the change, the allowlist update can be applied in a follow-up. It is **not** applied in this verification.
+Residential owner IPs and Cloud Agent egress NATs both change. The durable approach is a **stable management path** (owner-controlled VPN / WireGuard / Tailscale, or a dedicated jump host with a reserved IPv4) plus DigitalOcean Recovery Console as break-glass. Do not implement that path in Story 46.2.
 
 ## Unattended security updates
 
@@ -103,6 +84,8 @@ Ubuntu `unattended-upgrades` is installed and enabled:
 - **No automatic reboot** in 46.2 (the host is not serving Production traffic yet)
 
 Policy files: `/etc/apt/apt.conf.d/20auto-upgrades` and `/etc/apt/apt.conf.d/50unattended-upgrades`.
+
+Owner MOTD on 2026-10-20 reported **57 available updates, 50 security**. That is pending package metadata / unattended-upgrades backlog on a new host, not proof that unattended-upgrades is disabled. Applying those updates or rebooting is a **separate owner-gated maintenance action**. Do not install or reboot from Story 46.2.
 
 ## What 46.2 does not do
 
@@ -125,4 +108,4 @@ bash deploy/validate-production-host.sh
 
 Optional extra SSH CIDRs: `PRODUCTION_SSH_ALLOWLIST=203.0.113.10/32,198.51.100.0/24`.
 
-The provisioner samples its current public IPv4s because some agent/CI egress paths rotate through a small NAT pool. Each observed address is added as a `/32`. The script refuses `0.0.0.0/0` and `::/0`.
+The provisioner merges `owner_ssh_cidrs` and existing `ssh_sources` from inventory, then adds current provisioner `/32`s. It refuses `0.0.0.0/0` and `::/0`. A reconcile must not restore world-open SSH and must not drop recorded owner CIDRs.
