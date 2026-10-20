@@ -33,7 +33,7 @@ DigitalOcean cloud firewall `cohestra-production` (see `deploy/production-firewa
 
 | Direction | Port | Sources |
 | --- | --- | --- |
-| Inbound | 22/tcp | Approved administration CIDRs only (provisioner IP + optional `PRODUCTION_SSH_ALLOWLIST`). Never `0.0.0.0/0`. |
+| Inbound | 22/tcp | Approved administration CIDRs only (observed provisioner egress /32s + optional `PRODUCTION_SSH_ALLOWLIST`). Never `0.0.0.0/0` and never a regional AWS range. |
 | Inbound | 80/tcp | Public |
 | Inbound | 443/tcp | Public |
 | Inbound | 5432, 6379, 3000, 8080 | **Forbidden** |
@@ -81,3 +81,5 @@ bash deploy/validate-production-host.sh
 ```
 
 Optional extra SSH CIDRs: `PRODUCTION_SSH_ALLOWLIST=203.0.113.10/32,198.51.100.0/24`.
+
+The provisioner samples its current public IPv4s because some agent/CI egress paths rotate through a small NAT pool. Each observed address is added as a `/32`. The script refuses `0.0.0.0/0` and `::/0`.

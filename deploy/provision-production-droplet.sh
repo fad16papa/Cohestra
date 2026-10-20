@@ -38,12 +38,47 @@ fi
 mkdir -p "$EVIDENCE_DIR"
 install -d -m 0700 "$HOME/.ssh"
 
-PROVISIONER_IP="$(curl -fsS --max-time 10 https://ifconfig.me/ip || true)"
-if [[ ! "$PROVISIONER_IP" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+# Cursor Cloud / similar CI egress uses a small NAT pool. A single /32
+# locks the provisioner out of its own SSH rule. Sample observed IPv4s only.
+# Never expand to 0.0.0.0/0 or AWS regional ranges.
+sample_provisioner_ips() {
+  python3 - <<'PY'
+import urllib.request, sys
+urls = (
+    "https://ifconfig.me/ip",
+    "https://api.ipify.org",
+    "https://checkip.amazonaws.com",
+    "https://icanhazip.com",
+)
+seen = []
+found = set()
+for _ in range(24):
+    for url in urls:
+        try:
+            ip = urllib.request.urlopen(url, timeout=8).read().decode().strip()
+        except Exception:
+            continue
+        parts = ip.split(".")
+        if len(parts) != 4 or not all(p.isdigit() and 0 <= int(p) <= 255 for p in parts):
+            continue
+        if ip not in found:
+            found.add(ip)
+            seen.append(ip)
+print("\n".join(seen))
+if not seen:
+    sys.exit(1)
+PY
+}
+
+mapfile -t PROVISIONER_IPS < <(sample_provisioner_ips)
+if [[ ${#PROVISIONER_IPS[@]} -lt 1 ]]; then
   die "could not determine provisioner public IPv4 for SSH allowlist"
 fi
-
-ALLOWLIST=("${PROVISIONER_IP}/32")
+PROVISIONER_IP="${PROVISIONER_IPS[0]}"
+ALLOWLIST=()
+for ip in "${PROVISIONER_IPS[@]}"; do
+  ALLOWLIST+=("${ip}/32")
+done
 if [[ -n "${PRODUCTION_SSH_ALLOWLIST:-}" ]]; then
   IFS=',' read -r -a extra <<<"${PRODUCTION_SSH_ALLOWLIST}"
   for cidr in "${extra[@]}"; do
@@ -51,6 +86,16 @@ if [[ -n "${PRODUCTION_SSH_ALLOWLIST:-}" ]]; then
     [[ -n "$cidr" ]] && ALLOWLIST+=("$cidr")
   done
 fi
+# Deduplicate while preserving order.
+deduped=()
+seen_cidr=""
+for cidr in "${ALLOWLIST[@]}"; do
+  if [[ " ${seen_cidr} " != *" ${cidr} "* ]]; then
+    deduped+=("$cidr")
+    seen_cidr+=" ${cidr}"
+  fi
+done
+ALLOWLIST=("${deduped[@]}")
 for cidr in "${ALLOWLIST[@]}"; do
   if [[ "$cidr" == "0.0.0.0/0" || "$cidr" == "::/0" ]]; then
     die "SSH allowlist must not include 0.0.0.0/0 or ::/0"
@@ -69,17 +114,17 @@ if [[ ! -f "$BOOTSTRAP_KEY" ]]; then
   ssh-keygen -t ed25519 -f "$BOOTSTRAP_KEY" -N "" -C "$SSH_KEY_NAME" >/dev/null
   chmod 600 "$BOOTSTRAP_KEY"
 fi
-PUB="$(cat "${BOOTSTRAP_KEY}.pub")"
 EXISTING_KEY_ID="$(doctl compute ssh-key list --output json | jq -r --arg n "$SSH_KEY_NAME" '.[] | select(.name==$n) | .id' | head -n1)"
 if [[ -z "$EXISTING_KEY_ID" ]]; then
-  doctl compute ssh-key import "$SSH_KEY_NAME" --public-key "$PUB" >/dev/null
+  # doctl 1.x requires --public-key-file (never print or pass the key material on argv).
+  doctl compute ssh-key import "$SSH_KEY_NAME" --public-key-file "${BOOTSTRAP_KEY}.pub" >/dev/null
   EXISTING_KEY_ID="$(doctl compute ssh-key list --output json | jq -r --arg n "$SSH_KEY_NAME" '.[] | select(.name==$n) | .id' | head -n1)"
 fi
 mapfile -t ACCOUNT_KEY_IDS < <(doctl compute ssh-key list --output json | jq -r '.[].id')
 if [[ ${#ACCOUNT_KEY_IDS[@]} -eq 0 ]]; then
   die "no DigitalOcean SSH keys available"
 fi
-IFS=',' KEY_CSV="${ACCOUNT_KEY_IDS[*]}"
+KEY_CSV="$(IFS=','; printf '%s' "${ACCOUNT_KEY_IDS[*]}")"
 
 VPC_ID="$(doctl vpcs list --output json | jq -r --arg n "$VPC_NAME" --arg r "$REGION" '.[] | select(.name==$n and .region==$r) | .id' | head -n1)"
 if [[ -z "$VPC_ID" ]]; then
@@ -167,18 +212,20 @@ if grep -qE '0\.0\.0\.0/0|^::$|^::/0$' <<<"$SSH_OPEN"; then
 fi
 
 log "Waiting for SSH on ${DROPLET_IP}:22"
-for i in $(seq 1 36); do
+ssh_port_ok=0
+for ((i=1; i<=36; i++)); do
   if python3 - "$DROPLET_IP" <<'PY'
 import socket, sys
 s = socket.create_connection((sys.argv[1], 22), 5)
 s.close()
 PY
   then
+    ssh_port_ok=1
     break
   fi
   sleep 5
-  [[ "$i" -eq 36 ]] && die "SSH port never became reachable from provisioner"
 done
+[[ "$ssh_port_ok" -eq 1 ]] || die "SSH port never became reachable from provisioner"
 
 # Wait for cloud-init / sshd
 sleep 8
@@ -186,7 +233,7 @@ SSH_OPTS=(-i "$BOOTSTRAP_KEY" -o StrictHostKeyChecking=accept-new -o UserKnownHo
 USER="root"
 
 key_ok=0
-for attempt in $(seq 1 20); do
+for ((attempt=1; attempt<=20; attempt++)); do
   if ssh "${SSH_OPTS[@]}" "${USER}@${DROPLET_IP}" "true" >/dev/null 2>&1; then
     key_ok=1
     break

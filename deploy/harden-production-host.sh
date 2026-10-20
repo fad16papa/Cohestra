@@ -45,8 +45,10 @@ X11Forwarding no
 PermitEmptyPasswords no
 EOF
 
+# sshd -t requires /run/sshd even when systemd will create it on start.
+install -d -m 0755 /run/sshd
 if sshd -t; then
-  systemctl reload ssh || systemctl reload sshd
+  systemctl reload ssh || systemctl reload sshd || systemctl restart ssh || systemctl restart sshd
 else
   echo "REFUSE: sshd config test failed"
   exit 1

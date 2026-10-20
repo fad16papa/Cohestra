@@ -1,0 +1,24 @@
+story: 46.2
+droplet: cohestra-production
+droplet_id: 610830617
+public_ipv4: 159.223.55.242
+
+key_authentication_before_password_disable: proven
+passwordauthentication: no
+kbdinteractiveauthentication: no
+permitemptypasswords: no
+permitrootlogin: without-password
+pubkeyauthentication: yes
+
+password_ssh:
+  preferredauthentications: password
+  pubkeyauthentication: no
+  result: Permission denied (publickey)
+  exit_code: 255
+  required: fail
+  observed: fail
+
+key_authentication_after_password_disable: proven (KEY_STILL_WORKS)
+
+bootstrap_private_key: not in git (session agent store only)
+secrets_included: false

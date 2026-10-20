@@ -1,0 +1,11 @@
+story: 46.2
+unattended-upgrades.service: enabled
+unattended-upgrades.service: active
+
+/etc/apt/apt.conf.d/20auto-upgrades:
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+
+automatic_reboot: disabled_in_46.2
+security_pocket: enabled

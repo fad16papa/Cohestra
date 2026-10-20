@@ -47,7 +47,19 @@ else
   fail "Provisioner must require DIGITALOCEAN_ACCESS_TOKEN without printing it"
 fi
 
-if grep -q 'PasswordAuthentication no' "$HARDEN" && grep -q 'unattended-upgrades' "$HARDEN"; then
+if grep -q -- '--public-key-file' "$PROVISION" && ! grep -qE -- '--public-key[^-]' "$PROVISION"; then
+  pass "SSH key import uses --public-key-file (no key material on argv)"
+else
+  fail "Provisioner must import SSH keys via --public-key-file"
+fi
+
+if grep -q 'sample_provisioner_ips' "$PROVISION" && ! grep -qE '^IFS=,' "$PROVISION"; then
+  pass "Provisioner samples egress NAT /32s and does not persist IFS=,"
+else
+  fail "Provisioner must sample provisioner IPs without changing global IFS"
+fi
+
+if grep -q 'PasswordAuthentication no' "$HARDEN" && grep -q 'unattended-upgrades' "$HARDEN" && grep -q '/run/sshd' "$HARDEN"; then
   pass "Harden script disables password SSH and enables unattended-upgrades"
 else
   fail "Harden script must lock sshd and unattended-upgrades"

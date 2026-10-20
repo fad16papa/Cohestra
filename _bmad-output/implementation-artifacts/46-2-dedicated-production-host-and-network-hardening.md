@@ -64,9 +64,9 @@ so that **UAT and lead-generation-crm never share the Production runtime**.
 
 - [x] Task 1: Story + sprint-status + owner-gate record (AC 1, 5)
 - [x] Task 2: Firewall/SSH/host contract files (AC 3, 4)
-- [ ] Task 3: Provision dedicated droplet; prove ≠ UAT (AC 1, 2) — BLOCKED: no DIGITALOCEAN_ACCESS_TOKEN in this environment
-- [ ] Task 4: Apply cloud firewall + host sshd/ufw/unattended-upgrades (AC 3, 4)
-- [ ] Task 5: Public port probes + SSH proofs; sanitized evidence (AC 2, 3)
+- [x] Task 3: Provision dedicated droplet; prove ≠ UAT (AC 1, 2)
+- [x] Task 4: Apply cloud firewall + host sshd/ufw/unattended-upgrades (AC 3, 4)
+- [x] Task 5: Public port probes + SSH proofs; sanitized evidence (AC 2, 3)
 - [x] Task 6: Deterministic `deploy/validate-production-host.sh` + CI; UAT freeze (AC 5)
 - [ ] Task 7: Exact-HEAD code review PASS (BLOCKER=0, MAJOR=0)
 
@@ -97,6 +97,48 @@ Cursor Grok 4.6
 
 ### Debug Log References
 
+- `DIGITALOCEAN_ACCESS_TOKEN` presence checked without printing the value: PRESENT
+- `doctl account get` authentication: OK (token not printed)
+- `bash deploy/provision-production-droplet.sh`: PROVISION_OK droplet_id=610830617 ip=159.223.55.242
+- `bash deploy/validate-production-host.sh`: recorded in evidence
+- UAT droplet 581334322 / 129.212.235.2 unchanged
+- Password SSH: Permission denied (publickey), then key SSH still worked
+
 ### Completion Notes List
 
+- Dedicated droplet `cohestra-production` created in sgp1: id 610830617, plan s-4vcpu-8gb (8192/4/160), Ubuntu 24.04, public IPv4 159.223.55.242.
+- Host isolation proven: Production IPv4 and droplet id differ from UAT 129.212.235.2 / 581334322. `COHESTRA_SHARED_HOST_UAT` unset. `shared_host_uat=false` on the marker.
+- Cloud firewall `cohestra-production` attached only to the Production droplet. 22/tcp from observed provisioner /32s only. 80/443 public. 5432/6379/3000/8080 absent and publicly closed.
+- SSH key authentication proven before and after `PasswordAuthentication no`. Password login failed. Private key is not in git.
+- unattended-upgrades enabled and active. No automatic reboot in 46.2.
+- No Cohestra workloads, no Docker, no Production CD, no DNS mutation, no live Paddle, no GitHub Environment `production`.
+- Provisioner fixes required to finish live create: `doctl ssh-key import --public-key-file`, do not persist `IFS=,`, sample provisioner NAT /32s, create `/run/sshd` before `sshd -t`.
+- PRODUCTION RELEASE READINESS remains NOT YET COMPLETE. Do not start 46.3. Do not merge without owner authorization.
+
 ### File List
+
+- deploy/provision-production-droplet.sh
+- deploy/harden-production-host.sh
+- deploy/validate-production-host.sh
+- deploy/production-firewall.desired.json
+- docs/deploy/production-host.md
+- docs/deploy/production-host-inventory.json
+- docs/deploy/production-launch-program.md
+- .gitignore
+- _bmad-output/implementation-artifacts/46-2-dedicated-production-host-and-network-hardening.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/evidence/46-2/README.md
+- _bmad-output/implementation-artifacts/evidence/46-2/host-hardening.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/firewall-live.json
+- _bmad-output/implementation-artifacts/evidence/46-2/port-probes.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/ssh-proofs.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/unattended-updates.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/uat-unchanged.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/workloads.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/dns-unchanged.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/secret-scan.txt
+- _bmad-output/implementation-artifacts/evidence/46-2/validate-production-host.txt
+
+### Change Log
+
+- 2026-10-20: Provisioned dedicated Production droplet 610830617 and recorded sanitized host evidence.

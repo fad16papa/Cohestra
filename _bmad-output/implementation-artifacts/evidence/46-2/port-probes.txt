@@ -1,0 +1,24 @@
+story: 46.2
+target: 159.223.55.242
+uat_ipv4: 129.212.235.2
+distinct: yes
+
+public_probes_from_provisioner:
+  22/tcp   open
+  80/tcp   connect-ok-no-banner (firewall allowed; no HTTP service)
+  443/tcp  connect-ok-no-banner (firewall allowed; no TLS service)
+  5432/tcp TimeoutError  CLOSED
+  6379/tcp TimeoutError  CLOSED
+  3000/tcp TimeoutError  CLOSED
+  8080/tcp TimeoutError  CLOSED
+
+host_listen_table:
+  22/tcp sshd only
+  80/tcp ConnectionRefused on 127.0.0.1 and 0.0.0.0
+  443/tcp ConnectionRefused on 127.0.0.1 and 0.0.0.0
+  5432/6379/3000/8080 not listening
+
+notes:
+  80/443 are publicly allowed by cloud firewall as required.
+  No nginx/web/api process exists. Banner recv timed out; localhost refused.
+  Provisioner HTTP/HTTPS middleboxes may complete TCP to 80/443; host has no listener.

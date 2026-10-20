@@ -1,0 +1,31 @@
+{
+  "story": "46.2",
+  "firewall_name": "cohestra-production",
+  "firewall_id": "ae8e7427-f92a-4479-b4dd-3365fa02def3",
+  "status": "succeeded",
+  "attached_droplet_ids": [610830617],
+  "inbound": [
+    {
+      "protocol": "tcp",
+      "ports": "22",
+      "sources": "approved_admin_cidrs_only",
+      "source_count": 8,
+      "notes": "Eight observed provisioner egress /32s. Never 0.0.0.0/0 or ::/0."
+    },
+    {
+      "protocol": "tcp",
+      "ports": "80",
+      "sources": ["0.0.0.0/0", "::/0"]
+    },
+    {
+      "protocol": "tcp",
+      "ports": "443",
+      "sources": ["0.0.0.0/0", "::/0"]
+    }
+  ],
+  "forbidden_public_ports_absent": ["5432", "6379", "3000", "8080"],
+  "uat_firewall_name": "activitylead.creativorare",
+  "uat_firewall_id": "596840eb-4d01-4ef0-a1fc-478f78ae5a49",
+  "uat_firewall_droplet_ids": [581334322],
+  "secrets_included": false
+}

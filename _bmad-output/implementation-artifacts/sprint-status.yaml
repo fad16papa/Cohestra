@@ -1,6 +1,6 @@
 # generated: 2026-06-16
-# last_updated: 2026-10-19
-# Epic 46 in-progress 2026-10-19. 46.1 done (main 36601be5). 46.2 in-progress: dedicated Production droplet. OWNER_GATE droplet_purchase APPROVED. Cutover GRANTED; release NOT YET COMPLETE. Do not start 46.3.
+# last_updated: 2026-10-20
+# Epic 46 in-progress 2026-10-20. 46.1 done (main 36601be5). 46.2 in-progress: dedicated Production droplet 610830617 / 159.223.55.242 provisioned. OWNER_GATE droplet_purchase APPROVED. Cutover GRANTED; release NOT YET COMPLETE. Do not start 46.3.
 # Epic 46 in-progress 2026-10-19. Planning PR #480 merged at 01773c1e. Story 46.1 in-progress (compose contract). Do not start 46.2. OWNER_GATE=droplet_purchase after 46.1. Production cutover NOT AUTHORIZED. Production NO-GO.
 # Epic 46 PLANNED 2026-10-19 on main dedcb110. Production architecture/observability/DR/security/CD planned. Stories 46.1–46.15 backlog. Next 46.1. Production cutover NOT AUTHORIZED. Production NO-GO.
 # 19.5 DONE 2026-10-17: machine PASS on Deploy UAT 39011680830 / e0167466. Operator + PM sign-off APPROVED. Epic 19 DONE. Production cutover NOT AUTHORIZED. Production NO-GO.
