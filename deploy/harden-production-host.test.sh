@@ -538,6 +538,19 @@ set -e
 [[ "$(cat "$deny_dir/active")" == "0" ]] || fail "DENY 22 refuse must not enable UFW"
 pass "existing DENY 22 refuses without appending ALLOW or enabling"
 
+deny_any_dir="$WORKDIR/deny-any"
+create_mock_ufw "$deny_any_dir"
+echo 0 >"$deny_any_dir/active"
+printf '%s\n' "ufw deny from any" >"$deny_any_dir/added_extra"
+set +e
+deny_any_out="$(PRODUCTION_SSH_SOURCES="$OWNER" run_reconcile "$deny_any_dir" true 2>&1)"
+deny_any_rc=$?
+set -e
+[[ "$deny_any_rc" -ne 0 ]] || fail "deny from any must refuse: $deny_any_out"
+[[ "$deny_any_out" == *"denies or rejects SSH"* ]] || fail "deny from any must be reported"
+[[ "$(cat "$deny_any_dir/active")" == "0" ]] || fail "deny from any must not enable UFW"
+pass "existing DENY from any refuses without appending ALLOW or enabling"
+
 # Existing world-open SSH must refuse without mutation.
 world_exist_dir="$WORKDIR/world-exist"
 create_mock_ufw "$world_exist_dir"
