@@ -113,6 +113,7 @@ Cursor Grok 4.6
 - unattended-upgrades enabled and active. No automatic reboot in 46.2.
 - No Cohestra workloads, no Docker, no Production CD, no DNS mutation, no live Paddle, no GitHub Environment `production`.
 - Provisioner fixes required to finish live create: `doctl ssh-key import --public-key-file`, do not persist `IFS=,`, sample provisioner NAT /32s, create `/run/sshd` before `sshd -t`.
+- Review hardening: SSH CIDRs must be IPv4 /24-/32; UAT droplet id 581334322 is refused; firewall attach is exclusive and fail-closed; host `ufw` 22 is source-restricted; harden refuses the UAT address; unattended-upgrades enable is fail-closed.
 - PRODUCTION RELEASE READINESS remains NOT YET COMPLETE. Do not start 46.3. Do not merge without owner authorization.
 
 ### File List
@@ -125,6 +126,7 @@ Cursor Grok 4.6
 - docs/deploy/production-host-inventory.json
 - docs/deploy/production-launch-program.md
 - .gitignore
+- .github/workflows/ci.yml
 - _bmad-output/implementation-artifacts/46-2-dedicated-production-host-and-network-hardening.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
 - _bmad-output/implementation-artifacts/evidence/46-2/README.md

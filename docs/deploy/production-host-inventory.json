@@ -17,21 +17,21 @@
   "uat_public_ipv4": "129.212.235.2",
   "host_isolation": "distinct_from_uat",
   "ssh_sources": [
-    "44.208.231.58/32",
-    "54.175.155.253/32",
-    "13.217.185.202/32",
-    "34.239.238.26/32",
-    "54.147.134.223/32",
-    "54.161.91.42/32",
     "3.220.100.176/32",
-    "98.88.87.70/32"
+    "54.161.91.42/32",
+    "44.208.231.58/32",
+    "54.147.134.223/32",
+    "54.175.155.253/32",
+    "98.88.87.70/32",
+    "34.239.238.26/32",
+    "13.217.185.202/32"
   ],
-  "provisioner_ipv4": "44.208.231.58",
+  "provisioner_ipv4": "3.220.100.176",
   "ssh_password_authentication": "no",
   "ssh_key_authentication": "proven",
   "workloads_deployed": false,
   "option_a_postgres": true,
   "managed_postgres": false,
   "production_auto_deploy": false,
-  "hardened_utc": "2026-10-20T10:57:17Z"
+  "hardened_utc": "2026-10-20T11:13:02Z"
 }

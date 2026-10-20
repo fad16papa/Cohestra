@@ -8,6 +8,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INVENTORY="$ROOT_DIR/docs/deploy/production-host-inventory.json"
 EVIDENCE_DIR="$ROOT_DIR/_bmad-output/implementation-artifacts/evidence/46-2"
 UAT_IP="129.212.235.2"
+UAT_DROPLET_ID="${UAT_DROPLET_ID:-581334322}"
 DROPLET_NAME="${PRODUCTION_DROPLET_NAME:-cohestra-production}"
 REGION="${PRODUCTION_DROPLET_REGION:-sgp1}"
 SIZE="${PRODUCTION_DROPLET_SIZE:-s-4vcpu-8gb}"
@@ -96,10 +97,26 @@ for cidr in "${ALLOWLIST[@]}"; do
   fi
 done
 ALLOWLIST=("${deduped[@]}")
-for cidr in "${ALLOWLIST[@]}"; do
+assert_ssh_cidr() {
+  local cidr="$1"
   if [[ "$cidr" == "0.0.0.0/0" || "$cidr" == "::/0" ]]; then
     die "SSH allowlist must not include 0.0.0.0/0 or ::/0"
   fi
+  python3 - "$cidr" <<'PY' || die "SSH allowlist entry is not a /24-/32 IPv4 CIDR"
+import ipaddress, sys
+raw = sys.argv[1]
+try:
+    net = ipaddress.ip_network(raw, strict=False)
+except ValueError:
+    raise SystemExit(1)
+if net.version != 4 or net.prefixlen < 24 or net.prefixlen > 32:
+    raise SystemExit(1)
+if any(ch in raw for ch in (";", " ", ",", "address:")):
+    raise SystemExit(1)
+PY
+}
+for cidr in "${ALLOWLIST[@]}"; do
+  assert_ssh_cidr "$cidr"
 done
 
 log "== Cohestra Production droplet provision (46.2) =="
@@ -166,8 +183,8 @@ DISK="$(jq -r '.disk' <<<"$DROPLET")"
 STATUS="$(jq -r '.status' <<<"$DROPLET")"
 
 [[ "$DROPLET_IP" != "null" && -n "$DROPLET_IP" ]] || die "droplet has no public IPv4"
-if [[ "$DROPLET_IP" == "$UAT_IP" ]]; then
-  die "Production droplet IPv4 equals UAT host $UAT_IP — isolation failed"
+if [[ "$DROPLET_IP" == "$UAT_IP" || "$DROPLET_ID" == "$UAT_DROPLET_ID" ]]; then
+  die "Production droplet IPv4 or id equals UAT host $UAT_IP / $UAT_DROPLET_ID — isolation failed"
 fi
 if [[ "$MEMORY" -lt 8192 || "$VCPUS" -lt 4 || "$DISK" -lt 160 ]]; then
   die "droplet plan is below 8GiB/4vCPU/160GiB (memory=$MEMORY vcpus=$VCPUS disk=$DISK)"
@@ -191,25 +208,46 @@ if [[ -z "$FW_ID" ]]; then
     --name "$FIREWALL_NAME" \
     --inbound-rules "$INBOUND" \
     --outbound-rules "$OUTBOUND" \
-    --droplet-ids "$DROPLET_ID" >/dev/null
+    --droplet-ids "$DROPLET_ID" \
+    --tag-names cohestra-production >/dev/null
   FW_ID="$(doctl compute firewall list --output json | jq -r --arg n "$FIREWALL_NAME" '.[] | select(.name==$n) | .id' | head -n1)"
 else
   doctl compute firewall update "$FW_ID" \
     --name "$FIREWALL_NAME" \
     --inbound-rules "$INBOUND" \
-    --outbound-rules "$OUTBOUND" >/dev/null
-  doctl compute firewall add-droplets "$FW_ID" --droplet-ids "$DROPLET_ID" >/dev/null || true
+    --outbound-rules "$OUTBOUND" \
+    --droplet-ids "$DROPLET_ID" \
+    --tag-names cohestra-production >/dev/null
+  doctl compute firewall add-droplets "$FW_ID" --droplet-ids "$DROPLET_ID" >/dev/null
 fi
 [[ -n "$FW_ID" ]] || die "failed to apply firewall $FIREWALL_NAME"
 
 FW_JSON="$(doctl compute firewall get "$FW_ID" --output json | jq '.[0]')"
-if echo "$FW_JSON" | jq -e '.inbound_rules[] | select(.ports=="5432" or .ports=="6379" or .ports=="3000" or .ports=="8080")' >/dev/null; then
-  die "firewall unexpectedly allows a data/app port"
-fi
-SSH_OPEN="$(echo "$FW_JSON" | jq -r '.inbound_rules[] | select(.ports=="22") | .sources.addresses[]?' )"
-if grep -qE '0\.0\.0\.0/0|^::$|^::/0$' <<<"$SSH_OPEN"; then
-  die "SSH is publicly open"
-fi
+FW_CHECK="$(mktemp)"
+printf '%s' "$FW_JSON" >"$FW_CHECK"
+python3 - "$UAT_DROPLET_ID" "$DROPLET_ID" "$FW_CHECK" <<'PY' || { rm -f "$FW_CHECK"; die "firewall isolation/port contract failed"; }
+import json, sys
+uat_id, prod_id = sys.argv[1], int(sys.argv[2])
+fw = json.load(open(sys.argv[3], encoding="utf-8"))
+ids = [int(x) for x in (fw.get("droplet_ids") or [])]
+if prod_id not in ids:
+    raise SystemExit("firewall not attached to Production droplet")
+if int(uat_id) in ids:
+    raise SystemExit("firewall is attached to the UAT droplet")
+forbidden = {"5432", "6379", "3000", "8080", "4317", "4318", "all"}
+for rule in fw.get("inbound_rules") or []:
+    ports = str(rule.get("ports") or "")
+    if ports in forbidden or "-" in ports or ports == "0":
+        raise SystemExit(f"forbidden inbound ports {ports}")
+    if ports == "22":
+        addrs = ((rule.get("sources") or {}).get("addresses") or [])
+        if any(a in ("0.0.0.0/0", "::/0", "::") for a in addrs):
+            raise SystemExit("SSH is publicly open")
+        if not addrs:
+            raise SystemExit("SSH rule has no CIDR sources")
+print("FIREWALL_ATTACH_OK")
+PY
+rm -f "$FW_CHECK"
 
 log "Waiting for SSH on ${DROPLET_IP}:22"
 ssh_port_ok=0
@@ -244,9 +282,10 @@ done
 
 # Prove key works, then apply hardening (which disables password auth).
 scp "${SSH_OPTS[@]}" "$ROOT_DIR/deploy/harden-production-host.sh" "${USER}@${DROPLET_IP}:/tmp/harden-production-host.sh" >/dev/null
-HARDEN_OUT="$(ssh "${SSH_OPTS[@]}" "${USER}@${DROPLET_IP}" "bash /tmp/harden-production-host.sh && rm -f /tmp/harden-production-host.sh")"
+HARDEN_OUT="$(ssh "${SSH_OPTS[@]}" "${USER}@${DROPLET_IP}" "PRODUCTION_SSH_SOURCES='${ALLOWLIST[*]}' bash /tmp/harden-production-host.sh && rm -f /tmp/harden-production-host.sh")"
 echo "$HARDEN_OUT" | grep -q HARDEN_OK || die "host harden script did not report HARDEN_OK"
 echo "$HARDEN_OUT" | grep -qiE 'passwordauthentication no' || die "sshd did not report PasswordAuthentication no"
+echo "$HARDEN_OUT" | grep -qx 'UNATTENDED=enabled' || die "unattended-upgrades is not enabled"
 
 # Key still works after password disable.
 ssh "${SSH_OPTS[@]}" "${USER}@${DROPLET_IP}" "test -f /etc/cohestra-production-host && grep -q shared_host_uat=false /etc/cohestra-production-host" \
@@ -266,7 +305,7 @@ python3 - "$DROPLET_IP" <<'PY'
 import socket, sys
 ip = sys.argv[1]
 must_open = {22}
-must_closed = {5432, 6379, 3000, 8080}
+must_closed = {5432, 6379, 3000, 8080, 4317, 4318}
 failures = []
 for port in sorted(must_open | must_closed):
     s = socket.socket()

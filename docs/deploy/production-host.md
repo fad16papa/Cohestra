@@ -38,7 +38,7 @@ DigitalOcean cloud firewall `cohestra-production` (see `deploy/production-firewa
 | Inbound | 443/tcp | Public |
 | Inbound | 5432, 6379, 3000, 8080 | **Forbidden** |
 
-Host `ufw` mirrors 22/80/443 only. Postgres/Redis/application ports stay closed even if someone later publishes a Docker host port by mistake.
+Host `ufw` allows 80/443 publicly and 22/tcp only from the same approved administration CIDRs as the cloud firewall. Postgres/Redis/application ports stay closed even if someone later publishes a Docker host port by mistake.
 
 80/443 are allowed now so Let's Encrypt / HTTP can work in 46.13. No public DNS cutover in 46.2.
 

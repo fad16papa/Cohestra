@@ -59,10 +59,28 @@ else
   fail "Provisioner must sample provisioner IPs without changing global IFS"
 fi
 
-if grep -q 'PasswordAuthentication no' "$HARDEN" && grep -q 'unattended-upgrades' "$HARDEN" && grep -q '/run/sshd' "$HARDEN"; then
-  pass "Harden script disables password SSH and enables unattended-upgrades"
+if grep -q 'assert_ssh_cidr' "$PROVISION" && grep -q 'prefixlen < 24' "$PROVISION"; then
+  pass "SSH allowlist CIDRs must be IPv4 /24-/32"
 else
-  fail "Harden script must lock sshd and unattended-upgrades"
+  fail "Provisioner must reject broad or non-IPv4 SSH CIDRs"
+fi
+
+if grep -q 'UAT_DROPLET_ID' "$PROVISION" && grep -q 'equals UAT host' "$PROVISION"; then
+  pass "Provisioner refuses UAT droplet id as well as IPv4"
+else
+  fail "Provisioner must refuse UAT droplet id"
+fi
+
+if grep -q 'FIREWALL_ATTACH_OK' "$PROVISION" && ! grep -q 'add-droplets .*|| true' "$PROVISION"; then
+  pass "Firewall attach is verified and not ignored"
+else
+  fail "Firewall attach must be exclusive and fail-closed"
+fi
+
+if grep -q 'PasswordAuthentication no' "$HARDEN" && grep -q 'unattended-upgrades' "$HARDEN" && grep -q '/run/sshd' "$HARDEN" && grep -q 'UAT droplet' "$HARDEN"; then
+  pass "Harden script disables password SSH, enables unattended-upgrades, and refuses UAT"
+else
+  fail "Harden script must lock sshd/unattended-upgrades and refuse the UAT host"
 fi
 
 if grep -q 'workloads_deployed=false' "$HARDEN" && ! grep -q 'docker compose' "$HARDEN"; then
@@ -186,7 +204,11 @@ PY
 
   IP="$(jq -r '.public_ipv4' "$INVENTORY")"
   if [[ "${SKIP_LIVE_PORT_PROBES:-}" == "1" ]]; then
-    pass "Live port probes skipped (SKIP_LIVE_PORT_PROBES=1)"
+    if [[ "${CI:-}" == "true" ]]; then
+      fail "Live port probes cannot be skipped in CI"
+    else
+      pass "Live port probes skipped (SKIP_LIVE_PORT_PROBES=1)"
+    fi
   else
     set +e
     python3 - "$IP" <<'PY'

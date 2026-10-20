@@ -5,7 +5,10 @@ PASS: Provisioner refuses UAT IPv4
 PASS: Token is required from the environment and not printed
 PASS: SSH key import uses --public-key-file (no key material on argv)
 PASS: Provisioner samples egress NAT /32s and does not persist IFS=,
-PASS: Harden script disables password SSH and enables unattended-upgrades
+PASS: SSH allowlist CIDRs must be IPv4 /24-/32
+PASS: Provisioner refuses UAT droplet id as well as IPv4
+PASS: Firewall attach is verified and not ignored
+PASS: Harden script disables password SSH, enables unattended-upgrades, and refuses UAT
 PASS: Harden script does not deploy application workloads
 FIREWALL_JSON_OK
 PASS: Desired firewall is 22 source-restricted + 80/443 public; no 5432/6379/3000/8080
@@ -23,5 +26,5 @@ PASS: Inventory proves isolation, 8GiB plan, no password SSH, no workloads
 CLOSED_OK
 PASS: Live probe: 5432/6379/3000/8080 not publicly reachable on 159.223.55.242
 
-Passed: 20  Failed: 0
+Passed: 23  Failed: 0
 Production host contract PASS

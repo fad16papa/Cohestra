@@ -19,6 +19,7 @@ password_ssh:
   observed: fail
 
 key_authentication_after_password_disable: proven (KEY_STILL_WORKS)
+host_ufw_22: source-restricted to observed provisioner /32s (not Anywhere)
 
 bootstrap_private_key: not in git (session agent store only)
 secrets_included: false

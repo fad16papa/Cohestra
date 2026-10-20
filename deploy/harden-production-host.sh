@@ -14,6 +14,16 @@ if [[ "${COHESTRA_SHARED_HOST_UAT:-}" == "true" ]]; then
   exit 1
 fi
 
+UAT_IP="129.212.235.2"
+UAT_DROPLET_ID="581334322"
+META_ID="$(curl -fsS --max-time 3 http://169.254.169.254/metadata/v1/id || true)"
+META_IP="$(curl -fsS --max-time 3 http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address || true)"
+LOCAL_IPS="$(ip -4 -o addr show 2>/dev/null | awk '{print $4}' | cut -d/ -f1 | tr '\n' ' ')"
+if [[ "$META_ID" == "$UAT_DROPLET_ID" || "$META_IP" == "$UAT_IP" || " $LOCAL_IPS " == *" $UAT_IP "* ]]; then
+  echo "REFUSE: this host is the UAT droplet"
+  exit 1
+fi
+
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
 apt-get install -y --no-install-recommends \
@@ -28,10 +38,11 @@ EOF
 # Security updates only. No automatic reboot in 46.2 (host is not serving Production yet).
 if [[ -f /etc/apt/apt.conf.d/50unattended-upgrades ]]; then
   sed -i 's|^//\s*"\${distro_id}:\${distro_codename}-security";|"${distro_id}:${distro_codename}-security";|' \
-    /etc/apt/apt.conf.d/50unattended-upgrades || true
+    /etc/apt/apt.conf.d/50unattended-upgrades
 fi
-
-systemctl enable --now unattended-upgrades.service >/dev/null 2>&1 || true
+systemctl enable --now unattended-upgrades.service
+systemctl is-enabled unattended-upgrades | grep -qx enabled
+systemctl is-active unattended-upgrades | grep -qx active
 
 SSHD_DIR=/etc/ssh/sshd_config.d
 mkdir -p "$SSHD_DIR"
@@ -57,7 +68,13 @@ fi
 ufw --force reset >/dev/null
 ufw default deny incoming
 ufw default allow outgoing
-ufw allow 22/tcp
+if [[ -n "${PRODUCTION_SSH_SOURCES:-}" ]]; then
+  for cidr in ${PRODUCTION_SSH_SOURCES}; do
+    ufw allow from "$cidr" to any port 22 proto tcp
+  done
+else
+  ufw allow 22/tcp
+fi
 ufw allow 80/tcp
 ufw allow 443/tcp
 ufw --force enable

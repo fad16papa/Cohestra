@@ -4,6 +4,8 @@
   "firewall_id": "ae8e7427-f92a-4479-b4dd-3365fa02def3",
   "status": "succeeded",
   "attached_droplet_ids": [610830617],
+  "attached_tags": ["cohestra-production"],
+  "exclusive_of_uat_droplet_581334322": true,
   "inbound": [
     {
       "protocol": "tcp",
