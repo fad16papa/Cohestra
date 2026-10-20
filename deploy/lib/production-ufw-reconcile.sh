@@ -77,39 +77,83 @@ parse_ufw_inventory() {
 import ipaddress, sys
 
 WORLD = {"0.0.0.0/0", "::/0", "0:0:0:0:0:0:0:0/0", "anywhere", "anywhere (v6)", "any"}
-SSH_TO = {"22", "22/tcp", "22/tcp(v6)", "openssh", "openssh(v6)"}
-
-def is_ssh_to(to):
-    t = to.lower().replace(" ", "")
-    return t in SSH_TO or t.startswith("22/tcp") or t.startswith("openssh")
-
-def is_http_to(to, v6=False):
-    t = to.lower().replace(" ", "")
-    if v6:
-        return False
-    return t == "80/tcp"
-
-def is_https_to(to, v6=False):
-    t = to.lower().replace(" ", "")
-    if v6:
-        return False
-    return t == "443/tcp"
+SSH_DEST = {"22", "22/tcp", "ssh", "openssh"}
 
 def is_world(frm):
-    f = " ".join(frm.lower().split())
-    return f in WORLD or "anywhere" in f
+    return " ".join(str(frm).lower().split()) in WORLD or "anywhere" in str(frm).lower()
 
 def is_public_v4(frm):
-    f = " ".join(frm.lower().split())
-    return f in {"anywhere", "0.0.0.0/0", "any"}
+    return " ".join(str(frm).lower().split()) in {"anywhere", "0.0.0.0/0", "any"}
 
 def normalize_cidr(raw):
-    token = raw.split()[0]
-    net = ipaddress.ip_network(token, strict=False)
-    return str(net)
+    return str(ipaddress.ip_network(str(raw).split()[0], strict=False))
+
+def port_includes_22(token):
+    t = token.lower()
+    if t in {"22", "22/tcp", "22/any"}:
+        return True
+    if ":" in t:
+        rng, _, proto = t.partition("/")
+        try:
+            a, b = rng.split(":")
+            return int(a) <= 22 <= int(b) and proto in {"", "tcp", "any"}
+        except ValueError:
+            return False
+    if "," in t:
+        return any(port_includes_22(p) for p in t.split(","))
+    return False
+
+def mentions_ssh(tokens):
+    low = [t.lower() for t in tokens]
+    joined = " ".join(low)
+    if "openssh" in joined or " app ssh" in f" {joined}" or joined.endswith(" app ssh"):
+        return True
+    if any(t in SSH_DEST or t.startswith("22/tcp") for t in low):
+        return True
+    if "port" in low:
+        i = low.index("port")
+        if i + 1 < len(low) and port_includes_22(low[i + 1]):
+            return True
+    return any(port_includes_22(t) for t in low)
+
+def record_source(frm):
+    global world_open
+    if is_world(frm):
+        world_open = 1
+        return
+    try:
+        norm = normalize_cidr(frm)
+        net = ipaddress.ip_network(norm, strict=False)
+    except ValueError:
+        world_open = 1
+        return
+    if norm in ("0.0.0.0/0", "::/0"):
+        world_open = 1
+        return
+    if net.version != 4 or net.prefixlen < 24 or net.prefixlen > 32:
+        if norm not in broad:
+            broad.append(norm)
+        return
+    if norm not in seen:
+        seen.add(norm)
+        ssh.append(norm)
+
+def skip_qualifiers(tokens):
+    i = 0
+    while i < len(tokens):
+        t = tokens[i].lower()
+        if t in {"log", "log-all", "in", "out"}:
+            i += 1
+            continue
+        if t == "on" and i + 1 < len(tokens):
+            i += 2
+            continue
+        break
+    return tokens[i:]
 
 active = 0
 world_open = 0
+denied = 0
 http = 0
 https = 0
 ssh = []
@@ -139,93 +183,79 @@ for raw in status.splitlines():
         to = to + "(v6)"
         v6 = True
         rest = rest[1:]
+    rest = skip_qualifiers(rest)
     if not rest:
         continue
     action = rest[0].upper()
     rest = rest[1:]
     if rest and rest[0].upper() == "IN":
         rest = rest[1:]
+    frm = " ".join(rest)
+    to_l = to.lower().replace(" ", "")
+    ssh_row = to_l in SSH_DEST or to_l.startswith("22/tcp") or to_l.startswith("openssh") or to_l in {"anywhere", "any"}
+    if action in {"DENY", "REJECT"} and ssh_row:
+        denied = 1
+        continue
     if action not in {"ALLOW", "LIMIT"}:
         continue
-    frm = " ".join(rest)
-    if is_http_to(to, v6) and is_public_v4(frm):
+    if to_l == "80/tcp" and not v6 and is_public_v4(frm):
         http = 1
         continue
-    if is_https_to(to, v6) and is_public_v4(frm):
+    if to_l == "443/tcp" and not v6 and is_public_v4(frm):
         https = 1
         continue
-    if not is_ssh_to(to):
+    if not ssh_row:
         continue
-    if is_world(frm):
+    if to_l in {"anywhere", "any"}:
         world_open = 1
         continue
-    try:
-        norm = normalize_cidr(frm)
-    except ValueError:
-        world_open = 1
-        continue
-    if norm in ("0.0.0.0/0", "::/0"):
-        world_open = 1
-        continue
-    try:
-        net = ipaddress.ip_network(norm, strict=False)
-        if net.version != 4 or net.prefixlen < 24 or net.prefixlen > 32:
-            broad.append(norm)
-            continue
-    except ValueError:
-        world_open = 1
-        continue
-    if norm not in seen:
-        seen.add(norm)
-        ssh.append(norm)
+    record_source(frm.split()[0] if frm else "Anywhere")
 
 for raw in added.splitlines():
     line = raw.strip()
     if not line.startswith("ufw "):
         continue
     parts = line.split()
-    if len(parts) < 3:
+    i = 1
+    if i < len(parts) and parts[i].lower() == "insert":
+        i += 2
+    if i >= len(parts):
         continue
-    action = parts[1].lower()
+    action = parts[i].lower()
+    i += 1
+    rest = skip_qualifiers(parts[i:])
+    if action in {"deny", "reject"}:
+        if mentions_ssh(rest):
+            denied = 1
+        continue
     if action not in {"allow", "limit"}:
+        if mentions_ssh(parts[i:]):
+            world_open = 1
         continue
-    rest = parts[2:]
-    if rest and rest[0] == "from":
-        if "port" in rest:
-            port = rest[rest.index("port") + 1] if rest.index("port") + 1 < len(rest) else ""
-            proto = rest[rest.index("proto") + 1] if "proto" in rest and rest.index("proto") + 1 < len(rest) else "tcp"
-            if port not in {"22", "22/tcp"} and not (port == "22" or (port == "22" and proto == "tcp")):
-                if port in {"80", "80/tcp"} and is_public_v4(rest[1]):
-                    http = 1
-                if port in {"443", "443/tcp"} and is_public_v4(rest[1]):
-                    https = 1
-                continue
-            if port in {"80", "80/tcp"}:
-                continue
-            if port not in {"22", "22/tcp"}:
-                continue
-            frm = rest[1]
-            if is_world(frm):
-                world_open = 1
-                continue
-            try:
-                norm = normalize_cidr(frm)
-                net = ipaddress.ip_network(norm, strict=False)
-            except ValueError:
-                world_open = 1
-                continue
-            if norm in ("0.0.0.0/0", "::/0"):
-                world_open = 1
-                continue
-            if net.version != 4 or net.prefixlen < 24 or net.prefixlen > 32:
-                broad.append(norm)
-                continue
-            if norm not in seen:
-                seen.add(norm)
-                ssh.append(norm)
+    if not rest:
+        continue
+    if rest[0].lower() == "from":
+        frm = rest[1] if len(rest) > 1 else "Anywhere"
+        app_ssh = "app" in [t.lower() for t in rest] and mentions_ssh(rest)
+        has_port = "port" in [t.lower() for t in rest]
+        if "app" in [t.lower() for t in rest] and not app_ssh:
+            continue
+        if has_port and not mentions_ssh(rest):
+            low = [t.lower() for t in rest]
+            p = low[low.index("port") + 1] if "port" in low and low.index("port") + 1 < len(low) else ""
+            if p in {"80", "80/tcp"} and is_public_v4(frm):
+                http = 1
+            if p in {"443", "443/tcp"} and is_public_v4(frm):
+                https = 1
+            continue
+        record_source(frm)
+        continue
+    if rest[0].lower() in {"to", "proto"}:
+        if mentions_ssh(rest):
+            world_open = 1
         continue
     dest = rest[0].lower()
-    if dest in {"22", "22/tcp", "openssh"}:
+    if dest in SSH_DEST or dest.startswith("22/tcp"):
         world_open = 1
         continue
     if dest == "80/tcp":
@@ -233,9 +263,13 @@ for raw in added.splitlines():
         continue
     if dest == "443/tcp":
         https = 1
+        continue
+    if mentions_ssh(rest):
+        world_open = 1
 
 print(f"active={active}")
 print(f"world_open_22={world_open}")
+print(f"denied_22={denied}")
 print(f"http={http}")
 print(f"https={https}")
 for cidr in ssh:
@@ -248,6 +282,7 @@ PY
 _reset_ufw_inventory() {
   UFW_INV_ACTIVE=0
   UFW_INV_WORLD_OPEN=0
+  UFW_INV_DENIED=0
   UFW_INV_HTTP=0
   UFW_INV_HTTPS=0
   UFW_INV_SSH=()
@@ -262,6 +297,7 @@ _load_ufw_inventory() {
     case "$line" in
       active=1) UFW_INV_ACTIVE=1 ;;
       world_open_22=1) UFW_INV_WORLD_OPEN=1 ;;
+      denied_22=1) UFW_INV_DENIED=1 ;;
       http=1) UFW_INV_HTTP=1 ;;
       https=1) UFW_INV_HTTPS=1 ;;
       ssh:*) UFW_INV_SSH+=("${line#ssh:}") ;;
@@ -314,6 +350,10 @@ reconcile_production_ufw() {
 
   if [[ "$UFW_INV_WORLD_OPEN" -eq 1 ]]; then
     echo "REFUSE: existing UFW already allows world-open SSH; refusing to mutate (needs a separate reviewed action)" >&2
+    return 1
+  fi
+  if [[ "$UFW_INV_DENIED" -eq 1 ]]; then
+    echo "REFUSE: existing UFW denies or rejects SSH; refusing to mutate (needs a separate reviewed action)" >&2
     return 1
   fi
   if [[ ${#UFW_INV_BROAD[@]} -gt 0 ]]; then

@@ -101,6 +101,9 @@ case "$cmd" in
         fi
       done <"$STATE/rules"
     fi
+    if [[ -f "$STATE/added_extra" ]]; then
+      cat "$STATE/added_extra"
+    fi
     ;;
   reset)
     echo 0 >"$STATE/active"
@@ -491,6 +494,46 @@ if grep -Eq '(^| )(allow|enable|default|reset|disable|delete)( |$)' "$latent_dir
 fi
 assert_no_destructive "$latent_dir" "latent world-open SSH"
 pass "inactive UFW with latent world-open 22 refuses without enable"
+
+# Alternate UFW encodings of world-open SSH must also refuse before enable.
+for encoded in \
+  "ufw allow ssh" \
+  "ufw allow in 22/tcp" \
+  "ufw allow log 22/tcp" \
+  "ufw insert 1 allow 22/tcp" \
+  "ufw allow to any port 22 proto tcp" \
+  "ufw allow from 0.0.0.0/0" \
+  "ufw allow from 0.0.0.0/0 to any app OpenSSH" \
+  "ufw allow from Anywhere to any app OpenSSH"
+do
+  enc_dir="$(mktemp -d "$WORKDIR/enc.XXXXXX")"
+  create_mock_ufw "$enc_dir"
+  echo 0 >"$enc_dir/active"
+  printf '%s\n' "$encoded" >"$enc_dir/added_extra"
+  set +e
+  enc_out="$(PRODUCTION_SSH_SOURCES="$OWNER" run_reconcile "$enc_dir" true 2>&1)"
+  enc_rc=$?
+  set -e
+  [[ "$enc_rc" -ne 0 ]] || fail "encoding must refuse: $encoded -> $enc_out"
+  [[ "$(cat "$enc_dir/active")" == "0" ]] || fail "encoding must not enable UFW: $encoded"
+  if grep -Eq '(^| )(allow|enable|default|reset|disable|delete)( |$)' "$enc_dir/commands"; then
+    fail "encoding refuse must not mutate UFW: $encoded"
+  fi
+done
+pass "alternate UFW encodings of world-open SSH refuse without enable"
+
+deny_dir="$WORKDIR/deny-ssh"
+create_mock_ufw "$deny_dir"
+echo 0 >"$deny_dir/active"
+printf '%s\n' "ufw deny 22/tcp" >"$deny_dir/added_extra"
+set +e
+deny_out="$(PRODUCTION_SSH_SOURCES="$OWNER" run_reconcile "$deny_dir" true 2>&1)"
+deny_rc=$?
+set -e
+[[ "$deny_rc" -ne 0 ]] || fail "existing DENY 22 must refuse: $deny_out"
+[[ "$deny_out" == *"denies or rejects SSH"* ]] || fail "DENY 22 must be reported"
+[[ "$(cat "$deny_dir/active")" == "0" ]] || fail "DENY 22 refuse must not enable UFW"
+pass "existing DENY 22 refuses without appending ALLOW or enabling"
 
 # Existing world-open SSH must refuse without mutation.
 world_exist_dir="$WORKDIR/world-exist"
