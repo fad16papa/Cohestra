@@ -192,7 +192,15 @@ for raw in status.splitlines():
         rest = rest[1:]
     frm = " ".join(rest)
     to_l = to.lower().replace(" ", "")
-    ssh_row = to_l in SSH_DEST or to_l.startswith("22/tcp") or to_l.startswith("openssh") or to_l in {"anywhere", "any"}
+    ssh_row = (
+        to_l in SSH_DEST
+        or to_l.startswith("22/tcp")
+        or to_l.startswith("openssh")
+        or to_l in {"anywhere", "any"}
+        or to_l.startswith("anywhere")
+        or to_l.startswith("any/")
+        or to_l.startswith("any(")
+    )
     if action in {"DENY", "REJECT"} and ssh_row:
         denied = 1
         continue
@@ -225,7 +233,7 @@ for raw in added.splitlines():
     i += 1
     rest = skip_qualifiers(parts[i:])
     if action in {"deny", "reject"}:
-        if mentions_ssh(rest):
+        if mentions_ssh(rest) or not rest or (rest and rest[0].lower() in {"to", "proto", "any"}):
             denied = 1
         continue
     if action not in {"allow", "limit"}:
@@ -233,6 +241,7 @@ for raw in added.splitlines():
             world_open = 1
         continue
     if not rest:
+        world_open = 1
         continue
     if rest[0].lower() == "from":
         frm = rest[1] if len(rest) > 1 else "Anywhere"
@@ -251,7 +260,8 @@ for raw in added.splitlines():
         record_source(frm)
         continue
     if rest[0].lower() in {"to", "proto"}:
-        if mentions_ssh(rest):
+        low = [t.lower() for t in rest]
+        if mentions_ssh(rest) or "port" not in low:
             world_open = 1
         continue
     dest = rest[0].lower()

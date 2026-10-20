@@ -504,7 +504,10 @@ for encoded in \
   "ufw allow to any port 22 proto tcp" \
   "ufw allow from 0.0.0.0/0" \
   "ufw allow from 0.0.0.0/0 to any app OpenSSH" \
-  "ufw allow from Anywhere to any app OpenSSH"
+  "ufw allow from Anywhere to any app OpenSSH" \
+  "ufw allow proto tcp" \
+  "ufw allow to any proto tcp" \
+  "ufw allow in on eth0"
 do
   enc_dir="$(mktemp -d "$WORKDIR/enc.XXXXXX")"
   create_mock_ufw "$enc_dir"
@@ -571,7 +574,7 @@ pass "harden/reconcile sources contain no ufw reset/disable"
 
 set +e
 harden_missing="$(
-  env -u PRODUCTION_SSH_SOURCES COHESTRA_HARDEN_SKIP_METADATA=1 bash "$HARDEN" 2>&1
+  env -u PRODUCTION_SSH_SOURCES COHESTRA_HARDEN_SKIP_METADATA=1 COHESTRA_HARDEN_UNDER_TEST=1 bash "$HARDEN" 2>&1
 )"
 harden_missing_rc=$?
 set -e
@@ -582,7 +585,7 @@ pass "standalone harden validates SSH sources before root/apt/UFW"
 
 set +e
 harden_uat="$(
-  COHESTRA_HARDEN_SKIP_METADATA=1 COHESTRA_SHARED_HOST_UAT=true PRODUCTION_SSH_SOURCES="$OWNER" \
+  COHESTRA_HARDEN_SKIP_METADATA=1 COHESTRA_HARDEN_UNDER_TEST=1 COHESTRA_SHARED_HOST_UAT=true PRODUCTION_SSH_SOURCES="$OWNER" \
     bash "$HARDEN" 2>&1
 )"
 harden_uat_rc=$?

@@ -68,17 +68,20 @@ validate_production_ssh_sources() {
   local token
   local glob_was_off=0
   case "$-" in *f*) glob_was_off=1 ;; esac
+  restore_glob() {
+    if [[ "$glob_was_off" -eq 0 ]]; then
+      set +f
+    fi
+  }
   set -f
   local IFS=$' \t\n,'
   # shellcheck disable=SC2206
   tokens=($raw)
   unset IFS
-  if [[ "$glob_was_off" -eq 0 ]]; then
-    set +f
-  fi
 
   if [[ ${#tokens[@]} -eq 0 ]]; then
     echo "REFUSE: PRODUCTION_SSH_SOURCES is required; refusing to open 22/tcp to the world" >&2
+    restore_glob
     return 1
   fi
 
@@ -89,14 +92,17 @@ validate_production_ssh_sources() {
     [[ -z "$token" ]] && continue
     if [[ "$token" == *['*?[]']* ]]; then
       echo "REFUSE: SSH allowlist entry is not an approved IPv4 /24-/32 CIDR" >&2
+      restore_glob
       return 1
     fi
     if is_world_open_ssh_cidr "$token"; then
       echo "REFUSE: SSH allowlist must not include 0.0.0.0/0 or ::/0" >&2
+      restore_glob
       return 1
     fi
     if ! production_ssh_cidr_valid "$token"; then
       echo "REFUSE: SSH allowlist entry is not an approved IPv4 /24-/32 CIDR" >&2
+      restore_glob
       return 1
     fi
     local norm
@@ -109,9 +115,11 @@ validate_production_ssh_sources() {
 
   if [[ ${#out[@]} -eq 0 ]]; then
     echo "REFUSE: PRODUCTION_SSH_SOURCES is required; refusing to open 22/tcp to the world" >&2
+    restore_glob
     return 1
   fi
 
+  restore_glob
   printf '%s\n' "${out[@]}"
 }
 

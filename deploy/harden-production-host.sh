@@ -40,7 +40,7 @@ refuse_if_uat_or_shared_host() {
   local meta_id=""
   local meta_ip=""
   local local_ips=""
-  if [[ "${COHESTRA_HARDEN_SKIP_METADATA:-}" != "1" ]]; then
+  if [[ "${COHESTRA_HARDEN_SKIP_METADATA:-}" != "1" || "${COHESTRA_HARDEN_UNDER_TEST:-}" != "1" ]]; then
     meta_id="$(curl -fsS --max-time 3 http://169.254.169.254/metadata/v1/id 2>/dev/null || true)"
     meta_ip="$(curl -fsS --max-time 3 http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address 2>/dev/null || true)"
   fi
