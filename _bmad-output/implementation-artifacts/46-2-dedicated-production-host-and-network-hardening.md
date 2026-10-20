@@ -2,7 +2,7 @@
 id: 46.2
 key: 46-2-dedicated-production-host-and-network-hardening
 title: Dedicated production host and network hardening
-status: in-progress
+status: review
 epic: 46
 created: 2026-10-19
 baseline_commit: 36601be5c0fa25deb801fa27d8a65e67d12e824a
@@ -14,7 +14,7 @@ production_release_readiness: NOT_YET_COMPLETE
 
 # Story 46.2: Dedicated production host and network hardening
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -68,7 +68,7 @@ so that **UAT and lead-generation-crm never share the Production runtime**.
 - [x] Task 4: Apply cloud firewall + host sshd/ufw/unattended-upgrades (AC 3, 4)
 - [x] Task 5: Public port probes + SSH proofs; sanitized evidence (AC 2, 3)
 - [x] Task 6: Deterministic `deploy/validate-production-host.sh` + CI; UAT freeze (AC 5)
-- [ ] Task 7: Exact-HEAD code review PASS (BLOCKER=0, MAJOR=0)
+- [x] Task 7: Exact-HEAD code review PASS (BLOCKER=0, MAJOR=0)
 
 ## Dev Notes
 
@@ -115,6 +115,16 @@ Cursor Grok 4.6
 - Provisioner fixes required to finish live create: `doctl ssh-key import --public-key-file`, do not persist `IFS=,`, sample provisioner NAT /32s, create `/run/sshd` before `sshd -t`.
 - Review hardening: SSH CIDRs must be IPv4 /24-/32; UAT droplet id 581334322 is refused; firewall attach is exclusive and fail-closed; host `ufw` 22 is source-restricted; harden refuses the UAT address; unattended-upgrades enable is fail-closed.
 - PRODUCTION RELEASE READINESS remains NOT YET COMPLETE. Do not start 46.3. Do not merge without owner authorization.
+- Exact-HEAD Grok 4.6 review of `c86c28a59301168a00fe7cd8c7969e3f3ccb1eba`: BLOCKER=0, MAJOR=0, PASS. Deferred MINOR: ufw reset-before-sources on standalone harden; harden trusts provisioner CIDRs; validator is source-grep. No product/security residual that reopens AC3.
+
+## Senior Developer Review (AI)
+
+- Date: 2026-10-20
+- HEAD reviewed: c86c28a59301168a00fe7cd8c7969e3f3ccb1eba
+- Outcome: Approve (BLOCKER=0, MAJOR=0)
+- Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor (Grok 4.6)
+- Unresolved BLOCKER: 0
+- Unresolved MAJOR: 0
 
 ### File List
 
