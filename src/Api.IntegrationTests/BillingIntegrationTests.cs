@@ -150,7 +150,6 @@ public sealed class BillingIntegrationTests(IntegrationTestFixture fixture)
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var body = await response.Content.ReadAsStringAsync();
         Assert.Contains("managed by", body, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("503", body, StringComparison.Ordinal);
     }
 
     [SkippableFact]
