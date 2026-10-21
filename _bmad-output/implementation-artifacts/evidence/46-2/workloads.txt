@@ -1,0 +1,11 @@
+story: 46.2
+workloads_deployed: false
+docker: absent
+docker.service: inactive
+/opt/cohestra: absent
+/etc/cohestra-production-host: role=production shared_host_uat=false workloads_deployed=false
+COHESTRA_SHARED_HOST_UAT: unset
+compose: not_run
+nginx: not_installed
+cohestra-prod-web/api/postgres/redis/nginx/otelcol: not_present
+running_services: cron dbus do-agent droplet-agent getty ModemManager multipathd packagekit polkit rsyslog serial-getty ssh systemd-* udisks2 unattended-upgrades user@0

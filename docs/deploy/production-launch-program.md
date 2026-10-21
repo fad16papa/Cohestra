@@ -38,6 +38,22 @@ This is a repository contract only. It is **not** deployment evidence. No Produc
 - Production CD belongs to Story 46.3. This story does not auto-deploy.
 - Next owner gate after 46.1: `droplet_purchase` (Story 46.2). Do not create the droplet automatically.
 
+## Story 46.2 host (dedicated droplet)
+
+Owner gate `droplet_purchase` is **APPROVED**. Cutover phrase is **GRANTED** and does **not** waive remaining Epic 46 stories. Production release readiness is **NOT YET COMPLETE**.
+
+- Dedicated DigitalOcean droplet name: `cohestra-production`
+- Plan: Basic `s-4vcpu-8gb` (8 GiB / 4 vCPU / 160 GiB)
+- Database: OPTION A (self-hosted Postgres later). OPTION B not purchased.
+- UAT shared host (`129.212.235.2` / `uat.cohestra.app`) is forbidden and must remain a different machine.
+- Cloud firewall: 22 source-restricted, 80 and 443 public; 5432/6379/3000/8080 closed.
+- SSH password authentication disabled after key proof.
+- Unattended security updates enabled. No application workload deploy in 46.2.
+- Public inventory: [production-host.md](./production-host.md) and [production-host-inventory.json](./production-host-inventory.json) (no credentials).
+- Owner-confirmed DigitalOcean project: `Cohestra` (API project list is 403 with the current token). Droplet IDs/IPv4s unchanged after the reported project move.
+- Owner Windows SSH is **owner-reported PASS** (`116.86.142.14/32`). Cloud Agent SSH is not owner proof. Recovery Console is owner-reported PASS.
+- Do not start 46.3 automatically. Next remaining owner gate after merge of 46.2: `production_secrets` (Story 46.3).
+
 ## Historical docs (do not follow for Production topology)
 
 - [digitalocean-uat.md](./digitalocean-uat.md) — UAT shared host
@@ -48,4 +64,8 @@ This is a repository contract only. It is **not** deployment evidence. No Produc
 
 ## Production state
 
-**NO-GO** until the owner writes `PRODUCTION CUTOVER: AUTHORIZED`.
+Cutover authorization: **GRANTED**.
+
+Production release readiness: **NOT YET COMPLETE**.
+
+Do not point `cohestra.app` at this droplet in 46.2. Do not auto-deploy. Do not enable live Paddle.

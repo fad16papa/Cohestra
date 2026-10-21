@@ -1,0 +1,27 @@
+{
+  "name": "cohestra-production",
+  "story": "46.2",
+  "inbound": [
+    {
+      "protocol": "tcp",
+      "ports": "22",
+      "sources": ["APPROVED_ADMIN_CIDRS_ONLY"],
+      "notes": "SSH. Never 0.0.0.0/0. Replaced at provision with provisioner IP plus PRODUCTION_SSH_ALLOWLIST."
+    },
+    {
+      "protocol": "tcp",
+      "ports": "80",
+      "sources": ["0.0.0.0/0", "::/0"],
+      "notes": "Public HTTP edge. TLS/DNS cutover is later (46.13 / 46.15)."
+    },
+    {
+      "protocol": "tcp",
+      "ports": "443",
+      "sources": ["0.0.0.0/0", "::/0"],
+      "notes": "Public HTTPS edge. Certificate issuance is later (46.13)."
+    }
+  ],
+  "forbidden_public_ports": ["5432", "6379", "3000", "8080", "4317", "4318"],
+  "outbound": "allow_all",
+  "database": "OPTION_A_self_hosted_postgres_not_public"
+}

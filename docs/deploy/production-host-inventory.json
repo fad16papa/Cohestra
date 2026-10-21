@@ -1,0 +1,52 @@
+{
+  "story": "46.2",
+  "name": "cohestra-production",
+  "droplet_id": 610830617,
+  "region": "sgp1",
+  "size": "s-4vcpu-8gb",
+  "memory_mb": 8192,
+  "vcpus": 4,
+  "disk_gb": 160,
+  "image": "ubuntu-24-04-x64",
+  "public_ipv4": "159.223.55.242",
+  "status": "active",
+  "vpc_name": "cohestra-production-vpc",
+  "vpc_id": "9f82c79b-f2be-4496-ab35-1907bbdacf10",
+  "firewall_name": "cohestra-production",
+  "firewall_id": "ae8e7427-f92a-4479-b4dd-3365fa02def3",
+  "digitalocean_project": {
+    "owner_confirmed_name": "Cohestra",
+    "api_verification": "unverified_403_projects_scope",
+    "droplets_not_relocated_by_agent": true
+  },
+  "uat_droplet_id": 581334322,
+  "uat_public_ipv4": "129.212.235.2",
+  "uat_vpc_id": "f5aa05ac-bf74-44d1-a5cb-50e3c6d7411f",
+  "host_isolation": "distinct_from_uat",
+  "owner_ssh_cidrs": [
+    "116.86.142.14/32"
+  ],
+  "ssh_sources": [
+    "116.86.142.14/32",
+    "3.220.100.176/32",
+    "54.161.91.42/32",
+    "44.208.231.58/32",
+    "54.147.134.223/32",
+    "54.175.155.253/32",
+    "98.88.87.70/32",
+    "34.239.238.26/32",
+    "13.217.185.202/32"
+  ],
+  "provisioner_ipv4": "3.220.100.176",
+  "ssh_password_authentication": "no",
+  "ssh_key_authentication": "proven",
+  "owner_ssh_access": "owner_reported_pass",
+  "ssh_recovery_path": "digitalocean_droplet_console_owner_reported_pass",
+  "workloads_deployed": false,
+  "option_a_postgres": true,
+  "managed_postgres": false,
+  "production_auto_deploy": false,
+  "hardened_utc": "2026-10-20T11:13:02Z",
+  "owner_verification_utc": "2026-10-20T14:12:00Z",
+  "owner_ssh_verified_utc": "2026-10-20T15:55:00Z"
+}

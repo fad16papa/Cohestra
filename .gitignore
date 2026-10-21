@@ -13,3 +13,7 @@
 .DS_Store
 web/dump.rdb
 dump.rdb
+
+# Story 46.2 provisioner SSH key (created outside the repo)
+**/cohestra-production-46-2
+**/cohestra-production-46-2.pub

@@ -1,0 +1,21 @@
+story: 46.2
+uat_droplet_id: 581334322
+uat_name: ubuntu-s-2vcpu-4gb-sgp1
+uat_public_ipv4: 129.212.235.2
+uat_status: active
+uat_plan: 4096MB / 2 vCPU / 80GB
+uat_firewall: activitylead.creativorare (596840eb-4d01-4ef0-a1fc-478f78ae5a49)
+uat_firewall_droplets: [581334322]
+
+production_droplet_id: 610830617
+production_public_ipv4: 159.223.55.242
+isolation: distinct_id_and_ipv4
+
+git_diff_vs_main:
+  .github/workflows/deploy.yml: empty
+  docker-compose.uat.yml: empty
+  .github/workflows/deploy-production.yml: absent
+
+production_auto_deploy: false
+live_paddle: not_configured
+github_environment_production: not_created
