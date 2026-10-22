@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brainstorm — Story 24.5 EXPERIENCE.md Activities Module</title>
+<style>
+  :root {
+    --paper: #f7f4ef;
+    --ink: #1a1f2e;
+    --muted: #5c6478;
+    --lagoon: #2a9d8f;
+    --gold: #c9a227;
+    --destructive: #b91c1c;
+    --line: #ddd8ce;
+    --surface: #fff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 17px/1.65 "Georgia", "Times New Roman", serif;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  header {
+    padding: 3rem 1.5rem 2.5rem;
+    background: linear-gradient(180deg, #1a1f2e 0%, #2d3548 100%);
+    color: var(--paper);
+    text-align: center;
+  }
+  header h1 {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    margin: 0 0 0.75rem;
+    letter-spacing: -0.02em;
+  }
+  .tag {
+    display: inline-block;
+    font-family: system-ui, sans-serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--lagoon);
+    border: 1px solid color-mix(in srgb, var(--lagoon) 50%, transparent);
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+  }
+  .sub {
+    font-family: system-ui, sans-serif;
+    color: #b8bcc8;
+    max-width: 48ch;
+    margin: 1rem auto 0;
+    font-size: 0.95rem;
+  }
+  main { max-width: 820px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  h2 {
+    font-family: system-ui, sans-serif;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--lagoon);
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid var(--line);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(26,31,46,0.06);
+  }
+  .card em { color: var(--muted); font-style: normal; font-size: 0.9em; }
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+    margin: 1rem 0;
+  }
+  .flow span {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+  }
+  .flow .arrow { border: none; background: none; color: var(--muted); padding: 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: system-ui, sans-serif;
+    font-size: 0.88rem;
+    margin: 1rem 0;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .chip-demo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    border: 1px solid var(--lagoon);
+    background: color-mix(in srgb, var(--lagoon) 12%, white);
+    color: var(--lagoon);
+    padding: 0.25rem 0.75rem;
+    font-family: system-ui, sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .chip-demo .badge {
+    background: color-mix(in srgb, var(--lagoon) 18%, white);
+    border-radius: 999px;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .banner-blocked {
+    border-left: 4px solid var(--destructive);
+    background: color-mix(in srgb, var(--destructive) 8%, white);
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+    font-family: system-ui, sans-serif;
+    font-size: 0.9rem;
+  }
+  .banner-blocked strong { color: var(--destructive); }
+  .url {
+    font-family: ui-monospace, monospace;
+    font-size: 0.82rem;
+    background: #1a1f2e;
+    color: #7ee8dc;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    word-break: break-all;
+  }
+  .synthesis {
+    background: linear-gradient(135deg, #1a1f2e 0%, #2a3548 100%);
+    color: var(--paper);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin-top: 2rem;
+  }
+  .synthesis h2 { color: #7ee8dc; border-color: rgba(255,255,255,0.15); margin-top: 0; }
+  .synthesis ul { margin: 0; padding-left: 1.25rem; }
+  .synthesis li { margin-bottom: 0.5rem; }
+  .technique-label {
+    font-family: system-ui, sans-serif;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    margin-bottom: 0.35rem;
+  }
+</style>
+</head>
+<body>
+<header>
+  <p class="tag">Epic 24 · Story 24.5 · Brainstorm</p>
+  <h1>The Missing Chapter</h1>
+  <p class="sub">Codifying the Activities list operator contract in EXPERIENCE.md — the behavioral spine Clients already has.</p>
+</header>
+<main>
+
+<section>
+  <h2>First principles</h2>
+  <div class="card">
+    <p class="technique-label">Technique · First Principles</p>
+    <p><strong>/activities</strong> is not a CRUD table. It is a <strong>launchpad catalog</strong>: find engines, triage capacity, recover slots, hand off to Clients — at 50+ activities without losing state.</p>
+    <p>The doc job is the same as Clients: <em>presentation and interaction only</em>. Platform 0 publish/archive rules stay inherited.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Operator at cap</h2>
+  <div class="card">
+    <p class="technique-label">Technique · Role Playing</p>
+    <div class="banner-blocked">
+      <strong>Published activities at capacity (50/50).</strong> Archive or unpublish one to publish another.<br>
+      <span style="opacity:0.85;margin-top:0.35rem;display:block;">Monthly sign-ups paused (5,000/5,000).</span>
+    </div>
+    <p style="margin-top:1rem;font-family:system-ui,sans-serif;font-size:0.9rem;">
+      One banner — never two red alerts. Published recovery is primary; billing is explicit, separate.
+    </p>
+    <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
+      <span class="chip-demo">Published only <span class="badge">50</span></span>
+      <span class="chip-demo" style="border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,white);color:#8a6914;">Free a slot</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>URL as bookmark</h2>
+  <div class="card">
+    <p class="technique-label">Technique · Information Scent</p>
+    <p>After 24.4, the list is shareable. Document the contract:</p>
+    <div class="url">/activities?status=published&amp;sortBy=registrationCount&amp;sortDirection=desc</div>
+    <table>
+      <tr><th>Param</th><th>Example</th></tr>
+      <tr><td>status</td><td>published</td></tr>
+      <tr><td>search</td><td>tennis</td></tr>
+      <tr><td>community</td><td>Northside</td></tr>
+      <tr><td>category</td><td>Fitness</td></tr>
+      <tr><td>sortBy + sortDirection</td><td>name + asc (omitted when default)</td></tr>
+    </table>
+    <p><em>Page stays local — pagination not in URL (matches Clients).</em></p>
+  </div>
+</section>
+
+<section>
+  <h2>Card → Clients handoff</h2>
+  <div class="card">
+    <p class="technique-label">Technique · SCAMPER · Combine</p>
+    <div class="flow">
+      <span>Activity card</span>
+      <span class="arrow">→</span>
+      <span>Clients (N)</span>
+      <span class="arrow">→</span>
+      <span>/clients?activityId=…</span>
+    </div>
+    <p>24.3 quick actions + Clients filter = one documented cross-module flow. Copy link and Registrations tab get equal billing in the section.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Failure modes to forbid</h2>
+  <div class="card">
+    <p class="technique-label">Technique · Pre-mortem</p>
+    <ul style="font-family:system-ui,sans-serif;font-size:0.9rem;padding-left:1.2rem;">
+      <li>Two stacked plan-limit banners → reads as outage</li>
+      <li>Free a slot routing to billing → breaks trust</li>
+      <li>Filters in React state only → refresh loses work (fixed in 24.4 — must be in doc)</li>
+      <li>Registrant-facing copy mentioning plan limits → out of scope here; cross-ref public reg</li>
+    </ul>
+  </div>
+</section>
+
+<div class="synthesis">
+  <h2>Synthesis → Story 24.5 deliverable</h2>
+  <ul>
+    <li>Add <strong>## Activities module (operator at scale)</strong> to EXPERIENCE.md after Clients</li>
+    <li>Tables for mental model, banner, chips, filters, card signals, quick actions, empty states, plan gates</li>
+    <li>Cross-link Clients module and dashboard deep links</li>
+    <li>Docs-only — no code; closes Epic 24 documentation gap</li>
+    <li>Next: <code>bmad-build 24.5</code> → <code>bmad-retrospective epic 24</code></li>
+  </ul>
+</div>
+
+</main>
+</body>
+</html>
