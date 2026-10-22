@@ -50,6 +50,7 @@ Production: NO-GO / NOT YET COMPLETE
 - Layer A requires `head_branch=main` (null/missing refused).
 - Workflow contract proves `environment: production` on deploy and rollback independently.
 - Secret-scope wording: owner Settings gate. Code does not claim it proves Environment vs repo/org secret origin.
+- Production cannot relocate the trust anchor via env; tests need `COHESTRA_ALLOW_ANCHOR_OVERRIDE=true`. Committed file must match `c39f2618`.
 
 ## Allowlisted fields only
 
