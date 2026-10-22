@@ -162,17 +162,26 @@ else
   fail "docker-compose.uat.yml drifted"
 fi
 
-if [[ -f "$PROD_WF" ]]; then
-  fail "deploy-production.yml must not exist in Story 46.2 (belongs to 46.3)"
+if [[ -f "$PROD_WF" ]] && bash "$ROOT_DIR/deploy/validate-deploy-production-workflow.sh" >/dev/null; then
+  pass "Production CD workflow matches the 46.3 contract"
 else
-  pass "No Production CD workflow"
+  fail "deploy-production.yml must exist and satisfy validate-deploy-production-workflow.sh"
 fi
 
-if grep -R --include='*.yml' -E '^[[:space:]]*environment:[[:space:]]*production[[:space:]]*$' \
-  "$ROOT_DIR/.github/workflows" >/dev/null 2>&1; then
-  fail "No GitHub Environment production may be referenced in 46.2 workflows"
+prod_env_ok=1
+while IFS= read -r wf; do
+  base="$(basename "$wf")"
+  if [[ "$base" == "deploy-production.yml" ]]; then
+    continue
+  fi
+  if grep -qE '^[[:space:]]*environment:[[:space:]]*production[[:space:]]*$' "$wf"; then
+    prod_env_ok=0
+  fi
+done < <(find "$ROOT_DIR/.github/workflows" -name '*.yml' -print)
+if [[ "$prod_env_ok" -eq 1 ]]; then
+  pass "Only deploy-production.yml may reference Environment production"
 else
-  pass "No workflow references Environment production"
+  fail "UAT or other workflows must not reference Environment production"
 fi
 
 if [[ -f "$COMPOSE" ]] && grep -qE '^name:[[:space:]]*cohestra-production[[:space:]]*$' "$COMPOSE"; then
