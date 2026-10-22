@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Story 21.3 — Viber coverage parity</title>
+  <style>
+    :root {
+      --bg: #0f0d14;
+      --card: #1a1724;
+      --text: #f0ebfa;
+      --muted: #8f879e;
+      --viber: #7360f2;
+      --wa: #25d366;
+      --email: #e8a838;
+      --gap: #e05a5a;
+      --fix: #3d9a6a;
+      --line: rgba(255,255,255,0.07);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 2rem 1.25rem 4rem;
+    }
+    .wrap { max-width: 52rem; margin: 0 auto; }
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.6rem, 4vw, 2.1rem);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.35rem;
+    }
+    .sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
+    .hero {
+      background: linear-gradient(135deg, rgba(115,96,242,0.18), rgba(61,154,106,0.12));
+      border: 1px solid rgba(115,96,242,0.35);
+      border-radius: 1rem;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .hero p { font-size: 0.95rem; color: #ddd6ee; }
+    .hero strong { color: var(--fix); }
+    h2 {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin: 2rem 0 0.75rem;
+    }
+    .pipeline {
+      display: grid;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .pipe-row {
+      display: grid;
+      grid-template-columns: 8rem 1fr auto;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--card);
+      border-radius: 0.6rem;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.85rem;
+    }
+    .pipe-row .label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .pipe-row .bar-wrap { height: 0.5rem; background: rgba(255,255,255,0.06); border-radius: 999px; overflow: hidden; }
+    .pipe-row .bar { height: 100%; border-radius: 999px; }
+    .bar.ok { background: var(--fix); width: 100%; }
+    .bar.gap { background: var(--gap); width: 45%; }
+    .badge { font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 999px; font-weight: 600; }
+    .badge.ok { background: rgba(61,154,106,0.2); color: #8fd4ad; }
+    .badge.gap { background: rgba(224,90,90,0.2); color: #f0a0a0; }
+    .channels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      border: 1px solid var(--line);
+    }
+    .chip .dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; }
+    .chip.email .dot { background: var(--email); }
+    .chip.wa .dot { background: var(--wa); }
+    .chip.viber .dot { background: var(--viber); }
+    .chip.in { opacity: 1; }
+    .chip.out { opacity: 0.45; text-decoration: line-through; }
+    .grid2 { display: grid; gap: 1rem; }
+    @media (min-width: 640px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+    .card {
+      background: var(--card);
+      border-radius: 0.75rem;
+      padding: 1rem 1.1rem;
+      border-left: 3px solid var(--viber);
+    }
+    .card h3 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .card p, .card li { font-size: 0.85rem; color: #ccc4dc; }
+    .card ul { padding-left: 1.1rem; margin-top: 0.4rem; }
+    .card.fix { border-left-color: var(--fix); }
+    .card.test { border-left-color: var(--email); }
+    .decision {
+      background: linear-gradient(180deg, rgba(61,154,106,0.12), transparent);
+      border: 1px solid rgba(61,154,106,0.35);
+      border-radius: 1rem;
+      padding: 1.25rem 1.5rem;
+      margin-top: 2rem;
+    }
+    .decision h3 { font-family: Georgia, serif; font-size: 1.2rem; margin-bottom: 0.5rem; color: #8fd4ad; }
+    .decision ol { padding-left: 1.2rem; font-size: 0.88rem; color: #ddd6ee; }
+    .decision li { margin: 0.35rem 0; }
+    code { font-size: 0.8em; background: rgba(0,0,0,0.35); padding: 0.1rem 0.35rem; border-radius: 0.25rem; }
+    footer { margin-top: 2.5rem; font-size: 0.75rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Where Viber counts — and where it doesn't</h1>
+    <p class="sub">Brainstorm · Story 21.3 · 2026-08-09 · Epic 21 Viber messenger</p>
+
+    <div class="hero">
+      <p><strong>Convergence:</strong> A surgical ~30–50 LOC fix. The follow-up <em>queue</em> likely already honors Viber via <code>ClientService</code>. The <em>coverage %</em> on dashboard and reports is wrong because two copy-pasted predicates stop at WhatsApp.</p>
+    </div>
+
+    <h2>Pipeline audit</h2>
+    <div class="pipeline">
+      <div class="pipe-row">
+        <span class="label">Timeline log</span>
+        <div class="bar-wrap"><div class="bar ok"></div></div>
+        <span class="badge ok">21.1 / 21.2 ✓</span>
+      </div>
+      <div class="pipe-row">
+        <span class="label">Clients list</span>
+        <div class="bar-wrap"><div class="bar ok"></div></div>
+        <span class="badge ok">OutreachEventTypes ✓</span>
+      </div>
+      <div class="pipe-row">
+        <span class="label">Follow-up queue</span>
+        <div class="bar-wrap"><div class="bar ok"></div></div>
+        <span class="badge ok">withoutOutreach ✓</span>
+      </div>
+      <div class="pipe-row">
+        <span class="label">Coverage %</span>
+        <div class="bar-wrap"><div class="bar gap"></div></div>
+        <span class="badge gap">GAP → 21.3</span>
+      </div>
+    </div>
+
+    <h2>Event types in coverage predicate</h2>
+    <div class="channels">
+      <span class="chip email in"><span class="dot"></span> EmailCampaignSent</span>
+      <span class="chip wa in"><span class="dot"></span> WhatsAppInitiated</span>
+      <span class="chip wa in"><span class="dot"></span> WhatsAppFollowUpRecorded</span>
+      <span class="chip viber out"><span class="dot"></span> ViberInitiated</span>
+      <span class="chip viber out"><span class="dot"></span> ViberFollowUpRecorded</span>
+    </div>
+    <p style="font-size:0.85rem;color:var(--muted);">Strikethrough = missing today in DashboardService + ReportService. After 21.3, all five count equally.</p>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Failure modes avoided</h3>
+        <ul>
+          <li>Dashboard vs report mismatch — fix both in one PR</li>
+          <li>Double-count — CountAsync on clients, not events</li>
+          <li>Future Telegram drift — shared array</li>
+        </ul>
+      </div>
+      <div class="card fix">
+        <h3>Recommended fix</h3>
+        <p>Extract <code>FollowUpCoverageEventTypes</code> shared by Dashboard, Report, and ClientService. Replace inline OR chains with <code>Contains</code>.</p>
+      </div>
+      <div class="card">
+        <h3>AC3 — verify only</h3>
+        <p>Labels already ship: <em>Viber initiated</em>, <em>Viber follow-up recorded</em> in ClientTimelineBuilder. No UI work unless regression found.</p>
+      </div>
+      <div class="card test">
+        <h3>Tests to add</h3>
+        <ul>
+          <li>2 New leads, 1 ViberInitiated → 50% coverage</li>
+          <li>Report cohort with ViberFollowUpRecorded only</li>
+          <li>WhatsApp + email regression</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="decision">
+      <h3>Implementation order</h3>
+      <ol>
+        <li>Shared <code>FollowUpCoverageEventTypes</code> (+ wire ClientService)</li>
+        <li><code>DashboardService.cs</code> — followedUpLeads predicate</li>
+        <li><code>ReportService.cs</code> — BuildFollowUpStatusAsync</li>
+        <li>2–4 unit tests (Infrastructure.Tests)</li>
+        <li>Manual: demo seed dashboard coverage spot-check</li>
+      </ol>
+    </div>
+
+    <footer>Next: bmad-create-story 21-3 → bmad-dev-story 21-3 · memlog drives this artifact</footer>
+  </div>
+</body>
+</html>
