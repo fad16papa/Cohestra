@@ -160,6 +160,7 @@ flowchart TB
 - **Binds:** FR-8, FR-9, FR-42
 - **Prevents:** Deploying a SHA that is not the reviewed CI SHA
 - **Rule:** REVIEWED SHA = CI SHA = DEPLOY TARGET SHA = RUNTIME SHA = ACCEPTANCE SHA. Runtime SHA is `GIT_SHA` already consumed by `PlatformOpsVersionService`. Mismatch aborts or pages CRITICAL. Rollback targets a previous accepted SHA, not `latest`.
+- **Merge-commit provenance (does not shorten the chain):** GitHub merge commits create two SHAs. REVIEWED is the PR HEAD that passed review and `GitGuardian Security Checks`. CI / DEPLOY TARGET / RUNTIME / ACCEPTANCE are the merged main SHA. Production must prove `merge_commit_sha == deploy_sha` and GitGuardian SUCCESS on the immutable merge-time PR HEAD (`deploy_sha^2`). Do not require GitGuardian on the merge SHA. Do not treat `ancestor of main` as reviewed. Direct-to-main fails closed. Branch protection Settings are a later hardening concern, not the 46.3 trust boundary.
 
 ### AD-8 — OpenTelemetry is the telemetry contract [ADOPTED]
 

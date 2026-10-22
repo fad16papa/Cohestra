@@ -17,22 +17,15 @@ Spine: AD-6, AD-7, AD-13.
 ## Production path (new)
 
 ```
-main / release candidate
-  → CI (must pass, including TenantIsolation)
-  → security gates already in CI
+REVIEWED PR HEAD
+  → GitGuardian Security Checks SUCCESS on that PR HEAD
+  → MERGED MAIN DEPLOY SHA (pr.merge_commit_sha; two-parent merge)
+  → CI SUCCESS on the deploy SHA (five Actions jobs)
   → GitHub Environment production
   → EXPLICIT OWNER APPROVAL (required reviewers)
-  → deploy-production job
-       checkout SHA
-       fail closed on missing secrets
-       SSH (Actions deploy key, not Cursor)
-       git reset --hard SHA
-       pre-deploy backup gate if migrations
-       compose pull/build/up
-       GIT_SHA injected
-       runtime SHA read from ops/version or container env
-       smoke
-       observation window
+  → DEPLOY TARGET SHA
+  → RUNTIME SHA (GIT_SHA)
+  → later ACCEPTANCE SHA
   → still NO-GO for public traffic until PRODUCTION CUTOVER: AUTHORIZED
 ```
 
@@ -66,7 +59,7 @@ App secrets stay on the droplet `.env`, never in GitHub if they are not needed b
 
 ## Release sequence
 
-1. Pre-deploy: CI green, SHA ancestor of `origin/main`, Environment approval recorded
+1. Pre-deploy: Layer A (five Actions jobs SUCCESS on exact `deploy_sha`) **and** Layer B (unique hydrated merged-to-`main` PR + GitGuardian SUCCESS on `${deploy_sha}^2`); SHA ancestor of `origin/main` is necessary, not sufficient; Environment approval recorded. Direct-to-main and squash/rebase REFUSE.
 2. Migration compatibility: if EF migrations present, require expand/contract or documented irreversible flag + backup
 3. Backup gate: dump completes and is uploaded
 4. Deploy
@@ -90,6 +83,12 @@ No dedicated rollback script exists today. 46.3 must add `deploy/production-roll
 ## Provenance
 
 Reuse UAT lessons: `workflow_run.head_sha` is UAT-only. Production should be `workflow_dispatch` with an explicit SHA input and/or a workflow that never uses implicit latest. Prefer `workflow_dispatch` required SHA so a human types the SHA they approved. Optional: tag `prod-<sha>` after success.
+
+Production provenance is two-layer (canonical algorithm: 46.3 story file):
+
+- **Layer A** — exact `deploy_sha` / main CI: 40-hex commit, ancestor of `origin/main`, required `CI` workflow SUCCESS on that SHA for the five Actions jobs. Do not require `GitGuardian Security Checks` on the merge SHA — GitGuardian attaches to the PR HEAD.
+- **Layer B** — associated merged PR + GitGuardian: unique PR with `merge_commit_sha == deploy_sha` and hydrated `merged == true` targeting `main`; two-parent merge; GitGuardian SUCCESS on `${deploy_sha}^2`. Fail closed on missing/pending/cancelled/failed GitGuardian, missing/ambiguous PR, API errors, direct-to-main, and squash/rebase.
+- `ancestor of main` is not reviewed. Do not mutate branch protection in 46.3.
 
 ## Dark host vs public cutover
 

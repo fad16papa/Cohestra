@@ -39,6 +39,8 @@ Story 46.9 is the review-and-harden story. This document is the threat/risk spin
 | Redis exposure | Session theft | UAT unpublished | Same; require password on Production Redis |
 | SSH | Host takeover | UAT deploy key | Dedicated Production key; disable password auth |
 | GitHub environments | Secret leak / rogue deploy | UAT environment | Production required reviewers; no self-approve if possible |
+| Production SHA provenance | Unreviewed or unscanned main SHA ships | UAT auto-deploy after CI | 46.3 Layer A exact-SHA Actions CI **and** Layer B associated merged PR + GitGuardian on `${deploy_sha}^2`; direct-to-main REFUSE |
+| `main` branch protection | Direct pushes and weak required checks | Not a Production trust boundary today | Later hardening (candidate 46.9). Do not treat 46.3 as the Settings-mutation story |
 | Paddle webhooks | Forged events | HMAC + timestamp | Live secret; monitor invalid signatures |
 | SendGrid | Account takeover / spam | Restricted key recommended | Distinct Production key, Mail Send scope |
 | PII/logging | Leak in Loki | Partial DTO sanitizer | Pipeline redaction AD-9; fix SendGrid email logs |

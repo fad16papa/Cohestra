@@ -2,10 +2,11 @@
 id: 46.2
 key: 46-2-dedicated-production-host-and-network-hardening
 title: Dedicated production host and network hardening
-status: review
+status: done
 epic: 46
 created: 2026-10-19
 baseline_commit: 36601be5c0fa25deb801fa27d8a65e67d12e824a
+merged_main: 6fa0d46f252b2a6656b40f9e86fef85fe957a807
 owner_gate: droplet_purchase
 owner_gate_status: APPROVED
 owner_ssh_access: owner_reported_pass
@@ -15,7 +16,7 @@ production_release_readiness: NOT_YET_COMPLETE
 
 # Story 46.2: Dedicated production host and network hardening
 
-Status: review
+Status: done
 
 ## Story
 
@@ -168,3 +169,4 @@ Cursor Grok 4.6
 - 2026-10-20: Owner verification — project membership API unverified (403); IDs/IPs/firewall unchanged; owner Windows SSH not verified; no firewall mutation.
 - 2026-10-20: Owner SSH acceptance recorded; provisioner preserves `owner_ssh_cidrs` on reconcile.
 - 2026-10-20: Fail-closed host UFW correction — validate SSH allowlist before mutation; additive idempotent reconcile; mocked behavioral tests. Do not merge without owner authorization.
+- 2026-10-21: Story 46.2 merged on main (`6fa0d46f`, PR #482). Tracker reconciled to `done`. Historical evidence unchanged. Do not start 46.3 implementation in the planning pass.
