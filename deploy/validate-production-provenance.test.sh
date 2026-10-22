@@ -229,5 +229,35 @@ d["check_runs"][0]["conclusion"]="failure"
 json.dump(d, open(sys.argv[1],"w"))
 PY
 expect_refuse "$PROVENANCE_MERGE" "five CI jobs green + GitGuardian red is refused"
+write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+
+python3 - "$PROVENANCE_FIX/runs.json" "$PROVENANCE_MERGE" <<'PY'
+import json,sys
+sha=sys.argv[2]
+json.dump({"total_count":1,"workflow_runs":[
+  {"id":11,"event":"pull_request","head_sha":sha,"head_branch":"main","status":"completed","conclusion":"success","created_at":"2026-10-22T00:00:00Z"}
+]}, open(sys.argv[1],"w"))
+PY
+expect_refuse "$PROVENANCE_MERGE" "PR-only CI is refused"
+write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+
+python3 - "$PROVENANCE_FIX/runs.json" "$PROVENANCE_MERGE" <<'PY'
+import json,sys
+sha=sys.argv[2]
+json.dump({"total_count":1,"workflow_runs":[
+  {"id":11,"event":"pull_request_target","head_sha":sha,"head_branch":"main","status":"completed","conclusion":"success","created_at":"2026-10-22T00:00:00Z"}
+]}, open(sys.argv[1],"w"))
+PY
+expect_refuse "$PROVENANCE_MERGE" "pull_request_target CI is refused"
+write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+
+python3 - "$PROVENANCE_FIX/jobs_11.json" <<'PY'
+import json,sys
+d=json.load(open(sys.argv[1]))
+d["jobs"].append({"name":".NET build and test","conclusion":"failure"})
+d["total_count"]=len(d["jobs"])
+json.dump(d, open(sys.argv[1],"w"))
+PY
+expect_refuse "$PROVENANCE_MERGE" "duplicate required CI job failure is refused"
 
 echo "validate-production-provenance contract OK"

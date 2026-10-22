@@ -31,7 +31,13 @@ else
   fail "only workflow_dispatch may trigger Production"
 fi
 
-for key in push pull_request workflow_run workflow_call repository_dispatch schedule release deployment; do
+if grep -qE '^on:[[:space:]]*\[' "$WF"; then
+  fail "on: list form is forbidden; use workflow_dispatch only"
+else
+  pass "on: list form is absent"
+fi
+
+for key in push pull_request pull_request_target workflow_run workflow_call repository_dispatch schedule release deployment; do
   if grep -qE "^[[:space:]]*${key}:" "$WF"; then
     fail "forbidden trigger ${key} is present"
   else
@@ -56,6 +62,12 @@ if grep -qE 'group:[[:space:]]*deploy-production' "$WF" \
   pass "concurrency is deploy-production with cancel-in-progress false"
 else
   fail "concurrency must be deploy-production / cancel-in-progress: false"
+fi
+
+if grep -q 'refs/heads/main' "$WF" && grep -q 'Refuse non-main dispatch' "$WF"; then
+  pass "non-main dispatch is refused"
+else
+  fail "workflow must fail closed unless dispatched from main"
 fi
 
 if grep -qE 'group:[[:space:]]*deploy-uat' "$WF"; then

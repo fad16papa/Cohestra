@@ -11,7 +11,20 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime
 from typing import Any
+
+
+def parse_github_time(value: Any, label: str) -> datetime:
+    if not isinstance(value, str) or not value.strip():
+        refuse(f"{label} missing timestamp")
+    raw = value.strip()
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    try:
+        return datetime.fromisoformat(raw)
+    except ValueError:
+        refuse(f"{label} unparseable timestamp")
 
 
 def refuse(reason: str) -> None:
@@ -105,14 +118,12 @@ def newest_ci_run(runs: list[Any]) -> dict[str, Any]:
     scored: list[tuple[str, int, dict[str, Any]]] = []
     for run in runs:
         obj = require_dict(run, "ci run")
-        created = obj.get("created_at")
-        if not isinstance(created, str) or not created:
-            refuse("CI run missing created_at")
+        created = parse_github_time(obj.get("created_at"), "CI run created_at")
         try:
             run_id = int(obj.get("id"))
         except (TypeError, ValueError):
             refuse("CI run missing numeric id")
-        scored.append((created, run_id, obj))
+        scored.append((created.isoformat(), run_id, obj))
     scored.sort(key=lambda item: (item[0], item[1]))
     newest = scored[-1][2]
     ties = [item for item in scored if item[0] == scored[-1][0]]
@@ -146,12 +157,8 @@ def layer_a(repo: str, deploy_sha: str) -> dict[str, Any]:
     if not allowed:
         refuse("required CI run missing on deploy_sha")
     newest = newest_ci_run(allowed)
-    if newest.get("status") not in (None, "completed") and newest.get("conclusion") in (None, ""):
-        refuse("newest CI run is not terminal")
-    if newest.get("status") in ("queued", "in_progress", "pending"):
-        refuse("newest CI run is pending")
-    if newest.get("conclusion") != "success":
-        refuse("newest CI run is not success")
+    if newest.get("status") != "completed" or newest.get("conclusion") != "success":
+        refuse("newest CI run is not completed success")
     run_id = newest.get("id")
     jobs = paginate_list(
         f"/repos/{repo}/actions/runs/{run_id}/jobs",
@@ -170,13 +177,12 @@ def layer_a(repo: str, deploy_sha: str) -> dict[str, Any]:
         obj = require_dict(job, "ci job")
         name = obj.get("name")
         if name in required:
+            if obj.get("conclusion") != "success":
+                refuse(f"required CI job not success ({name})")
             by_name[str(name)] = obj
     missing = sorted(required - set(by_name))
     if missing:
         refuse("required CI job missing")
-    for name, job in by_name.items():
-        if job.get("conclusion") != "success":
-            refuse(f"required CI job not success ({name})")
     return {"ci_run_id": newest.get("id")}
 
 
@@ -250,13 +256,13 @@ def layer_b_gitguardian(repo: str, reviewed_pr_head: str) -> None:
     ]
     if not terminal:
         refuse("GitGuardian is not completed")
-    def _term_key(obj: dict[str, Any]) -> tuple[str, int]:
-        completed = obj.get("completed_at") or ""
+    def _term_key(obj: dict[str, Any]) -> tuple[datetime, int]:
+        completed = parse_github_time(obj.get("completed_at"), "GitGuardian completed_at")
         try:
             run_id = int(obj.get("id") or 0)
         except (TypeError, ValueError):
             run_id = 0
-        return (str(completed), run_id)
+        return (completed, run_id)
 
     newest = sorted(terminal, key=_term_key)[-1]
     conclusion = newest.get("conclusion")

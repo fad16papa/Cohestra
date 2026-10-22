@@ -13,7 +13,7 @@ refuse() {
 
 for arg in "$@"; do
   case "$arg" in
-    --restore-dump|--restore|up|psql|pg_restore)
+    --restore-dump|--restore|--restore-dump=*|up|psql|pg_restore)
       echo "NOT_IMPLEMENTED_46_5"
       refuse "database restore / compose up is forbidden in 46.3"
       ;;
@@ -25,7 +25,8 @@ if [[ -n "${RESTORE_DUMP:-}" || -n "${restore_dump:-}" ]]; then
   refuse "RESTORE_DUMP is forbidden in 46.3"
 fi
 
-if [[ "${COHESTRA_SHARED_HOST_UAT:-}" == "true" ]]; then
+shared_host="$(printf '%s' "${COHESTRA_SHARED_HOST_UAT:-}" | tr '[:upper:]' '[:lower:]')"
+if [[ "$shared_host" == "true" || "$shared_host" == "1" || "$shared_host" == "yes" ]]; then
   refuse "COHESTRA_SHARED_HOST_UAT is forbidden"
 fi
 
@@ -45,7 +46,9 @@ export GIT_SHA="$HEAD_SHA"
 
 # Dry-run compose contract only. Never `up`. Never eval.
 if [[ "${COHESTRA_PRODUCTION_COMPOSE_CMD:-}" == "true" ]]; then
-  true
+  if [[ "${COHESTRA_ALLOW_COMPOSE_STUB:-}" != "true" ]]; then
+    refuse "compose stub forbidden outside tests"
+  fi
 elif [[ -n "${COHESTRA_PRODUCTION_COMPOSE_CMD:-}" ]]; then
   refuse "invalid compose override"
 elif ! bash "$ROOT_DIR/deploy/production-compose.sh" config >/dev/null; then

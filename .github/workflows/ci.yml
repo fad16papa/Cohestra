@@ -261,6 +261,12 @@ jobs:
       - name: Production rollback contract
         run: bash deploy/production-rollback.test.sh
 
+      - name: Production accepted-SHA ledger contract
+        run: bash deploy/record-production-accepted-sha.test.sh
+
+      - name: Production evidence schema contract
+        run: bash deploy/validate-production-evidence-schema.test.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

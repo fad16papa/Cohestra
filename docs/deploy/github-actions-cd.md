@@ -149,7 +149,18 @@ Two-layer provenance must pass before Environment `production`:
 
 The Environment `production` job is declared in YAML. The owner must create and protect that Environment in GitHub Settings **before first dispatch**. This repository does not create the Environment, populate `PROD_*`, or SSH Production from Story 46.3 implementation.
 
+Owner Settings checklist (values never in git/chat):
+
+1. Create Environment `production` (do not rely on first-dispatch auto-create).
+2. Required reviewers: owner. Prevent self-review / administrator bypass if the UI offers it.
+3. Deployment branches: `main` only.
+4. Environment secrets (names only): `PROD_DROPLET_HOST`, `PROD_DROPLET_USER`, `PROD_DROPLET_SSH_KEY`, `PROD_DROPLET_DEPLOY_PATH`, `PROD_PUBLIC_BASE_URL`.
+5. Environment variable: `PROD_COMPOSE_PROJECT=cohestra-production`.
+6. Mint a **new** Production Actions deploy key. Do not reuse `cohestra-uat-gha`, the owner workstation key, or Environment `uat` / `DROPLET_*`.
+
 Do not copy Environment `uat` / `DROPLET_*` secrets. Fail-closed names print `MISSING_SECRET=<NAME>` only.
+
+Dispatch from **Actions → Deploy Production** on `main` only, with an explicit 40-hex `deploy_sha`. Feature-branch dispatch fails closed. Do not dispatch until the Environment is protected and later stories authorize a dark deploy.
 
 ---
 

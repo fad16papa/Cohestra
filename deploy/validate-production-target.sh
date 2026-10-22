@@ -13,6 +13,7 @@ PROD_IP="159.223.55.242"
 UAT_IP="129.212.235.2"
 DEFAULT_PATH="/home/deploy/cohestra-production"
 HOST="${PROD_DROPLET_HOST:-}"
+USER_IN="${PROD_DROPLET_USER:-}"
 PATH_IN="${PROD_DROPLET_DEPLOY_PATH:-$DEFAULT_PATH}"
 PROJECT="${PROD_COMPOSE_PROJECT:-}"
 BASE_URL="${PROD_PUBLIC_BASE_URL:-}"
@@ -29,13 +30,25 @@ fi
 if [[ "$HOST" == "$UAT_IP" ]]; then
   refuse "UAT IPv4 is forbidden"
 fi
+if [[ -n "$USER_IN" && "$USER_IN" != "deploy" ]]; then
+  refuse "PROD_DROPLET_USER must be deploy"
+fi
 
 shopt -s nocasematch
+if [[ -z "$BASE_URL" ]]; then
+  refuse "PROD_PUBLIC_BASE_URL missing"
+fi
 if [[ "$HOST" == *uat.cohestra.app* || "$BASE_URL" == *uat.cohestra.app* ]]; then
   refuse "UAT hostname is forbidden"
 fi
-if [[ "$BASE_URL" == "https://cohestra.app" || "$BASE_URL" == "https://cohestra.app/" ]]; then
+if [[ "$BASE_URL" == *cohestra.app* ]]; then
   refuse "public cutover URL is forbidden in 46.3"
+fi
+if [[ "$BASE_URL" == *"$UAT_IP"* ]]; then
+  refuse "UAT IPv4 is forbidden"
+fi
+if [[ "$BASE_URL" == *\[* ]] || [[ "$BASE_URL" =~ ^https?://[^/]*: ]]; then
+  refuse "IPv6 or hostname substitution is forbidden"
 fi
 shopt -u nocasematch
 

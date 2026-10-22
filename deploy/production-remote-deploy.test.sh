@@ -13,11 +13,11 @@ trap 'rm -f "$out"' EXIT
 cd "$ROOT_DIR"
 
 run() {
-  env COHESTRA_PRODUCTION_COMPOSE_CMD=true "$@" bash "$SCRIPT" >"$out" 2>&1
+  env COHESTRA_PRODUCTION_COMPOSE_CMD=true COHESTRA_ALLOW_COMPOSE_STUB=true "$@" bash "$SCRIPT" >"$out" 2>&1
 }
 
 run_args() {
-  env COHESTRA_PRODUCTION_COMPOSE_CMD=true bash "$SCRIPT" "$@" >"$out" 2>&1
+  env COHESTRA_PRODUCTION_COMPOSE_CMD=true COHESTRA_ALLOW_COMPOSE_STUB=true bash "$SCRIPT" "$@" >"$out" 2>&1
 }
 
 if ! run; then
@@ -52,6 +52,16 @@ if PROD_COMPOSE_PROJECT=cohestra-uat run; then
   fail "UAT compose project must fail"
 fi
 pass "UAT compose project is refused"
+
+if env COHESTRA_PRODUCTION_COMPOSE_CMD=true bash "$SCRIPT" >"$out" 2>&1; then
+  fail "compose stub without allow flag must fail"
+fi
+pass "compose stub is test-only"
+
+if run_args --restore-dump=x; then
+  fail "--restore-dump= must fail"
+fi
+pass "--restore-dump= attached form is refused"
 
 if grep -qiE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY' "$out"; then
   fail "no key material"

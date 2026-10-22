@@ -16,6 +16,7 @@ run() {
 
 ok=(
   PROD_DROPLET_HOST=159.223.55.242
+  PROD_DROPLET_USER=deploy
   PROD_DROPLET_DEPLOY_PATH=/home/deploy/cohestra-production
   PROD_COMPOSE_PROJECT=cohestra-production
   PROD_PUBLIC_BASE_URL=http://159.223.55.242
@@ -66,5 +67,20 @@ if run "${ok[@]}" PROD_COMPOSE_PROJECT=cohestra-uat; then
   fail "wrong compose project must be refused"
 fi
 pass "wrong compose project is refused"
+
+if run "${ok[@]}" PROD_DROPLET_USER=root; then
+  fail "non-deploy SSH user must be refused"
+fi
+pass "non-deploy SSH user is refused"
+
+if run "${ok[@]}" PROD_PUBLIC_BASE_URL=https://www.cohestra.app; then
+  fail "customer cutover URL must be refused"
+fi
+pass "customer cutover URL is refused"
+
+if run "${ok[@]}" PROD_PUBLIC_BASE_URL=http://129.212.235.2; then
+  fail "UAT IPv4 URL must be refused"
+fi
+pass "UAT IPv4 URL is refused"
 
 echo "validate-production-target contract OK"

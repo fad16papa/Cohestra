@@ -8,8 +8,8 @@ source "$ROOT_DIR/deploy/lib/production-provenance-fixture.sh"
 pass() { echo "PASS: $1"; }
 fail() { echo "FAIL: $1"; exit 1; }
 
-if grep -nE 'psql|pg_restore|down -v' "$ROOT_DIR/deploy/production-rollback.sh"; then
-  fail "rollback script must not contain database commands"
+if grep -nE '^[[:space:]]*(psql|pg_restore)|down -v' "$ROOT_DIR/deploy/production-rollback.sh"; then
+  fail "rollback script must not invoke database commands"
 fi
 pass "rollback script has no DB commands"
 
@@ -24,6 +24,7 @@ export GITHUB_REPOSITORY="fad16papa/Cohestra"
 export ORIGIN_MAIN_REF="origin/main"
 export COHESTRA_ROOT="$ROOT_DIR"
 export COHESTRA_PRODUCTION_COMPOSE_CMD=true
+export COHESTRA_ALLOW_COMPOSE_STUB=true
 export COHESTRA_ACCEPTED_SHA_LEDGER="$TMP/ledger"
 printf '%s\n' "$PROVENANCE_MERGE" >"$COHESTRA_ACCEPTED_SHA_LEDGER"
 

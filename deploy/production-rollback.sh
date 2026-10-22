@@ -13,11 +13,7 @@ refuse() {
 
 for arg in "$@"; do
   case "$arg" in
-    --restore-dump|--restore)
-      echo "NOT_IMPLEMENTED_46_5"
-      refuse "database restore is Story 46.5"
-      ;;
-    --restore-dump=*)
+    --restore-dump|--restore|--restore-dump=*|up|psql|pg_restore)
       echo "NOT_IMPLEMENTED_46_5"
       refuse "database restore is Story 46.5"
       ;;

@@ -21,18 +21,18 @@ cohestra_gh_api() {
     return 0
   fi
 
-  if [[ -z "${GITHUB_TOKEN:-}" && -z "${GH_TOKEN:-}" ]]; then
+  if [[ -z "${GITHUB_TOKEN:-}" ]]; then
     echo "REFUSE: GitHub API token missing" >&2
     return 1
   fi
 
-  local token="${GITHUB_TOKEN:-${GH_TOKEN}}"
+  local token="${GITHUB_TOKEN}"
   local url="https://api.github.com${path}"
   local tmp hdr code
   tmp="$(mktemp)"
   hdr="$(mktemp)"
   if ! code="$(
-    curl -sS -o "$tmp" -D "$hdr" -w '%{http_code}' \
+    curl -sS --connect-timeout 10 --max-time 30 -o "$tmp" -D "$hdr" -w '%{http_code}' \
       -H "Authorization: Bearer ${token}" \
       -H "Accept: application/vnd.github+json" \
       -H "X-GitHub-Api-Version: 2022-11-28" \

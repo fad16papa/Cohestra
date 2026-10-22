@@ -37,6 +37,15 @@ Production: NO-GO / NOT YET COMPLETE
 - Fix: set `user.email` / `user.name` on the fixture clone and in the orphan-commit case.
 - Production was not dispatched. Environment `production` was not created. No secrets were printed.
 
+## Review follow-up (sanitized)
+
+- Always refresh `origin/main` before Layer A/B.
+- Non-main `workflow_dispatch` fails closed instead of skipping.
+- Layer A requires `status=completed` and `conclusion=success`; duplicate required job failures REFUSE.
+- Target allowlist refuses non-`deploy` SSH user and `cohestra.app` / UAT URLs.
+- Compose stub is test-only. Accepted-SHA writer exists; real Production ledger is not written.
+- Evidence schema contract rejects secret-like keys and SSH logs.
+
 ## Allowlisted fields only
 
 - HOST_ALLOWLIST=pass (canonical IPv4 159.223.55.242)
