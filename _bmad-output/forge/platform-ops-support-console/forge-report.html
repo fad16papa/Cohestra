@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HARDENED — Ops console v2</title>
+  <style>
+    :root {
+      --paper: #f3eee4;
+      --ink: #1c2428;
+      --lagoon: #0b6b63;
+      --gold: #a68b5b;
+      --seal: #7a1f1f;
+      --kill: #6b2a2a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Palatino Linotype", Palatino, Georgia, serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    header {
+      padding: 2.5rem 1.5rem 1.5rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(28,36,40,.12);
+    }
+    .seal {
+      width: 132px;
+      height: 132px;
+      margin: 0 auto 1rem;
+      display: block;
+    }
+    h1 { font-weight: 500; letter-spacing: -0.02em; margin: 0; }
+    .sub { color: #5c666c; font-size: .95rem; max-width: 36rem; margin: .6rem auto 0; }
+    main { max-width: 44rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    h2 { font-size: 1.1rem; letter-spacing: .08em; text-transform: uppercase; color: var(--lagoon); }
+    ul { padding-left: 1.1rem; }
+    li { margin: .35rem 0; }
+    .killed { color: var(--kill); }
+    .room { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 2rem; }
+    .chip {
+      border: 1px solid rgba(28,36,40,.16);
+      border-radius: 999px;
+      padding: .25rem .7rem;
+      font-size: .82rem;
+      background: #fffdf8;
+    }
+    footer { text-align: center; font-size: .8rem; color: #7a8388; }
+  </style>
+</head>
+<body>
+  <header>
+    <svg class="seal" viewBox="0 0 120 120" aria-label="HARDENED wax seal">
+      <circle cx="60" cy="60" r="54" fill="#7a1f1f"/>
+      <circle cx="60" cy="60" r="46" fill="none" stroke="#f3eee4" stroke-width="2"/>
+      <text x="60" y="66" text-anchor="middle" fill="#f3eee4" font-size="13" font-family="Georgia, serif" letter-spacing="2">HARDENED</text>
+    </svg>
+    <h1>Ops console v2</h1>
+    <p class="sub">Francis can support a club without becoming the club. Impersonation did not survive the room.</p>
+  </header>
+  <main>
+    <p class="room">
+      <span class="chip">📋 John</span>
+      <span class="chip">🏗️ Winston</span>
+      <span class="chip">💻 Amelia</span>
+      <span class="chip">🎨 Sally</span>
+      <span class="chip">🧪 Murat</span>
+      <span class="chip">Gita — locked-out operator</span>
+      <span class="chip">Kenji — isolation counsel</span>
+      <span class="chip">Nia — Gmail matcher</span>
+    </p>
+
+    <h2>What survived</h2>
+    <ul>
+      <li>One snapshot card on ticket and tenant — plan, dials, caps, last login, last registration, member emails. No clients.</li>
+      <li>Replies the operator can read, plus email to the filer. Internal notes stay internal.</li>
+      <li>Audited password-reset and verify-resend. Ops never types a password.</li>
+      <li>Create-tenant form on the API you already have.</li>
+      <li>Search slug / email / SUP. Support badge for open count. Directory stays home.</li>
+    </ul>
+
+    <h2 class="killed">What died</h2>
+    <ul class="killed">
+      <li>Login-as-tenant — FR-7 / A-5.</li>
+      <li>Public cannot-sign-in form — abuse hose until recovery is proven.</li>
+      <li>Moving home off the directory — badge instead.</li>
+      <li>Stripe writes, Intercom, SLA, assignment, second app, client CSV.</li>
+    </ul>
+
+    <h2>Cracks that held</h2>
+    <ul>
+      <li>Member emails are not a CRM dump — they already live on tickets.</li>
+      <li>Empty provisioned tenants are allowed; membership is a later invite, not a hidden admin user.</li>
+      <li>Gmail stays match-by-SUP; in-app reply is the operator-facing thread.</li>
+    </ul>
+  </main>
+  <footer>Forge · 2026-08-18 · _bmad-output/forge/platform-ops-support-console</footer>
+</body>
+</html>
