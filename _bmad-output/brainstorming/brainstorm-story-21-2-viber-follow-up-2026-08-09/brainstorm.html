@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brainstorm — Story 21.2 Viber Follow-Up</title>
+  <style>
+    :root {
+      --bg: #0f0e14;
+      --surface: #1a1824;
+      --text: #f4f0fa;
+      --muted: #9b93ad;
+      --whatsapp: #25d366;
+      --viber: #7360f2;
+      --gold: #c9a227;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+    .hero {
+      padding: 3rem 1.5rem 2rem;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(115,96,242,0.25), transparent),
+                  radial-gradient(ellipse 60% 40% at 80% 20%, rgba(37,211,102,0.12), transparent);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero h1 { font-size: clamp(1.5rem, 4vw, 2.25rem); font-weight: 600; letter-spacing: -0.02em; }
+    .hero p { color: var(--muted); margin-top: 0.75rem; max-width: 36rem; margin-inline: auto; }
+    .badge { display: inline-block; margin-top: 1rem; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; background: rgba(115,96,242,0.2); color: #c4b8ff; border: 1px solid rgba(115,96,242,0.35); }
+    main { max-width: 52rem; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    section { margin-bottom: 2.5rem; }
+    h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 1rem; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .card p, .card li { font-size: 0.9rem; color: #d8d2e8; }
+    .card ul { padding-left: 1.25rem; margin-top: 0.5rem; }
+    .technique { border-left: 3px solid var(--viber); padding-left: 1rem; }
+    .technique.wa { border-left-color: var(--whatsapp); }
+    .technique.gold { border-left-color: var(--gold); }
+    .toggle-demo {
+      display: flex;
+      gap: 0;
+      margin: 1rem 0;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      max-width: 16rem;
+    }
+    .toggle-demo button {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: none;
+      font-size: 0.8rem;
+      cursor: default;
+      background: transparent;
+      color: var(--muted);
+    }
+    .toggle-demo button.wa-active { background: var(--whatsapp); color: #052e16; font-weight: 600; }
+    .toggle-demo button.viber-active { background: var(--viber); color: #fff; font-weight: 600; }
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      font-size: 0.85rem;
+      margin-top: 0.75rem;
+    }
+    .flow span {
+      padding: 0.35rem 0.65rem;
+      background: rgba(255,255,255,0.05);
+      border-radius: 0.35rem;
+      border: 1px solid var(--border);
+    }
+    .flow .arrow { color: var(--muted); background: none; border: none; padding: 0; }
+    .verdict {
+      background: linear-gradient(135deg, rgba(115,96,242,0.15), rgba(37,211,102,0.08));
+      border: 1px solid rgba(115,96,242,0.3);
+      border-radius: 1rem;
+      padding: 1.5rem;
+    }
+    .verdict strong { color: #c4b8ff; }
+    .rejected { opacity: 0.65; text-decoration: line-through; }
+    footer { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.75rem; border-top: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <p class="badge">Epic 21 · Story 21.2 · 2026-08-09</p>
+    <h1>Viber Follow-Up — Brainstorm Synthesis</h1>
+    <p>How to give Viber the same outreach audit trail WhatsApp already has — without cluttering the client profile sidebar.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>The gap</h2>
+      <div class="card">
+        <p>21.1 opens Viber and logs <code>ViberInitiated</code>. The <strong>Log outreach</strong> card still saves only <code>whatsapp_follow_up_recorded</code>. Operators who prefer Viber have no in-app record of outcomes.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Technique — First principles</h2>
+      <div class="card technique">
+        <h3>Mirror at the API layer</h3>
+        <ul>
+          <li><code>ViberFollowUpRecorded</code> + <code>POST .../viber-follow-up</code></li>
+          <li>15-minute dedup on identical status + note → 409</li>
+          <li>Same status vocabulary: Contacted · Awaiting reply</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Technique — SCAMPER (UI placement)</h2>
+      <div class="card technique wa">
+        <h3>Modify the existing card — channel toggle</h3>
+        <div class="toggle-demo">
+          <button class="wa-active" type="button">WhatsApp</button>
+          <button type="button">Viber</button>
+        </div>
+        <p>One sidebar card. Toggle picks which timeline stream receives the save. Baseline/dirty guard is <em>per channel</em>.</p>
+      </div>
+      <div class="card">
+        <h3 class="rejected">Rejected: second Viber-only card</h3>
+        <p>EXPERIENCE.md locks sidebar to Next follow-up + Log outreach — two log cards breaks the layout contract.</p>
+      </div>
+      <div class="card">
+        <h3 class="rejected">Rejected: invisible auto-route</h3>
+        <p>Save-to-last-initiated feels magic when operator WhatsApp'd Monday and Vibers Tuesday.</p>
+      </div>
+    </section>
+
+    <section>
+      <h2>Technique — Failure modes</h2>
+      <div class="card technique gold">
+        <ul>
+          <li>Duplicate save within 15 min → toast with API message (same as WhatsApp)</li>
+          <li>Switch channel mid-edit → reset note; status dropdown persists</li>
+          <li>No initiated events yet → default WhatsApp; operator can still pick Viber manually</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>Operator flow (UJ-5 Viber path)</h2>
+      <div class="card">
+        <div class="flow">
+          <span>Open Viber on row</span>
+          <span class="arrow">→</span>
+          <span>Profile</span>
+          <span class="arrow">→</span>
+          <span>Toggle Viber</span>
+          <span class="arrow">→</span>
+          <span>Awaiting reply + note</span>
+          <span class="arrow">→</span>
+          <span>Save outreach log</span>
+          <span class="arrow">→</span>
+          <span>Timeline: Viber follow-up recorded</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Verdict</h2>
+      <div class="verdict">
+        <p><strong>Ship:</strong> Full WhatsApp mirror in backend + channel toggle on <code>ClientOutreachLogCard</code>.</p>
+        <p style="margin-top:0.75rem"><strong>Defer to 21.3:</strong> Dashboard coverage, list Last outreach column, report predicates.</p>
+        <p style="margin-top:0.75rem"><strong>Next:</strong> <code>bmad-create-story 21-2</code> → <code>bmad-dev-story 21-2</code></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Cohestra · brainstorm-story-21-2-viber-follow-up-2026-08-09 · memlog-driven artifact
+  </footer>
+</body>
+</html>
