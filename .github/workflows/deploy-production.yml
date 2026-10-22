@@ -61,7 +61,9 @@ jobs:
           ORIGIN_MAIN_REF: origin/main
         run: |
           set -euo pipefail
-          git fetch origin main
+          if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+            git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
+          fi
           bash deploy/validate-production-provenance.sh
 
   deploy:
@@ -97,7 +99,9 @@ jobs:
           ORIGIN_MAIN_REF: origin/main
         run: |
           set -euo pipefail
-          git fetch origin main
+          if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+            git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
+          fi
           bash deploy/validate-production-provenance.sh
 
       - name: Fail closed if Production secrets are missing
@@ -175,7 +179,9 @@ jobs:
           ORIGIN_MAIN_REF: origin/main
         run: |
           set -euo pipefail
-          git fetch origin main
+          if ! git rev-parse --verify origin/main >/dev/null 2>&1; then
+            git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
+          fi
           bash deploy/validate-production-provenance.sh
 
       - name: Fail closed if Production secrets are missing
