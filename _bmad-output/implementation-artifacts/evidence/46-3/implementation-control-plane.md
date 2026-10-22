@@ -45,6 +45,7 @@ Production: NO-GO / NOT YET COMPLETE
 - Target allowlist refuses non-`deploy` SSH user and `cohestra.app` / UAT URLs.
 - Compose stub is test-only. Accepted-SHA writer exists; real Production ledger is not written.
 - Evidence schema contract rejects secret-like keys and SSH logs.
+- GitGuardian check-runs use `filter=all` so a newer pending run cannot hide behind `filter=latest`.
 
 ## Allowlisted fields only
 

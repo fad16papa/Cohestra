@@ -45,11 +45,13 @@ export DEPLOY_SHA="$ROLLBACK_SHA"
 if [[ -n "${COHESTRA_GH_API_MOCK:-}" || -n "${GITHUB_TOKEN:-}" || -n "${GH_TOKEN:-}" ]]; then
   bash "$ROOT_DIR/deploy/validate-production-provenance.sh" >/dev/null
 fi
-bash "$ROOT_DIR/deploy/reset-production-sha.sh" >/dev/null
-bash "$ROOT_DIR/deploy/production-remote-deploy.sh" >/dev/null
+reset_out="$(bash "$ROOT_DIR/deploy/reset-production-sha.sh")"
+remote_out="$(bash "$ROOT_DIR/deploy/production-remote-deploy.sh")"
 
 echo "RESULT=PASS"
 echo "ACTION=rollback"
 echo "ROLLBACK_SHA=${ROLLBACK_SHA}"
+echo "$reset_out" | awk -F= '/^(EXPECTED_SHA|DEPLOYED_SHA|GIT_SHA)=/{print}'
+echo "$remote_out" | awk -F= '/^(COMPOSE_UP|DATABASE_MUTATED|GIT_SHA)=/{print}'
 echo "DATABASE_MUTATED=false"
 echo "COMPOSE_UP=false"

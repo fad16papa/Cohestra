@@ -48,6 +48,10 @@ if [[ "$path" =~ /commits/([0-9a-fA-F]{40})/pulls ]]; then
 fi
 
 if [[ "$path" =~ /commits/([0-9a-fA-F]{40})/check-runs ]]; then
+  if [[ "$PATH_Q" != *"filter=all"* ]]; then
+    echo "check-runs must request filter=all" >&2
+    exit 1
+  fi
   pick "checks_${BASH_REMATCH[1],,}.json"
   exit 0
 fi

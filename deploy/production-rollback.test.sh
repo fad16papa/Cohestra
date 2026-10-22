@@ -32,9 +32,10 @@ run() {
   env ROLLBACK_SHA="${1:-}" bash "$ROOT_DIR/deploy/production-rollback.sh"
 }
 
-if ! run "$PROVENANCE_MERGE" >/dev/null 2>&1; then
-  fail "accepted merge SHA should rollback"
-fi
+out="$(run "$PROVENANCE_MERGE")" || fail "accepted merge SHA should rollback"
+echo "$out" | grep -q "^EXPECTED_SHA=${PROVENANCE_MERGE}$" || fail "rollback must emit EXPECTED_SHA"
+echo "$out" | grep -q "^DEPLOYED_SHA=${PROVENANCE_MERGE}$" || fail "rollback must emit DEPLOYED_SHA"
+echo "$out" | grep -q "^GIT_SHA=${PROVENANCE_MERGE}$" || fail "rollback must emit GIT_SHA"
 pass "explicit accepted SHA rollbacks"
 
 if ROLLBACK_SHA= bash "$ROOT_DIR/deploy/production-rollback.sh" >/dev/null 2>&1; then

@@ -8,6 +8,10 @@ source "$ROOT_DIR/deploy/lib/production-provenance-fixture.sh"
 pass() { echo "PASS: $1"; }
 fail() { echo "FAIL: $1"; exit 1; }
 
+grep -q 'check-runs?filter=all' "$ROOT_DIR/deploy/lib/production-github-provenance.py" \
+  || fail "check-runs must request filter=all"
+pass "GitGuardian check-runs request filter=all"
+
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -259,5 +263,12 @@ d["total_count"]=len(d["jobs"])
 json.dump(d, open(sys.argv[1],"w"))
 PY
 expect_refuse "$PROVENANCE_MERGE" "duplicate required CI job failure is refused"
+write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+
+python3 - "$PROVENANCE_FIX/pulls_${PROVENANCE_MERGE}.json" <<'PY'
+import json,sys
+json.dump([{"number":2,"merged":None,"base":{"ref":"main"},"merge_commit_sha":""}], open(sys.argv[1],"w"))
+PY
+expect_refuse "$PROVENANCE_MERGE" "empty merge_commit_sha is refused"
 
 echo "validate-production-provenance contract OK"

@@ -225,7 +225,7 @@ def hydrate_unique_pr(repo: str, sha: str) -> dict[str, Any]:
 
 def layer_b_gitguardian(repo: str, reviewed_pr_head: str) -> None:
     runs = paginate_list(
-        f"/repos/{repo}/commits/{reviewed_pr_head}/check-runs",
+        f"/repos/{repo}/commits/{reviewed_pr_head}/check-runs?filter=all",
         "check_runs",
         "check-runs",
     )

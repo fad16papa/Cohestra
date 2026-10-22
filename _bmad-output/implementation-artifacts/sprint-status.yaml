@@ -499,7 +499,7 @@ development_status:
   epic-46: in-progress
   46-1-production-architecture-and-infrastructure-baseline: done
   46-2-dedicated-production-host-and-network-hardening: done
-  46-3-github-production-environment-and-owner-gated-ci-cd: in-progress
+  46-3-github-production-environment-and-owner-gated-ci-cd: review
   46-4-production-runtime-config-and-secrets-isolation: backlog
   46-5-postgresql-backup-restore-and-dr: backlog
   46-6-production-observability-instrumentation: backlog
