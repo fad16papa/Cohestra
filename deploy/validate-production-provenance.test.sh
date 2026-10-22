@@ -51,9 +51,12 @@ expect_pass() {
 expect_refuse() {
   local sha="$1"
   local msg="$2"
-  if run_case "$sha" >/dev/null 2>&1; then
+  local out
+  if out="$(run_case "$sha" 2>&1)"; then
+    echo "$out"
     fail "$msg"
   fi
+  echo "$out" | grep -q 'RESULT=REFUSE' || { echo "$out"; fail "$msg (missing RESULT=REFUSE)"; }
   pass "$msg"
 }
 
@@ -66,7 +69,7 @@ pass "live pr.head.sha drift still uses immutable ^2"
 
 expect_refuse "not-a-sha" "malformed SHA is refused"
 expect_refuse "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" "unknown object is refused"
-expect_refuse "$PROVENANCE_PARENT" "one-parent / squash / rebase / direct commit is refused"
+expect_refuse "$PROVENANCE_HEAD" "one-parent / squash / rebase / direct commit is refused"
 
 # orphan non-ancestor (clone identity is required on GitHub-hosted runners)
 git config user.email test@example.com
@@ -322,11 +325,23 @@ echo "$out" | grep -q "REVIEWED_PR_HEAD=${PROVENANCE_M3_HEAD}" || fail "clean ch
 echo "$out" | grep -qx "FIRST_PARENT_CHAIN_DEPTH=3" || fail "clean chain depth"
 pass "multiple clean first-parent merges from trusted anchor PASS"
 
+rm -f "$PROVENANCE_FIX/pulls_${PROVENANCE_M1}.json" "$PROVENANCE_FIX/pr_31.json"
+write_layer_a "$PROVENANCE_FIX" "$PROVENANCE_M2"
+expect_refuse "$PROVENANCE_M2" "later clean merge cannot hide a missing intermediate PR"
+write_merge_layer_b "$PROVENANCE_FIX" "$PROVENANCE_M1" "$(git rev-parse "${PROVENANCE_M1}^2")" 31
+write_layer_a "$PROVENANCE_FIX" "$PROVENANCE_M3"
+
 ANCHOR_CASES="$(mktemp -d)"
 build_provenance_fixture "$ANCHOR_CASES"
 cd "$PROVENANCE_LOCAL"
 export COHESTRA_PROVENANCE_FIXTURE="$PROVENANCE_FIX"
 export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+
+if COHESTRA_ALLOW_ANCHOR_OVERRIDE= COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE" \
+  run_case "$PROVENANCE_MERGE" >/dev/null 2>&1; then
+  fail "anchor override without allow flag must be refused"
+fi
+pass "anchor override is forbidden without an explicit test flag"
 
 if COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$ANCHOR_CASES/missing" run_case "$PROVENANCE_MERGE" >/dev/null 2>&1; then
   fail "missing anchor must be refused"

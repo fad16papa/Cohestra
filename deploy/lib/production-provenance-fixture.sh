@@ -44,6 +44,7 @@ build_provenance_fixture() {
   PROVENANCE_ANCHOR_FILE="$dest/anchor"
   printf '%s\n' "$parent" >"$PROVENANCE_ANCHOR_FILE"
   export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+  export COHESTRA_ALLOW_ANCHOR_OVERRIDE=true
 }
 
 # Layer B fixtures for one merge commit. Does not overwrite Layer A CI runs.
@@ -131,6 +132,7 @@ build_launder_fixture() {
   PROVENANCE_ANCHOR_FILE="$dest/anchor"
   printf '%s\n' "$t" >"$PROVENANCE_ANCHOR_FILE"
   export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+  export COHESTRA_ALLOW_ANCHOR_OVERRIDE=true
 }
 
 # T -> M1 -> M2 -> M3. Every post-anchor commit is a reviewed merge.
@@ -171,6 +173,7 @@ build_clean_chain_fixture() {
   PROVENANCE_ANCHOR_FILE="$dest/anchor"
   printf '%s\n' "$t" >"$PROVENANCE_ANCHOR_FILE"
   export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+  export COHESTRA_ALLOW_ANCHOR_OVERRIDE=true
 }
 
 # Anchor is a second-parent only; first-parent walk never reaches it.
@@ -208,6 +211,7 @@ build_unreachable_anchor_fixture() {
   PROVENANCE_ANCHOR_FILE="$dest/anchor"
   printf '%s\n' "$t" >"$PROVENANCE_ANCHOR_FILE"
   export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+  export COHESTRA_ALLOW_ANCHOR_OVERRIDE=true
 }
 
 write_layer_a() {

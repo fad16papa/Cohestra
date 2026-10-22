@@ -38,7 +38,11 @@ if ! git merge-base --is-ancestor "$DEPLOY_SHA" "$ORIGIN_MAIN_REF"; then
   refuse "deploy_sha is not an ancestor of origin/main"
 fi
 
-if [[ -n "${COHESTRA_PRODUCTION_PROVENANCE_ANCHOR:-}" ]]; then
+CANONICAL_ANCHOR="c39f2618bcdcb71875d2da5b654f3a999b39ae35"
+if [[ -n "${COHESTRA_PRODUCTION_PROVENANCE_ANCHOR:-}" && "${COHESTRA_ALLOW_ANCHOR_OVERRIDE:-}" != "true" ]]; then
+  refuse "production provenance anchor override is forbidden"
+fi
+if [[ "${COHESTRA_ALLOW_ANCHOR_OVERRIDE:-}" == "true" && -n "${COHESTRA_PRODUCTION_PROVENANCE_ANCHOR:-}" ]]; then
   ANCHOR_FILE="$COHESTRA_PRODUCTION_PROVENANCE_ANCHOR"
 else
   ANCHOR_FILE="$ROOT_DIR/deploy/production-provenance-anchor.txt"
@@ -51,6 +55,9 @@ if [[ ! "$ANCHOR" =~ ^[0-9a-fA-F]{40}$ ]]; then
   refuse "production provenance anchor is malformed"
 fi
 ANCHOR="${ANCHOR,,}"
+if [[ "${COHESTRA_ALLOW_ANCHOR_OVERRIDE:-}" != "true" && "$ANCHOR" != "$CANONICAL_ANCHOR" ]]; then
+  refuse "production provenance anchor does not match the immutable 46.3 baseline"
+fi
 if ! git cat-file -t "$ANCHOR" >/dev/null 2>&1; then
   refuse "production provenance anchor is not a git object"
 fi

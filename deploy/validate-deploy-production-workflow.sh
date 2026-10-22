@@ -98,8 +98,12 @@ job_has_production_env() {
   awk -v job="$job" '
     $0 ~ "^  " job ":" { in_j=1; next }
     in_j && $0 ~ /^  [a-zA-Z0-9_-]+:/ { in_j=0 }
-    in_j && $0 ~ /^[[:space:]]+environment:[[:space:]]*production[[:space:]]*$/ { found=1 }
-    END { exit found ? 0 : 1 }
+    in_j && $0 ~ /^    environment:/ {
+      env_lines++
+      if ($0 ~ /^    environment:[[:space:]]*production[[:space:]]*$/) found=1
+      else other=1
+    }
+    END { exit (found && env_lines==1 && !other) ? 0 : 1 }
   ' "$file"
 }
 
@@ -157,6 +161,20 @@ if grep -q 'persist-credentials: false' "$WF"; then
   pass "checkout persist-credentials is false"
 else
   fail "checkout must set persist-credentials: false"
+fi
+
+if awk '
+  $0 ~ /^  [a-zA-Z0-9_-]+:/ { job=$1; sub(":", "", job) }
+  $0 ~ /appleboy\/ssh-action/ { ssh[job]=1 }
+  $0 ~ /^    environment:[[:space:]]*production[[:space:]]*$/ { env[job]=1 }
+  END {
+    for (j in ssh) if (!env[j]) exit 1
+    exit 0
+  }
+' "$WF"; then
+  pass "every appleboy SSH job declares environment: production"
+else
+  fail "every appleboy SSH job must declare environment: production"
 fi
 
 if grep -q 'uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262' "$WF" \
