@@ -2,7 +2,7 @@
 id: 46.3
 key: 46-3-github-production-environment-and-owner-gated-ci-cd
 title: GitHub Production Environment and owner-gated CI/CD
-status: ready-for-dev
+status: in-progress
 epic: 46
 created: 2026-10-21
 baseline_commit: 5d52d6e3dc99bce01545eda6eb10f378d469c374
@@ -11,7 +11,7 @@ depends_on:
   - 46.2
 owner_gate: production_environment_protections
 owner_gate_status: NOT_STARTED
-implementation_authorized: false
+implementation_authorized: true
 cutover_authorization: GRANTED
 production_release_readiness: NOT_YET_COMPLETE
 production: NO-GO
@@ -19,7 +19,7 @@ production: NO-GO
 
 # Story 46.3: GitHub Production Environment and owner-gated CI/CD
 
-Status: ready-for-dev
+Status: in-progress
 
 <!-- Ultimate context engine analysis completed — comprehensive developer guide created. -->
 <!-- DONE requires Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT ACCEPTANCE → CLOSE. Code review is repeating, not one-shot. -->
@@ -434,36 +434,36 @@ Do not edit: `docker-compose.uat.yml`, UAT auto-deploy behavior, Paddle live fla
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Owner-gated workflow + concurrency (AC 1, 2)
-  - [ ] Add `deploy-production.yml` with `workflow_dispatch` only
-   - [ ] Required `deploy_sha` / `action` inputs; no default SHA
-   - [ ] Forbid every trigger except `workflow_dispatch` (`push`, `workflow_run`, `workflow_call`, `repository_dispatch`, `schedule`, `release`, `deployment`)
-   - [ ] `concurrency` is workflow-wide `deploy-production` with `cancel-in-progress: false`
-   - [ ] Split `validate-sha` (no environment, no SSH) and `deploy`/`rollback` (`environment: production`)
-   - [ ] Checkout helpers at `ref: validated_sha` with `persist-credentials: false`
-   - [ ] Pin checkout + appleboy actions to the same reviewed SHAs as UAT; `command_timeout: 60m`; no `debug: true`
-- [ ] Task 2: SHA + CI + GitGuardian provenance (AC 3)
-  - [ ] `reset-production-sha.sh` refuses empty/`HEAD`/`latest`/`github.sha`
-  - [ ] Ancestor of `origin/main` required (necessary, not sufficient)
-  - [ ] Layer A: latest CI on exact `deploy_sha` green for the five Actions jobs
-  - [ ] Layer B: unique associated PR; hydrate `merged`; two-parent merge; `merge_commit_sha == deploy_sha`; GitGuardian success on `${deploy_sha}^2`
-  - [ ] Direct-to-main / squash/rebase / missing / ambiguous PR / missing GitGuardian → REFUSE
-  - [ ] Environment job re-runs Layer A + Layer B and refuses SHA substitution
-- [ ] Task 3: Secrets, host, path (AC 4, 5)
-  - [ ] `fail-closed-production-secrets.sh` + tests
-  - [ ] Inventory IPv4 allowlist; UAT IPv4/DNS denylist
-  - [ ] Safe deploy path; default `/home/deploy/cohestra-production`
-- [ ] Task 4: Rollback (AC 6)
-  - [ ] `production-rollback.sh` + tests
-  - [ ] `--restore-dump` fail-closed `NOT_IMPLEMENTED_46_5`
-- [ ] Task 5: Flip 46.1/46.2 forbids; keep UAT frozen (AC 7)
-  - [ ] Update compose/host validators
-  - [ ] Add `validate-deploy-production-workflow.sh` to CI
-  - [ ] Prove `deploy.yml` / UAT compose behavior unchanged
-- [ ] Task 6: Docs + sanitized evidence (AC 2, 8)
-  - [ ] Owner Environment checklist (no secret values)
-  - [ ] Evidence templates: SHAs, missing-secret names, host-allowlist result
-  - [ ] No live compose-up, DNS, Paddle, or UAT mutation
+- [x] Task 1: Owner-gated workflow + concurrency (AC 1, 2)
+  - [x] Add `deploy-production.yml` with `workflow_dispatch` only
+   - [x] Required `deploy_sha` / `action` inputs; no default SHA
+   - [x] Forbid every trigger except `workflow_dispatch` (`push`, `workflow_run`, `workflow_call`, `repository_dispatch`, `schedule`, `release`, `deployment`)
+   - [x] `concurrency` is workflow-wide `deploy-production` with `cancel-in-progress: false`
+   - [x] Split `validate-sha` (no environment, no SSH) and `deploy`/`rollback` (`environment: production`)
+   - [x] Checkout helpers at `ref: validated_sha` with `persist-credentials: false`
+   - [x] Pin checkout + appleboy actions to the same reviewed SHAs as UAT; `command_timeout: 60m`; no `debug: true`
+- [x] Task 2: SHA + CI + GitGuardian provenance (AC 3)
+  - [x] `reset-production-sha.sh` refuses empty/`HEAD`/`latest`/`github.sha`
+  - [x] Ancestor of `origin/main` required (necessary, not sufficient)
+  - [x] Layer A: latest CI on exact `deploy_sha` green for the five Actions jobs
+  - [x] Layer B: unique associated PR; hydrate `merged`; two-parent merge; `merge_commit_sha == deploy_sha`; GitGuardian success on `${deploy_sha}^2`
+  - [x] Direct-to-main / squash/rebase / missing / ambiguous PR / missing GitGuardian → REFUSE
+  - [x] Environment job re-runs Layer A + Layer B and refuses SHA substitution
+- [x] Task 3: Secrets, host, path (AC 4, 5)
+  - [x] `fail-closed-production-secrets.sh` + tests
+  - [x] Inventory IPv4 allowlist; UAT IPv4/DNS denylist
+  - [x] Safe deploy path; default `/home/deploy/cohestra-production`
+- [x] Task 4: Rollback (AC 6)
+  - [x] `production-rollback.sh` + tests
+  - [x] `--restore-dump` fail-closed `NOT_IMPLEMENTED_46_5`
+- [x] Task 5: Flip 46.1/46.2 forbids; keep UAT frozen (AC 7)
+  - [x] Update compose/host validators
+  - [x] Add `validate-deploy-production-workflow.sh` to CI
+  - [x] Prove `deploy.yml` / UAT compose behavior unchanged
+- [x] Task 6: Docs + sanitized evidence (AC 2, 8)
+  - [x] Owner Environment checklist (no secret values)
+  - [x] Evidence templates: SHAs, missing-secret names, host-allowlist result
+  - [x] No live compose-up, DNS, Paddle, or UAT mutation
 - [ ] Task 7: Exact-HEAD Grok 4.6 review PASS (BLOCKER=0, MAJOR=0)
   - [ ] Repeat Mandatory Code Review Loop on the final implementation HEAD
 
@@ -691,26 +691,47 @@ No unresolved BLOCKER or MAJOR remains in this plan. Deferred MINOR: live EF mig
 
 ### Agent Model Used
 
-Cursor Grok 4.6 (planning / story-prep only)
+Cursor Grok 4.6 (planning + implementation)
 
 ### Debug Log References
 
 - PR #484 merged at `5d52d6e3dc99bce01545eda6eb10f378d469c374` (reviewed HEAD `c5acc081`)
-- Story baseline is fresh `origin/main` after #484
-- Implementation not started
+- Planning PR #485 merged at `c39f2618bcdcb71875d2da5b654f3a999b39ae35`
+- Implementation branch created from that main SHA
+- Workflow was not dispatched. Environment `production` was not created.
 
 ### Completion Notes List
 
 - Planning artifact only. No `deploy-production.yml`, rollback script, or runtime deploy code in this pass.
 - 2026-10-22: Layer A + Layer B GitGuardian provenance correction. Direct-to-main fails closed. Two-parent merge required. Hydrate `merged` from `GET /pulls/{n}`.
+- 2026-10-22: Control-plane implementation. Contract tests PASS locally. No Production SSH, secrets, DNS, Paddle, or UAT behavior change.
 
 ### File List
 
+- `.github/workflows/deploy-production.yml`
+- `.github/workflows/ci.yml`
+- `deploy/fail-closed-production-secrets.sh`
+- `deploy/fail-closed-production-secrets.test.sh`
+- `deploy/reset-production-sha.sh`
+- `deploy/reset-production-sha.test.sh`
+- `deploy/validate-production-provenance.sh`
+- `deploy/validate-production-provenance.test.sh`
+- `deploy/validate-deploy-production-workflow.sh`
+- `deploy/validate-production-target.sh`
+- `deploy/validate-production-target.test.sh`
+- `deploy/production-rollback.sh`
+- `deploy/production-rollback.test.sh`
+- `deploy/production-remote-deploy.sh`
+- `deploy/production-remote-deploy.test.sh`
+- `deploy/validate-production-compose.sh`
+- `deploy/validate-production-host.sh`
+- `deploy/lib/cohestra-gh-api.sh`
+- `deploy/lib/production-github-provenance.py`
+- `deploy/lib/production-gh-api-mock.sh`
+- `deploy/lib/production-provenance-fixture.sh`
+- `docs/deploy/github-actions-cd.md`
+- `docs/deploy/production-launch-program.md`
+- `docs/deploy/production-host.md`
 - `_bmad-output/implementation-artifacts/46-3-github-production-environment-and-owner-gated-ci-cd.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
-- `_bmad-output/implementation-artifacts/46-2-dedicated-production-host-and-network-hardening.md` (status bookkeeping only)
-- `docs/deploy/production-launch-program.md`
-- `_bmad-output/planning-artifacts/epics-production-launch-readiness.md` (46.3 provenance addendum)
-- `_bmad-output/planning-artifacts/architecture/architecture-cohestra-epic-46-2026-10-19/ARCHITECTURE-SPINE.md` (AD-7 merge-commit note)
-- `_bmad-output/planning-artifacts/epic-46/deployment-release-architecture.md`
-- `_bmad-output/planning-artifacts/epic-46/production-security-model.md`
+- `_bmad-output/implementation-artifacts/evidence/46-3/implementation-control-plane.md`

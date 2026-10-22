@@ -90,7 +90,7 @@ Owner MOTD on 2026-10-20 reported **57 available updates, 50 security**. That is
 ## What 46.2 does not do
 
 - Does not deploy Cohestra web/api/postgres/redis/nginx/otelcol
-- Does not create `.github/workflows/deploy-production.yml`
+- Did not create `.github/workflows/deploy-production.yml` (Story 46.3 added the workflow file; Environment `production` is still owner-created)
 - Does not create GitHub Environment `production`
 - Does not populate `PROD_DROPLET_*` or application secrets
 - Does not change DNS or TLS

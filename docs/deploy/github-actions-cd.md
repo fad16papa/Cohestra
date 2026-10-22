@@ -27,6 +27,7 @@ push / merge to main
 |----------|------|---------|
 | CI | `.github/workflows/ci.yml` | Push/PR to `main` |
 | Deploy UAT | `.github/workflows/deploy.yml` | CI success on `main`, or manual |
+| Deploy Production | `.github/workflows/deploy-production.yml` | `workflow_dispatch` only, explicit 40-hex SHA |
 
 Application secrets (SendGrid, JWT, Postgres, Paddle sandbox, recaptcha) stay on the **droplet** in `.env`. GitHub Environment `uat` stores only deploy access and later UAT automation credentials. See `_bmad-output/planning-artifacts/epic-45-uat-secret-bootstrap-matrix.md` for names.
 
@@ -132,6 +133,23 @@ Cohestra UAT loopback binds stay `127.0.0.1:3100 / 5100 / 8180`.
 | Live Paddle / production | Refused. This workflow is UAT only. |
 
 Agents should read the Actions log and artifacts instead of asking for droplet stdout.
+
+---
+
+## Production CD (Story 46.3 control plane)
+
+`.github/workflows/deploy-production.yml` is **manual only**. CI green, `main` merge, and Deploy UAT must never start it.
+
+Required input: `deploy_sha` (exactly 40 hex). Action: `deploy` or `rollback`.
+
+Two-layer provenance must pass before Environment `production`:
+
+- Layer A: five Actions jobs SUCCESS on the exact merged SHA
+- Layer B: unique hydrated merged-to-`main` PR + `GitGuardian Security Checks` SUCCESS on `${deploy_sha}^2`
+
+The Environment `production` job is declared in YAML. The owner must create and protect that Environment in GitHub Settings **before first dispatch**. This repository does not create the Environment, populate `PROD_*`, or SSH Production from Story 46.3 implementation.
+
+Do not copy Environment `uat` / `DROPLET_*` secrets. Fail-closed names print `MISSING_SECRET=<NAME>` only.
 
 ---
 

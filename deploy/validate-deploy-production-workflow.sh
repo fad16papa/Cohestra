@@ -1,0 +1,180 @@
+#!/usr/bin/env bash
+# Repo-side contract for the Production deploy workflow. Does not talk to the droplet.
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WF="$ROOT_DIR/.github/workflows/deploy-production.yml"
+UAT="$ROOT_DIR/.github/workflows/deploy.yml"
+
+PASS=0
+FAIL=0
+pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
+fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); }
+
+if [[ ! -f "$WF" ]]; then
+  echo "Missing $WF" >&2
+  exit 1
+fi
+
+echo "== Deploy Production workflow contract =="
+
+if grep -qE '^name:[[:space:]]*Deploy Production[[:space:]]*$' "$WF"; then
+  pass "workflow name is Deploy Production"
+else
+  fail "workflow name must be Deploy Production"
+fi
+
+if grep -qE '^[[:space:]]*workflow_dispatch:' "$WF"; then
+  pass "workflow_dispatch is present"
+else
+  fail "only workflow_dispatch may trigger Production"
+fi
+
+for key in push pull_request workflow_run workflow_call repository_dispatch schedule release deployment; do
+  if grep -qE "^[[:space:]]*${key}:" "$WF"; then
+    fail "forbidden trigger ${key} is present"
+  else
+    pass "forbidden trigger ${key} is absent"
+  fi
+done
+
+if grep -qE 'deploy_sha:' "$WF" && ! grep -qE 'default:.*[0-9a-fA-F]{7,}' "$WF"; then
+  pass "deploy_sha has no implicit default SHA"
+else
+  fail "deploy_sha must be required without a default SHA"
+fi
+
+if grep -qE 'github\.sha' "$WF"; then
+  fail "workflow must not deploy github.sha"
+else
+  pass "github.sha is not a deploy target"
+fi
+
+if grep -qE 'group:[[:space:]]*deploy-production' "$WF" \
+  && grep -qE 'cancel-in-progress:[[:space:]]*false' "$WF"; then
+  pass "concurrency is deploy-production with cancel-in-progress false"
+else
+  fail "concurrency must be deploy-production / cancel-in-progress: false"
+fi
+
+if grep -qE 'group:[[:space:]]*deploy-uat' "$WF"; then
+  fail "UAT concurrency must not appear on Production workflow"
+else
+  pass "deploy-uat concurrency is absent"
+fi
+
+for perm in 'contents: read' 'actions: read' 'checks: read' 'pull-requests: read'; do
+  if grep -qE "$perm" "$WF"; then
+    pass "permission ${perm}"
+  else
+    fail "missing permission ${perm}"
+  fi
+done
+
+for perm in 'contents: write' 'actions: write' 'checks: write' 'pull-requests: write' 'id-token: write'; do
+  if grep -qE "$perm" "$WF"; then
+    fail "write permission ${perm} is forbidden"
+  else
+    pass "write permission ${perm} is absent"
+  fi
+done
+
+if awk '
+  $0 ~ /^  validate-sha:/ { in_v=1; next }
+  in_v && $0 ~ /^  [a-z].*:/ { in_v=0 }
+  in_v && $0 ~ /environment:[[:space:]]*production/ { found=1 }
+  END { exit found+0 }
+' "$WF"; then
+  pass "validate-sha has no Environment production"
+else
+  fail "validate-sha must not use environment: production"
+fi
+
+if grep -qE 'environment:[[:space:]]*production' "$WF"; then
+  pass "mutating jobs declare environment production"
+else
+  fail "deploy/rollback must use environment: production"
+fi
+
+if grep -q 'persist-credentials: false' "$WF"; then
+  pass "checkout persist-credentials is false"
+else
+  fail "checkout must set persist-credentials: false"
+fi
+
+if grep -q 'uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262' "$WF" \
+  && grep -q 'uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f' "$WF"; then
+  pass "actions are pinned to reviewed commit SHAs"
+else
+  fail "checkout and appleboy must be pinned to reviewed SHAs"
+fi
+
+if grep -E 'uses: (actions/checkout|appleboy/ssh-action)@v' "$WF"; then
+  fail "workflow must not use mutable action version tags"
+else
+  pass "no mutable action version tags"
+fi
+
+if grep -qE 'debug:[[:space:]]*true' "$WF"; then
+  fail "appleboy debug must not be true"
+else
+  pass "appleboy debug is not true"
+fi
+
+if grep -qE 'command_timeout:[[:space:]]*60m' "$WF"; then
+  pass "SSH command_timeout is 60m"
+else
+  fail "SSH command_timeout must be 60m"
+fi
+
+if grep -q 'host: 159.223.55.242' "$WF"; then
+  pass "SSH host is the literal Production IPv4"
+else
+  fail "appleboy host must be literal 159.223.55.242"
+fi
+
+if grep -q '129.212.235.2' "$WF" || grep -qE '[^_]DROPLET_|secrets\.DROPLET_' "$WF"; then
+  fail "UAT host or DROPLET_* secrets must not appear"
+else
+  pass "UAT host and DROPLET_* are absent"
+fi
+
+if grep -q 'validate-production-provenance.sh' "$WF" \
+  && grep -q 'fail-closed-production-secrets.sh' "$WF" \
+  && grep -q 'validate-production-target.sh' "$WF"; then
+  pass "provenance, secrets, and target validators are invoked"
+else
+  fail "workflow must run provenance, secret, and target validators"
+fi
+
+if grep -qE '(^|[^a-z-])remote-deploy\.sh' "$WF" || grep -q 'docker-compose.uat.yml' "$WF"; then
+  fail "UAT remote-deploy or UAT compose must not be used"
+else
+  pass "UAT deploy helpers are not used"
+fi
+
+if grep -q 'production-remote-deploy.sh' "$WF" && grep -q 'reset-production-sha.sh' "$WF"; then
+  pass "Production reset and remote dry-run helpers are used"
+else
+  fail "workflow must call reset-production-sha.sh and production-remote-deploy.sh"
+fi
+
+if grep -q 'NOT_IMPLEMENTED_46_5' "$WF"; then
+  pass "restore_dump is refused"
+else
+  fail "workflow must refuse restore_dump"
+fi
+
+if [[ -f "$UAT" ]] && grep -qE 'group:[[:space:]]*deploy-uat' "$UAT" \
+  && grep -qE 'environment:[[:space:]]*uat' "$UAT" \
+  && ! grep -qE 'environment:[[:space:]]*production' "$UAT"; then
+  pass "UAT workflow remains isolated"
+else
+  fail "deploy.yml UAT contract drifted"
+fi
+
+echo "Passed: ${PASS} | Failed: ${FAIL}"
+if [[ "$FAIL" -gt 0 ]]; then
+  exit 1
+fi

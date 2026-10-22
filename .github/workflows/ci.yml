@@ -240,6 +240,27 @@ jobs:
       - name: Production host contract
         run: bash deploy/validate-production-host.sh
 
+      - name: Production deploy workflow contract
+        run: bash deploy/validate-deploy-production-workflow.sh
+
+      - name: Fail-closed Production secret contract
+        run: bash deploy/fail-closed-production-secrets.test.sh
+
+      - name: Production SHA reset contract
+        run: bash deploy/reset-production-sha.test.sh
+
+      - name: Production target contract
+        run: bash deploy/validate-production-target.test.sh
+
+      - name: Production provenance contract
+        run: bash deploy/validate-production-provenance.test.sh
+
+      - name: Production remote dry-run contract
+        run: bash deploy/production-remote-deploy.test.sh
+
+      - name: Production rollback contract
+        run: bash deploy/production-rollback.test.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

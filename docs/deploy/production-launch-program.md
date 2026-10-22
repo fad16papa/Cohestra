@@ -52,9 +52,8 @@ Owner gate `droplet_purchase` is **APPROVED**. Cutover phrase is **GRANTED** and
 - Public inventory: [production-host.md](./production-host.md) and [production-host-inventory.json](./production-host-inventory.json) (no credentials).
 - Owner-confirmed DigitalOcean project: `Cohestra` (API project list is 403 with the current token). Droplet IDs/IPv4s unchanged after the reported project move.
 - Owner Windows SSH is **owner-reported PASS** (`116.86.142.14/32`). Cloud Agent SSH is not owner proof. Recovery Console is owner-reported PASS.
-- Story 46.3 is **ready-for-dev** (planning artifact only). Implementation is **not** authorized in the planning pass.
-- Next remaining owner gates for 46.3: GitHub Environment `production` protections, then `production_secrets` before any live SSH.
-- Do not create `.github/workflows/deploy-production.yml` until the 46.3 implementation pass.
+- Story 46.3 control-plane files are in-repo. Implementation must not dispatch or create Environment `production`.
+- Remaining owner gates: GitHub Environment `production` protections, then `production_secrets` before any live SSH.
 
 ## Historical docs (do not follow for Production topology)
 
@@ -72,7 +71,7 @@ Production release readiness: **NOT YET COMPLETE**.
 
 Do not point `cohestra.app` at this droplet in 46.2 or 46.3 planning. Do not auto-deploy. Do not enable live Paddle.
 
-## Story 46.3 control plane (planning only)
+## Story 46.3 control plane (implemented, not dispatched)
 
 Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-environment-and-owner-gated-ci-cd.md`
 
@@ -90,4 +89,4 @@ Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-e
 - Target: existing droplet `cohestra-production` / `159.223.55.242`. UAT `129.212.235.2` is forbidden.
 - Rollback: `deploy/production-rollback.sh` with explicit SHA; DB restore is 46.5 and never implicit.
 - UAT `deploy.yml` / `deploy-uat` remains automatic and unchanged.
-- Implementation of workflow/rollback scripts is a later pass. This file does not deploy Production.
+- Control-plane files exist in-repo. Environment `production` is not created here. Do not dispatch. This file does not deploy Production.
