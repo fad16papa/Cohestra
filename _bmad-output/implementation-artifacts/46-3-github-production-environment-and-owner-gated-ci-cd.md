@@ -55,15 +55,19 @@ Required delivery chain:
    **And** a newer request cannot silently cancel an active Production release
    **And** owner-required reviewer + `main`-only deployment branch are documented as a GitHub Settings owner gate (not YAML-settable)
 
-3. **SHA provenance is fail-closed**
+3. **SHA provenance is fail-closed (Layer A + Layer B)**
    **Given** a requested `deploy_sha`
    **When** validation runs
-   **Then** it is exactly 40 hexadecimal characters
-   **And** it exists and is an ancestor of `origin/main`
-   **And** required CI jobs succeeded on that exact SHA
-   **And** the environment job redeploys only that same SHA
-   **And** `REVIEWED SHA = CI SHA = DEPLOY TARGET SHA = RUNTIME SHA` is proven in 46.3
-   **And** AD-7 `ACCEPTANCE SHA` remains in the chain and is proven later (46.13/46.14 smoke); 46.3 must not redefine AD-7 as four-way
+   **Then** Layer A (exact deploy SHA / main CI) and Layer B (associated merged PR + GitGuardian) both pass
+   **And** a missing, pending, cancelled, skipped, or failed GitGuardian result is never treated as PASS
+   **And** a direct-to-main commit with no associated merged PR is REFUSE
+   **And** a one-parent squash/rebase `deploy_sha` is REFUSE
+   **And** GitGuardian is evaluated on merge-time `${deploy_sha}^2`, never on live `pr.head.sha` or on the merge SHA
+   **And** `ancestor of origin/main` is not treated as “reviewed”
+   **And** the environment job redeploys only that same `deploy_sha`
+   **And** AD-7 remains `REVIEWED = CI = DEPLOY TARGET = RUNTIME = ACCEPTANCE`
+   **And** 46.3 proves the GitHub merge-commit link from reviewed PR HEAD to merged main SHA
+   **And** ACCEPTANCE SHA is proven later (46.13/46.14); 46.3 must not drop it from AD-7
    **And** any mismatch fails closed
 
 4. **Secrets fail closed by name**
@@ -168,31 +172,61 @@ concurrency:
 
 permissions:
   contents: read
-  actions: read          # inspect CI on the pinned SHA
+  actions: read          # Layer A: CI runs on deploy_sha
+  checks: read           # Layer B: check-runs on PR HEAD
+  pull-requests: read    # Layer B: commit → associated PRs
+# No write, contents:write, or secrets permissions for this validation.
 ```
 
 Jobs:
 
-1. **`validate-sha`** — no `environment`, no SSH, no host mutation. Refuse unless:
+1. **`validate-sha`** — no `environment`, no SSH, no host mutation. Both layers required.
+
+   Shared refuse-before-layers:
    - `inputs.restore_dump` is empty
    - `deploy_sha =~ ^[0-9a-fA-F]{40}$` (normalize to lowercase only after the match)
    - `git cat-file -t $SHA` is `commit` (refuse tags/trees/blobs)
    - checkout uses `fetch-depth: 0` (or fetches the SHA + `origin/main`)
    - `git merge-base --is-ancestor $SHA origin/main`
-   - GitHub API/HTTP failures and empty payloads are `REFUSE`
-   - required CI lookup algorithm (fail closed if any step misses):
-     1. Query workflow file `.github/workflows/ci.yml` (name `CI`) runs with `head_sha == deploy_sha` and `event` in `push` or `workflow_dispatch` (PR CI on a different ref is not sufficient)
-     2. Select the newest run by `created_at`
-     3. That run `conclusion` must be `success` (not `skipped`, `cancelled`, or empty)
-     4. Named jobs must exist and succeed: `.NET build and test`, `API integration tests`, `Next.js build`, `UAT isolation contract`, `Docker stack smoke`
-     5. Refuse if a newer CI run on the same SHA failed
-     6. Refuse if the only green run is for a different SHA, `main` tip, or a pull_request event
-   - output `validated_sha`
+   - GitHub API/HTTP failures, incomplete, or empty payloads are `REFUSE`
+
+   **Layer A — exact `deploy_sha` / main CI**
+   1. Query workflow `.github/workflows/ci.yml` (name `CI`) runs with `head_sha == deploy_sha`
+   2. **Paginate every page** (`Link` / `total_count`). Truncation or fetch failure → `REFUSE`
+   3. Keep runs whose `event` is `push` or `workflow_dispatch`. Refuse `pull_request`, `pull_request_target`, and `merge_group` (this repo does not use merge queue)
+   4. Require `head_branch == main` when that field is present
+   5. Select the newest run by `created_at`, then highest numeric `id` if timestamps tie. If conclusions still disagree → `REFUSE`
+   6. Do **not** filter to green runs before picking newest (that hides a newer red)
+   7. Newest run `conclusion` must be `success` (not `skipped`, `cancelled`, pending, empty, or `neutral`)
+   8. Named **jobs** on that run must exist and `conclusion == success`: `.NET build and test`, `API integration tests`, `Next.js build`, `UAT isolation contract`, `Docker stack smoke`
+   9. Refuse if a newer CI run on the same SHA failed
+   10. Do **not** require `GitGuardian Security Checks` on `deploy_sha` itself
+
+   **Layer B — unique merged PR + GitGuardian on merge-time PR HEAD**
+   1. `GET /repos/{owner}/{repo}/commits/{deploy_sha}/pulls` with `Accept: application/vnd.github+json` (read-only, paginate all pages). Use only immutable relationship fields. Do not use PR title, body, labels, comments, or other user-supplied metadata
+   2. From the **list** payload, keep rows where `base.ref == main` AND `merge_commit_sha == deploy_sha` (apply merge-commit equality **before** uniqueness). **Do not require `merged == true` on this list payload.** Live evidence (PR #484 merge `5d52d6e3`): `commits/{sha}/pulls` returns `merged: null` even though `GET /pulls/484` has `merged: true`
+   3. If `merge_commit_sha` is absent/empty on a list row, drop it
+   4. If zero remain → `REFUSE` (direct-to-main, unmapped merge, or deploying a PR HEAD / other ancestor)
+   5. If more than one remains → `REFUSE`
+   6. Hydrate the unique candidate: `GET /repos/{owner}/{repo}/pulls/{n}`. HTTP/empty/incomplete → `REFUSE`. On the hydrated object require ALL of: `merged == true`, `base.ref == main`, `merge_commit_sha == deploy_sha`. Missing or false → `REFUSE`
+   7. Require `deploy_sha` is a **two-parent merge commit** (`git rev-list --parents -n 1` has exactly two parents). One-parent squash/rebase → `REFUSE`. This repository currently allows squash/rebase and does **not** delete branches on merge, so `/pulls/{n}/commits` and live `pr.head.sha` can drift. The only immutable merge-time PR HEAD is `${deploy_sha}^2`. Do **not** change GitHub merge-method settings in 46.3
+   8. Pin `reviewed_pr_head = git rev-parse ${deploy_sha}^2` as **authoritative**. Paginate `GET /pulls/{n}/commits` (HTTP/empty → `REFUSE`) only as corroboration. If the last list SHA differs from `^2` (branch reuse after merge), **do not** switch the GitGuardian host to that live SHA and **do not** REFUSE solely for the drift. Never use live `pr.head.sha` as the GitGuardian host
+   9. Immediate ride-along guard: first parent `${deploy_sha}^1` must itself resolve through this same list → `merge_commit_sha` filter → unique → hydrate (`merged` + `base.ref == main`) path to exactly one merged-to-`main` PR. A merge sitting on a naked direct-to-main parent is `REFUSE`. Do not walk the entire history. Deep historical holes remain a branch-protection observation, not a 46.3 Settings mutation
+   10. List **all pages** of `GET /repos/{owner}/{repo}/commits/{reviewed_pr_head}/check-runs` on **this** repository only (do not follow fork remotes; empty → `REFUSE`)
+   11. Match name exactly `GitGuardian Security Checks` AND `app.slug` case-insensitive `gitguardian` (verified on PR #484 HEAD `c5acc081` and PR #485 HEAD `895d951b`). If `app` is missing → `REFUSE`
+   12. Every matched run with `check_run.head_sha != reviewed_pr_head` is ignored; if none remain → `REFUSE`
+   13. If any matched run is `queued`, `in_progress`, or `pending` → `REFUSE` (do not fall back to an older SUCCESS)
+   14. Newest **terminal** matched run (by `completed_at`, then highest `id`) must have `status == completed` and `conclusion == success`
+   15. `REFUSE` conclusions: `failure`, `cancelled`, `skipped`, `neutral`, `timed_out`, `action_required`, empty
+   16. Never treat a missing GitGuardian result as PASS
+   17. Use only `GITHUB_TOKEN` with the read permissions above. Do not add a PAT, `contents:write`, `secrets`, or `deployments` write solely for this validation
+
+   Outputs: `validated_sha` (= `deploy_sha`), `reviewed_pr_head`, `associated_pr_number` (evidence only; never a deploy target)
 
 2. **`deploy` or `rollback`** — `needs: validate-sha`, `environment: production`
    - refuse unless `validate-sha` succeeded in **this** `run_id` (no partial job re-run)
    - refuse if `inputs.deploy_sha != validated_sha`
-   - **re-run** SHA format, commit-object, `origin/main` ancestry, and CI algorithm immediately before SSH (covers approval-wait races)
+   - **re-run Layer A and Layer B** immediately before SSH (covers approval-wait races and stale GitGuardian)
    - checkout this job's helpers at `ref: ${{ needs.validate-sha.outputs.validated_sha }}` with `persist-credentials: false`
    - fail-closed secret names; Environment-scoped `PROD_*` only (no repo/org `PROD_*`)
    - `vars.PROD_COMPOSE_PROJECT` must equal `cohestra-production`
@@ -221,8 +255,58 @@ Deploy key is a **new** Production Actions key, not `cohestra-uat-gha` and not t
 
 ## SHA provenance design
 
-AD-7 invariant (do not shorten): `REVIEWED = CI = DEPLOY TARGET = RUNTIME = ACCEPTANCE`.
-46.3 proves REVIEWED/CI/DEPLOY TARGET and control-plane RUNTIME (`GIT_SHA` export). ACCEPTANCE SHA is proven by 46.13/46.14 smoke, not by this story.
+AD-7 invariant (do not shorten or replace):
+
+`REVIEWED = CI = DEPLOY TARGET = RUNTIME = ACCEPTANCE`
+
+GitHub merge commits create two SHAs. Production must prove the link, not pretend GitGuardian ran on the merge commit.
+
+```
+REVIEWED PR HEAD
+  → GitGuardian SUCCESS on that PR HEAD
+  → MERGED MAIN DEPLOY SHA  (pr.merge_commit_sha)
+  → CI SUCCESS on the deploy SHA (five Actions jobs)
+  → DEPLOY TARGET SHA
+  → RUNTIME SHA (GIT_SHA)
+  → later ACCEPTANCE SHA (46.13/46.14)
+```
+
+Worked example (PR #484, do not treat as a secret):
+
+| Role | SHA |
+| --- | --- |
+| Reviewed PR HEAD | `c5acc08107124ee4c69a41078857f6b0fcd4cb0d` |
+| GitGuardian | SUCCESS on PR HEAD |
+| Merged main / deploy SHA | `5d52d6e3dc99bce01545eda6eb10f378d469c374` |
+| CI on deploy SHA | SUCCESS (five Actions jobs). No GitGuardian check-run on this merge SHA |
+
+`REVIEWED` in AD-7 is the reviewed PR HEAD. `CI` / `DEPLOY TARGET` / `RUNTIME` are the merged main SHA once Layer A passes. The control plane must prove `merge_commit_sha == deploy_sha` and GitGuardian success on merge-time `reviewed_pr_head` (`${deploy_sha}^2`). Do not collapse those identities. Do not pretend GitGuardian ran on the merge commit.
+
+### Direct-to-main policy
+
+`main` is not strongly branch-protected today. **Do not assume `ancestor of main == reviewed`.** Branch protection is **not** the Production trust boundary.
+
+A Production deploy of a commit with no single associated PR that is merged to `main` **fails closed**. That includes owner pushes, bot commits, and merge commits GitHub cannot map to exactly one PR.
+
+A two-parent merge whose first parent is itself a direct-to-main commit also **fails closed** (ride-along of unreviewed history).
+
+Do **not** change GitHub branch protection in Story 46.3. Record it as a later production-hardening observation (candidate: 46.9 / repo settings), not an owner-approved 46.3 task.
+
+### Merge-style policy
+
+Production deploy requires a two-parent merge commit so `reviewed_pr_head` is an immutable git object (`^2`). Squash and rebase merges are `REFUSE` even if a PR maps and some live head has GitGuardian SUCCESS.
+
+Do **not** change allowed GitHub merge methods in 46.3. This is a deploy-time provenance rule, not a Settings mutation.
+
+### GitGuardian policy
+
+- Required check name: `GitGuardian Security Checks`
+- Required `app.slug`: `gitguardian` (verified on PR #484 and PR #485)
+- Evaluated on merge-time `reviewed_pr_head` only (`${deploy_sha}^2`)
+- Never evaluated on live `pr.head.sha`
+- Never required on the merge/`deploy_sha` itself (PR #484 merge `5d52d6e3` has no GitGuardian check-run; requiring it there would refuse legitimate merges)
+- Never optional, skippable, or inferred from Layer A
+- Missing / pending / cancelled / skipped / failed / API error / empty payload → REFUSE
 
 Reuse, do not duplicate:
 
@@ -277,13 +361,15 @@ File: `deploy/production-rollback.sh`
 - Sanitized evidence JSON
 - `--restore-dump`, `--restore`, `RESTORE_DUMP`, `psql`, `pg_restore`, `down -v` → exit non-zero (`NOT_IMPLEMENTED_46_5` for dump restore). No database mutation.
 - Same Environment approval + concurrency if invoked from the workflow
+- Re-run Layer A + Layer B on `ROLLBACK_SHA` before SSH
 - Do not call UAT `remote-deploy.sh`
 
 ## Deployment sequence (implementation contract — not executed in planning)
 
-1. Validate requested SHA (40 hex)
-2. Verify SHA is accepted `main` history
-3. Verify required CI passed on that exact SHA (latest run)
+1. Validate requested SHA (40 hex commit object)
+2. Verify SHA is an ancestor of `origin/main` (necessary, not sufficient)
+3. Layer A: required five Actions jobs SUCCESS on that exact SHA (latest unfiltered `push`/`workflow_dispatch` CI run)
+3b. Layer B: unique hydrated merged-to-`main` PR; two-parent merge; GitGuardian SUCCESS on `${deploy_sha}^2`
 4. Enter Environment `production`
 5. Wait for explicit owner approval
 6. Validate secrets without exposing values
@@ -327,6 +413,8 @@ Create (implementation pass only — not this planning PR):
 - `deploy/reset-production-sha.sh`
 - `deploy/reset-production-sha.test.sh`
 - `deploy/validate-deploy-production-workflow.sh`
+- `deploy/validate-production-provenance.sh` (Layer A + Layer B)
+- `deploy/validate-production-provenance.test.sh`
 - `deploy/validate-production-target.sh` (host/path allowlist)
 - `deploy/validate-production-target.test.sh`
 - `deploy/production-rollback.sh`
@@ -354,11 +442,13 @@ Do not edit: `docker-compose.uat.yml`, UAT auto-deploy behavior, Paddle live fla
    - [ ] Split `validate-sha` (no environment, no SSH) and `deploy`/`rollback` (`environment: production`)
    - [ ] Checkout helpers at `ref: validated_sha` with `persist-credentials: false`
    - [ ] Pin checkout + appleboy actions to the same reviewed SHAs as UAT; `command_timeout: 60m`; no `debug: true`
-- [ ] Task 2: SHA + CI provenance (AC 3)
+- [ ] Task 2: SHA + CI + GitGuardian provenance (AC 3)
   - [ ] `reset-production-sha.sh` refuses empty/`HEAD`/`latest`/`github.sha`
-  - [ ] Ancestor of `origin/main` required
-  - [ ] Latest CI on exact SHA must be green for the five required jobs
-  - [ ] Environment job refuses SHA substitution
+  - [ ] Ancestor of `origin/main` required (necessary, not sufficient)
+  - [ ] Layer A: latest CI on exact `deploy_sha` green for the five Actions jobs
+  - [ ] Layer B: unique associated PR; hydrate `merged`; two-parent merge; `merge_commit_sha == deploy_sha`; GitGuardian success on `${deploy_sha}^2`
+  - [ ] Direct-to-main / squash/rebase / missing / ambiguous PR / missing GitGuardian → REFUSE
+  - [ ] Environment job re-runs Layer A + Layer B and refuses SHA substitution
 - [ ] Task 3: Secrets, host, path (AC 4, 5)
   - [ ] `fail-closed-production-secrets.sh` + tests
   - [ ] Inventory IPv4 allowlist; UAT IPv4/DNS denylist
@@ -391,6 +481,42 @@ Deterministic contract tests (preferred; no live droplet required):
 | existing `validate-deploy-uat-workflow.sh` | UAT path still forbids Production concurrency/environment |
 | existing `validate-production-compose.sh` / `validate-production-host.sh` | updated to require the new workflow without weakening UAT checks |
 | existing `reset-accepted-sha.test.sh` | UAT helper unchanged (empty→main tip remains UAT-only) |
+| `validate-production-provenance.test.sh` | Layer A + Layer B fixtures below |
+
+Required provenance fixtures (mocked GitHub API; no live tokens/secrets):
+
+| Case | Expected |
+| --- | --- |
+| Two-parent merge SHA + list payload `merged: null` + hydrated PR `merged: true` + `merge_commit_sha` match + GitGuardian success on `${deploy_sha}^2` + five CI jobs green | PASS |
+| Same, but GitGuardian `failure` | REFUSE |
+| GitGuardian missing | REFUSE |
+| GitGuardian pending / queued | REFUSE |
+| GitGuardian cancelled or skipped | REFUSE |
+| Associated PR missing | REFUSE |
+| PR `base.ref != main` (list or hydrated) | REFUSE |
+| Hydrated PR `merged != true` | REFUSE |
+| Implementation treats list-payload `merged: null` as merged without hydrating `GET /pulls/{n}` | REFUSE |
+| Direct-to-main commit (no associated PR) | REFUSE |
+| One-parent squash/rebase with mapped PR + GitGuardian green on live head | REFUSE |
+| Two PRs with `merge_commit_sha == deploy_sha` | REFUSE |
+| `merge_commit_sha` missing/empty | REFUSE |
+| `merge_commit_sha` ≠ `deploy_sha` (wrong PR or deploying PR HEAD) | REFUSE |
+| Live `pr.head.sha` and `/pulls/n/commits` drifted after merge; GitGuardian still evaluated on `${deploy_sha}^2` and is SUCCESS | PASS |
+| Implementation switches GitGuardian host to drifted live head when `^2` differs | REFUSE |
+| GitGuardian success on an older PR commit; missing/failed on `${deploy_sha}^2` | REFUSE |
+| Check-runs queried against `deploy_sha` instead of pinned `reviewed_pr_head` | REFUSE |
+| Newest GitGuardian pending/queued; older SUCCESS exists | REFUSE |
+| GitGuardian `neutral` / `timed_out` / `action_required` / `skipped` / `cancelled` | REFUSE |
+| Check name matches but `app.slug` is not `gitguardian` | REFUSE |
+| Five CI jobs green, GitGuardian red | REFUSE |
+| GitGuardian green, exact merge-SHA CI red or missing | REFUSE |
+| Newer red `push` CI after older green on same SHA | REFUSE |
+| CI `head_branch != main` | REFUSE |
+| Paginated pulls/check-runs/CI truncated | REFUSE |
+| GitHub API error / empty / incomplete payload | REFUSE |
+| Merge whose first-parent is a direct-to-main commit | REFUSE |
+
+Both layers are mandatory. Green Actions CI cannot waive GitGuardian. Green GitGuardian cannot waive exact-SHA CI.
 
 CI: add the new scripts to `.github/workflows/ci.yml` job `UAT isolation contract`.
 
@@ -405,7 +531,7 @@ Do not require a live Production deploy to mark 46.3 done. If owner later popula
 
 ## Evidence expectations
 
-Allowed: SHAs, workflow run ids, job names, `MISSING_SECRET=<NAME>`, `shared_host_uat=false`, inventory IPv4, boolean present/absent, result=`PASS|FAIL`.
+Allowed: SHAs (`deploy_sha`, `reviewed_pr_head`), associated PR number, GitGuardian conclusion name only, workflow run ids, job names, `MISSING_SECRET=<NAME>`, `shared_host_uat=false`, inventory IPv4, boolean present/absent, result=`PASS|FAIL`.
 
 Forbidden: secret values, private keys, `.env` dumps, SSH transcripts with commands that echo secrets, screenshots of GitHub secret values.
 
@@ -415,7 +541,18 @@ Every item is resolved in this planning artifact. Implementation must keep the c
 
 | Threat | Severity if unmitigated | Planned control |
 | --- | --- | --- |
-| Arbitrary SHA deploy | BLOCKER | 40-hex only; object exists; ancestor of `origin/main`; CI green on exact SHA |
+| Arbitrary SHA deploy | BLOCKER | 40-hex commit; ancestor of `origin/main`; Layer A + Layer B |
+| Direct-to-main / unreviewed ancestor | BLOCKER | No associated merged-to-`main` PR → REFUSE; ancestry ≠ review |
+| Bypass GitGuardian via merge commit | BLOCKER | GitGuardian required on PR HEAD; never optional; never inferred from Layer A |
+| Wrong PR’s GitGuardian | BLOCKER | Exactly one merged-to-`main` PR; `merge_commit_sha == deploy_sha` |
+| Stale PR-head security result | BLOCKER | GitGuardian evaluated only on immutable `${deploy_sha}^2`; pending/old-success-then-fail → REFUSE |
+| Ambiguous commit→PR mapping | BLOCKER | `count != 1` after merge-commit+base filters → REFUSE |
+| PR HEAD / merge SHA substitution | BLOCKER | Deploy target is `deploy_sha` only; GitGuardian host is `reviewed_pr_head` (`^2`) only |
+| List-payload `merged: null` treated as not-merged or as merged | BLOCKER | Hydrate `GET /pulls/{n}`; require `merged == true` there |
+| Squash/rebase live-head swap | BLOCKER | One-parent `deploy_sha` → REFUSE |
+| API failure as success | BLOCKER | HTTP/empty/incomplete → REFUSE |
+| GitGuardian skipped/cancelled as success | BLOCKER | Only `status=completed` and `conclusion=success` |
+| Post-merge CI failed after green PR checks | BLOCKER | Layer A on merge SHA is independent and mandatory |
 | Branch/ref confusion | BLOCKER | Never deploy `github.sha` / `HEAD` / `latest`; dispatch input is the only target |
 | Stale CI acceptance | BLOCKER | Latest CI run on that SHA must be success; do not use a different commit's green |
 | SHA substitution between jobs | BLOCKER | `validated_sha` output must equal `inputs.deploy_sha` in the environment job |
@@ -447,8 +584,36 @@ Planning-review resolutions (Grok 4.6 Blind Hunter / Edge Case Hunter / Acceptan
 - AD-7 shortened → full five-way chain kept; ACCEPTANCE later.
 - Rollback compose missing → dry-run `production-compose.sh config` at `ROLLBACK_SHA`.
 - Approval-wait CI/main races → re-validate in the environment job before SSH.
+- GitGuardian omitted from merge-SHA CI → Layer B on immutable merge-time PR HEAD (`${deploy_sha}^2`), never live `pr.head.sha`, never `deploy_sha`.
+- Unique PR selected by `base main + merge_commit_sha == deploy_sha` on the list payload, then hydrated; `commits/{sha}/pulls.merged` is **not** authoritative (`null` on PR #484).
+- Direct-to-main and a merge whose first-parent is direct-to-main → REFUSE. Deep history holes are a later branch-protection observation, not a 46.3 Settings mutation.
+- One-parent squash/rebase → REFUSE (no immutable `^2` pin; repo does not delete branches on merge). Merge-method Settings are not changed in 46.3.
+- Pending/forged GitGuardian → refuse any non-terminal run; pin `app.slug=gitguardian`; refuse `neutral`/`skipped`/`cancelled`.
+- Paginated GitHub lists must be fully consumed or REFUSE.
+- Threat-table wording that said “current `pr.head.sha`” is retired; implementers must follow `reviewed_pr_head`.
 
-No unresolved BLOCKER or MAJOR remains in this plan. Deferred MINOR: live EF migration detector (step 11) waits until 46.4 compose-up exists.
+Correction-review pass (Grok 4.6 Blind Hunter / Edge Case Hunter / Acceptance Auditor / deployment-security), attacking the requested bypasses:
+
+| Attack | Result after this plan |
+| --- | --- |
+| Bypass GitGuardian via direct main push | REFUSE (no unique hydrated merged-to-`main` PR) |
+| Choose a different PR’s GitGuardian | REFUSE unless `merge_commit_sha == deploy_sha` uniquely |
+| Stale / live PR-head security result | GitGuardian host is immutable `^2`, not live `pr.head.sha` |
+| Ambiguous commit→PR mapping | `count != 1` after merge-commit+base filters → REFUSE |
+| PR HEAD / merge SHA substitution | Deploy target stays `deploy_sha`; GG host stays `^2` |
+| GitHub API failure treated as success | HTTP/empty/incomplete/truncated → REFUSE |
+| GitGuardian skipped/cancelled as success | Only `completed` + `success` |
+| Deploy unreviewed main ancestor | Ancestry insufficient; no associated PR → REFUSE |
+| PR checks green, post-merge CI red | Layer A independent; red/missing exact-SHA CI → REFUSE |
+| `commits/{sha}/pulls.merged == null` | Hydrate `GET /pulls/{n}` (live #484 evidence) |
+| Squash/rebase + reused branch | One-parent → REFUSE; no Settings mutation |
+| Merge whose first parent is direct-to-main | Ride-along REFUSE |
+
+Blind Hunter: no remaining SHA-substitution or GG-waiver path in the planned algorithm.  
+Edge Case Hunter: list-payload `merged:null`, pagination, pending-over-old-success, squash drift, first-parent ride-along are fail-closed.  
+Acceptance Auditor: user-required fixtures plus hydration/squash/`^2` cases are in the contract table. AD-7 five-way chain is not shortened.
+
+No unresolved BLOCKER or MAJOR remains in this plan. Deferred MINOR: live EF migration detector (step 11) waits until 46.4 compose-up exists. Deferred observation: strengthen `main` branch protection and optionally lock merge methods to merge-commits only — outside 46.3, candidate 46.9.
 
 ## Definition of Done
 
@@ -537,6 +702,7 @@ Cursor Grok 4.6 (planning / story-prep only)
 ### Completion Notes List
 
 - Planning artifact only. No `deploy-production.yml`, rollback script, or runtime deploy code in this pass.
+- 2026-10-22: Layer A + Layer B GitGuardian provenance correction. Direct-to-main fails closed. Two-parent merge required. Hydrate `merged` from `GET /pulls/{n}`.
 
 ### File List
 
@@ -544,3 +710,7 @@ Cursor Grok 4.6 (planning / story-prep only)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/implementation-artifacts/46-2-dedicated-production-host-and-network-hardening.md` (status bookkeeping only)
 - `docs/deploy/production-launch-program.md`
+- `_bmad-output/planning-artifacts/epics-production-launch-readiness.md` (46.3 provenance addendum)
+- `_bmad-output/planning-artifacts/architecture/architecture-cohestra-epic-46-2026-10-19/ARCHITECTURE-SPINE.md` (AD-7 merge-commit note)
+- `_bmad-output/planning-artifacts/epic-46/deployment-release-architecture.md`
+- `_bmad-output/planning-artifacts/epic-46/production-security-model.md`

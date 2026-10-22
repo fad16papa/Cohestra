@@ -271,6 +271,15 @@ So that **merging to main cannot ship Production the way it ships UAT**.
 
 This story must not populate secret values in git or in chat.
 
+**Provenance addendum (2026-10-22; canonical machine contract is the 46.3 story file):**
+
+Production deploy is permitted only when **both** layers pass:
+
+- **Layer A** — exact `deploy_sha` is a 40-hex commit, ancestor of `origin/main`, and the required GitHub Actions `CI` run on that exact SHA is SUCCESS for `.NET build and test`, `API integration tests`, `Next.js build`, `UAT isolation contract`, and `Docker stack smoke`.
+- **Layer B** — that SHA maps to exactly one hydrated PR that is merged to `main` with `merge_commit_sha == deploy_sha`, is a two-parent merge, and `GitGuardian Security Checks` is SUCCESS on the merge-time PR HEAD (`${deploy_sha}^2`).
+
+GitGuardian is not evaluated on the merge commit. Direct-to-main and squash/rebase fail closed. `ancestor of main` is not reviewed. AD-7 remains `REVIEWED = CI = DEPLOY TARGET = RUNTIME = ACCEPTANCE`. Do not start implementation from this epic file alone.
+
 ---
 
 ### Story 46.4: Production runtime, config, and secrets isolation

@@ -79,7 +79,13 @@ Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-e
 - Trigger: `workflow_dispatch` with explicit 40-character SHA. Never `push`, PR merge, UAT, or CI completion.
 - Environment: `production` (independent of `uat`), required owner approval, `main` only.
 - Concurrency: `deploy-production` with `cancel-in-progress: false`.
-- SHA chain: REVIEWED = CI = DEPLOY TARGET = RUNTIME (`GIT_SHA`).
+- SHA chain: AD-7 `REVIEWED = CI = DEPLOY TARGET = RUNTIME = ACCEPTANCE` remains intact. GitHub merge commits split reviewed PR HEAD from the merged main SHA; the control plane must prove the link.
+- Production provenance is two-layer and fail-closed:
+  - Layer A = five Actions CI jobs SUCCESS on the exact merged `deploy_sha` (newest unfiltered `push`/`workflow_dispatch` run).
+  - Layer B = unique associated PR targeting `main` with hydrated `merged == true` and `merge_commit_sha == deploy_sha`, plus `GitGuardian Security Checks` (`app.slug=gitguardian`) SUCCESS on immutable `${deploy_sha}^2`.
+- GitGuardian is not required on the merge commit itself (it attaches to the PR HEAD). Requiring it on `deploy_sha` would refuse legitimate merges.
+- Direct-to-main commits fail closed. `ancestor of main` is not reviewed. Branch protection is not mutated in 46.3.
+- One-parent squash/rebase deploys fail closed (no immutable merge-time PR HEAD). Merge-method Settings are not changed in 46.3.
 - Secrets: `PROD_DROPLET_*` + `PROD_PUBLIC_BASE_URL` names only. Fail closed with `MISSING_SECRET=<NAME>`.
 - Target: existing droplet `cohestra-production` / `159.223.55.242`. UAT `129.212.235.2` is forbidden.
 - Rollback: `deploy/production-rollback.sh` with explicit SHA; DB restore is 46.5 and never implicit.
