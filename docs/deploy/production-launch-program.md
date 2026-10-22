@@ -83,7 +83,7 @@ Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-e
   - Layer A = five Actions CI jobs SUCCESS on the exact merged `deploy_sha` (newest unfiltered `push`/`workflow_dispatch` run).
   - Layer B = unique associated PR targeting `main` with hydrated `merged == true` and `merge_commit_sha == deploy_sha`, plus `GitGuardian Security Checks` (`app.slug=gitguardian`) SUCCESS on immutable `${deploy_sha}^2`.
 - GitGuardian is not required on the merge commit itself (it attaches to the PR HEAD). Requiring it on `deploy_sha` would refuse legitimate merges.
-- Direct-to-main commits fail closed. `ancestor of main` is not reviewed. Branch protection is not mutated in 46.3.
+- Direct-to-main commits fail closed, including when a later clean merge would launder them. First-parent history is walked to the immutable trust anchor `c39f2618bcdcb71875d2da5b654f3a999b39ae35`. `ancestor of main` is not reviewed. Branch protection is not mutated in 46.3.
 - One-parent squash/rebase deploys fail closed (no immutable merge-time PR HEAD). Merge-method Settings are not changed in 46.3.
 - Secrets: `PROD_DROPLET_*` + `PROD_PUBLIC_BASE_URL` names only. Fail closed with `MISSING_SECRET=<NAME>`.
 - Target: existing droplet `cohestra-production` / `159.223.55.242`. UAT `129.212.235.2` is forbidden.

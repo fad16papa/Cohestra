@@ -144,8 +144,8 @@ Required input: `deploy_sha` (exactly 40 hex). Action: `deploy` or `rollback`.
 
 Two-layer provenance must pass before Environment `production`:
 
-- Layer A: five Actions jobs SUCCESS on the exact merged SHA
-- Layer B: unique hydrated merged-to-`main` PR + `GitGuardian Security Checks` SUCCESS on `${deploy_sha}^2`
+- Layer A: five Actions jobs SUCCESS on the exact merged SHA. `head_branch` must be `main`.
+- Layer B: unique hydrated merged-to-`main` PR + `GitGuardian Security Checks` SUCCESS on `${deploy_sha}^2`, and the same merge+GitGuardian contract on every first-parent commit after the immutable trust anchor `c39f2618bcdcb71875d2da5b654f3a999b39ae35` (`deploy/production-provenance-anchor.txt`).
 
 The Environment `production` job is declared in YAML. The owner must create and protect that Environment in GitHub Settings **before first dispatch**. This repository does not create the Environment, populate `PROD_*`, or SSH Production from Story 46.3 implementation.
 
@@ -155,8 +155,10 @@ Owner Settings checklist (values never in git/chat):
 2. Required reviewers: owner. Prevent self-review / administrator bypass if the UI offers it.
 3. Deployment branches: `main` only.
 4. Environment secrets (names only): `PROD_DROPLET_HOST`, `PROD_DROPLET_USER`, `PROD_DROPLET_SSH_KEY`, `PROD_DROPLET_DEPLOY_PATH`, `PROD_PUBLIC_BASE_URL`.
-5. Environment variable: `PROD_COMPOSE_PROJECT=cohestra-production`.
-6. Mint a **new** Production Actions deploy key. Do not reuse `cohestra-uat-gha`, the owner workstation key, or Environment `uat` / `DROPLET_*`.
+5. Confirm those `PROD_*` names exist only on Environment `production`. The workflow cannot prove whether a same-named secret came from Environment, repository, or organization scope.
+6. Confirm conflicting repository- or organization-level `PROD_*` secrets are absent.
+7. Environment variable: `PROD_COMPOSE_PROJECT=cohestra-production`.
+8. Mint a **new** Production Actions deploy key. Do not reuse `cohestra-uat-gha`, the owner workstation key, or Environment `uat` / `DROPLET_*`.
 
 Do not copy Environment `uat` / `DROPLET_*` secrets. Fail-closed names print `MISSING_SECRET=<NAME>` only.
 

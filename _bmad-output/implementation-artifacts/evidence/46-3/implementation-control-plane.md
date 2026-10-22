@@ -46,6 +46,10 @@ Production: NO-GO / NOT YET COMPLETE
 - Compose stub is test-only. Accepted-SHA writer exists; real Production ledger is not written.
 - Evidence schema contract rejects secret-like keys and SSH logs.
 - GitGuardian check-runs use `filter=all` so a newer pending run cannot hide behind `filter=latest`.
+- First-parent chain walks to immutable anchor `c39f2618`. Immediate ride-along and later-merge laundering both REFUSE.
+- Layer A requires `head_branch=main` (null/missing refused).
+- Workflow contract proves `environment: production` on deploy and rollback independently.
+- Secret-scope wording: owner Settings gate. Code does not claim it proves Environment vs repo/org secret origin.
 
 ## Allowlisted fields only
 

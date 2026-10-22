@@ -148,7 +148,7 @@ def layer_a(repo: str, deploy_sha: str) -> dict[str, Any]:
         if event not in ("push", "workflow_dispatch"):
             continue
         head_branch = obj.get("head_branch")
-        if head_branch is not None and head_branch != "main":
+        if head_branch != "main":
             refuse("CI head_branch is not main")
         head_sha = _norm_sha(obj.get("head_sha"))
         if head_sha != deploy_sha:
@@ -270,7 +270,7 @@ def layer_b_gitguardian(repo: str, reviewed_pr_head: str) -> None:
         refuse(f"GitGuardian conclusion is {conclusion or 'empty'}")
 
 
-def layer_b(repo: str, deploy_sha: str, reviewed_pr_head: str, first_parent: str | None) -> dict[str, Any]:
+def layer_b(repo: str, deploy_sha: str, reviewed_pr_head: str) -> dict[str, Any]:
     pr = hydrate_unique_pr(repo, deploy_sha)
     number = pr.get("number")
     commits = paginate_list(
@@ -280,8 +280,6 @@ def layer_b(repo: str, deploy_sha: str, reviewed_pr_head: str, first_parent: str
     )
     if not commits:
         refuse("PR commits unavailable")
-    if first_parent:
-        hydrate_unique_pr(repo, first_parent)
     layer_b_gitguardian(repo, reviewed_pr_head)
     return {"associated_pr_number": number, "reviewed_pr_head": reviewed_pr_head}
 
@@ -301,8 +299,7 @@ def main() -> None:
         if len(sys.argv) < 5:
             refuse("reviewed_pr_head missing")
         reviewed = sys.argv[4].lower()
-        first_parent = sys.argv[5].lower() if len(sys.argv) > 5 and sys.argv[5] else None
-        info = layer_b(repo, deploy_sha, reviewed, first_parent)
+        info = layer_b(repo, deploy_sha, reviewed)
         print("LAYER_B=PASS")
         print(f"ASSOCIATED_PR_NUMBER={info['associated_pr_number']}")
         print(f"REVIEWED_PR_HEAD={info['reviewed_pr_head']}")

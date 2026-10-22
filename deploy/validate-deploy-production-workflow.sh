@@ -92,21 +92,65 @@ for perm in 'contents: write' 'actions: write' 'checks: write' 'pull-requests: w
   fi
 done
 
-if awk '
-  $0 ~ /^  validate-sha:/ { in_v=1; next }
-  in_v && $0 ~ /^  [a-z].*:/ { in_v=0 }
-  in_v && $0 ~ /environment:[[:space:]]*production/ { found=1 }
-  END { exit found+0 }
-' "$WF"; then
-  pass "validate-sha has no Environment production"
-else
+job_has_production_env() {
+  local file="$1"
+  local job="$2"
+  awk -v job="$job" '
+    $0 ~ "^  " job ":" { in_j=1; next }
+    in_j && $0 ~ /^  [a-zA-Z0-9_-]+:/ { in_j=0 }
+    in_j && $0 ~ /^[[:space:]]+environment:[[:space:]]*production[[:space:]]*$/ { found=1 }
+    END { exit found ? 0 : 1 }
+  ' "$file"
+}
+
+if job_has_production_env "$WF" "validate-sha"; then
   fail "validate-sha must not use environment: production"
+else
+  pass "validate-sha has no Environment production"
 fi
 
-if grep -qE 'environment:[[:space:]]*production' "$WF"; then
-  pass "mutating jobs declare environment production"
+if job_has_production_env "$WF" "deploy"; then
+  pass "deploy job has environment: production"
 else
-  fail "deploy/rollback must use environment: production"
+  fail "deploy job must declare environment: production"
+fi
+
+if job_has_production_env "$WF" "rollback"; then
+  pass "rollback job has environment: production"
+else
+  fail "rollback job must declare environment: production"
+fi
+
+strip_job_environment() {
+  local job="$1"
+  awk -v job="$job" '
+    $0 ~ "^  " job ":" { in_j=1 }
+    in_j && $0 ~ /^  [a-zA-Z0-9_-]+:/ && $0 !~ "^  " job ":" { in_j=0 }
+    in_j && $0 ~ /^[[:space:]]+environment:[[:space:]]*production[[:space:]]*$/ { next }
+    { print }
+  '
+}
+
+copy="$(mktemp)"
+trap 'rm -f "$copy"' EXIT
+strip_job_environment deploy <"$WF" >"$copy"
+if job_has_production_env "$copy" deploy; then
+  fail "contract must detect deploy missing environment: production"
+else
+  pass "deploy missing environment production is detected"
+fi
+if ! job_has_production_env "$copy" rollback; then
+  fail "stripping deploy environment must not drop rollback environment"
+fi
+
+strip_job_environment rollback <"$WF" >"$copy"
+if job_has_production_env "$copy" rollback; then
+  fail "contract must detect rollback missing environment: production"
+else
+  pass "rollback missing environment production is detected"
+fi
+if ! job_has_production_env "$copy" deploy; then
+  fail "stripping rollback environment must not drop deploy environment"
 fi
 
 if grep -q 'persist-credentials: false' "$WF"; then
@@ -184,6 +228,13 @@ if [[ -f "$UAT" ]] && grep -qE 'group:[[:space:]]*deploy-uat' "$UAT" \
   pass "UAT workflow remains isolated"
 else
   fail "deploy.yml UAT contract drifted"
+fi
+
+if [[ -f "$ROOT_DIR/deploy/production-provenance-anchor.txt" ]] \
+  && [[ "$(tr -d '[:space:]' <"$ROOT_DIR/deploy/production-provenance-anchor.txt")" == "c39f2618bcdcb71875d2da5b654f3a999b39ae35" ]]; then
+  pass "immutable Production provenance anchor is the 46.3 baseline"
+else
+  fail "deploy/production-provenance-anchor.txt must contain c39f2618bcdcb71875d2da5b654f3a999b39ae35"
 fi
 
 echo "Passed: ${PASS} | Failed: ${FAIL}"

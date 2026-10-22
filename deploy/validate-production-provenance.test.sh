@@ -12,8 +12,18 @@ grep -q 'check-runs?filter=all' "$ROOT_DIR/deploy/lib/production-github-provenan
   || fail "check-runs must request filter=all"
 pass "GitGuardian check-runs request filter=all"
 
+ANCHOR_FILE="$ROOT_DIR/deploy/production-provenance-anchor.txt"
+[[ -f "$ANCHOR_FILE" ]] || fail "committed provenance anchor is missing"
+[[ "$(tr -d '[:space:]' <"$ANCHOR_FILE")" == "c39f2618bcdcb71875d2da5b654f3a999b39ae35" ]] \
+  || fail "committed provenance anchor must be the 46.3 baseline"
+pass "committed provenance anchor is the 46.3 baseline"
+
 TMP="$(mktemp -d)"
-trap 'rm -rf "$TMP"' EXIT
+LAUNDER=""
+CLEAN=""
+ANCHOR_CASES=""
+UNREACH=""
+trap 'rm -rf "$TMP" "$LAUNDER" "$CLEAN" "$ANCHOR_CASES" "$UNREACH"' EXIT
 
 build_provenance_fixture "$TMP"
 cd "$PROVENANCE_LOCAL"
@@ -189,6 +199,24 @@ PY
 expect_refuse "$PROVENANCE_MERGE" "CI head_branch != main is refused"
 write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
 
+python3 - "$PROVENANCE_FIX/runs.json" <<'PY'
+import json,sys
+d=json.load(open(sys.argv[1]))
+d["workflow_runs"][0]["head_branch"]=None
+json.dump(d, open(sys.argv[1],"w"))
+PY
+expect_refuse "$PROVENANCE_MERGE" "CI head_branch null is refused"
+write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+
+python3 - "$PROVENANCE_FIX/runs.json" <<'PY'
+import json,sys
+d=json.load(open(sys.argv[1]))
+d["workflow_runs"][0].pop("head_branch", None)
+json.dump(d, open(sys.argv[1],"w"))
+PY
+expect_refuse "$PROVENANCE_MERGE" "missing CI head_branch is refused"
+write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+
 python3 - "$PROVENANCE_FIX/jobs_11.json" <<'PY'
 import json,sys
 d=json.load(open(sys.argv[1]))
@@ -222,8 +250,9 @@ expect_refuse "$PROVENANCE_MERGE" "GitHub API error is refused"
 rm -f "$PROVENANCE_FIX/error"
 write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
 
+# Anchor is the trust root. Missing PR on the anchor must not refuse the merge.
 rm -f "$PROVENANCE_FIX/pulls_${PROVENANCE_PARENT}.json" "$PROVENANCE_FIX/pr_1.json"
-expect_refuse "$PROVENANCE_MERGE" "first-parent ride-along is refused"
+expect_pass "anchor itself is not revalidated as a PR merge"
 write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
 
 python3 - "$PROVENANCE_FIX/checks_${PROVENANCE_HEAD}.json" <<'PY'
@@ -270,5 +299,70 @@ import json,sys
 json.dump([{"number":2,"merged":None,"base":{"ref":"main"},"merge_commit_sha":""}], open(sys.argv[1],"w"))
 PY
 expect_refuse "$PROVENANCE_MERGE" "empty merge_commit_sha is refused"
+
+# --- first-parent chain / laundering ---
+LAUNDER="$(mktemp -d)"
+build_launder_fixture "$LAUNDER"
+cd "$PROVENANCE_LOCAL"
+export COHESTRA_PROVENANCE_FIXTURE="$PROVENANCE_FIX"
+export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+write_layer_a "$PROVENANCE_FIX" "$PROVENANCE_M1"
+expect_refuse "$PROVENANCE_M1" "immediate direct-main ride-along is refused"
+write_layer_a "$PROVENANCE_FIX" "$PROVENANCE_M2"
+expect_refuse "$PROVENANCE_M2" "laundered direct-main via later clean merge is refused"
+
+CLEAN="$(mktemp -d)"
+build_clean_chain_fixture "$CLEAN"
+cd "$PROVENANCE_LOCAL"
+export COHESTRA_PROVENANCE_FIXTURE="$PROVENANCE_FIX"
+export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+out="$(run_case "$PROVENANCE_M3")" || { echo "$out"; fail "clean first-parent chain should pass"; }
+echo "$out" | grep -q 'RESULT=PASS' || fail "clean chain missing RESULT=PASS"
+echo "$out" | grep -q "REVIEWED_PR_HEAD=${PROVENANCE_M3_HEAD}" || fail "clean chain must pin M3 ^2"
+echo "$out" | grep -qx "FIRST_PARENT_CHAIN_DEPTH=3" || fail "clean chain depth"
+pass "multiple clean first-parent merges from trusted anchor PASS"
+
+ANCHOR_CASES="$(mktemp -d)"
+build_provenance_fixture "$ANCHOR_CASES"
+cd "$PROVENANCE_LOCAL"
+export COHESTRA_PROVENANCE_FIXTURE="$PROVENANCE_FIX"
+export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+
+if COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$ANCHOR_CASES/missing" run_case "$PROVENANCE_MERGE" >/dev/null 2>&1; then
+  fail "missing anchor must be refused"
+fi
+pass "anchor missing is refused"
+
+printf 'not-a-sha\n' >"$ANCHOR_CASES/bad"
+if COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$ANCHOR_CASES/bad" run_case "$PROVENANCE_MERGE" >/dev/null 2>&1; then
+  fail "malformed anchor must be refused"
+fi
+pass "malformed anchor is refused"
+
+tree="$(git rev-parse HEAD^{tree})"
+printf '%s\n' "$tree" >"$ANCHOR_CASES/tree"
+if COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$ANCHOR_CASES/tree" run_case "$PROVENANCE_MERGE" >/dev/null 2>&1; then
+  fail "non-commit anchor must be refused"
+fi
+pass "anchor not a commit is refused"
+
+git checkout -q --orphan stray
+echo stray >stray
+git add stray
+git commit -q -m stray
+STRAY="$(git rev-parse HEAD)"
+git checkout -q main
+printf '%s\n' "$STRAY" >"$ANCHOR_CASES/stray"
+if COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$ANCHOR_CASES/stray" run_case "$PROVENANCE_MERGE" >/dev/null 2>&1; then
+  fail "non-ancestor anchor must be refused"
+fi
+pass "anchor not ancestor of deploy_sha is refused"
+
+UNREACH="$(mktemp -d)"
+build_unreachable_anchor_fixture "$UNREACH"
+cd "$PROVENANCE_LOCAL"
+export COHESTRA_PROVENANCE_FIXTURE="$PROVENANCE_FIX"
+export COHESTRA_PRODUCTION_PROVENANCE_ANCHOR="$PROVENANCE_ANCHOR_FILE"
+expect_refuse "$PROVENANCE_MERGE" "first-parent traversal never reaches anchor is refused"
 
 echo "validate-production-provenance contract OK"
