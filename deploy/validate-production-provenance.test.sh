@@ -54,7 +54,9 @@ expect_refuse "not-a-sha" "malformed SHA is refused"
 expect_refuse "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" "unknown object is refused"
 expect_refuse "$PROVENANCE_PARENT" "one-parent / squash / rebase / direct commit is refused"
 
-# orphan non-ancestor
+# orphan non-ancestor (clone identity is required on GitHub-hosted runners)
+git config user.email test@example.com
+git config user.name testd
 git checkout -q --orphan other
 echo other >other
 git add other

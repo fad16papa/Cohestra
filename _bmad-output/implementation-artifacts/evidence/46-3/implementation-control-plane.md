@@ -30,6 +30,13 @@ Production: NO-GO / NOT YET COMPLETE
 | validate-production-host (static; live probes skipped locally) | PASS |
 | validate-deploy-uat-workflow | PASS |
 
+## CI note (sanitized)
+
+- PR CI run `39789732860` job `UAT isolation contract` FAILED on HEAD `39bd74c4`.
+- Failure: provenance fixture clone had no git identity; orphan-commit case exited 128 (`empty ident name`).
+- Fix: set `user.email` / `user.name` on the fixture clone and in the orphan-commit case.
+- Production was not dispatched. Environment `production` was not created. No secrets were printed.
+
 ## Allowlisted fields only
 
 - HOST_ALLOWLIST=pass (canonical IPv4 159.223.55.242)

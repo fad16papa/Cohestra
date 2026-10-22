@@ -30,6 +30,8 @@ build_provenance_fixture() {
   merge="$(git -C "$remote" rev-parse HEAD)"
 
   git clone -q "$remote" "$localc"
+  git -C "$localc" config user.email test@example.com
+  git -C "$localc" config user.name testd
   git -C "$localc" fetch -q origin main
 
   write_pass_fixtures "$fix" "$merge" "$head" "$parent"
