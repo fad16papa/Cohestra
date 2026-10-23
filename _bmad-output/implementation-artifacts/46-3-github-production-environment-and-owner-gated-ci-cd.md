@@ -11,6 +11,8 @@ depends_on:
   - 46.2
 owner_gate: production_environment_protections
 owner_gate_status: PASS — OWNER CONFIGURED / BOT API UNAVAILABLE
+overlay_code_path: IMPLEMENTED / NOT LIVE
+owner_gate_b: BLOCKED — LIVE OVERLAY NOT BOOTSTRAPPED
 implementation_authorized: true
 cutover_authorization: GRANTED
 production_release_readiness: NOT_YET_COMPLETE
@@ -81,7 +83,9 @@ Required delivery chain:
 5. **Host and path cannot target UAT**
    **Given** Production deploy secrets
    **When** host/path validation runs
-   **Then** SSH connects only to literal inventory IPv4 `159.223.55.242`
+   **Then** inventory validation still requires literal `PROD_DROPLET_HOST=159.223.55.242`
+   **And** SSH transport uses `${{ vars.PROD_TAILSCALE_HOST }}` in Tailscale CGNAT `100.64.0.0/10` only
+   **And** the public inventory IPv4 is never the appleboy SSH destination
    **And** `129.212.235.2`, IPv6 literals, `uat.cohestra.app`, `*.uat.cohestra.app`, and any hostname with extra A/AAAA records are refused
    **And** `PROD_DROPLET_DEPLOY_PATH` is an absolute safe path with no `..`
    **And** `/home/deploy/cohestra` and any UAT checkout path are refused
@@ -136,7 +140,7 @@ Required delivery chain:
 | Gate | Who | When | Blocks |
 | --- | --- | --- | --- |
 | `production_environment_protections` | Owner in GitHub Settings | Before first live Environment deployment | Unprotected `production` environment. 2026-10-23: owner attested Environment `production` from the GitHub web UI (`OWNER_ATTESTED_CONFIGURATION=PASS`). Cursor App Settings verification remains unavailable (`AUTOMATED_SETTINGS_VERIFICATION=UNAVAILABLE_DUE_TO_GITHUB_APP_PERMISSIONS`). See `evidence/46-3/owner-gate-a-environment-protections.md`. |
-| `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Missing `PROD_*` (fail-closed names only). **2026-10-23 BLOCKED — OVERLAY NOT IMPLEMENTED.** Owner accepted Option A: Tailscale + GitHub Actions OIDC federation (no reusable auth key). Do not populate `PROD_*` or mint the Actions SSH key until overlay is implemented. See `investigations/story-46-3-production-actions-network-path.md`. |
+| `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Missing `PROD_*` (fail-closed names only). **2026-10-23 BLOCKED — LIVE OVERLAY NOT BOOTSTRAPPED.** Code path is implemented and dormant (`CODE PATH IMPLEMENTED != LIVE OVERLAY BOOTSTRAPPED`). Do not populate `PROD_*`, mint the Actions SSH key, create the federated identity, or dispatch Production until the owner finishes host/Tailscale bootstrap. See `docs/deploy/tailscale-production-overlay.md`. |
 | Each deploy approval | Owner required reviewer | Every Environment `production` job | Deploy without approval |
 | Implementation authorization | Owner | After this planning artifact is accepted | `bmad-dev-story` for 46.3 |
 
@@ -175,7 +179,8 @@ permissions:
   actions: read          # Layer A: CI runs on deploy_sha
   checks: read           # Layer B: check-runs on PR HEAD
   pull-requests: read    # Layer B: commit → associated PRs
-# No write, contents:write, or secrets permissions for this validation.
+# No write, contents:write, secrets, or workflow-global id-token: write.
+# deploy/rollback add job-level id-token: write only after Environment approval.
 ```
 
 Jobs:
@@ -230,7 +235,11 @@ Jobs:
    - checkout this job's helpers at `ref: ${{ needs.validate-sha.outputs.validated_sha }}` with `persist-credentials: false`
    - fail-closed secret names (`PROD_*`). GitHub Actions does not prove Environment vs repo/org secret scope at runtime. Owner Settings must place `PROD_*` only on Environment `production` and must confirm conflicting repo/org `PROD_*` are absent before first dispatch.
    - `vars.PROD_COMPOSE_PROJECT` must equal `cohestra-production`
-   - host/path allowlist; appleboy `host:` is the literal IPv4
+   - host/path allowlist keeps inventory `PROD_DROPLET_HOST=159.223.55.242`
+   - overlay validator requires `PROD_TAILSCALE_CLIENT_ID`, `PROD_TAILSCALE_AUDIENCE`, and CGNAT `PROD_TAILSCALE_HOST`
+   - join Tailscale with pinned `tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf` using OIDC federation (`tag:gha-production`)
+   - fail-closed overlay ping; no public `:22` fallback
+   - appleboy `host:` is `${{ vars.PROD_TAILSCALE_HOST }}`
    - SSH via pinned `appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f`; `command_timeout: 60m`; `debug: false`
    - droplet `git fetch origin main` retries 6× like UAT before reset
    - never interpolate unvalidated strings into shell
@@ -246,6 +255,7 @@ Environment name: `production`
 | --- | --- |
 | Secrets | `PROD_DROPLET_HOST`, `PROD_DROPLET_USER`, `PROD_DROPLET_SSH_KEY`, `PROD_DROPLET_DEPLOY_PATH`, `PROD_PUBLIC_BASE_URL` |
 | Variable | `PROD_COMPOSE_PROJECT=cohestra-production` |
+| Overlay variables (later) | `PROD_TAILSCALE_CLIENT_ID`, `PROD_TAILSCALE_AUDIENCE`, `PROD_TAILSCALE_HOST` — not populated in this pass |
 | Optional later smoke | `PROD_SMOKE_*` only (do not invent in 46.3 unless a contract test needs the name) |
 | App secrets | Host `.env` in 46.4 — not GitHub unless Actions must use them |
 | Reviewers | Owner required |
@@ -466,6 +476,13 @@ Do not edit: `docker-compose.uat.yml`, UAT auto-deploy behavior, Paddle live fla
   - [x] No live compose-up, DNS, Paddle, or UAT mutation
 - [x] Task 7: Exact-HEAD Grok 4.6 review PASS (BLOCKER=0, MAJOR=0)
   - [x] Repeat Mandatory Code Review Loop on the final implementation HEAD
+- [x] Task 8: Tailscale OIDC code path (dormant until owner bootstrap)
+  - [x] Job-level `id-token: write` on `deploy`/`rollback` only
+  - [x] Pin `tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf`
+  - [x] Overlay validator + connectivity helper; appleboy uses `PROD_TAILSCALE_HOST`
+  - [x] Owner-run Tailscale and `deploy` user bootstrap scripts (unexecuted)
+  - [x] Grants template + OIDC inspection workflow (undispatched)
+  - [ ] Live overlay bootstrap remains owner-only and is not this PR
 
 ## Test strategy
 
@@ -477,6 +494,10 @@ Deterministic contract tests (preferred; no live droplet required):
 | `fail-closed-production-secrets.test.sh` | missing/whitespace secrets print `MISSING_SECRET=<NAME>` only |
 | `reset-production-sha.test.sh` | refuse empty/`HEAD`/`latest`/short/non-ancestor; accept 40-hex ancestor |
 | `validate-production-target.test.sh` | allow only 159.223.55.242; refuse 129.212.235.2, IPv6, UAT hosts, `/home/deploy/cohestra`, `..` paths |
+| `validate-production-overlay-target.test.sh` | require overlay vars; accept CGNAT only; refuse public/UAT/RFC1918/IPv6/hostname |
+| `verify-production-overlay-connectivity.test.sh` | no public TCP 22 fallback; refuse public/UAT ping targets |
+| `validate-inspect-production-oidc-workflow.sh` | manual production-only OIDC inspect; mutations for JWT leak/SSH/Tailscale/push fail |
+| `validate-tailscale-production-grants.sh` | Grants `tcp:22` only; no wildcard/UAT/exit-node/invented owner |
 | `production-rollback.test.sh` | explicit SHA; refuse unknown; refuse `--restore-dump`; no DB commands |
 | existing `validate-deploy-uat-workflow.sh` | UAT path still forbids Production concurrency/environment |
 | existing `validate-production-compose.sh` / `validate-production-host.sh` | updated to require the new workflow without weakening UAT checks |
@@ -706,6 +727,7 @@ Cursor Grok 4.6 (planning + implementation)
 - 2026-10-22: Layer A + Layer B GitGuardian provenance correction. Direct-to-main fails closed. Two-parent merge required. Hydrate `merged` from `GET /pulls/{n}`.
 - 2026-10-22: Control-plane implementation exists (`deploy-production.yml`, provenance, rollback, target, secrets validators). Workflow was not dispatched. Environment `production` was not created. Secrets were not populated. Production SSH was not executed. No Production workload was deployed.
 - 2026-10-22: First-parent chain walk to immutable anchor `c39f2618`. Laundering a direct-to-main commit through a later clean merge is REFUSE.
+- 2026-10-23: Tailscale OIDC Production control plane implemented in-repo and left dormant. Workflow not dispatched. Tailscale not installed live. Federated identity not created. `deploy` user not created live. Secrets/variables not populated. Story 46.4 not started.
 
 ### File List
 
@@ -737,3 +759,17 @@ Cursor Grok 4.6 (planning + implementation)
 - `_bmad-output/implementation-artifacts/46-3-github-production-environment-and-owner-gated-ci-cd.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 - `_bmad-output/implementation-artifacts/evidence/46-3/implementation-control-plane.md`
+- `.github/workflows/inspect-production-oidc.yml`
+- `deploy/validate-production-overlay-target.sh`
+- `deploy/validate-production-overlay-target.test.sh`
+- `deploy/verify-production-overlay-connectivity.sh`
+- `deploy/verify-production-overlay-connectivity.test.sh`
+- `deploy/bootstrap-production-tailscale.sh`
+- `deploy/bootstrap-production-deploy-user.sh`
+- `deploy/bootstrap-production-overlay.test.sh`
+- `deploy/validate-inspect-production-oidc-workflow.sh`
+- `deploy/validate-tailscale-production-grants.sh`
+- `docs/deploy/tailscale-production-overlay.md`
+- `docs/deploy/tailscale-production-grants.template.json`
+- `_bmad-output/implementation-artifacts/evidence/46-3/tailscale-oidc-control-plane.md`
+- `_bmad-output/implementation-artifacts/evidence/46-3/tailscale-github-action-review.md`

@@ -158,13 +158,14 @@ Owner Settings checklist (values never in git/chat):
 5. Confirm those `PROD_*` names exist only on Environment `production`. The workflow cannot prove whether a same-named secret came from Environment, repository, or organization scope.
 6. Confirm conflicting repository- or organization-level `PROD_*` secrets are absent.
 7. Environment variable: `PROD_COMPOSE_PROJECT=cohestra-production`.
-8. Mint a **new** Production Actions deploy key. Do not reuse `cohestra-uat-gha`, the owner workstation key, or Environment `uat` / `DROPLET_*`.
+8. Later overlay variables (names only, do not populate in this pass): `PROD_TAILSCALE_CLIENT_ID`, `PROD_TAILSCALE_AUDIENCE`, `PROD_TAILSCALE_HOST`.
+9. Mint a **new** Production Actions deploy key later at Gate B. Do not reuse `cohestra-uat-gha`, the owner workstation key, or Environment `uat` / `DROPLET_*`.
 
 Do not copy Environment `uat` / `DROPLET_*` secrets. Fail-closed names print `MISSING_SECRET=<NAME>` only.
 
-**Network path (2026-10-23):** Environment `production` protections are owner-configured. Owner accepted Option A: Tailscale overlay with **GitHub Actions OIDC federation**. Owner Gate B is **blocked** until that overlay is implemented. GitHub-hosted runners do not have a stable per-repo source IP. Do not populate `PROD_*` or mint the Actions SSH key on the current `ubuntu-latest` → public `:22` design. Do not use a reusable `PROD_TAILSCALE_AUTHKEY` as the primary join method (`FALLBACK ONLY — NOT SELECTED`). Later `deploy`/`rollback` jobs may add job-level `id-token: write` only. See `_bmad-output/implementation-artifacts/investigations/story-46-3-production-actions-network-path.md`.
+**Network path (2026-10-23):** `CODE PATH IMPLEMENTED != LIVE OVERLAY BOOTSTRAPPED`. Environment `production` protections are owner-configured (Gate A PASS). The Production workflow now joins Tailscale from `deploy`/`rollback` only, using GitHub OIDC federation (`vars.PROD_TAILSCALE_CLIENT_ID` + `vars.PROD_TAILSCALE_AUDIENCE`, tag `tag:gha-production`). SSH uses `${{ vars.PROD_TAILSCALE_HOST }}` after a fail-closed `tailscale ping`. Inventory identity remains `PROD_DROPLET_HOST=159.223.55.242` and is never the SSH destination. Public TCP 22 stays CIDR-restricted. Do not populate `PROD_*`, mint the Actions SSH key, create the federated identity, or dispatch Production until the owner finishes live bootstrap. Do not use a reusable `PROD_TAILSCALE_AUTHKEY` (`FALLBACK ONLY — NOT SELECTED`). Job-level `id-token: write` exists only on `deploy` and `rollback`. See [tailscale-production-overlay.md](./tailscale-production-overlay.md).
 
-Dispatch from **Actions → Deploy Production** on `main` only, with an explicit 40-hex `deploy_sha`. Feature-branch dispatch fails closed. Do not dispatch until the Environment is protected, the overlay path is implemented, and later stories authorize a dark deploy.
+Dispatch from **Actions → Deploy Production** on `main` only, with an explicit 40-hex `deploy_sha`. Feature-branch dispatch fails closed. Do not dispatch until the live overlay is bootstrapped and later stories authorize a dark deploy.
 
 ---
 

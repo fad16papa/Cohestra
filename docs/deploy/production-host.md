@@ -74,9 +74,12 @@ If the residential IP changes, add a new `/24`–`/32` CIDR to `owner_ssh_cidrs`
 
 Residential owner IPs and Cloud Agent egress NATs both change. The durable approach is a **stable management path** (owner-controlled VPN / WireGuard / Tailscale, or a dedicated jump host with a reserved IPv4) plus DigitalOcean Recovery Console as break-glass. Do not implement that path in Story 46.2.
 
-Story 46.3 Owner Gate B is **blocked** until the accepted overlay is implemented: GitHub-hosted `ubuntu-latest` has no deterministic source IP that can traverse this SSH allowlist. Do not open 22 to `0.0.0.0/0` and do not allowlist shared GitHub-hosted runner CIDRs. Owner-accepted path: Production-only Tailscale overlay using **GitHub Actions OIDC workload identity federation** (reusable Tailscale auth key is fallback only, not selected). Investigation: `_bmad-output/implementation-artifacts/investigations/story-46-3-production-actions-network-path.md`. Do not implement overlay, populate `PROD_*`, or dispatch Production from that investigation.  
+Story 46.3 now has the **code-side** Tailscale OIDC control plane. That is not a live overlay. Owner Gate B remains **blocked** until the owner installs Tailscale on this host, joins `tag:cohestra-production`, applies Grants, observes the OIDC subject, creates the federated identity, and prepares Unix user `deploy`. Do not open 22 to `0.0.0.0/0` and do not allowlist shared GitHub-hosted runner CIDRs. Cursor must not SSH. Runbook: [tailscale-production-overlay.md](./tailscale-production-overlay.md).  
+`CODE_PATH_IMPLEMENTED != LIVE_OVERLAY_BOOTSTRAPPED`  
 `PUBLIC_SSH_FIREWALL_CHANGE=NONE`  
-`TAILSCALE_HOST_FIREWALL_INTEGRATION=VERIFY_DURING_BOOTSTRAP`
+`TAILSCALE_INSTALLED_LIVE=false`  
+`TAILSCALE_NODE_JOINED=false`  
+`DEPLOY_USER_CREATED_LIVE=false`
 
 ## Unattended security updates
 

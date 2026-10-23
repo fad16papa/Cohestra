@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-23
-# Epic 46 in-progress 2026-10-23. 46.3 review on main a7c5f88b. Owner Gate A PASS. Option A ACCEPTED — Tailscale + OIDC federation (auth key fallback only, not selected). Owner Gate B BLOCKED — OVERLAY NOT IMPLEMENTED. Do not populate PROD_*. Do not dispatch Production. Do not start 46.4. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
+# Epic 46 in-progress 2026-10-23. 46.3 review: Tailscale OIDC code path implemented, not live. Owner Gate A PASS. Network architecture ACCEPTED. Code IMPLEMENTED / NOT LIVE. Owner Gate B BLOCKED. Do not populate PROD_*. Do not dispatch Production. Do not start 46.4. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
 # Epic 46 in-progress 2026-10-22. 46.3 planning correction: Layer A exact-SHA CI + Layer B GitGuardian on merge-time PR HEAD. Still ready-for-dev; do not start implementation; do not merge planning PR until owner accepts. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
 # Epic 46 in-progress 2026-10-21. 46.2 done (main 5d52d6e3 includes #484 CI flake fix after 46.2 merge). 46.3 ready-for-dev (planning only). Do not start 46.3 implementation. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
 # Epic 46 in-progress 2026-10-20. 46.1 done (main 36601be5). 46.2 review: dedicated Production droplet 610830617 / 159.223.55.242. OWNER_GATE droplet_purchase APPROVED. Cutover GRANTED; release NOT YET COMPLETE. Do not start 46.3.
