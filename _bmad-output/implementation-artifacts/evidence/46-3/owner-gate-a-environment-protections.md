@@ -72,3 +72,18 @@ Required reviewer could not be applied because Environment write is forbidden to
 `OWNER_GATE_B_STATUS=outstanding` (`production_secrets`)
 
 Story 46.3 remains `review`. Epic 46 remains `in-progress`.
+
+## Retry (Asia/Singapore 2026-10-23 19:02 +08)
+
+- Main unchanged: `beba545f269f801711aaea0047bd7dbb95775c60`
+- Authenticated actor still `cursor[bot]`; repository `admin=false`
+- Environments before retry: `uat` only
+- Same `PUT` body retried (reviewer `fad16papa` only; no bot reviewer)
+- Result again: HTTP 403 `Resource not accessible by integration`
+- `production` still 404
+- UAT `updated_at` still `2026-10-15T13:50:40Z`
+- `Deploy Production` runs still none
+- Repository secret names still HTTP 403
+- `ORG_SECRET_SCOPE=UNVERIFIED`
+
+No Settings mutation occurred. Gate remains blocked.
