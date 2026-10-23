@@ -53,7 +53,7 @@ Owner gate `droplet_purchase` is **APPROVED**. Cutover phrase is **GRANTED** and
 - Owner-confirmed DigitalOcean project: `Cohestra` (API project list is 403 with the current token). Droplet IDs/IPv4s unchanged after the reported project move.
 - Owner Windows SSH is **owner-reported PASS** (`116.86.142.14/32`). Cloud Agent SSH is not owner proof. Recovery Console is owner-reported PASS.
 - Story 46.3 control-plane files are in-repo. Implementation must not dispatch or create Environment `production`.
-- Remaining owner gates: GitHub Environment `production` protections, then `production_secrets` before any live SSH.
+- Remaining owner gates: GitHub Environment `production` protections (Gate A owner-configured), then `production_secrets` (Gate B **blocked** until the accepted Tailscale + OIDC overlay is implemented — do not mint keys or populate `PROD_*` yet).
 
 ## Historical docs (do not follow for Production topology)
 
