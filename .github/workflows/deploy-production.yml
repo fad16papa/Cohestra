@@ -84,6 +84,12 @@ jobs:
     if: ${{ inputs.action == 'deploy' }}
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      pull-requests: read
+      id-token: write
     steps:
       - name: Refuse SHA substitution
         env:
@@ -124,7 +130,7 @@ jobs:
           PROD_PUBLIC_BASE_URL: ${{ secrets.PROD_PUBLIC_BASE_URL }}
         run: bash deploy/fail-closed-production-secrets.sh
 
-      - name: Validate Production target
+      - name: Validate Production inventory identity
         env:
           PROD_DROPLET_HOST: ${{ secrets.PROD_DROPLET_HOST }}
           PROD_DROPLET_USER: ${{ secrets.PROD_DROPLET_USER }}
@@ -133,14 +139,37 @@ jobs:
           PROD_COMPOSE_PROJECT: ${{ vars.PROD_COMPOSE_PROJECT }}
         run: bash deploy/validate-production-target.sh
 
-      - name: Dry-run Production control plane over SSH
+      - name: Validate Production overlay configuration
+        env:
+          PROD_TAILSCALE_CLIENT_ID: ${{ vars.PROD_TAILSCALE_CLIENT_ID }}
+          PROD_TAILSCALE_AUDIENCE: ${{ vars.PROD_TAILSCALE_AUDIENCE }}
+          PROD_TAILSCALE_HOST: ${{ vars.PROD_TAILSCALE_HOST }}
+        run: bash deploy/validate-production-overlay-target.sh
+
+      - name: Join Production Tailscale overlay via OIDC
+        uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf
+        with:
+          oauth-client-id: ${{ vars.PROD_TAILSCALE_CLIENT_ID }}
+          audience: ${{ vars.PROD_TAILSCALE_AUDIENCE }}
+          tags: tag:gha-production
+          ping: ${{ vars.PROD_TAILSCALE_HOST }}
+          args: --accept-routes=false --advertise-exit-node=false --ssh=false
+
+      - name: Verify Production overlay connectivity
+        env:
+          PROD_TAILSCALE_CLIENT_ID: ${{ vars.PROD_TAILSCALE_CLIENT_ID }}
+          PROD_TAILSCALE_AUDIENCE: ${{ vars.PROD_TAILSCALE_AUDIENCE }}
+          PROD_TAILSCALE_HOST: ${{ vars.PROD_TAILSCALE_HOST }}
+        run: bash deploy/verify-production-overlay-connectivity.sh
+
+      - name: Dry-run Production control plane over overlay SSH
         uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
         env:
           PROD_DROPLET_DEPLOY_PATH: ${{ secrets.PROD_DROPLET_DEPLOY_PATH }}
           DEPLOY_SHA: ${{ needs.validate-sha.outputs.validated_sha }}
           PROD_COMPOSE_PROJECT: ${{ vars.PROD_COMPOSE_PROJECT }}
         with:
-          host: 159.223.55.242
+          host: ${{ vars.PROD_TAILSCALE_HOST }}
           username: ${{ secrets.PROD_DROPLET_USER }}
           key: ${{ secrets.PROD_DROPLET_SSH_KEY }}
           port: 22
@@ -165,6 +194,12 @@ jobs:
     if: ${{ inputs.action == 'rollback' }}
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      pull-requests: read
+      id-token: write
     steps:
       - name: Refuse SHA substitution
         env:
@@ -205,7 +240,7 @@ jobs:
           PROD_PUBLIC_BASE_URL: ${{ secrets.PROD_PUBLIC_BASE_URL }}
         run: bash deploy/fail-closed-production-secrets.sh
 
-      - name: Validate Production target
+      - name: Validate Production inventory identity
         env:
           PROD_DROPLET_HOST: ${{ secrets.PROD_DROPLET_HOST }}
           PROD_DROPLET_USER: ${{ secrets.PROD_DROPLET_USER }}
@@ -214,14 +249,37 @@ jobs:
           PROD_COMPOSE_PROJECT: ${{ vars.PROD_COMPOSE_PROJECT }}
         run: bash deploy/validate-production-target.sh
 
-      - name: Dry-run Production rollback over SSH
+      - name: Validate Production overlay configuration
+        env:
+          PROD_TAILSCALE_CLIENT_ID: ${{ vars.PROD_TAILSCALE_CLIENT_ID }}
+          PROD_TAILSCALE_AUDIENCE: ${{ vars.PROD_TAILSCALE_AUDIENCE }}
+          PROD_TAILSCALE_HOST: ${{ vars.PROD_TAILSCALE_HOST }}
+        run: bash deploy/validate-production-overlay-target.sh
+
+      - name: Join Production Tailscale overlay via OIDC
+        uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf
+        with:
+          oauth-client-id: ${{ vars.PROD_TAILSCALE_CLIENT_ID }}
+          audience: ${{ vars.PROD_TAILSCALE_AUDIENCE }}
+          tags: tag:gha-production
+          ping: ${{ vars.PROD_TAILSCALE_HOST }}
+          args: --accept-routes=false --advertise-exit-node=false --ssh=false
+
+      - name: Verify Production overlay connectivity
+        env:
+          PROD_TAILSCALE_CLIENT_ID: ${{ vars.PROD_TAILSCALE_CLIENT_ID }}
+          PROD_TAILSCALE_AUDIENCE: ${{ vars.PROD_TAILSCALE_AUDIENCE }}
+          PROD_TAILSCALE_HOST: ${{ vars.PROD_TAILSCALE_HOST }}
+        run: bash deploy/verify-production-overlay-connectivity.sh
+
+      - name: Dry-run Production rollback over overlay SSH
         uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
         env:
           PROD_DROPLET_DEPLOY_PATH: ${{ secrets.PROD_DROPLET_DEPLOY_PATH }}
           DEPLOY_SHA: ${{ needs.validate-sha.outputs.validated_sha }}
           PROD_COMPOSE_PROJECT: ${{ vars.PROD_COMPOSE_PROJECT }}
         with:
-          host: 159.223.55.242
+          host: ${{ vars.PROD_TAILSCALE_HOST }}
           username: ${{ secrets.PROD_DROPLET_USER }}
           key: ${{ secrets.PROD_DROPLET_SSH_KEY }}
           port: 22

@@ -84,13 +84,87 @@ for perm in 'contents: read' 'actions: read' 'checks: read' 'pull-requests: read
   fi
 done
 
-for perm in 'contents: write' 'actions: write' 'checks: write' 'pull-requests: write' 'id-token: write'; do
+for perm in 'contents: write' 'actions: write' 'checks: write' 'pull-requests: write'; do
   if grep -qE "$perm" "$WF"; then
     fail "write permission ${perm} is forbidden"
   else
     pass "write permission ${perm} is absent"
   fi
 done
+
+workflow_global_has_id_token_write() {
+  awk '
+    /^permissions:/ { in_p=1; next }
+    in_p && /^[a-zA-Z]/ { in_p=0 }
+    in_p && $0 ~ /id-token:[[:space:]]*write/ { found=1 }
+    END { exit found ? 0 : 1 }
+  ' "$1"
+}
+
+job_has_id_token_write() {
+  local file="$1"
+  local job="$2"
+  awk -v job="$job" '
+    $0 ~ "^  " job ":" { in_j=1; next }
+    in_j && $0 ~ /^  [a-zA-Z0-9_-]+:/ { in_j=0 }
+    in_j && $0 ~ /^    permissions:/ { in_p=1; next }
+    in_j && in_p && $0 ~ /^    [a-zA-Z0-9_-]+:/ && $0 !~ /^    permissions:/ { in_p=0 }
+    in_j && in_p && $0 ~ /id-token:[[:space:]]*write/ { found=1 }
+    END { exit found ? 0 : 1 }
+  ' "$file"
+}
+
+job_has_required_oidc_permissions() {
+  local file="$1"
+  local job="$2"
+  awk -v job="$job" '
+    $0 ~ "^  " job ":" { in_j=1; next }
+    in_j && $0 ~ /^  [a-zA-Z0-9_-]+:/ { in_j=0 }
+    in_j && $0 ~ /^    permissions:/ { in_p=1; next }
+    in_j && in_p && $0 ~ /^    [a-zA-Z0-9_-]+:/ && $0 !~ /^    permissions:/ { in_p=0 }
+    in_j && in_p {
+      line=$0
+      sub(/^[[:space:]]+/, "", line)
+      if (line=="contents: read") c=1
+      if (line=="actions: read") a=1
+      if (line=="checks: read") k=1
+      if (line=="pull-requests: read") p=1
+      if (line=="id-token: write") i=1
+      if (line ~ /:[[:space:]]*write/ && line !~ /id-token:[[:space:]]*write/) bad=1
+    }
+    END { exit (c && a && k && p && i && !bad) ? 0 : 1 }
+  ' "$file"
+}
+
+if workflow_global_has_id_token_write "$WF"; then
+  fail "workflow-global id-token: write is forbidden"
+else
+  pass "workflow-global id-token: write is absent"
+fi
+
+if job_has_id_token_write "$WF" "require-main"; then
+  fail "require-main must not have id-token: write"
+else
+  pass "require-main has no id-token: write"
+fi
+
+if job_has_id_token_write "$WF" "validate-sha"; then
+  fail "validate-sha must not have id-token: write"
+else
+  pass "validate-sha has no id-token: write"
+fi
+
+if job_has_required_oidc_permissions "$WF" "deploy"; then
+  pass "deploy has job-level OIDC permissions"
+else
+  fail "deploy must grant job-level id-token: write with read-only extras"
+fi
+
+if job_has_required_oidc_permissions "$WF" "rollback"; then
+  pass "rollback has job-level OIDC permissions"
+else
+  fail "rollback must grant job-level id-token: write with read-only extras"
+fi
 
 job_has_production_env() {
   local file="$1"
@@ -178,16 +252,81 @@ else
 fi
 
 if grep -q 'uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262' "$WF" \
-  && grep -q 'uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f' "$WF"; then
+  && grep -q 'uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f' "$WF" \
+  && grep -q 'uses: tailscale/github-action@99a8333667fff04fdd6cffb46dfd409f8329a7bf' "$WF"; then
   pass "actions are pinned to reviewed commit SHAs"
 else
-  fail "checkout and appleboy must be pinned to reviewed SHAs"
+  fail "checkout, appleboy, and tailscale/github-action must be pinned to reviewed SHAs"
 fi
 
-if grep -E 'uses: (actions/checkout|appleboy/ssh-action)@v' "$WF"; then
+if python3 - "$WF" <<'PY'
+import re
+import sys
+from pathlib import Path
+text = Path(sys.argv[1]).read_text()
+expected = {
+    "tailscale/github-action": "99a8333667fff04fdd6cffb46dfd409f8329a7bf",
+    "appleboy/ssh-action": "2ead5e36573f08b82fbfce1504f1a4b05a647c6f",
+}
+pins = re.findall(r"uses:\s*(tailscale/github-action|appleboy/ssh-action)@([0-9a-fA-F]+)", text)
+if not pins:
+    raise SystemExit(1)
+for name, sha in pins:
+    if len(sha) != 40 or sha.lower() != expected[name]:
+        raise SystemExit(1)
+raise SystemExit(0)
+PY
+then
+  pass "Tailscale and appleboy pins are the exact 40-character reviewed SHAs"
+else
+  fail "Tailscale/appleboy pins must be the exact 40-character reviewed SHAs"
+fi
+
+if grep -E 'uses: (actions/checkout|appleboy/ssh-action|tailscale/github-action)@v' "$WF"; then
   fail "workflow must not use mutable action version tags"
 else
   pass "no mutable action version tags"
+fi
+
+if awk '
+  $0 ~ /^  [a-zA-Z0-9_-]+:/ { job=$1; sub(":", "", job) }
+  $0 ~ /tailscale\/github-action/ { ts[job]=1 }
+  END {
+    if (!ts["deploy"] || !ts["rollback"]) exit 1
+    for (j in ts) if (j != "deploy" && j != "rollback") exit 1
+    exit 0
+  }
+' "$WF"; then
+  pass "Tailscale action exists only on deploy and rollback"
+else
+  fail "Tailscale action must exist only on deploy and rollback"
+fi
+
+if grep -qE 'tags:[[:space:]]*tag:gha-production' "$WF"; then
+  pass "runner tag is tag:gha-production"
+else
+  fail "Tailscale tags must be exactly tag:gha-production"
+fi
+
+if grep -q 'oauth-client-id: ${{ vars.PROD_TAILSCALE_CLIENT_ID }}' "$WF" \
+  && grep -q 'audience: ${{ vars.PROD_TAILSCALE_AUDIENCE }}' "$WF"; then
+  pass "workload federation inputs use Environment variables"
+else
+  fail "Tailscale action must use vars.PROD_TAILSCALE_CLIENT_ID and AUDIENCE"
+fi
+
+if grep -qE 'authkey:|oauth-secret:|PROD_TAILSCALE_AUTHKEY|secrets\.PROD_TAILSCALE' "$WF"; then
+  fail "authkey and OAuth client secret are forbidden"
+else
+  pass "no authkey or OAuth client secret"
+fi
+
+if grep -q -- '--accept-routes=false' "$WF" \
+  && grep -q -- '--advertise-exit-node=false' "$WF" \
+  && grep -q -- '--ssh=false' "$WF"; then
+  pass "runner join disables accept-routes, exit node, and Tailscale SSH"
+else
+  fail "Tailscale join must disable accept-routes, exit node, and Tailscale SSH"
 fi
 
 if grep -qE 'debug:[[:space:]]*true' "$WF"; then
@@ -202,10 +341,22 @@ else
   fail "SSH command_timeout must be 60m"
 fi
 
-if grep -q 'host: 159.223.55.242' "$WF"; then
-  pass "SSH host is the literal Production IPv4"
+if grep -q 'host: ${{ vars.PROD_TAILSCALE_HOST }}' "$WF"; then
+  pass "appleboy host uses the overlay transport identity"
 else
-  fail "appleboy host must be literal 159.223.55.242"
+  fail "appleboy host must be vars.PROD_TAILSCALE_HOST"
+fi
+
+if grep -q '159.223.55.242' "$WF"; then
+  fail "public Production IPv4 must not be an SSH destination in the workflow"
+else
+  pass "public Production IPv4 is not an SSH destination"
+fi
+
+if grep -qE 'username: \$\{\{ secrets\.PROD_DROPLET_USER \}\}' "$WF"; then
+  pass "SSH username remains PROD_DROPLET_USER"
+else
+  fail "appleboy username must stay secrets.PROD_DROPLET_USER"
 fi
 
 if grep -q '129.212.235.2' "$WF" || grep -qE '[^_]DROPLET_|secrets\.DROPLET_' "$WF"; then
@@ -216,10 +367,30 @@ fi
 
 if grep -q 'validate-production-provenance.sh' "$WF" \
   && grep -q 'fail-closed-production-secrets.sh' "$WF" \
-  && grep -q 'validate-production-target.sh' "$WF"; then
-  pass "provenance, secrets, and target validators are invoked"
+  && grep -q 'validate-production-target.sh' "$WF" \
+  && grep -q 'validate-production-overlay-target.sh' "$WF" \
+  && grep -q 'verify-production-overlay-connectivity.sh' "$WF"; then
+  pass "provenance, secrets, inventory, overlay, and connectivity validators are invoked"
 else
-  fail "workflow must run provenance, secret, and target validators"
+  fail "workflow must run provenance, secret, inventory, overlay, and connectivity validators"
+fi
+
+if awk '
+  $0 ~ /^  [a-zA-Z0-9_-]+:/ { job=$1; sub(":", "", job) }
+  $0 ~ /validate-production-overlay-target\.sh/ { overlay[job]=1 }
+  $0 ~ /tailscale\/github-action/ { ts[job]=1 }
+  $0 ~ /verify-production-overlay-connectivity\.sh/ { ping[job]=1 }
+  $0 ~ /appleboy\/ssh-action/ { ssh[job]=1 }
+  END {
+    for (j in ssh) {
+      if (!overlay[j] || !ts[j] || !ping[j]) exit 1
+    }
+    exit 0
+  }
+' "$WF"; then
+  pass "overlay validate → Tailscale join → ping → SSH order is present on SSH jobs"
+else
+  fail "SSH jobs must validate overlay, join Tailscale, then ping before appleboy"
 fi
 
 if grep -qE '(^|[^a-z-])remote-deploy\.sh' "$WF" || grep -q 'docker-compose.uat.yml' "$WF"; then
@@ -253,6 +424,43 @@ if [[ -f "$ROOT_DIR/deploy/production-provenance-anchor.txt" ]] \
   pass "immutable Production provenance anchor is the 46.3 baseline"
 else
   fail "deploy/production-provenance-anchor.txt must contain c39f2618bcdcb71875d2da5b654f3a999b39ae35"
+fi
+
+if grep -q 'PROD_IP="159.223.55.242"' "$ROOT_DIR/deploy/validate-production-target.sh" \
+  && grep -q 'host is not the Production inventory IPv4' "$ROOT_DIR/deploy/validate-production-target.sh"; then
+  pass "inventory validator still requires 159.223.55.242"
+else
+  fail "validate-production-target.sh must keep the public inventory identity"
+fi
+
+if [[ -f "$UAT" ]] && ! grep -qE 'tailscale/github-action|PROD_TAILSCALE_|tag:gha-production' "$UAT"; then
+  pass "UAT workflow has no Production Tailscale config"
+else
+  fail "Production Tailscale config must not leak into deploy.yml"
+fi
+
+firewall_files=(
+  "$ROOT_DIR/deploy/harden-production-host.sh"
+  "$ROOT_DIR/deploy/lib/production-ssh-cidr.sh"
+  "$ROOT_DIR/deploy/lib/production-ufw-reconcile.sh"
+  "$ROOT_DIR/deploy/provision-production-droplet.sh"
+)
+firewall_ok=1
+for f in "${firewall_files[@]}"; do
+  if grep -nE '0\.0\.0\.0/0|::/0' "$f" | grep -E '22|ssh|SSH|OpenSSH' | grep -vqE 'Never|must not|REFUSE|forbidden|WORLD|die |assert .*not'; then
+    firewall_ok=0
+  fi
+done
+if grep -RqnE 'actions\.githubusercontent|githubusercontent|AzureCloud|13\.64\.|20\.37\.|52\.147\.' \
+  "$ROOT_DIR/deploy/harden-production-host.sh" \
+  "$ROOT_DIR/deploy/lib/production-ssh-cidr.sh" \
+  "$ROOT_DIR/deploy/provision-production-droplet.sh"; then
+  firewall_ok=0
+fi
+if [[ "$firewall_ok" -eq 1 ]]; then
+  pass "Story 46.2 firewall scripts do not open SSH to the world or shared runner CIDRs"
+else
+  fail "firewall/hardening must not introduce 0.0.0.0/0:22, ::/0:22, or GitHub/Azure SSH allowlists"
 fi
 
 echo "Passed: ${PASS} | Failed: ${FAIL}"

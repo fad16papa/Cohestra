@@ -171,7 +171,7 @@ fi
 prod_env_ok=1
 while IFS= read -r wf; do
   base="$(basename "$wf")"
-  if [[ "$base" == "deploy-production.yml" ]]; then
+  if [[ "$base" == "deploy-production.yml" || "$base" == "inspect-production-oidc.yml" ]]; then
     continue
   fi
   if grep -qE '^[[:space:]]*environment:[[:space:]]*production[[:space:]]*$' "$wf"; then
@@ -179,7 +179,7 @@ while IFS= read -r wf; do
   fi
 done < <(find "$ROOT_DIR/.github/workflows" -name '*.yml' -print)
 if [[ "$prod_env_ok" -eq 1 ]]; then
-  pass "Only deploy-production.yml may reference Environment production"
+  pass "Only Production deploy/inspect workflows may reference Environment production"
 else
   fail "UAT or other workflows must not reference Environment production"
 fi

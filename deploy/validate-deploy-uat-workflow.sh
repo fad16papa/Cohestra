@@ -237,6 +237,12 @@ else
   pass "lifecycle job does not add write permissions"
 fi
 
+if grep -qE 'tailscale/github-action|PROD_TAILSCALE_|tag:gha-production|environment: production' "$WF"; then
+  fail "UAT workflow must not gain Production Tailscale or production Environment"
+else
+  pass "UAT workflow has no Production overlay or Environment production"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1

@@ -1,0 +1,13 @@
+{
+  "tagOwners": {
+    "tag:gha-production": ["OWNER_TAILSCALE_PRINCIPAL_PLACEHOLDER"],
+    "tag:cohestra-production": ["OWNER_TAILSCALE_PRINCIPAL_PLACEHOLDER"]
+  },
+  "grants": [
+    {
+      "src": ["tag:gha-production"],
+      "dst": ["tag:cohestra-production"],
+      "ip": ["tcp:22"]
+    }
+  ]
+}

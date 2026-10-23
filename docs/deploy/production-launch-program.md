@@ -53,7 +53,7 @@ Owner gate `droplet_purchase` is **APPROVED**. Cutover phrase is **GRANTED** and
 - Owner-confirmed DigitalOcean project: `Cohestra` (API project list is 403 with the current token). Droplet IDs/IPv4s unchanged after the reported project move.
 - Owner Windows SSH is **owner-reported PASS** (`116.86.142.14/32`). Cloud Agent SSH is not owner proof. Recovery Console is owner-reported PASS.
 - Story 46.3 control-plane files are in-repo. Implementation must not dispatch or create Environment `production`.
-- Remaining owner gates: GitHub Environment `production` protections (Gate A owner-configured), then `production_secrets` (Gate B **blocked** until the accepted Tailscale + OIDC overlay is implemented — do not mint keys or populate `PROD_*` yet).
+- Remaining owner gates: GitHub Environment `production` protections (Gate A PASS). Tailscale OIDC code path is implemented and dormant. Gate B (`production_secrets`) is **blocked** until the owner bootstraps the live overlay — do not mint keys or populate `PROD_*` yet.
 
 ## Historical docs (do not follow for Production topology)
 
@@ -86,7 +86,9 @@ Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-e
 - Direct-to-main commits fail closed, including when a later clean merge would launder them. First-parent history is walked to the immutable trust anchor `c39f2618bcdcb71875d2da5b654f3a999b39ae35`. `ancestor of main` is not reviewed. Branch protection is not mutated in 46.3.
 - One-parent squash/rebase deploys fail closed (no immutable merge-time PR HEAD). Merge-method Settings are not changed in 46.3.
 - Secrets: `PROD_DROPLET_*` + `PROD_PUBLIC_BASE_URL` names only. Fail closed with `MISSING_SECRET=<NAME>`.
-- Target: existing droplet `cohestra-production` / `159.223.55.242`. UAT `129.212.235.2` is forbidden.
+- Overlay variables (later, not populated here): `PROD_TAILSCALE_CLIENT_ID`, `PROD_TAILSCALE_AUDIENCE`, `PROD_TAILSCALE_HOST`.
+- Inventory identity: droplet `cohestra-production` / `159.223.55.242`. SSH transport identity: later Tailscale CGNAT IPv4. UAT `129.212.235.2` is forbidden.
+- `CODE PATH IMPLEMENTED != LIVE OVERLAY BOOTSTRAPPED`. Production host Tailscale is not installed. Federated identity is not created. Do not dispatch.
 - Rollback: `deploy/production-rollback.sh` with explicit SHA; DB restore is 46.5 and never implicit.
 - UAT `deploy.yml` / `deploy-uat` remains automatic and unchanged.
 - Control-plane files exist in-repo. Environment `production` is not created here. Do not dispatch. This file does not deploy Production.

@@ -267,6 +267,21 @@ jobs:
       - name: Production evidence schema contract
         run: bash deploy/validate-production-evidence-schema.test.sh
 
+      - name: Production overlay target contract
+        run: bash deploy/validate-production-overlay-target.test.sh
+
+      - name: Production overlay connectivity contract
+        run: bash deploy/verify-production-overlay-connectivity.test.sh
+
+      - name: Production overlay bootstrap contract
+        run: bash deploy/bootstrap-production-overlay.test.sh
+
+      - name: Production Tailscale Grants contract
+        run: bash deploy/validate-tailscale-production-grants.sh
+
+      - name: Production OIDC inspection contract
+        run: bash deploy/validate-inspect-production-oidc-workflow.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest
