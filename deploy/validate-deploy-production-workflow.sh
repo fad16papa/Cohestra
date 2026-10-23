@@ -259,6 +259,29 @@ else
   fail "checkout, appleboy, and tailscale/github-action must be pinned to reviewed SHAs"
 fi
 
+if python3 - "$WF" <<'PY'
+import re
+import sys
+from pathlib import Path
+text = Path(sys.argv[1]).read_text()
+expected = {
+    "tailscale/github-action": "99a8333667fff04fdd6cffb46dfd409f8329a7bf",
+    "appleboy/ssh-action": "2ead5e36573f08b82fbfce1504f1a4b05a647c6f",
+}
+pins = re.findall(r"uses:\s*(tailscale/github-action|appleboy/ssh-action)@([0-9a-fA-F]+)", text)
+if not pins:
+    raise SystemExit(1)
+for name, sha in pins:
+    if len(sha) != 40 or sha.lower() != expected[name]:
+        raise SystemExit(1)
+raise SystemExit(0)
+PY
+then
+  pass "Tailscale and appleboy pins are the exact 40-character reviewed SHAs"
+else
+  fail "Tailscale/appleboy pins must be the exact 40-character reviewed SHAs"
+fi
+
 if grep -E 'uses: (actions/checkout|appleboy/ssh-action|tailscale/github-action)@v' "$WF"; then
   fail "workflow must not use mutable action version tags"
 else

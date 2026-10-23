@@ -50,7 +50,9 @@ Production: NO-GO / NOT YET COMPLETE
 - PUBLIC_SSH_FALLBACK=false
 - TAILNET_GRANT=tag:gha-production->tag:cohestra-production:tcp:22
 - OIDC_INSPECTION_DISPATCHED=false
+- REQUEST_TOKEN_LOGGED=false
 - RAW_JWT_LOGGED=false
+- REQUEST_TOKEN_READ_ALLOWED=true
 - PRODUCTION_SSH=false
 - GATE_B=BLOCKED
 

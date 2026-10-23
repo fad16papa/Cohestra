@@ -25,7 +25,7 @@ Unresolved MINOR: upstream action still injects `--accept-routes` before caller 
 | Overlay lateral movement / wildcard Grants | FAIL closed. Single grant `tag:gha-production → tag:cohestra-production tcp:22`. |
 | Exit node / subnet routes | FAIL closed in join args, bootstrap command, and Grants (`via` forbidden). |
 | Production root SSH / owner or UAT key reuse | Username remains `PROD_DROPLET_USER` (must be `deploy`). Bootstrap does not install a key. |
-| Raw JWT / request-token leakage | Inspection decoder never prints JWT, signature, or request token. Mutations fail tests. |
+| Raw JWT / request-token leakage | Inspection decoder reads `ACTIONS_ID_TOKEN_REQUEST_URL` / `ACTIONS_ID_TOKEN_REQUEST_TOKEN` in-process only. Echo, print, upload, persist, and job-output of the request token or raw JWT fail the contract. Legitimate reads are not treated as leaks. |
 | Automatic diagnostic workflow | `workflow_dispatch` only + Environment `production`. Push/PR mutations fail tests. |
 | Accidental Deploy Production | Still manual, main-only, Environment-gated. This PR does not dispatch. |
 | Firewall weakening | 46.2 harden/provision scripts still refuse `0.0.0.0/0:22`, `::/0:22`, and shared runner CIDRs. |

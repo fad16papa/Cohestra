@@ -20,6 +20,9 @@ jobs:
           OIDC_INSPECT_AUDIENCE: cohestra-production-oidc-inspect
         run: |
           set -euo pipefail
+          # ACTIONS_ID_TOKEN_REQUEST_URL and ACTIONS_ID_TOKEN_REQUEST_TOKEN must
+          # be read in-process to acquire the GitHub OIDC JWT. Do not echo,
+          # print, upload, persist, or export them. Do not print the raw JWT.
           python3 - <<'PY'
           import base64
           import json

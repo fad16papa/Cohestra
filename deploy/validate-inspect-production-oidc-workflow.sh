@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # Static contract for the Production OIDC inspection workflow.
+# Legitimate in-process reads of ACTIONS_ID_TOKEN_REQUEST_URL/TOKEN are required
+# and allowed. Echo, print, upload, persist, and output of those values or the
+# raw JWT are leaks and must fail.
 
 set -euo pipefail
 
@@ -13,31 +16,92 @@ pass() { echo "PASS: $1"; PASS=$((PASS + 1)); }
 fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); }
 
 inspect_contract() {
-  local file="$1"
-  [[ -f "$file" ]] || return 1
-  grep -qE '^name:[[:space:]]*Inspect Production OIDC[[:space:]]*$' "$file" || return 1
-  grep -qE '^[[:space:]]*workflow_dispatch:' "$file" || return 1
-  ! grep -qE '^on:[[:space:]]*\[' "$file" || return 1
-  for key in push pull_request pull_request_target workflow_run workflow_call repository_dispatch schedule release deployment; do
-    ! grep -qE "^[[:space:]]*${key}:" "$file" || return 1
-  done
-  grep -qE '^[[:space:]]+environment:[[:space:]]*production[[:space:]]*$' "$file" || return 1
-  ! grep -qE 'environment:[[:space:]]*uat' "$file" || return 1
-  grep -qE 'id-token:[[:space:]]*write' "$file" || return 1
-  ! grep -qE 'contents:[[:space:]]*write|actions:[[:space:]]*write|pull-requests:[[:space:]]*write|packages:[[:space:]]*write' "$file" || return 1
-  ! grep -qE 'actions/checkout|appleboy/ssh-action|tailscale/github-action' "$file" || return 1
-  ! grep -qiE 'appleboy|tailscale/github-action' "$file" || return 1
-  ! grep -qE 'secrets\.|PROD_|DROPLET_|oauth-secret|authkey' "$file" || return 1
-  ! grep -qE 'print\(jwt\)|print\(request_token\)|echo .*ACTIONS_ID_TOKEN_REQUEST_TOKEN|echo \$\{?JWT' "$file" || return 1
-  grep -q 'JWT_PRINTED=false' "$file" || return 1
-  grep -q 'REQUEST_TOKEN_PRINTED=false' "$file" || return 1
-  grep -q 'cohestra-production-oidc-inspect' "$file" || return 1
-  grep -q 'ABSENT' "$file" || return 1
-  return 0
+  python3 - "$1" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+text = Path(sys.argv[1]).read_text()
+
+def fail(reason: str) -> None:
+    print(reason)
+    raise SystemExit(1)
+
+if not re.search(r"^name:\s*Inspect Production OIDC\s*$", text, re.M):
+    fail("name")
+if not re.search(r"^\s*workflow_dispatch:", text, re.M):
+    fail("workflow_dispatch")
+if re.search(r"^on:\s*\[", text, re.M):
+    fail("on_list")
+for key in (
+    "push",
+    "pull_request",
+    "pull_request_target",
+    "workflow_run",
+    "workflow_call",
+    "repository_dispatch",
+    "schedule",
+    "release",
+    "deployment",
+):
+    if re.search(rf"^\s*{key}:", text, re.M):
+        fail(f"trigger_{key}")
+if not re.search(r"^\s+environment:\s*production\s*$", text, re.M):
+    fail("environment_production")
+if re.search(r"environment:\s*uat", text):
+    fail("environment_uat")
+if not re.search(r"id-token:\s*write", text):
+    fail("id_token")
+if re.search(r"contents:\s*write|actions:\s*write|pull-requests:\s*write|packages:\s*write", text):
+    fail("write_permissions")
+if re.search(r"actions/checkout|appleboy/ssh-action|tailscale/github-action", text):
+    fail("forbidden_step")
+if re.search(r"secrets\.|PROD_|DROPLET_|oauth-secret|authkey", text):
+    fail("named_secrets")
+
+# Required, allowed in-process reads. These are not leaks.
+if 'os.environ.get("ACTIONS_ID_TOKEN_REQUEST_URL"' not in text:
+    fail("must_read_request_url")
+if 'os.environ.get("ACTIONS_ID_TOKEN_REQUEST_TOKEN"' not in text:
+    fail("must_read_request_token")
+
+leak_patterns = (
+    r"print\(\s*jwt\s*\)",
+    r"print\(\s*request_token\s*\)",
+    r"print\(\s*request_url\s*\)",
+    r"print\(os\.environ\.get\(\"ACTIONS_ID_TOKEN_REQUEST_TOKEN\"",
+    r"echo\s+.*ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+    r"echo\s+.*ACTIONS_ID_TOKEN_REQUEST_URL",
+    r"echo\s+\$\{?JWT",
+    r"print\(.*Authorization",
+    r"actions/upload-artifact",
+    r"upload-artifact",
+    r"GITHUB_OUTPUT",
+    r"GITHUB_ENV",
+    r"GITHUB_STEP_SUMMARY",
+    r"^\s+outputs:",
+    r"open\([^\n]*(jwt|request_token)",
+    r"write_text\([^\n]*(jwt|request_token)",
+    r"Path\([^\n]*(jwt|token)",
+)
+for pat in leak_patterns:
+    if re.search(pat, text, re.M | re.I):
+        fail(f"leak:{pat}")
+
+if "JWT_PRINTED=false" not in text or "REQUEST_TOKEN_PRINTED=false" not in text:
+    fail("sanitized_markers")
+if "cohestra-production-oidc-inspect" not in text:
+    fail("inspect_audience")
+if "ABSENT" not in text:
+    fail("absent_claims")
+if "iss" not in text or "sub" not in text or "job_workflow_ref" not in text:
+    fail("required_claims")
+PY
 }
 
-if ! inspect_contract "$WF"; then
+if ! inspect_contract "$WF" >/dev/null; then
   echo "Missing or invalid $WF" >&2
+  inspect_contract "$WF" || true
   exit 1
 fi
 
@@ -52,7 +116,8 @@ pass "job can request an OIDC token"
 pass "repository-write permissions are absent"
 pass "no checkout, SSH, or Tailscale steps"
 pass "named secrets are absent"
-pass "raw JWT and request token are not printed"
+pass "legitimate in-process OIDC request URL/token reads are required and allowed"
+pass "raw JWT, request token, artifacts, and outputs are not leaked"
 pass "inspection audience is local and not a Tailscale exchange"
 pass "missing claims are reported as ABSENT"
 
@@ -67,21 +132,19 @@ trap 'rm -f "$copy"' EXIT
 
 check_mutation() {
   local label="$1"
-  if inspect_contract "$copy"; then
+  if inspect_contract "$copy" >/dev/null; then
     fail "mutation '${label}' must fail the contract"
   else
     pass "mutation '${label}' is detected"
   fi
 }
 
-python3 - "$WF" "$copy" <<'PY'
-from pathlib import Path
-import sys
-src = Path(sys.argv[1]).read_text()
-dst = Path(sys.argv[2])
-# placeholder; mutations applied by the shell below
-dst.write_text(src)
-PY
+# The current file itself is the allowed-read fixture.
+if inspect_contract "$WF" >/dev/null; then
+  pass "current workflow's request-token read is not treated as a leak"
+else
+  fail "legitimate request-token read was incorrectly flagged as a leak"
+fi
 
 cp "$WF" "$copy"
 python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("on:\n  workflow_dispatch:\n", "on:\n  push:\n  workflow_dispatch:\n"))'
@@ -93,11 +156,31 @@ check_mutation "automatically triggered by pull_request"
 
 cp "$WF" "$copy"
 python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("print(\"JWT_PRINTED=false\")", "print(jwt)\n              print(\"JWT_PRINTED=false\")"))'
-check_mutation "accidentally prints raw JWT"
+check_mutation "prints raw JWT"
 
 cp "$WF" "$copy"
 python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("print(\"REQUEST_TOKEN_PRINTED=false\")", "print(request_token)\n              print(\"REQUEST_TOKEN_PRINTED=false\")"))'
-check_mutation "prints ACTIONS_ID_TOKEN_REQUEST_TOKEN"
+check_mutation "prints request token"
+
+cp "$WF" "$copy"
+python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("set -euo pipefail\n", "set -euo pipefail\n          echo \"${ACTIONS_ID_TOKEN_REQUEST_TOKEN}\"\n"))'
+check_mutation "echoes request token"
+
+cp "$WF" "$copy"
+python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("      - name: Request and decode OIDC payload only\n", "      - uses: actions/upload-artifact@v4\n        with:\n          name: oidc-jwt\n          path: jwt.txt\n      - name: Request and decode OIDC payload only\n"))'
+check_mutation "uploads raw JWT"
+
+cp "$WF" "$copy"
+python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("print(\"RESULT=PASS\")", "print(\"jwt<<EOF\", file=open(\"/tmp/jwt\", \"w\"))\n              print(\"RESULT=PASS\")"))'
+check_mutation "persists raw JWT"
+
+cp "$WF" "$copy"
+python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("    environment: production\n", "    environment: production\n    outputs:\n      jwt: ${{ steps.inspect.outputs.jwt }}\n"))'
+check_mutation "exposes JWT through job outputs"
+
+cp "$WF" "$copy"
+python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("print(\"RESULT=PASS\")", "Path(\"/tmp/request_token\").write_text(request_token)\n              print(\"RESULT=PASS\")"))'
+check_mutation "persists request token"
 
 cp "$WF" "$copy"
 python3 -c 'from pathlib import Path; p=Path("'"$copy"'"); t=p.read_text(); p.write_text(t.replace("contents: read\n      id-token: write", "contents: write\n      id-token: write"))'
