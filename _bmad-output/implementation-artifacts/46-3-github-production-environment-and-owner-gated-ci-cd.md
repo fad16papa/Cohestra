@@ -10,7 +10,7 @@ depends_on:
   - 46.1
   - 46.2
 owner_gate: production_environment_protections
-owner_gate_status: BLOCKED
+owner_gate_status: PASS — OWNER CONFIGURED / BOT API UNAVAILABLE
 implementation_authorized: true
 cutover_authorization: GRANTED
 production_release_readiness: NOT_YET_COMPLETE
@@ -135,7 +135,7 @@ Required delivery chain:
 
 | Gate | Who | When | Blocks |
 | --- | --- | --- | --- |
-| `production_environment_protections` | Owner in GitHub Settings | Before first live Environment deployment | Unprotected `production` environment. 2026-10-23 owner-gate pass BLOCKED: `cursor[bot]` received HTTP 403 on create/update Environment; `production` was not created. See `evidence/46-3/owner-gate-a-environment-protections.md`. |
+| `production_environment_protections` | Owner in GitHub Settings | Before first live Environment deployment | Unprotected `production` environment. 2026-10-23: owner attested Environment `production` from the GitHub web UI (`OWNER_ATTESTED_CONFIGURATION=PASS`). Cursor App Settings verification remains unavailable (`AUTOMATED_SETTINGS_VERIFICATION=UNAVAILABLE_DUE_TO_GITHUB_APP_PERMISSIONS`). See `evidence/46-3/owner-gate-a-environment-protections.md`. |
 | `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Missing `PROD_*` (fail-closed names only) |
 | Each deploy approval | Owner required reviewer | Every Environment `production` job | Deploy without approval |
 | Implementation authorization | Owner | After this planning artifact is accepted | `bmad-dev-story` for 46.3 |
