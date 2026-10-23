@@ -162,7 +162,7 @@ Owner Settings checklist (values never in git/chat):
 
 Do not copy Environment `uat` / `DROPLET_*` secrets. Fail-closed names print `MISSING_SECRET=<NAME>` only.
 
-**Network path (2026-10-23):** Environment `production` protections are owner-configured. Owner Gate B is **blocked** until Actions can reach Production without weakening the 46.2 SSH allowlist. GitHub-hosted runners do not have a stable per-repo source IP. Do not populate `PROD_*` or mint the Actions key on the current `ubuntu-latest` → public `:22` design. Recommended later path: Production-only Tailscale overlay. See `_bmad-output/implementation-artifacts/investigations/story-46-3-production-actions-network-path.md`.
+**Network path (2026-10-23):** Environment `production` protections are owner-configured. Owner accepted Option A: Tailscale overlay with **GitHub Actions OIDC federation**. Owner Gate B is **blocked** until that overlay is implemented. GitHub-hosted runners do not have a stable per-repo source IP. Do not populate `PROD_*` or mint the Actions SSH key on the current `ubuntu-latest` → public `:22` design. Do not use a reusable `PROD_TAILSCALE_AUTHKEY` as the primary join method (`FALLBACK ONLY — NOT SELECTED`). Later `deploy`/`rollback` jobs may add job-level `id-token: write` only. See `_bmad-output/implementation-artifacts/investigations/story-46-3-production-actions-network-path.md`.
 
 Dispatch from **Actions → Deploy Production** on `main` only, with an explicit 40-hex `deploy_sha`. Feature-branch dispatch fails closed. Do not dispatch until the Environment is protected, the overlay path is implemented, and later stories authorize a dark deploy.
 

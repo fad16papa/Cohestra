@@ -1,10 +1,11 @@
 # Investigation: Story 46.3 Production Actions network path
 
-Date (Asia/Singapore): 2026-10-23 22:10 +08  
+Date (Asia/Singapore): 2026-10-23 22:30 +08  
 Main SHA: `a7c5f88b1bc407e01fa6a05efb2770421a8e406f`  
 Story: 46.3 remains `review`  
 Owner Gate A: PASS — OWNER CONFIGURED  
-Owner Gate B: BLOCKED — NETWORK PATH UNRESOLVED  
+Owner Gate B: BLOCKED — OVERLAY NOT IMPLEMENTED  
+Network architecture: OPTION A ACCEPTED — TAILSCALE + OIDC FEDERATION  
 Production: NO-GO / NOT YET COMPLETE  
 Workflow dispatched: NO  
 Implementation in this pass: NO
@@ -28,8 +29,10 @@ Standard GitHub-hosted runners do not have a stable per-repository source IP. Gi
 
 Therefore Gate B must not mint a Production Actions SSH key or populate `PROD_*` until a deterministic, dedicated network path exists. Opening port 22 to the public internet, or silently adding the shared hosted-runner CIDR set, would reopen Story 46.2.
 
-`OWNER_GATE_B_PRECONDITION=resolve_production_actions_network_path`  
+`OWNER_GATE_B_PRECONDITION=implement_tailscale_oidc_overlay`  
 `OWNER_GATE_B_PRECONDITION=verify_repository_secret_name_conflicts`
+
+Owner decision (2026-10-23): **Option A accepted**. Primary join method is **GitHub Actions OIDC → Tailscale workload identity federation**. A reusable Tailscale auth key is **not** the selected design.
 
 ## Current facts (repository evidence)
 
@@ -65,35 +68,129 @@ Therefore Gate B must not mint a Production Actions SSH key or populate `PROD_*`
 11. No Production workload is deployed as part of the correction.  
 12. Minimal cost unless the owner approves paid infrastructure.
 
-## Option A — secure overlay (Tailscale / WireGuard)
+## Option A — Tailscale overlay with GitHub OIDC federation (ACCEPTED)
 
 Desired shape:
 
 - Production host makes/maintains **outbound** overlay connectivity.
-- GitHub Actions obtains **short-lived**, tagged, Production-only overlay membership for the Environment job.
+- GitHub-hosted runner obtains a **short-lived GitHub OIDC** identity token.
+- Tailscale validates that identity against a narrowly scoped **federated identity**.
+- The runner joins the tailnet as an **ephemeral** `tag:gha-production` node and is removed after the job.
 - Public TCP 22 stay owner/admin CIDRs only.
-- Runner reaches Production only through the overlay management plane.
-- Overlay credentials are dedicated to Production and rotatable.
+- Standard SSH over Tailscale provides reachability; host auth remains the dedicated Production Actions Ed25519 key.
 - Environment `production` approval still gates the mutating jobs.
 - UAT is not on the same ACL path.
 
-### Tailscale (preferred A variant)
+### Primary authentication (REQUIRED DEFAULT)
 
-Practical for a personal account. Personal Tailscale is sufficient for a single Production node plus ephemeral Actions nodes. Cost: $0 unless the owner later wants paid features.
+`PRIMARY_TAILSCALE_AUTH=GitHub Actions OIDC → Tailscale workload identity federation`
 
-Host: install Tailscale; outbound UDP/HTTPS to Tailscale only. Do not add inbound 22 sources.
+`AUTH_KEY_STATUS=FALLBACK ONLY — NOT SELECTED`
 
-Actions: after Environment approval, join an **ephemeral tagged** node (`ephemeral=true`, tagged, not the owner’s personal device). SSH to the Production Tailscale address as `deploy`, not `root`. Disconnect at job end.
+No reusable `PROD_TAILSCALE_AUTHKEY` in the preferred design. Do not mint a standing Actions auth key.
 
-ACL sketch (not implemented here): only `tag:gha-production` may open TCP 22 to `tag:cohestra-production`. No UAT tag. No exit node. No subnet route to the UAT VPC. No `autogroup:member` SSH to Production.
+Fallback order (each step needs a separate security review and owner authorization):
 
-Threats: stolen overlay auth key; overly broad ACL; using the owner laptop as a hop; mixing UAT and Production on one wide-open tailnet. Mitigations: ephemeral tagged keys, tight ACLs, rotate keys, separate tags, no shared UAT node.
+1. Workload identity federation — **required default**
+2. OAuth client — only if federation is proven unavailable
+3. Reusable auth key — last-resort only
 
-### WireGuard (A fallback)
+Do **not** introduce a Tailscale client secret for the preferred path.
 
-Same security properties if the owner refuses Tailscale SaaS. Harder on GitHub-hosted runners: each job must bring a unique peer config; key distribution becomes another secret; NAT traversal is DIY. A public WireGuard UDP listen on Production is a new attack surface, still better than world-open 22, worse than outbound-only Tailscale. Use only if the owner rejects Tailscale.
+### Federated identity (plan only — do not create now)
 
-**Option A verdict:** ACCEPT as the default. Does not weaken 46.2. Deterministic. Dedicated. Rotatable. Cheap.
+| Field | Planned value |
+| --- | --- |
+| Issuer | `https://token.actions.githubusercontent.com` |
+| Tailscale scope | `auth_keys` |
+| Runner tag | `tag:gha-production` |
+| Production host tag | `tag:cohestra-production` |
+| Repository | `fad16papa/Cohestra` |
+| Environment | `production` |
+| Ref | `refs/heads/main` |
+| Runner environment | GitHub-hosted |
+| Config identifiers | `PROD_TAILSCALE_CLIENT_ID`, `PROD_TAILSCALE_AUDIENCE` |
+
+`PROD_TAILSCALE_CLIENT_ID` and `PROD_TAILSCALE_AUDIENCE` are configuration identifiers, not reusable credentials. Store them later as Environment `production` variables or secrets per repository convention. Do not create them in this pass.
+
+The federated identity must authorize **only** the intended Cohestra Production workload. It must not grant other repositories, UAT, arbitrary Actions jobs, personal tailnet devices, exit nodes, or subnet routes.
+
+### GitHub OIDC subject (do not hardcode)
+
+Repository created `2026-07-13`. GitHub’s immutable default OIDC subject applies automatically only to repositories created **after 2026-07-15**. Cohestra may still use the older Environment-based subject unless immutable/custom subjects were enabled later.
+
+Expected **legacy candidate** (not authoritative until bootstrap verifies the live subject):
+
+`repo:fad16papa/Cohestra:environment:production`
+
+If immutable subject claims are enabled, use the actual ID-bound subject. Fail closed on mismatch.
+
+Later implementation must also validate, where Tailscale federation supports it:
+
+- issuer `https://token.actions.githubusercontent.com`
+- repository `fad16papa/Cohestra`
+- environment `production`
+- ref `refs/heads/main`
+- GitHub-hosted runner
+- exact verified subject
+- exact Tailscale federated-identity audience
+
+Do not authorize feature-branch, PR, UAT, or unrelated workflow identity.
+
+### Workflow permissions (later implementation)
+
+Add `id-token: write` **only** on `deploy` and `rollback` (both already `environment: production`).
+
+Do **not** grant `id-token: write` to `require-main`, `validate-sha`, CI, UAT, or workflow-global permissions unless a later review proves it unavoidable.
+
+Preferred Environment-job permissions:
+
+```yaml
+permissions:
+  contents: read
+  actions: read
+  checks: read
+  pull-requests: read
+  id-token: write
+```
+
+`id-token: write` requests an OIDC token. It is not repository write. Still forbid `contents: write`, `actions: write`, `checks: write`, `pull-requests: write`.
+
+Later implementation may use `tailscale/github-action` **pinned to a reviewed commit SHA**. Do not use a floating `@v4` tag. Resolve the SHA in the implementation pass.
+
+### Tailnet ACL
+
+Required effective rule only:
+
+`tag:gha-production` → `tag:cohestra-production:22`
+
+Actions must not reach UAT, PostgreSQL, Redis, Docker ports, the owner workstation, arbitrary tailnet nodes, subnet routes, or exit nodes. The Production node must not be an exit node, UAT subnet router, or general gateway. The GitHub runner must not be an exit node.
+
+### SSH model
+
+**Standard SSH over Tailscale connectivity**, not Tailscale SSH, for Story 46.3.
+
+Preserve future secret `PROD_DROPLET_SSH_KEY`. Do not reuse the owner workstation key, UAT Actions key, Cursor key, or root.
+
+### Identities
+
+- Inventory identity (immutable): `159.223.55.242`
+- Transport identity (later): Production Tailscale IPv4 or tightly validated Production-only MagicDNS
+
+Do not replace inventory validation with arbitrary hostname acceptance. Split `production inventory host` from `production SSH transport host`.
+
+### Firewall
+
+`PUBLIC_SSH_FIREWALL_CHANGE=NONE`  
+`TAILSCALE_HOST_FIREWALL_INTEGRATION=VERIFY_DURING_BOOTSTRAP`
+
+Do not add shared GitHub/Azure runner ranges. Later bootstrap must prove tailnet TCP 22 works without weakening public TCP 22.
+
+### WireGuard
+
+Owner accepted Tailscale. WireGuard is no longer the selected path. Recorded only as a historical alternative.
+
+**Option A verdict:** ACCEPTED by owner. Primary auth is OIDC federation. Auth keys are fallback only.
 
 ## Option B — dedicated management / jump host
 
@@ -149,20 +246,20 @@ Disfavored.
 
 ## Recommendation
 
-**Recommended network path: Option A — Tailscale overlay (WireGuard only if Tailscale is owner-rejected).**
+**Owner-accepted path: Option A — Tailscale overlay with GitHub Actions OIDC federation.**
 
-Rationale: it is the only option that is simultaneously dedicated, deterministic, cheap, available on this personal account, compatible with the 46.2 firewall, and already named in Production host documentation.
+Rationale: dedicated, deterministic, cheap, available on this personal account, compatible with the 46.2 firewall, and now using short-lived OIDC instead of a reusable overlay secret.
 
 Cost impact: $0 expected (Tailscale personal + existing droplet). No extra droplet. No GitHub plan change.
 
 Owner action required (later authorized implementation, not this pass):
 
-1. Accept Option A (or explicitly reject Tailscale and choose WireGuard).
-2. Create a Production-only Tailscale tailnet/ACL (or equivalent WireGuard design).
-3. Join the Production host as `tag:cohestra-production` (outbound only).
-4. Mint an ephemeral tagged Actions auth key. Do not reuse owner, UAT, or Cursor credentials.
-5. Authorize a later implementation PR to change the workflow SSH path to the overlay **without** opening public 22.
-6. Only then proceed to Gate B key minting and `PROD_*` population.
+1. Option A is already accepted. Do not reopen B–E.
+2. Verify the live GitHub OIDC subject for Environment `production` before configuring Tailscale trust.
+3. Create the Tailscale federated identity (issuer, audience, `auth_keys` scope, `tag:gha-production` only).
+4. Join the Production host as `tag:cohestra-production` (outbound only; no exit node; no UAT subnet route).
+5. Authorize a later implementation PR: job-level `id-token: write` on `deploy`/`rollback` only; pin `tailscale/github-action` to a reviewed SHA; split inventory host from overlay SSH host.
+6. Only then create `deploy`, mint the dedicated Actions SSH key, and populate Gate B names.
 
 ## SSH user precondition
 
@@ -192,22 +289,26 @@ Later Gate B / host bootstrap must:
 | `PROD_PUBLIC_BASE_URL` | secret | `http://159.223.55.242` (pre-cutover; not `cohestra.app`) | NO |
 | `PROD_COMPOSE_PROJECT` | variable | `cohestra-production` | NO |
 
-Later overlay implementation will need an additional Environment secret name, for example `PROD_TAILSCALE_AUTHKEY` (final name in the implementation PR). Do not create it now.
+Later overlay implementation will also need Environment configuration identifiers `PROD_TAILSCALE_CLIENT_ID` and `PROD_TAILSCALE_AUDIENCE`. These are not reusable auth credentials. Do **not** create `PROD_TAILSCALE_AUTHKEY` unless federation and OAuth are both proven unavailable and separately authorized (`FALLBACK ONLY — NOT SELECTED`).
 
 `PROD_DROPLET_HOST` remains the inventory IPv4 even if SSH travels over overlay. `appleboy` `host:` is currently hardcoded to `159.223.55.242`; an implementation PR must split inventory allowlist from overlay SSH destination. `validate-production-target.sh` today refuses any host other than that IPv4 and forbids hostname substitution — that is correct for inventory identity and must be extended, not deleted, when overlay lands.
 
 ## Required later changes (not in this pass)
 
-Firewall: **no** new public 22 sources. **no** hosted-runner CIDRs. **no** `0.0.0.0/0`.
+Firewall: **no** new public 22 sources. **no** hosted-runner CIDRs. **no** `0.0.0.0/0`.  
+`PUBLIC_SSH_FIREWALL_CHANGE=NONE`
 
-UFW: **no** 22 expansion. Overlay uses host outbound connectivity already permitted.
+UFW: **no** public 22 expansion.  
+`TAILSCALE_HOST_FIREWALL_INTEGRATION=VERIFY_DURING_BOOTSTRAP`
 
 Workflow (later authorized implementation only):
 
 - keep `workflow_dispatch`, Environment `production`, provenance, fail-closed secrets
-- join overlay only on `deploy` / `rollback` after Environment approval
-- SSH as `deploy` over overlay
-- do not move `validate-sha` onto the overlay
+- add `id-token: write` only on `deploy` / `rollback`
+- join Tailscale via OIDC federation only on those Environment jobs
+- pin `tailscale/github-action` to a reviewed SHA
+- SSH as `deploy` over Tailscale with `PROD_DROPLET_SSH_KEY`
+- do not move `validate-sha` onto the overlay and do not give it `id-token: write`
 - do not dispatch as a connectivity test
 
 UAT: no change to `.github/workflows/deploy.yml` or Environment `uat`.
@@ -227,8 +328,18 @@ UAT: no change to `.github/workflows/deploy.yml` or Environment `uat`.
 | Self-hosted runner persistence | On-droplet / persistent runners REJECT. |
 | Untrusted PR on self-hosted runner | Public repo risk. Another reason to reject C as default. |
 | Direct root SSH from Actions | Contract already refuses `root`. Deploy user unproven; create later. |
-| Overlay credential theft | Ephemeral tagged key, Environment-scoped, rotate, no exit node. |
-| Overlay lateral movement | ACL: Actions tag → Production tag:22 only. No UAT. |
+| Overlay credential theft | Preferred path has no reusable auth key. OIDC token is short-lived. Client ID/audience are not credentials. |
+| Another repository obtaining Production tailnet identity | Bind issuer + repository `fad16papa/Cohestra` + Environment `production` + verified subject. |
+| PR workflow obtaining Production identity | Do not trust `pull_request` / feature-branch subjects. Bind `refs/heads/main`. |
+| UAT obtaining Production identity | Separate Environment `uat`. No UAT tag on the Production ACL. |
+| Forged OIDC subject / wrong audience / repo / env / ref | Fail closed. Verify live subject before Tailscale trust is configured. |
+| `id-token: write` on `validate-sha` or workflow-global | Forbidden. Job-level on `deploy`/`rollback` only. |
+| Long-lived Tailscale credential leakage | Auth key is fallback only and not selected. |
+| Broad Tailscale tags / lateral access / MagicDNS | ACL is `tag:gha-production` → `tag:cohestra-production:22` only. No arbitrary hostname accept. |
+| Exit-node / subnet-router exposure | Forbidden on host and runner. |
+| Actions SSH as root / owner or UAT key reuse | Contract refuses `root`. Dedicated Actions key later. |
+| Public TCP 22 expansion | `PUBLIC_SSH_FIREWALL_CHANGE=NONE`. |
+| Tailscale/UFW conflict | `TAILSCALE_HOST_FIREWALL_INTEGRATION=VERIFY_DURING_BOOTSTRAP`. |
 | Jump-host compromise | Extra standing host. Not selected as the Actions path. |
 | Environment approval bypass | Overlay join stays on Environment jobs only. `validate-sha` stays off Environment and off SSH. |
 | Accidental Production dispatch | Still `workflow_dispatch` only. This pass does not dispatch. |

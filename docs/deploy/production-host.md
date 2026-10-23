@@ -74,7 +74,9 @@ If the residential IP changes, add a new `/24`–`/32` CIDR to `owner_ssh_cidrs`
 
 Residential owner IPs and Cloud Agent egress NATs both change. The durable approach is a **stable management path** (owner-controlled VPN / WireGuard / Tailscale, or a dedicated jump host with a reserved IPv4) plus DigitalOcean Recovery Console as break-glass. Do not implement that path in Story 46.2.
 
-Story 46.3 Owner Gate B is **blocked** on the same gap: GitHub-hosted `ubuntu-latest` has no deterministic source IP that can traverse this SSH allowlist. Do not open 22 to `0.0.0.0/0` and do not allowlist shared GitHub-hosted runner CIDRs. Recommended later path is a Production-only Tailscale overlay (WireGuard fallback). Investigation: `_bmad-output/implementation-artifacts/investigations/story-46-3-production-actions-network-path.md`. Do not implement overlay, populate `PROD_*`, or dispatch Production from that investigation.
+Story 46.3 Owner Gate B is **blocked** until the accepted overlay is implemented: GitHub-hosted `ubuntu-latest` has no deterministic source IP that can traverse this SSH allowlist. Do not open 22 to `0.0.0.0/0` and do not allowlist shared GitHub-hosted runner CIDRs. Owner-accepted path: Production-only Tailscale overlay using **GitHub Actions OIDC workload identity federation** (reusable Tailscale auth key is fallback only, not selected). Investigation: `_bmad-output/implementation-artifacts/investigations/story-46-3-production-actions-network-path.md`. Do not implement overlay, populate `PROD_*`, or dispatch Production from that investigation.  
+`PUBLIC_SSH_FIREWALL_CHANGE=NONE`  
+`TAILSCALE_HOST_FIREWALL_INTEGRATION=VERIFY_DURING_BOOTSTRAP`
 
 ## Unattended security updates
 
