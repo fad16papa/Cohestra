@@ -813,6 +813,14 @@ HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolve
 - Complimentary tenants are not guarded inside `TenantBillingPlanSync` mutators — jobs already skip complimentary for delinquency; webhook/service callers reject complimentary money paths
 - Operator still needs live Paddle sandbox keys + webhook tunnel to record 29.7 screenshot evidence (automated process tests cover the adapter)
 
+## Deferred from: code review of 46-4-production-runtime-config-and-secrets-isolation.md (2026-10-24)
+
+Review 4 of `1308a60d` PASS. Residual MINORs only; no product, architecture, or security risk. Production remains NO-GO.
+
+- Redis `password=` with no endpoint, or exotic loopback aliases (`::1:6379`, `.localhost`), are not rejected. Compose always sets `redis:6379,password=...`.
+- `git diff` failure after `origin/main` exists would take the freeze-check `else` PASS branch. Missing `origin/main` still fails closed. CI 40106674234 passed the freeze step.
+- Host `--check-names` uses `urlparse().hostname`; runtime uses `Uri.IdnHost`. API start remains fail-closed.
+
 ## Deferred from: code review of 38-1-billing-sync-environment-and-error-behavior.md (2026-09-22)
 
 - Configured Paddle live checkout cannot be exercised in this environment — covered by helper + `PaddleBillingServiceTests` with FakePaddle
