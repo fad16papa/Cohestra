@@ -142,6 +142,7 @@ so that **sandbox Paddle, UAT SendGrid, and UAT JWT material cannot boot the ded
 - [x] [AI-Review][MAJOR] Scan all Redis endpoints for loopback
 - [x] [AI-Review][MAJOR] Apex-only PUBLIC_BASE_URL + tighter host `--check-names`
 - [x] [AI-Review][MAJOR] Do not treat tenant hosts as Production public base URL
+- [x] [AI-Review][BLOCKER] Clear leftover appsettings CORS localhost slots in Production compose
 
 ## Dev Notes
 

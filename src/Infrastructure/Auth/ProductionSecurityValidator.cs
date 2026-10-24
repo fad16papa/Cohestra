@@ -85,7 +85,7 @@ public static class ProductionSecurityValidator
             || !ProductionCorsOrigins.IsProductionPublicBaseUrl(publicBaseUrl))
         {
             throw new InvalidOperationException(
-                "PublicWeb:BaseUrl on the dedicated Production plane must be https://cohestra.app or https://{tenant}.cohestra.app, not a UAT, localhost, or http origin.");
+                "PublicWeb:BaseUrl on the dedicated Production plane must be https://cohestra.app (apex), not a tenant, UAT, localhost, or http origin.");
         }
     }
 

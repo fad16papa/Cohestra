@@ -116,6 +116,13 @@ else
   fail "Program.cs must use ProductionCorsOrigins on dedicated plane"
 fi
 
+if grep -qE 'Cors__AllowedOrigins__1:[[:space:]]*""' "$COMPOSE" \
+  && grep -qE 'Cors__AllowedOrigins__2:[[:space:]]*""' "$COMPOSE"; then
+  pass "compose clears leftover appsettings CORS localhost slots"
+else
+  fail "compose must blank Cors__AllowedOrigins__1 and __2 so appsettings localhost cannot merge"
+fi
+
 if grep -q 'ValidateForDedicatedProduction' "$SENDGRID"; then
   pass "independent Production SendGrid validator exists"
 else
