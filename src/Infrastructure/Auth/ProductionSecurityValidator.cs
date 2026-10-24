@@ -14,6 +14,12 @@ public static class ProductionSecurityValidator
         "changeme",
     ];
 
+    private static readonly string[] GoogleRecaptchaTestKeys =
+    [
+        "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+        "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
+    ];
+
     public static void Validate(IConfiguration configuration, IHostEnvironment environment)
     {
         var paddle = configuration.GetSection(PaddleSettings.SectionName).Get<PaddleSettings>()
@@ -59,7 +65,134 @@ public static class ProductionSecurityValidator
                 "DemoDataSeed:Enabled must be false in non-Development environments.");
         }
 
+        if (configuration.GetValue("PlatformAdminSeed:Enabled", false))
+        {
+            throw new InvalidOperationException(
+                "PlatformAdminSeed:Enabled must be false in non-Development environments.");
+        }
+
+        if (signingKey.Trim().Length < 32)
+        {
+            throw new InvalidOperationException("Jwt:SigningKey must be at least 32 characters.");
+        }
+
+        ValidateProductionCors(configuration);
+        ValidateProductionRecaptcha(configuration, publicBaseUrl);
+        ValidateProductionRedis(configuration.GetConnectionString("Redis"), publicBaseUrl);
         ValidateProductionPostgres(configuration.GetConnectionString("DefaultConnection"));
+    }
+
+    private static void ValidateProductionCors(IConfiguration configuration)
+    {
+        var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        if (origins.Length == 0)
+        {
+            throw new InvalidOperationException(
+                "Cors:AllowedOrigins must be configured in non-Development environments.");
+        }
+
+        foreach (var raw in origins)
+        {
+            if (string.IsNullOrWhiteSpace(raw)
+                || !Uri.TryCreate(raw, UriKind.Absolute, out var uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                throw new InvalidOperationException(
+                    "Cors:AllowedOrigins entries must be absolute http(s) origins in non-Development environments.");
+            }
+
+            var host = uri.IdnHost;
+            if (IsLoopbackHost(host)
+                || host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "Cors:AllowedOrigins must not include localhost or loopback hosts in non-Development environments.");
+            }
+        }
+    }
+
+    private static void ValidateProductionRecaptcha(IConfiguration configuration, string? publicBaseUrl)
+    {
+        var bypass = configuration["SelfServeSignup:Recaptcha:TestBypassToken"];
+        if (!string.IsNullOrWhiteSpace(bypass))
+        {
+            throw new InvalidOperationException(
+                "SelfServeSignup:Recaptcha:TestBypassToken must be empty in non-Development environments.");
+        }
+
+        var secret = configuration["SelfServeSignup:Recaptcha:SecretKey"];
+        var siteKey = configuration["SelfServeSignup:Recaptcha:SiteKey"];
+        if (IsGoogleRecaptchaTestKey(secret) || IsGoogleRecaptchaTestKey(siteKey))
+        {
+            throw new InvalidOperationException(
+                "SelfServeSignup:Recaptcha must not use Google test keys in non-Development environments.");
+        }
+
+        var enabled = configuration.GetValue("SelfServeSignup:Recaptcha:Enabled", false);
+        if (enabled && string.IsNullOrWhiteSpace(secret))
+        {
+            throw new InvalidOperationException(
+                "SelfServeSignup:Recaptcha:SecretKey must be set when reCAPTCHA is enabled in non-Development environments.");
+        }
+
+        var registrationClosed = configuration.GetValue("SelfServeSignup:RegistrationClosed", false);
+        if (!registrationClosed && IsProductionApexHost(publicBaseUrl) && !enabled)
+        {
+            throw new InvalidOperationException(
+                "SelfServeSignup:Recaptcha:Enabled must be true when self-serve signup is open on the Production apex.");
+        }
+    }
+
+    private static void ValidateProductionRedis(string? redis, string? publicBaseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(redis) || PaddleCredentialGuard.IsUatPublicHost(publicBaseUrl))
+        {
+            return;
+        }
+
+        if (!HasRedisPassword(redis))
+        {
+            throw new InvalidOperationException(
+                "ConnectionStrings:Redis must include a password in non-UAT Production environments.");
+        }
+    }
+
+    private static bool HasRedisPassword(string redis)
+    {
+        foreach (var part in redis.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var eq = part.IndexOf('=');
+            if (eq <= 0)
+            {
+                continue;
+            }
+
+            if (part[..eq].Trim().Equals("password", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(part[(eq + 1)..]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsGoogleRecaptchaTestKey(string? value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && GoogleRecaptchaTestKeys.Contains(value.Trim(), StringComparer.Ordinal);
+
+    private static bool IsProductionApexHost(string? publicBaseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(publicBaseUrl)
+            || !Uri.TryCreate(publicBaseUrl, UriKind.Absolute, out var uri)
+            || PaddleCredentialGuard.IsUatPublicHost(publicBaseUrl))
+        {
+            return false;
+        }
+
+        var host = uri.IdnHost;
+        return host.Equals("cohestra.app", StringComparison.OrdinalIgnoreCase)
+            || host.Equals("www.cohestra.app", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void ValidateProductionPostgres(string? postgres)
