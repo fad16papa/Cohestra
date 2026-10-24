@@ -54,4 +54,42 @@ public sealed class CohestraTraceSamplerTests
 
         Assert.Equal(SamplingDecision.Drop, result.Decision);
     }
+
+    [Fact]
+    public void Parent_aware_sampler_records_always_on_child_of_unsampled_parent()
+    {
+        var sampler = CohestraTraceSampler.CreateParentAware(0);
+        var parent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            ActivityTraceFlags.None);
+        var result = sampler.ShouldSample(new SamplingParameters(
+            parent,
+            default,
+            CohestraTelemetry.JobRunActivity,
+            ActivityKind.Internal,
+            null,
+            null));
+
+        Assert.Equal(SamplingDecision.RecordAndSample, result.Decision);
+    }
+
+    [Fact]
+    public void Parent_aware_sampler_drops_ordinary_child_of_unsampled_parent_at_ratio_zero()
+    {
+        var sampler = CohestraTraceSampler.CreateParentAware(0);
+        var parent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            ActivityTraceFlags.None);
+        var result = sampler.ShouldSample(new SamplingParameters(
+            parent,
+            default,
+            "GET",
+            ActivityKind.Server,
+            [new KeyValuePair<string, object?>("http.route", "/api/v1/admin/clients")],
+            null));
+
+        Assert.Equal(SamplingDecision.Drop, result.Decision);
+    }
 }

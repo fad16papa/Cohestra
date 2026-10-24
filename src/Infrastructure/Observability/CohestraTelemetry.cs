@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Cohestra.Domain.Outbox;
 
 namespace Cohestra.Infrastructure.Observability;
 
@@ -29,19 +30,34 @@ public static class CohestraTelemetry
     public static readonly Histogram<double> JobDurationMs =
         Meter.CreateHistogram<double>("cohestra.job.duration", unit: "ms");
 
-    private static readonly HashSet<string> KnownPaddleEventTypes = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, string> KnownPaddleEventTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "transaction.completed",
-        "transaction.payment_failed",
-        "subscription.created",
-        "subscription.updated",
-        "subscription.canceled",
-        "subscription.past_due",
-        "subscription.activated",
-        "adjustment.created",
-        "adjustment.updated",
-        "missing",
-        "rejected",
+        ["transaction.completed"] = "transaction.completed",
+        ["transaction.payment_failed"] = "transaction.payment_failed",
+        ["subscription.created"] = "subscription.created",
+        ["subscription.updated"] = "subscription.updated",
+        ["subscription.canceled"] = "subscription.canceled",
+        ["subscription.past_due"] = "subscription.past_due",
+        ["subscription.activated"] = "subscription.activated",
+        ["adjustment.created"] = "adjustment.created",
+        ["adjustment.updated"] = "adjustment.updated",
+        ["missing"] = "missing",
+        ["rejected"] = "rejected",
+    };
+
+    private static readonly HashSet<string> KnownOutboxMessageTypes = new(StringComparer.Ordinal)
+    {
+        OutboxMessageTypes.RegistrationConfirmation,
+        OutboxMessageTypes.RegistrationOperatorNotify,
+        OutboxMessageTypes.CampaignRecipient,
+        OutboxMessageTypes.BillingNotification,
+        OutboxMessageTypes.SupportIssueTech,
+        OutboxMessageTypes.SupportIssueConfirmation,
+        OutboxMessageTypes.SupportIssueFilerReply,
+        OutboxMessageTypes.SupportIssueFilerStatus,
+        OutboxMessageTypes.ActivityExpired,
+        OutboxMessageTypes.ActivityExpiringSoon,
+        OutboxMessageTypes.WebsiteInquiryOperatorNotify,
     };
 
     public static bool IsAlwaysOnActivity(string? name) =>
@@ -53,7 +69,7 @@ public static class CohestraTelemetry
         ArgumentNullException.ThrowIfNull(action);
 
         var started = Stopwatch.GetTimestamp();
-        using var activity = ActivitySource.StartActivity(JobRunActivity, ActivityKind.Internal);
+        using var activity = StartAlwaysOn(JobRunActivity, ActivityKind.Internal);
         activity?.SetTag("job.name", jobName);
         try
         {
@@ -78,8 +94,9 @@ public static class CohestraTelemetry
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
         ArgumentNullException.ThrowIfNull(action);
 
-        using var activity = ActivitySource.StartActivity(OutboxDispatchActivity, ActivityKind.Internal);
-        activity?.SetTag("outbox.message_type", messageType);
+        var normalizedType = NormalizeOutboxMessageType(messageType);
+        using var activity = StartAlwaysOn(OutboxDispatchActivity, ActivityKind.Internal);
+        activity?.SetTag("outbox.message_type", normalizedType);
         try
         {
             var result = await action().ConfigureAwait(false);
@@ -94,21 +111,21 @@ public static class CohestraTelemetry
                 activity?.SetStatus(ActivityStatusCode.Ok);
             }
 
-            OutboxDispatchCounter.Add(1, new KeyValuePair<string, object?>("outbox.message_type", messageType), new KeyValuePair<string, object?>("outbox.status", status));
+            OutboxDispatchCounter.Add(1, new KeyValuePair<string, object?>("outbox.message_type", normalizedType), new KeyValuePair<string, object?>("outbox.status", status));
             return result;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             activity?.SetTag("outbox.status", "Failed");
             activity?.SetStatus(ActivityStatusCode.Error, ex.GetType().Name);
-            OutboxDispatchCounter.Add(1, new KeyValuePair<string, object?>("outbox.message_type", messageType), new KeyValuePair<string, object?>("outbox.status", "Failed"));
+            OutboxDispatchCounter.Add(1, new KeyValuePair<string, object?>("outbox.message_type", normalizedType), new KeyValuePair<string, object?>("outbox.status", "Failed"));
             throw;
         }
     }
 
     public static Activity? StartPaddleWebhook(string? eventType)
     {
-        var activity = ActivitySource.StartActivity(PaddleWebhookActivity, ActivityKind.Server);
+        var activity = StartAlwaysOn(PaddleWebhookActivity, ActivityKind.Server);
         activity?.SetTag("paddle.event_type", NormalizePaddleEventType(eventType));
         return activity;
     }
@@ -137,7 +154,7 @@ public static class CohestraTelemetry
 
     public static void RecordUnhandledException(string method)
     {
-        using var activity = ActivitySource.StartActivity(UnhandledExceptionActivity, ActivityKind.Internal);
+        using var activity = StartAlwaysOn(UnhandledExceptionActivity, ActivityKind.Internal);
         activity?.SetTag("http.request.method", method);
         activity?.SetStatus(ActivityStatusCode.Error, "unhandled");
         Activity.Current?.SetStatus(ActivityStatusCode.Error, "unhandled");
@@ -151,6 +168,24 @@ public static class CohestraTelemetry
         }
 
         var trimmed = eventType.Trim();
-        return KnownPaddleEventTypes.Contains(trimmed) ? trimmed : "other";
+        return KnownPaddleEventTypes.TryGetValue(trimmed, out var canonical) ? canonical : "other";
+    }
+
+    public static string NormalizeOutboxMessageType(string? messageType)
+    {
+        if (string.IsNullOrWhiteSpace(messageType))
+        {
+            return "other";
+        }
+
+        var trimmed = messageType.Trim();
+        return KnownOutboxMessageTypes.Contains(trimmed) ? trimmed : "other";
+    }
+
+    public static Activity? StartAlwaysOn(string name, ActivityKind kind)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        return ActivitySource.StartActivity(name, kind)
+            ?? ActivitySource.StartActivity(name, kind, parentContext: default);
     }
 }

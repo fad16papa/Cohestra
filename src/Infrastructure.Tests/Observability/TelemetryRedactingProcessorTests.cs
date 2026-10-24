@@ -56,15 +56,40 @@ public sealed class TelemetryRedactingProcessorTests
         Assert.DoesNotContain("customer@example.com", snapshot.AttributeDump, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Log_processor_drops_exception_with_pii()
+    {
+        var captured = new List<LogRecordSnapshot>();
+        using var factory = LoggerFactory.Create(builder =>
+        {
+            builder.AddOpenTelemetry(options =>
+            {
+                options.IncludeFormattedMessage = true;
+                options.AddProcessor(new TelemetryRedactingLogProcessor());
+                options.AddProcessor(new CapturingLogProcessor(captured));
+            });
+        });
+
+        var logger = factory.CreateLogger("telemetry-redaction");
+        logger.LogError(new InvalidOperationException("failed for customer@example.com"), "send failed");
+        factory.Dispose();
+
+        Assert.NotEmpty(captured);
+        Assert.False(captured[0].HasException);
+        Assert.DoesNotContain("customer@example.com", captured[0].FormattedMessage ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain("customer@example.com", captured[0].AttributeDump, StringComparison.Ordinal);
+    }
+
     private sealed class CapturingLogProcessor(List<LogRecordSnapshot> sink) : BaseProcessor<LogRecord>
     {
         public override void OnEnd(LogRecord data)
         {
             sink.Add(new LogRecordSnapshot(
                 data.FormattedMessage,
-                string.Join('|', (data.Attributes ?? []).Select(attribute => $"{attribute.Key}={attribute.Value}"))));
+                string.Join('|', (data.Attributes ?? []).Select(attribute => $"{attribute.Key}={attribute.Value}")),
+                data.Exception is not null));
         }
     }
 
-    private sealed record LogRecordSnapshot(string? FormattedMessage, string AttributeDump);
+    private sealed record LogRecordSnapshot(string? FormattedMessage, string AttributeDump, bool HasException = false);
 }

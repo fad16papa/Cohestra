@@ -69,8 +69,9 @@ public sealed class PaddleWebhookController(
             return BadRequest("Invalid Paddle-Signature.");
         }
 
+        using var processed = CohestraTelemetry.StartPaddleWebhook(null);
         var result = await webhookProcessor.ProcessAsync(json, cancellationToken);
-        using var processed = CohestraTelemetry.StartPaddleWebhook(result.EventType);
+        processed?.SetTag("paddle.event_type", CohestraTelemetry.NormalizePaddleEventType(result.EventType));
         CohestraTelemetry.CompletePaddleWebhook(processed, result.Disposition.ToString());
         var statusCode = PaddleWebhookHttp.StatusCodeFor(result);
         if (result.Disposition == PaddleWebhookDisposition.Retryable)

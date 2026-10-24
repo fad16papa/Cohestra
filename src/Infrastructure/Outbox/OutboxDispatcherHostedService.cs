@@ -28,17 +28,18 @@ public sealed class OutboxDispatcherHostedService(
         {
             try
             {
+                var processed = 0;
                 await CohestraTelemetry.TraceJobAsync("outbox-dispatcher", async () =>
                 {
                     await using var scope = scopeFactory.CreateAsyncScope();
                     var processor = scope.ServiceProvider.GetRequiredService<IOutboxProcessor>();
-                    var processed = await processor.ProcessBatchAsync(stoppingToken);
-
-                    if (processed == 0)
-                    {
-                        await Task.Delay(pollInterval, stoppingToken);
-                    }
+                    processed = await processor.ProcessBatchAsync(stoppingToken);
                 });
+
+                if (processed == 0)
+                {
+                    await Task.Delay(pollInterval, stoppingToken);
+                }
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

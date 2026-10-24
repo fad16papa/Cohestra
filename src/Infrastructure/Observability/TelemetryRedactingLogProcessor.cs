@@ -34,5 +34,15 @@ public sealed class TelemetryRedactingLogProcessor : BaseProcessor<LogRecord>
 
             data.Attributes = redacted;
         }
+
+        if (data.Exception is { } exception)
+        {
+            var dump = exception.ToString();
+            if (TelemetryRedactor.ContainsForbiddenResidue(dump)
+                || TelemetryRedactor.ContainsForbiddenResidue(exception.Message))
+            {
+                data.Exception = null;
+            }
+        }
     }
 }

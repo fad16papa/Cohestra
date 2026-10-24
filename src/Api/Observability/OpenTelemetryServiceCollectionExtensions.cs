@@ -40,12 +40,12 @@ public static class OpenTelemetryServiceCollectionExtensions
             .WithTracing(tracing =>
             {
                 tracing
-                    .SetSampler(new ParentBasedSampler(new CohestraTraceSampler(options.TracesSamplerRatio)))
+                    .SetSampler(CohestraTraceSampler.CreateParentAware(options.TracesSamplerRatio))
                     .AddSource(CohestraTelemetry.ActivitySourceName)
                     .AddProcessor(new TelemetryRedactingActivityProcessor())
                     .AddAspNetCoreInstrumentation(aspNet =>
                     {
-                        aspNet.RecordException = true;
+                        aspNet.RecordException = false;
                         aspNet.EnrichWithHttpResponse = (activity, response) =>
                         {
                             var tenant = response.HttpContext.RequestServices.GetService<CurrentTenant>();
@@ -57,7 +57,7 @@ public static class OpenTelemetryServiceCollectionExtensions
                     })
                     .AddHttpClientInstrumentation(http =>
                     {
-                        http.RecordException = true;
+                        http.RecordException = false;
                     })
                     .AddEntityFrameworkCoreInstrumentation()
                     .AddRedisInstrumentation(redis =>

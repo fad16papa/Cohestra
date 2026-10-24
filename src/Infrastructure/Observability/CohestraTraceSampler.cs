@@ -12,6 +12,15 @@ public sealed class CohestraTraceSampler : Sampler
         _ratioSampler = new TraceIdRatioBasedSampler(bounded);
     }
 
+    public static Sampler CreateParentAware(double ratio)
+    {
+        var inner = new CohestraTraceSampler(ratio);
+        return new ParentBasedSampler(
+            inner,
+            remoteParentNotSampled: inner,
+            localParentNotSampled: inner);
+    }
+
     public override SamplingResult ShouldSample(in SamplingParameters samplingParameters)
     {
         if (CohestraTelemetry.IsAlwaysOnActivity(samplingParameters.Name))

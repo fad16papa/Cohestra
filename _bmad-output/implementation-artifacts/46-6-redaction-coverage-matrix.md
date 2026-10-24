@@ -30,5 +30,7 @@ Known leak fix: `SendGridEmailSender` / `NullEmailSender` never log recipient em
 | High-cardinality URL | `url.full` / `url.query` / `http.url` | key | `[redacted]` | `TelemetryRedactorTests` |
 | SendGrid Production log | recipient / raw body | ILogger | never present | `SendGridEmailSenderLoggingTests` |
 | Synthetic OTLP body | webhook secret tag | exported bytes | absent | `SyntheticOtlpExportTests` |
+| Exception message | `exception.message` / `LogRecord.Exception` | key + exception dump | `[redacted]` / dropped | `TelemetryRedactorTests`, `TelemetryRedactingProcessorTests` |
+| Health 200-char cap | 250-char safe text | OTel value path | not truncated | `TelemetryRedactorTests` |
 
 Safe labels kept: `http.route`, `http.request.method`, `http.response.status_code`, `outbox.message_type`, `outbox.status`, `paddle.event_type` (bounded + `other`), `paddle.disposition`, `job.name`, `tenant.id`.

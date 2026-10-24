@@ -83,8 +83,8 @@ public sealed class SyntheticOtlpExportTests
             activity?.SetTag("job.name", "outbox-dispatcher");
         }
 
-        var flushed = provider.ForceFlush(1000);
-        Assert.True(flushed || !flushed);
+        var exception = Record.Exception(() => provider.ForceFlush(1000));
+        Assert.Null(exception);
     }
 }
 

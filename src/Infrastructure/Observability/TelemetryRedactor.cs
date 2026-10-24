@@ -63,6 +63,8 @@ public static partial class TelemetryRedactor
         "http.response.body",
         "db.query.parameter",
         "db.statement.parameter",
+        "exception.message",
+        "exception.stacktrace",
     };
 
     private static readonly HashSet<string> HighCardinalityKeys = new(StringComparer.OrdinalIgnoreCase)
@@ -125,7 +127,7 @@ public static partial class TelemetryRedactor
 
         var text = SshPrivateKey().Replace(value, Redacted);
         text = TokenAssignment().Replace(text, "$1=[redacted]");
-        text = PlatformHealthDescriptionSanitizer.Sanitize(text) ?? string.Empty;
+        text = PlatformHealthDescriptionSanitizer.Sanitize(text, maxLength: 0) ?? string.Empty;
         text = PhoneNumber().Replace(text, Redacted);
         text = PaymentCard().Replace(text, Redacted);
         text = FormAnswersJson().Replace(text, $"\"answers\":{Redacted}");

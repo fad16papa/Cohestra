@@ -260,3 +260,4 @@ Cursor Grok 4.6
 ### Change Log
 
 - 2026-10-24: Implemented Story 46.6 OTel SDK, redaction, SendGrid leak fix, and exact-HEAD tests. Status → review.
+- 2026-10-24: Review-loop patches — parent-aware sampler so always-on children of unsampled parents export; `RecordException=false` + drop PII `LogRecord.Exception`; Paddle span wraps `ProcessAsync`; outbox idle delay outside `job.run`; allowlisted outbox message types; paddle event types canonicalized; OTel redaction no longer inherits the health 200-char cap.

@@ -1,4 +1,5 @@
 using Cohestra.Infrastructure.Observability;
+using Cohestra.Infrastructure.Platform;
 
 namespace Cohestra.Infrastructure.Tests.Observability;
 
@@ -82,5 +83,23 @@ public sealed class TelemetryRedactorTests
         Assert.False(TelemetryRedactor.IsHighCardinalityKey("http.route"));
         Assert.Equal("/api/v1/admin/clients", TelemetryRedactor.RedactValue("http.route", "/api/v1/admin/clients"));
         Assert.Equal(200, TelemetryRedactor.RedactValue("http.response.status_code", 200));
+    }
+
+    [Fact]
+    public void Otel_redaction_does_not_apply_health_description_length_cap()
+    {
+        var raw = new string('x', 250);
+        var redacted = TelemetryRedactor.Redact(raw);
+
+        Assert.Equal(250, redacted!.Length);
+        Assert.Equal(200, PlatformHealthDescriptionSanitizer.Sanitize(raw)!.Length);
+    }
+
+    [Fact]
+    public void Exception_message_key_is_forbidden()
+    {
+        Assert.True(TelemetryRedactor.IsForbiddenKey("exception.message"));
+        Assert.Equal(TelemetryRedactor.Redacted, TelemetryRedactor.RedactValue("exception.message", "failed for customer@example.com"));
+        Assert.Equal(TelemetryRedactor.Redacted, TelemetryRedactor.RedactValue("exception.stacktrace", "at Send(customer@example.com)"));
     }
 }
