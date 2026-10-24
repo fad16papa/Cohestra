@@ -73,6 +73,7 @@ services:
       - support_attachments_data:/app/data/support-attachments
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      Cohestra__DeploymentPlane: Production
       ASPNETCORE_URLS: http://+:8080
       GIT_SHA: ${GIT_SHA:-}
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-cohestra};Username=${POSTGRES_USER:-cohestra};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}

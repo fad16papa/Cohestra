@@ -1,0 +1,9 @@
+# Synthetic FAIL fixture — Production suffixes that collide with UAT.
+# Not live secrets.
+JWT_SIGNING_KEY	ua01
+POSTGRES_PASSWORD	pr02
+REDIS_PASSWORD	pr07
+SendGrid__ApiKey	pr03
+Paddle__ApiKey	pr04
+Paddle__WebhookSecret	pr05
+Paddle__ClientToken	pr06

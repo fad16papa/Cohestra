@@ -89,6 +89,14 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
+        if (DeploymentPlane.IsDedicatedProduction(builder.Configuration))
+        {
+            policy.SetIsOriginAllowed(ProductionCorsOrigins.IsAllowed)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+            return;
+        }
+
         var allowedOrigins = builder.Configuration
             .GetSection("Cors:AllowedOrigins")
             .Get<string[]>() ?? ["http://localhost:3000"];
@@ -155,7 +163,16 @@ if (PlatformAdminSeedOneShot.IsRequested(app.Configuration))
 }
 
 await ApplyMigrationsAsync(app);
-LogStartupSeedConfiguration(app);
+if (DeploymentPlane.IsDedicatedProduction(app.Configuration))
+{
+    app.Logger.LogInformation(
+        "Dedicated Production plane: seed flags locked off, DEV_TENANT_SLUG unset, login-account diagnostics disabled.");
+}
+else
+{
+    LogStartupSeedConfiguration(app);
+}
+
 await OperatorSeeder.SeedAsync(app.Services);
 await PlatformAdminSeeder.SeedAsync(app.Services);
 await SitePageSeeder.SeedAsync(app.Services);
@@ -171,7 +188,11 @@ if (loadTestSeedEnabled)
     await RunLoadTestSeedSafelyAsync(app);
 }
 
-await LogStartupLoginAccountsAsync(app);
+if (!DeploymentPlane.IsDedicatedProduction(app.Configuration))
+{
+    await LogStartupLoginAccountsAsync(app);
+}
+
 LogPaddleDefaultPaymentLink(app);
 
 app.UseExceptionHandler();
