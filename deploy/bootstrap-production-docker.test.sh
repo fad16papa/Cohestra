@@ -44,6 +44,10 @@ fi
 if grep -qE '\bufw\b|\biptables\b|\bnft\b|firewall-cmd|tailscale\b|sshd' "$SCRIPT"; then
   fail "bootstrap must not alter firewall, Tailscale, or SSH"
 fi
+grep -q 'production-compose-config-placeholders.sh' "$SCRIPT" || fail "bootstrap must use the canonical compose placeholder helper"
+if grep -qE 'POSTGRES_PASSWORD=bootstrap-config-check-not-a-secret' "$SCRIPT"; then
+  fail "bootstrap must not duplicate placeholder values; use the helper"
+fi
 grep -q 'download.docker.com/linux/ubuntu' "$SCRIPT" || fail "official Docker apt URI missing"
 grep -q 'docker-compose-plugin' "$SCRIPT" || fail "compose plugin package missing"
 grep -q '9DC858229FC7DD38854AE2D88D81803C0EBFCD88' "$SCRIPT" || fail "official Docker GPG fingerprint missing"
@@ -160,6 +164,12 @@ expect_refuse passwordless_sudo_forbidden "passwordless sudo" COHESTRA_TEST_PASS
 expect_refuse docker_tcp_listener_forbidden "Docker TCP listener" COHESTRA_TEST_TCP_LISTENER=1
 expect_refuse unexpected_containers_present "foreign containers" COHESTRA_TEST_FOREIGN_CONTAINERS=1
 expect_refuse snap_docker_forbidden "Snap Docker" COHESTRA_TEST_SNAP_DOCKER=1
+
+cp "$ROOT_DIR/docker-compose.production.yml" "$TMP/drift-compose.yml"
+printf '\n      New__Secret: ${NEW_VAR:?Set NEW_VAR in .env}\n' >>"$TMP/drift-compose.yml"
+expect_refuse compose_placeholder_contract_drift "new compose required variable" \
+  COHESTRA_TEST_COMPOSE_FILE="$TMP/drift-compose.yml"
+
 expect_refuse test_harness_must_not_use_live_path "live Production path" \
   COHESTRA_TEST_DEPLOY_HOME=/home/deploy \
   COHESTRA_TEST_DEPLOY_PATH=/home/deploy/cohestra-production

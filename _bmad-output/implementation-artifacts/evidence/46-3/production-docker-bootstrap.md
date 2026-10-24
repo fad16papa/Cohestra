@@ -46,6 +46,15 @@ No secrets are recorded.
 - No compose-up, container start, or database mutation
 - Socket-less dry-run: `docker --version`, `docker compose version`, `bash deploy/production-compose.sh config`
 
+## 2026-10-24 owner rerun (install succeeded, config refused)
+
+- `RESULT=REFUSE`
+- `REFUSE_REASON=production_compose_config_failed`
+- Docker Engine / Compose plugin installed
+- `COMPOSE_UP=false` `DATABASE_MUTATED=false` `DEPLOY_USER_IN_DOCKER_GROUP=false`
+- Cause: config-only placeholders omitted `SendGrid__ApiKey` and `SendGrid__FromEmail`
+- Follow-up: `deploy/lib/production-compose-config-placeholders.sh`
+
 ## Privilege policy
 
 Membership in group `docker` is root-equivalent. Story 46.3 only needs Compose configuration validation. Privileged container lifecycle authorization belongs to a later explicit Production deployment story.

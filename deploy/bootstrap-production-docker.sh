@@ -474,32 +474,40 @@ COMPOSE_VER="$(compose_version)"
 as_deploy docker --version >/dev/null
 as_deploy docker compose version >/dev/null
 
+compose_helper=""
 if [[ "$UNDER_TEST" -eq 1 ]]; then
-  if [[ -f "$DEPLOY_PATH/.env" ]]; then
-    as_deploy bash "$DEPLOY_PATH/deploy/production-compose.sh" config >/dev/null
-  else
-    as_deploy env \
-      POSTGRES_PASSWORD=bootstrap-config-check-not-a-secret \
-      REDIS_PASSWORD=bootstrap-config-check-not-a-secret \
-      JWT_SIGNING_KEY=bootstrap-config-check-not-a-secret-32 \
-      PUBLIC_BASE_URL=http://127.0.0.1 \
-      bash "$DEPLOY_PATH/deploy/production-compose.sh" config >/dev/null
+  compose_helper="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/deploy/lib/production-compose-config-placeholders.sh"
+else
+  compose_helper="$DEPLOY_PATH/deploy/lib/production-compose-config-placeholders.sh"
+fi
+if [[ ! -f "$compose_helper" ]]; then
+  refuse "compose_placeholder_helper_missing"
+fi
+# shellcheck disable=SC1090
+. "$compose_helper"
+if [[ "$UNDER_TEST" -eq 1 ]]; then
+  if ! production_compose_assert_placeholder_contract \
+    "${COHESTRA_TEST_COMPOSE_FILE:-$(production_compose_file)}"; then
+    refuse "compose_placeholder_contract_drift"
   fi
+else
+  if ! production_compose_assert_placeholder_contract "$DEPLOY_PATH/docker-compose.production.yml"; then
+    refuse "compose_placeholder_contract_drift"
+  fi
+fi
+# Process-only. Never write .env. production-compose.sh config applies the
+# same canonical placeholders for any still-missing ${VAR:?} names.
+if [[ ! -f "$DEPLOY_PATH/.env" ]]; then
+  production_compose_apply_config_placeholders
+fi
+
+if [[ "$UNDER_TEST" -eq 1 ]]; then
+  as_deploy bash "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/deploy/production-compose.sh" config >/dev/null
   COMPOSE_CONFIG="pass"
 else
   set +e
-  if [[ -f "$DEPLOY_PATH/.env" ]]; then
-    as_deploy bash "$DEPLOY_PATH/deploy/production-compose.sh" config >/dev/null
-    compose_rc=$?
-  else
-    as_deploy env \
-      POSTGRES_PASSWORD=bootstrap-config-check-not-a-secret \
-      REDIS_PASSWORD=bootstrap-config-check-not-a-secret \
-      JWT_SIGNING_KEY=bootstrap-config-check-not-a-secret-32 \
-      PUBLIC_BASE_URL=http://127.0.0.1 \
-      bash "$DEPLOY_PATH/deploy/production-compose.sh" config >/dev/null
-    compose_rc=$?
-  fi
+  as_deploy bash "$DEPLOY_PATH/deploy/production-compose.sh" config >/dev/null
+  compose_rc=$?
   set -e
   if [[ "$compose_rc" -ne 0 ]]; then
     refuse "production_compose_config_failed"
