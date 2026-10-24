@@ -1,0 +1,19 @@
+# Story 46.9 — documented IgnoreTenantFilters / IgnoreQueryFilters call sites
+# under src/Infrastructure and src/Api. Tests and seed helpers outside these
+# trees are ignored. New production call sites must be added here with a
+# documented PlatformAdmin or system-job reason.
+src/Infrastructure/Persistence/CohestraDbContext.cs
+src/Infrastructure/Activities/ActivityExpirationService.cs
+src/Infrastructure/Outbox/ActivityExpiredOutboxHandler.cs
+src/Infrastructure/Outbox/ActivityExpiringSoonOutboxHandler.cs
+src/Infrastructure/Outbox/SupportIssueOutboxHandlers.cs
+src/Infrastructure/Support/PlatformSupportIssueService.cs
+src/Infrastructure/Support/PlatformSupportReportService.cs
+src/Infrastructure/Team/TeamInviteService.cs
+src/Infrastructure/Seed/DemoDataSeeder.cs
+src/Infrastructure/Site/SiteUpcomingActivitiesResolver.cs
+src/Infrastructure/Platform/PlatformOpsOverviewService.cs
+src/Infrastructure/Platform/PlatformTenantOpsService.cs
+src/Infrastructure/Platform/PlatformTenantService.cs
+src/Infrastructure/Platform/PlatformTenantTimelineService.cs
+src/Infrastructure/PublicDoor/PublicDoorService.cs

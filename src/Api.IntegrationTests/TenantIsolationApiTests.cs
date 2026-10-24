@@ -1041,4 +1041,149 @@ public sealed class TenantIsolationApiTests(IntegrationTestFixture fixture)
             Assert.DoesNotContain(audits, row => row.TenantId == tenantB.Id);
         }
     }
+
+    [SkippableFact]
+    public async Task Admin_JwtTenantA_OnForeignHost_Returns403_TenantMismatch()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+        IntegrationTestHelpers.UseTenantHost(adminClient, tenantB.Slug);
+
+        using var response = await adminClient.GetAsync("/api/v1/admin/me");
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.Contains("tenant_mismatch", body, StringComparison.Ordinal);
+        Assert.DoesNotContain(tenantB.Name, body, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [SkippableFact]
+    public async Task Admin_XTenantIdHeader_CannotWidenAccessToForeignActivity()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        const string foreignMarker = "TENANT_B_X_TENANT_ID_MARKER";
+        var foreignSlug = $"iso-xid-{Guid.NewGuid():N}"[..20];
+        var foreignActivity = await IntegrationTestHelpers.SeedPublishedActivityForTenantAsync(
+            Factory.Services,
+            tenantB.Id,
+            foreignSlug,
+            foreignMarker);
+
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+        adminClient.DefaultRequestHeaders.TryAddWithoutValidation("X-Tenant-Id", tenantB.Id.ToString());
+
+        using var response = await adminClient.GetAsync($"/api/v1/admin/activities/{foreignActivity.Id}");
+        Assert.True(
+            response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden,
+            $"Expected 404 or 403 for X-Tenant-Id impersonation, got {(int)response.StatusCode}.");
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(foreignSlug, body, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task Admin_GetClient_ByForeignTenantId_Returns404Or403_NeverForeignPayload()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        const string foreignMarker = "TENANT_B_CLIENT_ISOLATION_MARKER";
+        var foreignEmail = $"iso-client-{Guid.NewGuid():N}@isolation-b.test";
+        var foreignClient = await IntegrationTestHelpers.SeedClientAsync(
+            Factory.Services,
+            client =>
+            {
+                client.TenantId = tenantB.Id;
+                client.FullName = foreignMarker;
+                client.Email = foreignEmail;
+                client.NormalizedEmail = foreignEmail;
+            });
+
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        using var response = await adminClient.GetAsync($"/api/v1/admin/clients/{foreignClient.Id}");
+        Assert.True(
+            response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden,
+            $"Expected 404 or 403 for cross-tenant client GET, got {(int)response.StatusCode}.");
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(foreignEmail, body, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task Admin_GetSupportIssue_ByForeignTenantId_Returns404Or403_NeverForeignPayload()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var tenantB = await CreateForeignTenantAsync();
+        const string foreignMarker = "TENANT_B_SUPPORT_ISOLATION_MARKER";
+        Guid foreignIssueId;
+        var now = DateTimeOffset.UtcNow;
+
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+            var issue = new SupportIssue
+            {
+                Id = Guid.CreateVersion7(),
+                TenantId = tenantB.Id,
+                IssueNumber = $"SUP{DateTime.UtcNow:yyyyMMdd}{Random.Shared.Next(10000, 99999)}",
+                SubmittedByUserId = Guid.CreateVersion7(),
+                Subject = foreignMarker,
+                Description = foreignMarker,
+                OperatorEmail = "iso-b@example.com",
+                OperatorDisplayName = foreignMarker,
+                TenantSlug = tenantB.Slug,
+                TenantName = tenantB.Name,
+                CreatedAt = now,
+                UpdatedAt = now,
+            };
+            db.SupportIssues.Add(issue);
+            await db.SaveChangesAsync();
+            foreignIssueId = issue.Id;
+        }
+
+        using var adminClient = Factory.CreateClient();
+        var accessToken = await IntegrationTestHelpers.LoginAsOperatorAsync(adminClient);
+        IntegrationTestHelpers.UseBearerToken(adminClient, accessToken);
+
+        using var response = await adminClient.GetAsync($"/api/v1/admin/support-issues/{foreignIssueId}");
+        Assert.True(
+            response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden,
+            $"Expected 404 or 403 for cross-tenant support GET, got {(int)response.StatusCode}.");
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain(foreignMarker, body, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
+    public async Task Platform_support_report_is_PlatformAdmin_only()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        using var tenantAdmin = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            tenantAdmin,
+            await IntegrationTestHelpers.LoginAsOperatorAsync(tenantAdmin));
+        using var forbidden = await tenantAdmin.GetAsync("/api/v1/platform/reports/support?preset=weekly");
+        Assert.Equal(HttpStatusCode.Forbidden, forbidden.StatusCode);
+
+        using var platform = Factory.CreateClient();
+        IntegrationTestHelpers.UseBearerToken(
+            platform,
+            await IntegrationTestHelpers.LoginAsPlatformAdminAsync(platform));
+        using var ok = await platform.GetAsync("/api/v1/platform/reports/support?preset=weekly");
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        var body = await ok.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Password=", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Bearer ", body, StringComparison.Ordinal);
+    }
 }
