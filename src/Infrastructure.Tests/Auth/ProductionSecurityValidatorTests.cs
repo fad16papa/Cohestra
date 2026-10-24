@@ -449,6 +449,64 @@ public sealed class ProductionSecurityValidatorTests
     }
 
     [Fact]
+    public void Validate_dedicated_production_survives_appsettings_cors_array_merge()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins:0"] = "http://localhost",
+                ["Cors:AllowedOrigins:1"] = "http://localhost:3000",
+                ["Cors:AllowedOrigins:2"] = "http://127.0.0.1",
+            })
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Cohestra:DeploymentPlane"] = "Production",
+                ["Jwt:SigningKey"] = "synthetic-production-jwt-signing-key-44chars",
+                ["ConnectionStrings:DefaultConnection"] =
+                    "Host=postgres;Port=5432;Database=cohestra;Username=cohestra;Password=synthetic-postgres-password-32",
+                ["ConnectionStrings:Redis"] = "redis:6379,password=synthetic-redis-password-32chars",
+                ["PublicWeb:BaseUrl"] = "https://cohestra.app",
+                ["Cors:AllowedOrigins:0"] = "https://cohestra.app",
+                ["Cors:AllowedOrigins:1"] = "",
+                ["Cors:AllowedOrigins:2"] = "",
+                ["SendGrid:ApiKey"] = "SG.syntheticIndependentProdKey",
+                ["SendGrid:FromEmail"] = "noreply@cohestra.app",
+                ["SendGrid:UseSandbox"] = "false",
+            })
+            .Build();
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+        Assert.Equal("https://cohestra.app", configuration["Cors:AllowedOrigins:0"]);
+        Assert.True(string.IsNullOrEmpty(configuration["Cors:AllowedOrigins:1"]));
+        Assert.True(string.IsNullOrEmpty(configuration["Cors:AllowedOrigins:2"]));
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_allows_cleared_appsettings_cors_slots()
+    {
+        var configuration = DedicatedProductionConfig(corsOrigin1: "", corsOrigin2: "");
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_rejects_merged_localhost_cors_leftover()
+    {
+        var configuration = DedicatedProductionConfig(corsOrigin1: "http://localhost:3000");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Cors:AllowedOrigins", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Validate_dedicated_production_rejects_localhost_cors_origin()
     {
         var configuration = DedicatedProductionConfig(corsOrigin: "http://localhost:3000");
@@ -565,6 +623,8 @@ public sealed class ProductionSecurityValidatorTests
             "Host=postgres;Port=5432;Database=cohestra;Username=cohestra;Password=synthetic-postgres-password-32",
         string? publicBaseUrl = "https://cohestra.app",
         string? corsOrigin = "https://cohestra.app",
+        string? corsOrigin1 = null,
+        string? corsOrigin2 = null,
         string? sendGridApiKey = "SG.syntheticIndependentProdKey",
         string? sendGridFromEmail = "noreply@cohestra.app",
         bool sendGridUseSandbox = false,
@@ -594,6 +654,16 @@ public sealed class ProductionSecurityValidatorTests
             ["Paddle:ClientToken"] = paddleClientToken,
             ["Paddle:AllowLive"] = "false",
         };
+        if (corsOrigin1 is not null)
+        {
+            values["Cors:AllowedOrigins:1"] = corsOrigin1;
+        }
+
+        if (corsOrigin2 is not null)
+        {
+            values["Cors:AllowedOrigins:2"] = corsOrigin2;
+        }
+
         if (devTenantSlug is not null)
         {
             values["DEV_TENANT_SLUG"] = devTenantSlug;

@@ -91,6 +91,8 @@ services:
       CampaignAssets__PublicApiBaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
       Support__AttachmentStoragePath: /app/data/support-attachments
       Cors__AllowedOrigins__0: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+      Cors__AllowedOrigins__1: ""
+      Cors__AllowedOrigins__2: ""
       SendGrid__ApiKey: ${SendGrid__ApiKey:?Set SendGrid__ApiKey in .env}
       SendGrid__FromEmail: ${SendGrid__FromEmail:?Set SendGrid__FromEmail in .env}
       SendGrid__FromName: ${SendGrid__FromName:-Cohestra}
