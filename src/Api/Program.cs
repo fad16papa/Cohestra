@@ -1,5 +1,6 @@
 using Cohestra.Api.Health;
 using Cohestra.Api.Infrastructure;
+using Cohestra.Api.Observability;
 using Cohestra.Infrastructure;
 using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Identity;
@@ -35,6 +36,7 @@ if (string.IsNullOrWhiteSpace(redisConnection))
 }
 
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
+builder.Services.AddCohestraOpenTelemetry(builder.Configuration, builder.Environment);
 
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
     ?? throw new InvalidOperationException("Jwt configuration is missing.");

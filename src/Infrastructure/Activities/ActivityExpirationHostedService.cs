@@ -1,3 +1,4 @@
+using Cohestra.Infrastructure.Observability;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,7 +26,9 @@ public sealed class ActivityExpirationHostedService(
 
         try
         {
-            await RunBackfillPassAsync(stoppingToken);
+            await CohestraTelemetry.TraceJobAsync(
+                "activity-expiration-backfill",
+                () => RunBackfillPassAsync(stoppingToken));
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -38,7 +41,9 @@ public sealed class ActivityExpirationHostedService(
         {
             try
             {
-                await RunExpirationPassAsync(stoppingToken);
+                await CohestraTelemetry.TraceJobAsync(
+                    "activity-expiration",
+                    () => RunExpirationPassAsync(stoppingToken));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
