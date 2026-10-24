@@ -68,7 +68,14 @@ for arg in "$@"; do
   esac
 done
 
-if command -v docker >/dev/null 2>&1; then
+# Daemon probes need a usable Docker socket. Story 46.3 dry-run runs as
+# non-root `deploy` without docker-group membership (socket access is
+# root-equivalent). `docker compose config` must still succeed.
+docker_daemon_usable=0
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  docker_daemon_usable=1
+fi
+if [[ "$docker_daemon_usable" -eq 1 ]]; then
   for net in cohestra_uat_internal cohestra_uat_edge; do
     if docker network inspect "$net" >/dev/null 2>&1; then
       echo "REFUSE: UAT Docker network ${net} is present."
