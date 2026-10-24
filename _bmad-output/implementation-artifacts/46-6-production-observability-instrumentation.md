@@ -79,8 +79,25 @@ so that **we are not blind the first time Production breaks**.
   - [x] Subtask 4.3: `SendGridEmailSender` never logs recipient email or raw body in Production
 - [x] Task 5: Tests — synthetic OTLP, coverage, redaction, collector outage, `/ready`, TenantIsolation, API integration, UAT regression (AC 1–4)
 - [x] Task 6: BMAD evidence + redaction coverage matrix (AC 2, 5)
-- [ ] Task 7: Exact-HEAD BMAD code review loop (no unresolved BLOCKER/MAJOR)
+- [x] Task 7: Exact-HEAD BMAD code review loop (no unresolved BLOCKER/MAJOR)
 - [ ] Task 8: Product acceptance on the same HEAD; draft PR; no merge; Production NO-GO
+  - [x] Product acceptance written for HEAD `d6596101`
+  - [x] Draft PR #503
+  - [ ] CI success on the same HEAD
+  - [x] No merge / Production NO-GO
+
+### Review Findings
+
+Reviewed HEAD `d65961010a7cb56901960955dc2ddb5ac999f8f2` twice with Grok 4.6 Blind Hunter, Edge Case Hunter, and Acceptance Auditor.
+
+Zero unresolved BLOCKER / MAJOR after the review-loop patches.
+
+- [x] [Review][Defer] ASP.NET `http.route` is usually absent at sample time, so the extra paddle HTTP always-on branch is ineffective — deferred, custom `paddle.webhook` span is always-on
+- [x] [Review][Defer] Console/file `ILogger` sinks are not passed through `TelemetryRedactingLogProcessor` — deferred, SendGrid/NullEmail source-fixed; remaining log sites are 46.9
+- [x] [Review][Defer] `AddRedisInstrumentation` resolves `IConnectionMultiplexer` at TracerProvider build (eager Connect) — deferred, pre-existing Redis singleton; 46.4 owns runtime
+- [x] [Review][Defer] Nested `answers` JSON regex is first-`}` best-effort — deferred, `answers` / `form_answer` keys are fully redacted
+- [x] [Review][Defer] Empty outbox polls still emit always-on `job.run` — deferred, volume not cardinality; 46.7 dashboards
+- [x] [Review][Defer] Collector-outage integration host uses the simple export processor — deferred, production default is batch; ForceFlush outage unit test covers exporter errors
 
 ## Dev Notes
 
@@ -202,10 +219,10 @@ Cursor Grok 4.6
 ### Debug Log References
 
 - `dotnet build Cohestra.sln` — succeeded
-- `dotnet test Cohestra.sln --filter Category!=Integration` — 1313 passed
+- `dotnet test Cohestra.sln --filter Category!=Integration` — **1321 passed** on `d6596101`
 - `dotnet test Infrastructure.Tests --filter Category=TenantIsolation` — 9 passed
-- `dotnet test Api.IntegrationTests --filter Category=TenantIsolation` — 39 passed
-- `dotnet test Api.IntegrationTests --filter Category=Integration` — 217 passed / 0 skipped (fresh `cohestra_test` + Redis FLUSHALL)
+- `dotnet test Api.IntegrationTests --filter Category=TenantIsolation` — 39 passed (included in the 217 Integration category run)
+- `dotnet test Api.IntegrationTests --filter Category=Integration` — **217 passed / 0 skipped** (fresh `cohestra_test` + Redis FLUSHALL)
 - Collector-down host: `ObservabilityCollectorOutageIntegrationTests` passed after moving Redis instrumentation into `WithTracing` (DI-time, not post-`ServiceProvider`)
 - UAT compose/workflow untouched. Production compose/secrets untouched.
 
@@ -221,7 +238,10 @@ Cursor Grok 4.6
 
 - _bmad-output/implementation-artifacts/46-6-production-observability-instrumentation.md
 - _bmad-output/implementation-artifacts/46-6-redaction-coverage-matrix.md
+- _bmad-output/implementation-artifacts/46-6-bmad-code-review-d6596101.md
+- _bmad-output/implementation-artifacts/46-6-product-acceptance-d6596101.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/deferred-work.md
 - src/Api/Api.csproj
 - src/Api/Program.cs
 - src/Api/appsettings.json

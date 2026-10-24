@@ -1,7 +1,7 @@
 ---
 story: 46.6
 title: Telemetry redaction coverage matrix
-status: in-progress
+status: review
 production: NO-GO
 created: 2026-10-24
 ---
