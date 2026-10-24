@@ -306,6 +306,25 @@ public sealed class ProductionSecurityValidatorTests
     }
 
     [Fact]
+    public void Validate_rejects_uat_cors_origin_on_production_apex()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["PublicWeb:BaseUrl"] = "https://cohestra.app",
+                ["Cors:AllowedOrigins:0"] = "https://uat.cohestra.app",
+                ["SelfServeSignup:RegistrationClosed"] = "true",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("UAT hosts", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Validate_rejects_recaptcha_bypass_token_in_production()
     {
         var configuration = RebuildWith(

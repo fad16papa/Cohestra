@@ -2,7 +2,7 @@
 id: 46.9
 key: 46-9-production-security-and-tenant-isolation-hardening
 title: Production security and tenant-isolation hardening
-status: in-progress
+status: review
 epic: 46
 created: 2026-10-24
 baseline_commit: e962c8c3eead953a1f56f2b397b3e9d4fc669041
@@ -14,7 +14,7 @@ production: NO-GO
 
 # Story 46.9: Production security and tenant-isolation hardening
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -76,7 +76,7 @@ so that **launch does not depend on UAT luck**.
 - [x] Task 4: CSP live-Paddle contract + tests (AC 1)
 - [x] Task 5: TenantIsolation negatives + bypass allowlist (AC 2, 3)
 - [x] Task 6: Secret inventory names-only + CI contracts (AC 1, 4)
-- [ ] Task 7: BUILD + TEST + BMAD code review on exact HEAD
+- [x] Task 7: BUILD + TEST + BMAD code review on exact HEAD (review recorded below; CI + live gates still open)
 
 ## Dev Notes
 
@@ -139,6 +139,44 @@ Cursor Grok 4.6
 - _bmad-output/implementation-artifacts/46-9-production-security-and-tenant-isolation-hardening.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
 
+## Senior Developer Review (AI)
+
+**Reviewer:** Cursor Grok 4.6 (exact-HEAD review after BUILD + TEST)
+**Date:** 2026-10-24 (Asia/Singapore)
+**Outcome:** Changes requested once (UAT CORS on Production apex) → fixed → **Approve** for in-repo merge readiness
+**Unresolved BLOCKER:** 0
+**Unresolved MAJOR:** 0
+
+Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor, plus Mandatory Code Review Loop checklist (tenant isolation, authz, security, tests, brownfield reuse).
+
+### Findings
+
+| Sev | Finding | Disposition |
+| --- | --- | --- |
+| MAJOR | Production CORS validator rejected localhost but allowed `https://uat.cohestra.app` when `PublicWeb:BaseUrl` was the Production apex | **Fixed** — `ValidateProductionCors` now refuses UAT hosts on the apex; unit test added |
+| MINOR | Shared nginx CSP still includes sandbox Paddle until 46.10 adopts `production-live-csp.snippet` | **Deferred** — documented; sandbox checkout still required until live Paddle. No product/security risk for current sandbox-locked compose |
+| MINOR | Live `verify-security-headers.sh` / firewall / Environment reviewers remain unverified | **Deferred** — prohibited live probes; recorded PENDING, not PASS |
+| NIT | CORS origins with paths are accepted if host is valid | Left as-is; compose uses origin URLs |
+
+### Test evidence on reviewed worktree
+
+- `dotnet test` Category!=Integration: **1261 passed**, 10 skipped (Redis-unavailable pre-existing)
+- TenantIsolation integration: **44 passed**
+- Category=Integration: **221 passed**, 0 failed
+- CSP vitest: **6 passed**
+- `validate-production-csp.sh` / allowlist / secret-inventory: **PASS**
+
+### Product acceptance
+
+- PRODUCT TRUTH: threat matrix recorded; in-repo holes closed; live rows stay PENDING
+- DATA TRUTH: cross-tenant reads remain 404/403 without foreign payload
+- UX TRUTH: no new UI (N/A)
+- INTEGRATION TRUTH: Platform Admin 403s include support reports; UAT deploy isolation untouched
+- REGRESSION TRUTH: full unit + integration suite green
+
+Story stays **review**. Not DONE: GitHub CI on this HEAD, owner live gates, 46.4/46.6 integrations, and no autonomous merge. Production **NO-GO**.
+
 ## Change Log
 
 - 2026-10-24 — Story 46.9 implementation: security audit, fail-closed hardening, negative tests, evidence matrix. Production NO-GO.
+- 2026-10-24 — Code review: reject UAT CORS on Production apex; record exact-HEAD review. Status → review.

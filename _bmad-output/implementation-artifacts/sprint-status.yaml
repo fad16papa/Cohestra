@@ -505,7 +505,7 @@ development_status:
   46-6-production-observability-instrumentation: backlog
   46-7-metrics-dashboards-and-alerting: backlog
   46-8-platform-admin-production-support-telemetry-integration: backlog
-  46-9-production-security-and-tenant-isolation-hardening: in-progress
+  46-9-production-security-and-tenant-isolation-hardening: review
   46-10-paddle-live-readiness: backlog
   46-11-sendgrid-and-email-production-readiness: backlog
   46-12-performance-capacity-and-load-acceptance: backlog

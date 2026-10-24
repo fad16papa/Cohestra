@@ -76,13 +76,13 @@ public static class ProductionSecurityValidator
             throw new InvalidOperationException("Jwt:SigningKey must be at least 32 characters.");
         }
 
-        ValidateProductionCors(configuration);
+        ValidateProductionCors(configuration, publicBaseUrl);
         ValidateProductionRecaptcha(configuration, publicBaseUrl);
         ValidateProductionRedis(configuration.GetConnectionString("Redis"), publicBaseUrl);
         ValidateProductionPostgres(configuration.GetConnectionString("DefaultConnection"));
     }
 
-    private static void ValidateProductionCors(IConfiguration configuration)
+    private static void ValidateProductionCors(IConfiguration configuration, string? publicBaseUrl)
     {
         var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
         if (origins.Length == 0)
@@ -107,6 +107,12 @@ public static class ProductionSecurityValidator
             {
                 throw new InvalidOperationException(
                     "Cors:AllowedOrigins must not include localhost or loopback hosts in non-Development environments.");
+            }
+
+            if (IsProductionApexHost(publicBaseUrl) && PaddleCredentialGuard.IsUatPublicHost(raw))
+            {
+                throw new InvalidOperationException(
+                    "Cors:AllowedOrigins must not include UAT hosts when the public host is the Production apex.");
             }
         }
     }
