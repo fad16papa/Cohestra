@@ -194,6 +194,13 @@ else
   fail "API must lock ASPNETCORE_ENVIRONMENT=Production"
 fi
 
+if grep -qE 'Cohestra__DeploymentPlane:[[:space:]]*Production[[:space:]]*$' "$COMPOSE" \
+  && ! grep -qE 'Cohestra__DeploymentPlane:.*\$' "$COMPOSE"; then
+  pass "API Cohestra__DeploymentPlane is locked Production"
+else
+  fail "API must lock Cohestra__DeploymentPlane=Production (not interpolatable)"
+fi
+
 for seed in OperatorSeed__Enabled PlatformAdminSeed__Enabled DemoDataSeed__Enabled LoadTestSeed__Enabled FollowUpDigest__Enabled; do
   if grep -qE "${seed}:[[:space:]]*\"false\"" "$COMPOSE"; then
     pass "${seed} locked false"
@@ -252,7 +259,7 @@ fi
 
 if [[ -f "$ENV_EXAMPLE" ]]; then
   pass ".env.production.example exists"
-  for name in POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY SendGrid__ApiKey PUBLIC_BASE_URL GIT_SHA OTEL_EXPORTER_OTLP_ENDPOINT Paddle__AllowLive; do
+  for name in POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY SendGrid__ApiKey PUBLIC_BASE_URL GIT_SHA OTEL_EXPORTER_OTLP_ENDPOINT Paddle__AllowLive Cohestra__DeploymentPlane; do
     if grep -q "$name" "$ENV_EXAMPLE"; then
       pass "env example names ${name}"
     else
