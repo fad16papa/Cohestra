@@ -3,6 +3,7 @@ using Cohestra.Application.Tenants;
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Activities;
+using Cohestra.Infrastructure.Observability;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +32,9 @@ public sealed class BillingJobsHostedService(
         {
             try
             {
-                await RunDailyJobsAsync(stoppingToken);
+                await CohestraTelemetry.TraceJobAsync(
+                    "billing-jobs",
+                    () => RunDailyJobsAsync(stoppingToken));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {

@@ -72,6 +72,7 @@ public class IntegrationTestWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseSetting("AuthOtp:MaxSendAttemptsPerWindow", "1000");
         builder.UseSetting("AuthOtp:SendWindowMinutes", "15");
         builder.UseSetting("DEV_TENANT_SLUG", "default");
+        builder.UseSetting("OpenTelemetry:Enabled", "false");
     }
 
     protected virtual void ConfigureTestServices(IWebHostBuilder builder)
