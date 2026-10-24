@@ -1,6 +1,11 @@
 # Production Tailscale overlay (Story 46.3)
 
-`CODE PATH IMPLEMENTED != LIVE OVERLAY BOOTSTRAPPED`
+`CODE PATH IMPLEMENTED = YES`  
+`LIVE OVERLAY BOOTSTRAPPED = PARTIAL`  
+`TAILSCALE LIVE = YES`  
+`PRODUCTION TAILSCALE HOST = 100.90.12.72`  
+`DEPLOY USER LIVE = YES`  
+`PRODUCTION CHECKOUT = NOT YET BOOTSTRAPPED`
 
 This document is the owner runbook for the accepted Production network path:
 
@@ -22,7 +27,7 @@ Public TCP 22 stays owner/admin CIDR restricted. Do not open `0.0.0.0/0:22` or `
 | Identity | Variable | Allowed value |
 | --- | --- | --- |
 | Inventory | `PROD_DROPLET_HOST` | `159.223.55.242` only |
-| Transport | `PROD_TAILSCALE_HOST` | later exact Tailscale IPv4 in `100.64.0.0/10` |
+| Transport | `PROD_TAILSCALE_HOST` | live Tailscale IPv4 `100.90.12.72` (Environment variable not populated yet) |
 
 `PROD_DROPLET_HOST` must never become the SSH destination. `PROD_TAILSCALE_HOST` must never replace the inventory host.
 
@@ -64,9 +69,10 @@ Cursor must not execute these against Production.
    `sudo tailscale up --advertise-tags=tag:cohestra-production --accept-routes=false --advertise-exit-node=false --ssh=false`
 3. Apply the Grants template in `tailscale-production-grants.template.json`. Replace `OWNER_TAILSCALE_PRINCIPAL_PLACEHOLDER` with the owner's real Tailscale principal. Do not invent an email here.
 4. Create the federated identity **after** dispatching `Inspect Production OIDC` and reading the sanitized `sub` / `iss` / `aud` / `environment` claims. Do not dispatch that workflow in this pass.
-5. Run `deploy/bootstrap-production-deploy-user.sh` on the host. It prepares `deploy` and `/home/deploy/cohestra-production` without installing a key.
-6. Later Gate B mints a **new** Actions SSH key for `deploy`. Do not reuse the owner workstation key or UAT `cohestra-uat-gha`.
-7. If the host needs `git fetch origin main` against a private repository, mint a **separate** read-only GitHub credential. Do not reuse the Actions SSH key. Those are opposite trust directions.
+5. Run `deploy/bootstrap-production-deploy-user.sh` on the host. It prepares `deploy` and `/home/deploy/cohestra-production` without installing a key. Owner-completed: Unix user `deploy` exists; password locked; no passwordless sudo; no Actions public key.
+6. Run `deploy/bootstrap-production-checkout.sh` as root with `PRODUCTION_BOOTSTRAP_SHA=<40 hex>`. This clones or validates `https://github.com/fad16papa/Cohestra.git` at `/home/deploy/cohestra-production` as `deploy` over unauthenticated HTTPS. It does not compose-up. **Not yet run.**
+7. Later Gate B mints a **new** Actions SSH key for `deploy`. Do not reuse the owner workstation key or UAT `cohestra-uat-gha`.
+8. The repository is currently public. Do not create a host→GitHub credential unless it later becomes private. That credential must stay separate from the Actions SSH key.
 
 ## Grants (modern Tailscale Grants, not legacy ACLs)
 
@@ -93,10 +99,11 @@ Do not run it until the owner authorizes that inspection.
 | Owner Gate A | PASS |
 | Network architecture | ACCEPTED |
 | Code implementation | IMPLEMENTED / NOT LIVE |
-| Production host Tailscale | NOT INSTALLED |
-| Production Tailscale node | NOT JOINED |
+| Production host Tailscale | INSTALLED / JOINED (`tag:cohestra-production`) |
+| Production Tailscale IPv4 | `100.90.12.72` |
 | OIDC subject | NOT YET OBSERVED |
 | Federated identity | NOT CREATED |
-| deploy user | NOT YET LIVE VERIFIED |
-| Owner Gate B | BLOCKED |
+| deploy user | LIVE (no Actions key) |
+| Production checkout | NOT YET BOOTSTRAPPED |
+| Owner Gate B | BLOCKED — checkout bootstrap and Actions SSH key remain |
 | Production | NO-GO |

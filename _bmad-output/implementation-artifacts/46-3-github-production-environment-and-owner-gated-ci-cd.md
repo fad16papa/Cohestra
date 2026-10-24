@@ -140,7 +140,7 @@ Required delivery chain:
 | Gate | Who | When | Blocks |
 | --- | --- | --- | --- |
 | `production_environment_protections` | Owner in GitHub Settings | Before first live Environment deployment | Unprotected `production` environment. 2026-10-23: owner attested Environment `production` from the GitHub web UI (`OWNER_ATTESTED_CONFIGURATION=PASS`). Cursor App Settings verification remains unavailable (`AUTOMATED_SETTINGS_VERIFICATION=UNAVAILABLE_DUE_TO_GITHUB_APP_PERMISSIONS`). See `evidence/46-3/owner-gate-a-environment-protections.md`. |
-| `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Missing `PROD_*` (fail-closed names only). **2026-10-23 BLOCKED — LIVE OVERLAY NOT BOOTSTRAPPED.** Code path is implemented and dormant (`CODE PATH IMPLEMENTED != LIVE OVERLAY BOOTSTRAPPED`). Do not populate `PROD_*`, mint the Actions SSH key, create the federated identity, or dispatch Production until the owner finishes host/Tailscale bootstrap. See `docs/deploy/tailscale-production-overlay.md`. |
+| `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Missing `PROD_*` (fail-closed names only). **2026-10-24 BLOCKED — CHECKOUT NOT BOOTSTRAPPED.** Tailscale is live at `100.90.12.72` and Unix user `deploy` exists. `/home/deploy/cohestra-production` is not a Git checkout. Do not populate `PROD_*`, mint the Actions SSH key, or dispatch Production until owner-run `deploy/bootstrap-production-checkout.sh` and Gate B complete. See `docs/deploy/tailscale-production-overlay.md`. |
 | Each deploy approval | Owner required reviewer | Every Environment `production` job | Deploy without approval |
 | Implementation authorization | Owner | After this planning artifact is accepted | `bmad-dev-story` for 46.3 |
 
@@ -728,6 +728,7 @@ Cursor Grok 4.6 (planning + implementation)
 - 2026-10-22: Control-plane implementation exists (`deploy-production.yml`, provenance, rollback, target, secrets validators). Workflow was not dispatched. Environment `production` was not created. Secrets were not populated. Production SSH was not executed. No Production workload was deployed.
 - 2026-10-22: First-parent chain walk to immutable anchor `c39f2618`. Laundering a direct-to-main commit through a later clean merge is REFUSE.
 - 2026-10-23: Tailscale OIDC Production control plane implemented in-repo and left dormant. Workflow not dispatched. Tailscale not installed live. Federated identity not created. `deploy` user not created live. Secrets/variables not populated. Story 46.4 not started.
+- 2026-10-24: Owner live Tailscale join at `100.90.12.72` and Unix user `deploy` reported. Checkout directory exists without a Git repository. Added owner-run `deploy/bootstrap-production-checkout.sh` (unexecuted). Gate B remains blocked.
 
 ### File List
 
@@ -773,3 +774,7 @@ Cursor Grok 4.6 (planning + implementation)
 - `docs/deploy/tailscale-production-grants.template.json`
 - `_bmad-output/implementation-artifacts/evidence/46-3/tailscale-oidc-control-plane.md`
 - `_bmad-output/implementation-artifacts/evidence/46-3/tailscale-github-action-review.md`
+- `deploy/bootstrap-production-checkout.sh`
+- `deploy/bootstrap-production-checkout.test.sh`
+- `_bmad-output/implementation-artifacts/evidence/46-3/production-checkout-bootstrap.md`
+- `_bmad-output/implementation-artifacts/evidence/46-3/production-checkout-bootstrap-review.md`
