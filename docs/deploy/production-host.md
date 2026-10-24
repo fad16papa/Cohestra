@@ -74,15 +74,16 @@ If the residential IP changes, add a new `/24`–`/32` CIDR to `owner_ssh_cidrs`
 
 Residential owner IPs and Cloud Agent egress NATs both change. The durable approach is a **stable management path** (owner-controlled VPN / WireGuard / Tailscale, or a dedicated jump host with a reserved IPv4) plus DigitalOcean Recovery Console as break-glass. Do not implement that path in Story 46.2.
 
-Story 46.3 owner live overlay bootstrap is **partial**. Tailscale is installed and joined as `tag:cohestra-production` at `100.90.12.72`. Unix user `deploy` exists with checkout `/home/deploy/cohestra-production` at `21e835604884a922f3a51d3b0d6039657affed15`. Dedicated Production Actions SSH key is installed for `deploy`. Gate B Environment values are configured. Host `docker` is **not** installed. Owner Gate B remains **blocked** until owner-run `deploy/bootstrap-production-docker.sh` and Gate B validation. Do not open 22 to `0.0.0.0/0`. Cursor must not SSH. Runbook: [tailscale-production-overlay.md](./tailscale-production-overlay.md).  
+Story 46.3 owner live overlay bootstrap is **partial**. Tailscale is installed and joined as `tag:cohestra-production` at `100.90.12.72`. Unix user `deploy` exists. Dedicated Production Actions SSH key is installed. Gate B Environment values are configured. Owner reported Docker Engine `29.9.2`, Compose `v5.6.1`, `COMPOSE_CONFIG=PASS`, and safety markers `false`. `RESULT=PASS` is **not visible** in the provided transcript. Owner Gate B remains **blocked** until that marker is attested. Do not open 22 to `0.0.0.0/0`. Cursor must not SSH. Runbook: [tailscale-production-overlay.md](./tailscale-production-overlay.md).  
 `LIVE_TAILSCALE=YES`  
 `LIVE_TAILSCALE_HOST=100.90.12.72`  
 `LIVE_DEPLOY_USER=YES`  
 `LIVE_CHECKOUT=YES`  
-`LIVE_CHECKOUT_SHA=21e835604884a922f3a51d3b0d6039657affed15`  
+`LIVE_CHECKOUT_SHA=OWNER_RERUN_REPORTED_UNVERIFIED`  
 `PRODUCTION_ACTIONS_SSH_KEY=CREATED_AND_CONFIGURED`  
 `GATE_B_VALUES=CONFIGURED`  
-`DOCKER_RUNTIME=NOT_YET_INSTALLED`  
+`DOCKER_RUNTIME=OWNER_REPORTED_PARTIAL`  
+`RESULT_PASS=NOT_VISIBLE`  
 `GATE_B_VALIDATION=NOT_DISPATCHED`  
 `PUBLIC_SSH_FIREWALL_CHANGE=NONE`
 

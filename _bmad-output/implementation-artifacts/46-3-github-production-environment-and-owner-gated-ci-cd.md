@@ -12,7 +12,7 @@ depends_on:
 owner_gate: production_environment_protections
 owner_gate_status: PASS — OWNER CONFIGURED / BOT API UNAVAILABLE
 overlay_code_path: IMPLEMENTED / NOT LIVE
-owner_gate_b: BLOCKED — DOCKER RUNTIME NOT INSTALLED / GATE B VALIDATION NOT DISPATCHED
+owner_gate_b: BLOCKED — DOCKER BOOTSTRAP RESULT=PASS NOT VISIBLE / GATE B VALIDATION NOT DISPATCHED
 implementation_authorized: true
 cutover_authorization: GRANTED
 production_release_readiness: NOT_YET_COMPLETE
@@ -140,7 +140,7 @@ Required delivery chain:
 | Gate | Who | When | Blocks |
 | --- | --- | --- | --- |
 | `production_environment_protections` | Owner in GitHub Settings | Before first live Environment deployment | Unprotected `production` environment. 2026-10-23: owner attested Environment `production` from the GitHub web UI (`OWNER_ATTESTED_CONFIGURATION=PASS`). Cursor App Settings verification remains unavailable (`AUTOMATED_SETTINGS_VERIFICATION=UNAVAILABLE_DUE_TO_GITHUB_APP_PERMISSIONS`). See `evidence/46-3/owner-gate-a-environment-protections.md`. |
-| `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Missing `PROD_*` (fail-closed names only). **2026-10-24 BLOCKED — DOCKER RUNTIME NOT INSTALLED.** Live checkout is `21e835604884a922f3a51d3b0d6039657affed15`. Environment `production` has the 5 required secrets and 4 required variables. Dedicated Production Actions SSH key is created and installed for `deploy`. Host `docker` is absent, so Gate B / `production-compose.sh config` must not be dispatched until owner-run `deploy/bootstrap-production-docker.sh` completes. See `docs/deploy/tailscale-production-overlay.md`. |
+| `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Missing `PROD_*` (fail-closed names only). **2026-10-24 BLOCKED — DOCKER BOOTSTRAP RESULT=PASS NOT VISIBLE.** Owner reported Engine `29.9.2`, Compose `v5.6.1`, `COMPOSE_CONFIG=PASS`, and all safety markers `false`. The provided transcript does not show `RESULT=PASS`. Do not dispatch Gate B / Deploy Production until that line is attested. See `evidence/46-3/production-docker-bootstrap-acceptance.md`. |
 | Each deploy approval | Owner required reviewer | Every Environment `production` job | Deploy without approval |
 | Implementation authorization | Owner | After this planning artifact is accepted | `bmad-dev-story` for 46.3 |
 
@@ -731,6 +731,7 @@ Cursor Grok 4.6 (planning + implementation)
 - 2026-10-24: Owner live Tailscale join at `100.90.12.72` and Unix user `deploy` reported. Checkout directory exists without a Git repository. Added owner-run `deploy/bootstrap-production-checkout.sh` (unexecuted). Gate B remains blocked.
 - 2026-10-24: Live checkout PASS at `21e835604884a922f3a51d3b0d6039657affed15`. Gate B secrets/variables and the dedicated Production Actions SSH key are configured. Host `docker` is absent. Added owner-run `deploy/bootstrap-production-docker.sh` (unexecuted). Do not dispatch Gate B validation. Gate B remains blocked. Story 46.4 not started.
 - 2026-10-24: Owner ran Docker bootstrap. Engine install succeeded; `production-compose.sh config` refused because config-only placeholders omitted `SendGrid__ApiKey` / `SendGrid__FromEmail`. No compose-up. Added canonical placeholder helper. Do not create `.env`. Story 46.4 not started.
+- 2026-10-24: Owner reran checkout + Docker bootstrap after #500. Fragment shows safety markers `false` and `COMPOSE_CONFIG=PASS`. `RESULT=PASS` is not visible. Story remains review / IN PROGRESS. Do not dispatch Gate B. Do not start 46.4.
 
 ### File List
 
@@ -789,3 +790,5 @@ Cursor Grok 4.6 (planning + implementation)
 - `deploy/production-compose-config-placeholders.test.sh`
 - `_bmad-output/implementation-artifacts/investigations/story-46-3-docker-bootstrap-compose-config.md`
 - `_bmad-output/implementation-artifacts/evidence/46-3/production-compose-config-placeholders-review.md`
+- `_bmad-output/implementation-artifacts/evidence/46-3/production-docker-bootstrap-acceptance.md`
+- `_bmad-output/implementation-artifacts/evidence/46-3/production-docker-bootstrap-acceptance-review.md`

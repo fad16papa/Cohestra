@@ -163,7 +163,7 @@ Owner Settings checklist (values never in git/chat):
 
 Do not copy Environment `uat` / `DROPLET_*` secrets. Fail-closed names print `MISSING_SECRET=<NAME>` only.
 
-**Network path (2026-10-24):** `LIVE_TAILSCALE=YES` at `100.90.12.72`. `LIVE_DEPLOY_USER=YES`. `LIVE_CHECKOUT=YES` at `21e835604884a922f3a51d3b0d6039657affed15`. `PRODUCTION_ACTIONS_SSH_KEY=CREATED_AND_CONFIGURED`. `GATE_B_VALUES=CONFIGURED`. `DOCKER_RUNTIME=NOT_YET_INSTALLED`. `GATE_B_VALIDATION=NOT_DISPATCHED`. Environment `production` protections remain owner-configured (Gate A PASS). Gate B stays blocked until owner-run `deploy/bootstrap-production-docker.sh`. Do not dispatch Production. See [tailscale-production-overlay.md](./tailscale-production-overlay.md).
+**Network path (2026-10-24):** `LIVE_TAILSCALE=YES` at `100.90.12.72`. `LIVE_DEPLOY_USER=YES`. `PRODUCTION_ACTIONS_SSH_KEY=CREATED_AND_CONFIGURED`. `GATE_B_VALUES=CONFIGURED`. `DOCKER_RUNTIME=OWNER_REPORTED_PARTIAL` (Engine `29.9.2`, Compose `v5.6.1`, `COMPOSE_CONFIG` owner-reported PASS). `RESULT_PASS=NOT_VISIBLE`. `GATE_B_VALIDATION=NOT_DISPATCHED`. Gate A PASS. Do not dispatch Production. See [tailscale-production-overlay.md](./tailscale-production-overlay.md).
 
 Dispatch from **Actions → Deploy Production** on `main` only, with an explicit 40-hex `deploy_sha`. Feature-branch dispatch fails closed. Do not dispatch until the live overlay is bootstrapped and later stories authorize a dark deploy.
 

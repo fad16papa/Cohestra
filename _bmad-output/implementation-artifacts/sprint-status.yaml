@@ -1,6 +1,6 @@
 # generated: 2026-06-16
 # last_updated: 2026-10-24
-# Epic 46 in-progress 2026-10-24. 46.3 review on main 21e83560. Tailscale live 100.90.12.72. deploy user live. checkout live at 21e83560. Actions SSH key created. Gate B values configured. Docker runtime NOT YET INSTALLED. Gate B validation NOT DISPATCHED. Owner Gate A PASS. Owner Gate B BLOCKED. Do not dispatch Production. Do not start 46.4. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
+# Epic 46 in-progress 2026-10-24. 46.3 review on main 7e1cf5d4. Tailscale live 100.90.12.72. Owner reported Docker Engine 29.9.2 / Compose v5.6.1 and safety markers false. RESULT=PASS NOT VISIBLE. Gate B validation NOT DISPATCHED. Owner Gate A PASS. Owner Gate B BLOCKED. Do not dispatch Production. Do not start 46.4. Production NO-GO.
 # Epic 46 in-progress 2026-10-22. 46.3 planning correction: Layer A exact-SHA CI + Layer B GitGuardian on merge-time PR HEAD. Still ready-for-dev; do not start implementation; do not merge planning PR until owner accepts. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
 # Epic 46 in-progress 2026-10-21. 46.2 done (main 5d52d6e3 includes #484 CI flake fix after 46.2 merge). 46.3 ready-for-dev (planning only). Do not start 46.3 implementation. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
 # Epic 46 in-progress 2026-10-20. 46.1 done (main 36601be5). 46.2 review: dedicated Production droplet 610830617 / 159.223.55.242. OWNER_GATE droplet_purchase APPROVED. Cutover GRANTED; release NOT YET COMPLETE. Do not start 46.3.
