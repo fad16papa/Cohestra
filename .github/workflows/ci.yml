@@ -276,6 +276,9 @@ jobs:
       - name: Production overlay bootstrap contract
         run: bash deploy/bootstrap-production-overlay.test.sh
 
+      - name: Production checkout bootstrap contract
+        run: bash deploy/bootstrap-production-checkout.test.sh
+
       - name: Production Tailscale Grants contract
         run: bash deploy/validate-tailscale-production-grants.sh
 
