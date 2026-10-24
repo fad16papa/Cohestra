@@ -92,4 +92,19 @@ fi
 grep -q 'INVALID_PUBLIC_BASE_URL_HOST' "$out" || fail "UAT host marker"
 pass "UAT PUBLIC_BASE_URL is rejected"
 
+cat >"$tmp_env" <<'EOF'
+POSTGRES_PASSWORD=synthetic-host-postgres-aaaa
+REDIS_PASSWORD=synthetic-host-redis-bbbb
+JWT_SIGNING_KEY=synthetic-host-jwt-signing-key-32xx
+SendGrid__ApiKey=SG.syntheticHostKeyIndependent
+SendGrid__FromEmail=noreply@cohestra.app
+PUBLIC_BASE_URL=https://example.com
+EOF
+
+if bash "$SCRIPT" --check-names "$tmp_env" >"$out" 2>&1; then
+  fail "foreign https host must fail"
+fi
+grep -q 'INVALID_PUBLIC_BASE_URL_HOST' "$out" || fail "foreign host marker"
+pass "non-apex PUBLIC_BASE_URL is rejected"
+
 echo "prepare-production-host-env contract OK"

@@ -33,7 +33,7 @@ Required names (values never recorded here):
 - `JWT_SIGNING_KEY` (min 32 characters, not a placeholder)
 - `SendGrid__ApiKey` (independent Production key; not the UAT key)
 - `SendGrid__FromEmail`
-- `PUBLIC_BASE_URL=https://cohestra.app`
+- `PUBLIC_BASE_URL=https://cohestra.app` (apex only; tenant CORS is pattern-based)
 
 Locked / forbidden:
 

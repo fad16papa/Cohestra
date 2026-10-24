@@ -15,6 +15,7 @@ public static class DeploymentPlane
     public static bool IsDedicatedProduction(IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
-        return string.Equals(configuration[ConfigKey], Production, StringComparison.OrdinalIgnoreCase);
+        var value = configuration[ConfigKey]?.Trim();
+        return string.Equals(value, Production, StringComparison.OrdinalIgnoreCase);
     }
 }

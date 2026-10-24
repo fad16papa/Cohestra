@@ -172,6 +172,21 @@ public class SendGridSettingsValidatorTests
     }
 
     [Fact]
+    public void ValidateForDedicatedProduction_RejectsPlaceholderFromEmail()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            SendGridSettingsValidator.ValidateForDedicatedProduction(new SendGridSettings
+            {
+                ApiKey = "SG.syntheticIndependentProdKey",
+                FromEmail = "changeme@cohestra.app",
+                UseSandbox = false,
+            }));
+
+        Assert.Contains("SendGrid:FromEmail", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("changeme@", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void ValidateForDedicatedProduction_AllowsIndependentProductionSender()
     {
         SendGridSettingsValidator.ValidateForDedicatedProduction(new SendGridSettings

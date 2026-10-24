@@ -11,16 +11,26 @@ pass() { echo "PASS: $1"; }
 fail() { echo "FAIL: $1"; exit 1; }
 
 out="$(mktemp)"
-trap 'rm -f "$out"' EXIT
+incomplete=""
+trap 'rm -f "$out" "$incomplete"' EXIT
 
 if ! bash "$SCRIPT" "$UAT" "$PROD" >"$out"; then
   fail "synthetic isolated inventories must pass"
 fi
-grep -q 'CLASSIFIED_ISOLATION=PASS' "$out" || fail "isolation marker"
+grep -q 'CLASSIFIED_COMPARE=NO_COLLISION' "$out" || fail "compare marker"
+grep -q 'LIVE_ISOLATION_PROVEN=NO' "$out" || fail "must not claim live isolation"
 if grep -qE 'ua01|pr01|ua02|pr02' "$out"; then
   fail "must not print classified suffixes"
 fi
-pass "synthetic isolated suffixes pass without printing suffixes"
+pass "synthetic isolated suffixes compare without printing suffixes"
+
+incomplete="$(mktemp)"
+printf 'POSTGRES_PASSWORD\tzz99\nSendGrid__ApiKey\tzz98\nREDIS_PASSWORD\tzz97\n' >"$incomplete"
+if bash "$SCRIPT" "$UAT" "$incomplete" >"$out" 2>&1; then
+  fail "inventory missing JWT_SIGNING_KEY must fail"
+fi
+grep -q 'MISSING_CLASSIFIED_NAME_PRODUCTION=JWT_SIGNING_KEY' "$out" || fail "must name missing classified secret"
+pass "incomplete classified inventory fails closed"
 
 if bash "$SCRIPT" "$UAT" "$SHARED" >"$out" 2>&1; then
   fail "shared suffix fixture must fail"

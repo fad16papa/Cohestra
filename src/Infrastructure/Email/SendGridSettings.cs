@@ -68,10 +68,17 @@ internal static class SendGridSettingsValidator
     {
         ValidateForProduction(settings);
 
-        if (Auth.SecretPlaceholders.LooksLikePlaceholder(settings.ApiKey))
+        if (Auth.SecretPlaceholders.LooksLikePlaceholder(settings.ApiKey)
+            || string.Equals(settings.ApiKey?.Trim(), "crm", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
                 "SendGrid:ApiKey appears to be a development placeholder. Use an independent Production key.");
+        }
+
+        if (Auth.SecretPlaceholders.LooksLikePlaceholder(settings.FromEmail))
+        {
+            throw new InvalidOperationException(
+                "SendGrid:FromEmail appears to be a development placeholder.");
         }
 
         RejectUatSender(settings.FromEmail, "SendGrid:FromEmail");

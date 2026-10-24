@@ -135,6 +135,14 @@ so that **sandbox Paddle, UAT SendGrid, and UAT JWT material cannot boot the ded
 - [x] Task 6: Deterministic validators + CI + unit tests; UAT / TenantIsolation freeze (AC 2, 5, 7)
 - [ ] Task 7: Exact-HEAD BMAD code review PASS (BLOCKER=0, MAJOR=0)
 
+### Review Follow-ups (AI)
+
+- [x] [AI-Review][BLOCKER] Limit PlatformAdminSeed reject to dedicated Production plane (UAT one-shot)
+- [x] [AI-Review][MAJOR] Require classified names on both inventories
+- [x] [AI-Review][MAJOR] Scan all Redis endpoints for loopback
+- [x] [AI-Review][MAJOR] Apex-only PUBLIC_BASE_URL + tighter host `--check-names`
+- [x] [AI-Review][MAJOR] Do not treat tenant hosts as Production public base URL
+
 ## Dev Notes
 
 - Spine: AD-3 compose project, AD-5 OPTION A Postgres 16, AD-9 no secrets in logs, AD-12 Paddle/SendGrid independence, AD-13 NO-GO, AD-15 Redis password.
@@ -164,7 +172,9 @@ Cursor Grok 4.6
 
 ### Debug Log References
 
-- `dotnet test` Infrastructure.Tests filter ProductionSecurityValidator / ProductionCorsOrigins / SendGridSettingsValidator / PaddleCredentialGuard — 80 passed
+- `dotnet test` Infrastructure.Tests filter ProductionSecurityValidator / ProductionCorsOrigins / SendGridSettingsValidator / PaddleCredentialGuard — 89 passed after review fixes
+- `dotnet test Cohestra.sln --filter Category!=Integration` — 1289 passed / 10 skipped
+- `dotnet test --filter Category=TenantIsolation` — 9 passed
 - `bash deploy/validate-production-runtime-secrets.test.sh` — PASS
 - `bash deploy/validate-production-compose.sh` — 67/0 PASS
 - `bash deploy/validate-uat-isolation.sh` — 56/0 PASS
@@ -208,7 +218,24 @@ Cursor Grok 4.6
 - .github/workflows/ci.yml
 - _bmad-output/implementation-artifacts/46-4-production-runtime-config-and-secrets-isolation.md
 - _bmad-output/implementation-artifacts/sprint-status.yaml
+- _bmad-output/implementation-artifacts/evidence/46-4/code-review-1.md
+- _bmad-output/implementation-artifacts/evidence/46-4/product-acceptance.md
 
 ### Change Log
 
 - 2026-10-24: Implemented repository-side Story 46.4 fail-closed Production runtime, CORS, Redis auth, SendGrid independence, and owner-controlled classified secret isolation. Live owner secret gate pending. Production NO-GO.
+- 2026-10-24: Addressed code review findings — 5 items resolved (1 BLOCKER, 4 MAJOR). UAT PlatformAdmin one-shot preserved. Classified compare requires names. Redis loopback scans all endpoints. PUBLIC_BASE_URL is apex-only.
+
+## Senior Developer Review (AI)
+
+**Review 1 HEAD:** `5bca15f0` — Changes Requested (1 BLOCKER, 4 MAJOR). Patched.
+
+**Review 2:** required on the successor HEAD after this patch commit. Story cannot close until that review is BLOCKER=0 / MAJOR=0.
+
+### Action Items
+
+- [x] Limit PlatformAdminSeed reject to dedicated Production plane
+- [x] Required classified names
+- [x] Redis multi-endpoint loopback
+- [x] Host `--check-names` apex + sender
+- [x] Apex-only Production public base URL
