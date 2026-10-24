@@ -23,6 +23,21 @@ public sealed class ObservabilityOptionsTests
     }
 
     [Fact]
+    public void Sdk_disabled_accepts_trimmed_true()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["OpenTelemetry:Enabled"] = "true",
+                ["OTEL_SDK_DISABLED"] = " true ",
+            })
+            .Build();
+        var options = ObservabilityOptions.FromConfiguration(configuration);
+
+        Assert.False(options.IsSdkEnabled(configuration));
+    }
+
+    [Fact]
     public void Enabled_false_disables_export()
     {
         var configuration = new ConfigurationBuilder()

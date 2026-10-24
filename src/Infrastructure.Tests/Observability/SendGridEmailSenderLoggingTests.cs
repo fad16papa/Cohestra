@@ -16,7 +16,10 @@ public sealed class SendGridEmailSenderLoggingTests
         var environment = new FakeHostEnvironment { EnvironmentName = environmentName };
 
         SendGridEmailSender.LogSendFailure(logger, environment, 403);
-        SendGridEmailSender.LogSendException(logger, environment, new InvalidOperationException("provider"));
+        SendGridEmailSender.LogSendException(
+            logger,
+            environment,
+            new InvalidOperationException("failed for customer@example.com body {\"secret\":\"SG.live\"}"));
 
         var dump = string.Join('\n', logger.Messages);
         Assert.DoesNotContain("ToEmail", dump, StringComparison.Ordinal);

@@ -70,9 +70,24 @@ public sealed class PaddleWebhookController(
         }
 
         using var processed = CohestraTelemetry.StartPaddleWebhook(null);
-        var result = await webhookProcessor.ProcessAsync(json, cancellationToken);
-        processed?.SetTag("paddle.event_type", CohestraTelemetry.NormalizePaddleEventType(result.EventType));
-        CohestraTelemetry.CompletePaddleWebhook(processed, result.Disposition.ToString());
+        PaddleWebhookProcessResult result;
+        try
+        {
+            result = await webhookProcessor.ProcessAsync(json, cancellationToken);
+            processed?.SetTag("paddle.event_type", CohestraTelemetry.NormalizePaddleEventType(result.EventType));
+            CohestraTelemetry.CompletePaddleWebhook(processed, result.Disposition.ToString());
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            CohestraTelemetry.CompletePaddleWebhook(processed, "Canceled");
+            throw;
+        }
+        catch (Exception)
+        {
+            CohestraTelemetry.CompletePaddleWebhook(processed, "Failed");
+            throw;
+        }
+
         var statusCode = PaddleWebhookHttp.StatusCodeFor(result);
         if (result.Disposition == PaddleWebhookDisposition.Retryable)
         {

@@ -44,8 +44,8 @@ public sealed class ObservabilityOptions
 
     public static bool IsSdkDisabledByEnvironment(IConfiguration configuration)
     {
-        var raw = configuration["OTEL_SDK_DISABLED"];
-        return raw is "1" or "true" or "TRUE" or "True";
+        var raw = configuration["OTEL_SDK_DISABLED"]?.Trim();
+        return raw is "1" || bool.TryParse(raw, out var disabled) && disabled;
     }
 
     public bool IsHttpProtobuf() =>

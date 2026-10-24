@@ -19,5 +19,9 @@ internal sealed class ListLogger<T> : ILogger<T>
         Func<TState, Exception?, string> formatter)
     {
         Messages.Add(formatter(state, exception));
+        if (exception is not null)
+        {
+            Messages.Add(exception.ToString());
+        }
     }
 }

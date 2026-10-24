@@ -92,4 +92,24 @@ public sealed class CohestraTraceSamplerTests
 
         Assert.Equal(SamplingDecision.Drop, result.Decision);
     }
+
+    [Fact]
+    public void Parent_aware_sampler_does_not_honor_untrusted_remote_sampled_parent()
+    {
+        var sampler = CohestraTraceSampler.CreateParentAware(0);
+        var parent = new ActivityContext(
+            ActivityTraceId.CreateRandom(),
+            ActivitySpanId.CreateRandom(),
+            ActivityTraceFlags.Recorded,
+            isRemote: true);
+        var result = sampler.ShouldSample(new SamplingParameters(
+            parent,
+            default,
+            "GET",
+            ActivityKind.Server,
+            [new KeyValuePair<string, object?>("http.route", "/api/v1/admin/clients")],
+            null));
+
+        Assert.Equal(SamplingDecision.Drop, result.Decision);
+    }
 }

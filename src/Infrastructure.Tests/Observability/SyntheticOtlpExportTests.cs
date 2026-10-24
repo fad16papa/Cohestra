@@ -55,6 +55,7 @@ public sealed class SyntheticOtlpExportTests
         {
             activity?.SetTag("paddle.event_type", "transaction.completed");
             activity?.SetTag("webhook_secret", "pdl_ntfset_live");
+            activity?.SetTag("password", "hunter2");
         }
 
         Assert.True(provider.ForceFlush(5000));

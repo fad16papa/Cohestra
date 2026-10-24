@@ -17,7 +17,9 @@ public sealed class CohestraTraceSampler : Sampler
         var inner = new CohestraTraceSampler(ratio);
         return new ParentBasedSampler(
             inner,
+            remoteParentSampled: inner,
             remoteParentNotSampled: inner,
+            localParentSampled: new AlwaysOnSampler(),
             localParentNotSampled: inner);
     }
 

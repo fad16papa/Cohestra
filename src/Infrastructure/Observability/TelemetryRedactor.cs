@@ -177,6 +177,8 @@ public static partial class TelemetryRedactor
         return JwtToken().IsMatch(text)
             || EmailAddress().IsMatch(text)
             || SshPrivateKey().IsMatch(text)
+            || PhoneNumber().IsMatch(text)
+            || TokenAssignment().IsMatch(text)
             || text.Contains("Password=", StringComparison.OrdinalIgnoreCase)
             || text.Contains("Bearer ", StringComparison.Ordinal)
             || text.Contains("ApiKey=", StringComparison.OrdinalIgnoreCase)
@@ -192,7 +194,7 @@ public static partial class TelemetryRedactor
     [GeneratedRegex(@"(?<!\d)(?:\+65[89]\d{7}|\+[1-9]\d{9,14}|[89]\d{7})(?!\d)")]
     private static partial Regex PhoneNumber();
 
-    [GeneratedRegex(@"(?<!\d)(?:\d[ -]?){13,19}(?!\d)")]
+    [GeneratedRegex(@"(?<!\d)(?:\d{4}[ -]){3}\d{1,4}(?!\d)")]
     private static partial Regex PaymentCard();
 
     [GeneratedRegex(@"""answers""\s*:\s*\{.*?\}", RegexOptions.Singleline)]

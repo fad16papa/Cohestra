@@ -71,13 +71,13 @@ public sealed class TelemetryRedactingProcessorTests
         });
 
         var logger = factory.CreateLogger("telemetry-redaction");
-        logger.LogError(new InvalidOperationException("failed for customer@example.com"), "send failed");
+        logger.LogError(new InvalidOperationException("failed for +6591234567"), "send failed");
         factory.Dispose();
 
         Assert.NotEmpty(captured);
         Assert.False(captured[0].HasException);
-        Assert.DoesNotContain("customer@example.com", captured[0].FormattedMessage ?? string.Empty, StringComparison.Ordinal);
-        Assert.DoesNotContain("customer@example.com", captured[0].AttributeDump, StringComparison.Ordinal);
+        Assert.DoesNotContain("+6591234567", captured[0].FormattedMessage ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain("+6591234567", captured[0].AttributeDump, StringComparison.Ordinal);
     }
 
     private sealed class CapturingLogProcessor(List<LogRecordSnapshot> sink) : BaseProcessor<LogRecord>

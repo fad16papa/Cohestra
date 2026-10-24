@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Cohestra.Domain.Outbox;
+using Cohestra.Infrastructure.Billing;
 
 namespace Cohestra.Infrastructure.Observability;
 
@@ -100,7 +101,7 @@ public static class CohestraTelemetry
         try
         {
             var result = await action().ConfigureAwait(false);
-            var status = result?.ToString() ?? "unknown";
+            var status = NormalizeOutboxStatus(result?.ToString());
             activity?.SetTag("outbox.status", status);
             if (string.Equals(status, "Failed", StringComparison.OrdinalIgnoreCase))
             {
@@ -132,10 +133,10 @@ public static class CohestraTelemetry
 
     public static void CompletePaddleWebhook(Activity? activity, string disposition)
     {
-        var normalizedDisposition = string.IsNullOrWhiteSpace(disposition) ? "unknown" : disposition.Trim();
+        var normalizedDisposition = NormalizePaddleDisposition(disposition);
         var eventType = activity?.GetTagItem("paddle.event_type")?.ToString() ?? "other";
         activity?.SetTag("paddle.disposition", normalizedDisposition);
-        if (normalizedDisposition is "Invalid" or "Retryable" or "Rejected")
+        if (normalizedDisposition is "Invalid" or "Retryable" or "Rejected" or "Failed")
         {
             activity?.SetStatus(ActivityStatusCode.Error, normalizedDisposition);
         }
@@ -154,10 +155,11 @@ public static class CohestraTelemetry
 
     public static void RecordUnhandledException(string method)
     {
+        var parent = Activity.Current;
         using var activity = StartAlwaysOn(UnhandledExceptionActivity, ActivityKind.Internal);
         activity?.SetTag("http.request.method", method);
         activity?.SetStatus(ActivityStatusCode.Error, "unhandled");
-        Activity.Current?.SetStatus(ActivityStatusCode.Error, "unhandled");
+        parent?.SetStatus(ActivityStatusCode.Error, "unhandled");
     }
 
     public static string NormalizePaddleEventType(string? eventType)
@@ -169,6 +171,42 @@ public static class CohestraTelemetry
 
         var trimmed = eventType.Trim();
         return KnownPaddleEventTypes.TryGetValue(trimmed, out var canonical) ? canonical : "other";
+    }
+
+    public static string NormalizeOutboxStatus(string? status)
+    {
+        if (string.Equals(status, nameof(OutboxMessageStatus.Completed), StringComparison.OrdinalIgnoreCase))
+        {
+            return nameof(OutboxMessageStatus.Completed);
+        }
+
+        if (string.Equals(status, nameof(OutboxMessageStatus.Failed), StringComparison.OrdinalIgnoreCase))
+        {
+            return nameof(OutboxMessageStatus.Failed);
+        }
+
+        return "other";
+    }
+
+    public static string NormalizePaddleDisposition(string? disposition)
+    {
+        if (string.IsNullOrWhiteSpace(disposition))
+        {
+            return "other";
+        }
+
+        return disposition.Trim() switch
+        {
+            nameof(PaddleWebhookDisposition.Processed) => nameof(PaddleWebhookDisposition.Processed),
+            nameof(PaddleWebhookDisposition.Duplicate) => nameof(PaddleWebhookDisposition.Duplicate),
+            nameof(PaddleWebhookDisposition.Ignored) => nameof(PaddleWebhookDisposition.Ignored),
+            nameof(PaddleWebhookDisposition.Invalid) => nameof(PaddleWebhookDisposition.Invalid),
+            nameof(PaddleWebhookDisposition.Retryable) => nameof(PaddleWebhookDisposition.Retryable),
+            "Rejected" => "Rejected",
+            "Failed" => "Failed",
+            "Canceled" => "Canceled",
+            _ => "other",
+        };
     }
 
     public static string NormalizeOutboxMessageType(string? messageType)

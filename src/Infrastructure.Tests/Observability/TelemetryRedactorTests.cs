@@ -96,6 +96,14 @@ public sealed class TelemetryRedactorTests
     }
 
     [Fact]
+    public void Residue_check_includes_phone_and_refresh_token()
+    {
+        Assert.True(TelemetryRedactor.ContainsForbiddenResidue("call +6591234567"));
+        Assert.True(TelemetryRedactor.ContainsForbiddenResidue("refresh_token=refresh-secret-value"));
+        Assert.False(TelemetryRedactor.ContainsForbiddenResidue("outbox.dispatch completed"));
+    }
+
+    [Fact]
     public void Exception_message_key_is_forbidden()
     {
         Assert.True(TelemetryRedactor.IsForbiddenKey("exception.message"));

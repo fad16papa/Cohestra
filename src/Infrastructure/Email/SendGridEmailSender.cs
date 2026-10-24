@@ -129,7 +129,7 @@ public sealed class SendGridEmailSender(
 
     internal static void LogSendException(ILogger logger, IHostEnvironment environment, Exception exception)
     {
-        logger.LogError(exception, "SendGrid send failed");
+        logger.LogError("SendGrid send failed ({ExceptionType})", exception.GetType().Name);
         _ = environment;
     }
 
