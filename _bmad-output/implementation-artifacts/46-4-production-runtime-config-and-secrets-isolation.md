@@ -133,7 +133,7 @@ so that **sandbox Paddle, UAT SendGrid, and UAT JWT material cannot boot the ded
 - [x] Task 4: Compose / env-example / launch-program contract updates (AC 1, 6, 7)
 - [x] Task 5: Owner host-env procedure + classified isolation scripts with synthetic fixtures (AC 5, 6)
 - [x] Task 6: Deterministic validators + CI + unit tests; UAT / TenantIsolation freeze (AC 2, 5, 7)
-- [x] Task 7: Exact-HEAD BMAD code review PASS (BLOCKER=0, MAJOR=0) on `ee5035ac`
+- [x] Task 7: Exact-HEAD BMAD code review PASS (BLOCKER=0, MAJOR=0) on `1308a60d`
 
 ### Review Follow-ups (AI)
 
@@ -143,6 +143,12 @@ so that **sandbox Paddle, UAT SendGrid, and UAT JWT material cannot boot the ded
 - [x] [AI-Review][MAJOR] Apex-only PUBLIC_BASE_URL + tighter host `--check-names`
 - [x] [AI-Review][MAJOR] Do not treat tenant hosts as Production public base URL
 - [x] [AI-Review][BLOCKER] Clear leftover appsettings CORS localhost slots in Production compose
+
+### Review Findings
+
+- [x] [Review][Defer] Redis password-only / exotic loopback aliases [`ProductionSecurityValidator.cs:157-266`] — compose always sets `redis:6379,password=...`; residual parser edges only
+- [x] [Review][Defer] Freeze `git diff` elif fail-open [`validate-production-runtime-secrets.sh:186-189`] — `origin/main` missing still fails closed; CI 40106674234 passed the freeze step
+- [x] [Review][Defer] Host `--check-names` vs `IdnHost` parser drift — API start remains fail-closed; no product/architecture/security risk
 
 ## Dev Notes
 
@@ -223,11 +229,13 @@ Cursor Grok 4.6
 - _bmad-output/implementation-artifacts/evidence/46-4/product-acceptance.md
 - _bmad-output/implementation-artifacts/evidence/46-4/code-review-2.md
 - _bmad-output/implementation-artifacts/evidence/46-4/code-review-3.md
+- _bmad-output/implementation-artifacts/evidence/46-4/code-review-4.md
 
 ### Change Log
 
 - 2026-10-24: Implemented repository-side Story 46.4 fail-closed Production runtime, CORS, Redis auth, SendGrid independence, and owner-controlled classified secret isolation. Live owner secret gate pending. Production NO-GO.
 - 2026-10-24: Addressed code review findings — 5 items resolved (1 BLOCKER, 4 MAJOR). UAT PlatformAdmin one-shot preserved. Classified compare requires names. Redis loopback scans all endpoints. PUBLIC_BASE_URL is apex-only.
+- 2026-10-24: Review 4 of `1308a60d` PASS (BLOCKER=0, MAJOR=0). Exact-HEAD CI 40106674234 SUCCESS. Owner secret gate still PENDING. Production NO-GO.
 
 ## Senior Developer Review (AI)
 
@@ -235,7 +243,9 @@ Cursor Grok 4.6
 
 **Review 2 HEAD:** `52a59a6f` — Changes Requested (1 new BLOCKER: CORS appsettings leftovers). Patched.
 
-**Review 3 HEAD:** `ee5035ac` — **PASS** (BLOCKER=0, MAJOR=0).
+**Review 3 HEAD:** `ee5035ac` — **PASS** (BLOCKER=0, MAJOR=0). Stale after later commits.
+
+**Review 4 HEAD:** `1308a60d` — **PASS** (BLOCKER=0, MAJOR=0).
 
 ### Action Items
 

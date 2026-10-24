@@ -2,7 +2,8 @@
 
 Story: Production runtime, configuration and secrets isolation  
 Baseline: `e962c8c3eead953a1f56f2b397b3e9d4fc669041`  
-Implementation HEAD reviewed: `ee5035ac54fd5c664ebc79c5f5e54752d4cbd77f`  
+Implementation HEAD reviewed: `1308a60daf711a536cc865e1478eca786faa1fc8`  
+Exact-HEAD CI: https://github.com/fad16papa/Cohestra/actions/runs/40106674234 SUCCESS (23:26 SGT, 24 Oct 2026)  
 PR: https://github.com/fad16papa/Cohestra/pull/502 (draft)  
 Production: **NO-GO**
 
@@ -13,8 +14,8 @@ Production: **NO-GO**
 | PRODUCT | PASS (repo contract) | Dedicated Production plane cannot boot with UAT/dev seeds, `DEV_TENANT_SLUG`, placeholder secrets, passwordless Redis, or non-apex public URL. Owner procedure exists; no Production `.env` was created. |
 | DATA | PASS | Synthetic fixtures only. Classified compare never prints values. `.env.production.example` remains names-only. |
 | UX | N/A | No operator UI. Procedure is documented in `docs/deploy/production-runtime-secrets.md`. |
-| INTEGRATION | PASS | UAT compose remains passwordless Redis without the plane marker. PlatformAdmin one-shot still allowed on UAT Production environment. TenantIsolation unit gate 9/0 PASS. `deploy.yml` unchanged. |
-| REGRESSION | PASS | Infrastructure unit tests 1289 passed / 10 skipped (pre-existing Redis-dependent skips). Compose + UAT isolation contracts PASS. |
+| INTEGRATION | PASS | UAT compose remains passwordless Redis without the plane marker. PlatformAdmin one-shot still allowed on UAT Production environment. TenantIsolation unit + API CI gates PASS. `deploy.yml` unchanged. |
+| REGRESSION | PASS | Exact-HEAD CI green: .NET build and test, API integration tests, Next.js build, UAT isolation contract (including Production runtime secrets isolation), Docker stack smoke, GitGuardian. |
 
 ## Owner gates
 
