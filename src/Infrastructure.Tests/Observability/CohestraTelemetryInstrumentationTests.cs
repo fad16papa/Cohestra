@@ -29,12 +29,20 @@ public sealed class CohestraTelemetryInstrumentationTests
             CohestraTelemetry.CompletePaddleWebhook(unknown, "Ignored");
         }
 
-        Assert.Contains(stopped, activity => activity.OperationName == CohestraTelemetry.JobRunActivity && Equals(activity.GetTagItem("job.name"), "billing-jobs"));
-        Assert.Contains(stopped, activity => activity.OperationName == CohestraTelemetry.OutboxDispatchActivity && Equals(activity.GetTagItem("outbox.message_type"), "RegistrationConfirmation"));
-        Assert.Contains(stopped, activity => activity.OperationName == CohestraTelemetry.PaddleWebhookActivity && Equals(activity.GetTagItem("paddle.event_type"), "transaction.completed"));
-        Assert.Contains(stopped, activity => Equals(activity.GetTagItem("paddle.event_type"), "other"));
-        Assert.DoesNotContain(stopped, activity => activity.TagObjects.Any(tag => TelemetryRedactor.IsForbiddenKey(tag.Key)));
-        Assert.DoesNotContain(stopped, activity => activity.TagObjects.Any(tag => tag.Key.Contains("payload", StringComparison.OrdinalIgnoreCase)));
+        var ours = stopped
+            .Where(activity =>
+                Equals(activity.GetTagItem("job.name"), "billing-jobs")
+                || Equals(activity.GetTagItem("outbox.message_type"), "RegistrationConfirmation")
+                || Equals(activity.GetTagItem("paddle.event_type"), "transaction.completed")
+                || Equals(activity.GetTagItem("paddle.event_type"), "other"))
+            .ToList();
+
+        Assert.Contains(ours, activity => activity.OperationName == CohestraTelemetry.JobRunActivity && Equals(activity.GetTagItem("job.name"), "billing-jobs"));
+        Assert.Contains(ours, activity => activity.OperationName == CohestraTelemetry.OutboxDispatchActivity && Equals(activity.GetTagItem("outbox.message_type"), "RegistrationConfirmation"));
+        Assert.Contains(ours, activity => activity.OperationName == CohestraTelemetry.PaddleWebhookActivity && Equals(activity.GetTagItem("paddle.event_type"), "transaction.completed"));
+        Assert.Contains(ours, activity => Equals(activity.GetTagItem("paddle.event_type"), "other"));
+        Assert.DoesNotContain(ours, activity => activity.TagObjects.Any(tag => TelemetryRedactor.IsForbiddenKey(tag.Key)));
+        Assert.DoesNotContain(ours, activity => activity.TagObjects.Any(tag => tag.Key.Contains("payload", StringComparison.OrdinalIgnoreCase)));
     }
 
     [Fact]

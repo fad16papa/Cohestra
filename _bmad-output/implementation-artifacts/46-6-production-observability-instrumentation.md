@@ -2,7 +2,7 @@
 id: 46.6
 key: 46-6-production-observability-instrumentation
 title: Production observability instrumentation
-status: in-progress
+status: review
 epic: 46
 created: 2026-10-24
 baseline_commit: e962c8c3eead953a1f56f2b397b3e9d4fc669041
@@ -20,7 +20,7 @@ does_not_implement:
 
 # Story 46.6: Production observability instrumentation
 
-Status: in-progress
+Status: review
 
 ## Story
 
@@ -60,25 +60,25 @@ so that **we are not blind the first time Production breaks**.
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Story context + sprint status + branch from `e962c8c3` (AC 5)
-  - [ ] Subtask 1.1: Create this story file and mark 46.6 in-progress
-  - [ ] Subtask 1.2: Record 46.4 / 46.9 / 46.7 non-overlap
-- [ ] Task 2: OpenTelemetry 1.20.x hosting + OTLP export, safely disableable (AC 1, 4)
-  - [ ] Subtask 2.1: Add compatible 1.20.x packages
-  - [ ] Subtask 2.2: Honor `OpenTelemetry:*`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SDK_DISABLED`
-  - [ ] Subtask 2.3: Collector outage / bad endpoint cannot crash API or `/ready`
-- [ ] Task 3: Instrument HTTP, EF (no params), Redis (no token payloads), outbox, Paddle, hosted jobs (AC 1)
-  - [ ] Subtask 3.1: ASP.NET Core + HttpClient (route templates, not raw PII URLs)
-  - [ ] Subtask 3.2: EF Core without parameter values
-  - [ ] Subtask 3.3: Redis without token payloads
-  - [ ] Subtask 3.4: Custom spans/metrics for outbox, Paddle dispositions, hosted jobs
-  - [ ] Subtask 3.5: Preserve `/ready` exactly three existing checks
-- [ ] Task 4: Centralized telemetry redaction + SendGrid Production leak fix (AC 2)
-  - [ ] Subtask 4.1: Deny-list redactor extending `PlatformHealthDescriptionSanitizer` patterns
-  - [ ] Subtask 4.2: Activity + log processors; drop high-cardinality labels
-  - [ ] Subtask 4.3: `SendGridEmailSender` never logs recipient email or raw body in Production
-- [ ] Task 5: Tests — synthetic OTLP, coverage, redaction, collector outage, `/ready`, TenantIsolation, API integration, UAT regression (AC 1–4)
-- [ ] Task 6: BMAD evidence + redaction coverage matrix (AC 2, 5)
+- [x] Task 1: Story context + sprint status + branch from `e962c8c3` (AC 5)
+  - [x] Subtask 1.1: Create this story file and mark 46.6 in-progress
+  - [x] Subtask 1.2: Record 46.4 / 46.9 / 46.7 non-overlap
+- [x] Task 2: OpenTelemetry 1.20.x hosting + OTLP export, safely disableable (AC 1, 4)
+  - [x] Subtask 2.1: Add compatible 1.20.x packages
+  - [x] Subtask 2.2: Honor `OpenTelemetry:*`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_SDK_DISABLED`
+  - [x] Subtask 2.3: Collector outage / bad endpoint cannot crash API or `/ready`
+- [x] Task 3: Instrument HTTP, EF (no params), Redis (no token payloads), outbox, Paddle, hosted jobs (AC 1)
+  - [x] Subtask 3.1: ASP.NET Core + HttpClient (route templates, not raw PII URLs)
+  - [x] Subtask 3.2: EF Core without parameter values
+  - [x] Subtask 3.3: Redis without token payloads
+  - [x] Subtask 3.4: Custom spans/metrics for outbox, Paddle dispositions, hosted jobs
+  - [x] Subtask 3.5: Preserve `/ready` exactly three existing checks
+- [x] Task 4: Centralized telemetry redaction + SendGrid Production leak fix (AC 2)
+  - [x] Subtask 4.1: Deny-list redactor extending `PlatformHealthDescriptionSanitizer` patterns
+  - [x] Subtask 4.2: Activity + log processors; drop high-cardinality labels
+  - [x] Subtask 4.3: `SendGridEmailSender` never logs recipient email or raw body in Production
+- [x] Task 5: Tests — synthetic OTLP, coverage, redaction, collector outage, `/ready`, TenantIsolation, API integration, UAT regression (AC 1–4)
+- [x] Task 6: BMAD evidence + redaction coverage matrix (AC 2, 5)
 - [ ] Task 7: Exact-HEAD BMAD code review loop (no unresolved BLOCKER/MAJOR)
 - [ ] Task 8: Product acceptance on the same HEAD; draft PR; no merge; Production NO-GO
 
@@ -201,8 +201,62 @@ Cursor Grok 4.6
 
 ### Debug Log References
 
+- `dotnet build Cohestra.sln` — succeeded
+- `dotnet test Cohestra.sln --filter Category!=Integration` — 1313 passed
+- `dotnet test Infrastructure.Tests --filter Category=TenantIsolation` — 9 passed
+- `dotnet test Api.IntegrationTests --filter Category=TenantIsolation` — 39 passed
+- `dotnet test Api.IntegrationTests --filter Category=Integration` — 217 passed / 0 skipped (fresh `cohestra_test` + Redis FLUSHALL)
+- Collector-down host: `ObservabilityCollectorOutageIntegrationTests` passed after moving Redis instrumentation into `WithTracing` (DI-time, not post-`ServiceProvider`)
+- UAT compose/workflow untouched. Production compose/secrets untouched.
+
 ### Completion Notes List
+
+- API SDK exports OTLP on OpenTelemetry.Extensions.Hosting 1.20.1 + matching OTLP exporter. Disabled via `OpenTelemetry:Enabled=false` or `OTEL_SDK_DISABLED=true`. Empty endpoint = no exporter.
+- Instrumented HTTP, EF Core (default `SetDbQueryParameters` off), Redis (`SetVerboseDatabaseStatements=false`), outbox, Paddle webhook dispositions, and the four existing hosted jobs. Jobs remain in the API process.
+- Central `TelemetryRedactor` + activity/log processors. High-cardinality URL/body/email labels stripped. SendGrid/NullEmail never log recipient or raw body.
+- `/ready` still exactly `postgres`, `redis`, `default-tenant`.
+- Draft PR #503. No merge. Production NO-GO.
 
 ### File List
 
+- _bmad-output/implementation-artifacts/46-6-production-observability-instrumentation.md
+- _bmad-output/implementation-artifacts/46-6-redaction-coverage-matrix.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+- src/Api/Api.csproj
+- src/Api/Program.cs
+- src/Api/appsettings.json
+- src/Api/Observability/OpenTelemetryServiceCollectionExtensions.cs
+- src/Api/Infrastructure/GlobalExceptionHandler.cs
+- src/Api/Controllers/V1/PaddleWebhookController.cs
+- src/Api.IntegrationTests/Infrastructure/IntegrationTestWebApplicationFactory.cs
+- src/Api.IntegrationTests/Infrastructure/ObservabilityCollectorOutageWebApplicationFactory.cs
+- src/Api.IntegrationTests/ObservabilityCollectorOutageIntegrationTests.cs
+- src/Infrastructure/Infrastructure.csproj
+- src/Infrastructure/Observability/ObservabilityOptions.cs
+- src/Infrastructure/Observability/CohestraTelemetry.cs
+- src/Infrastructure/Observability/CohestraTraceSampler.cs
+- src/Infrastructure/Observability/TelemetryRedactor.cs
+- src/Infrastructure/Observability/TelemetryRedactingActivityProcessor.cs
+- src/Infrastructure/Observability/TelemetryRedactingLogProcessor.cs
+- src/Infrastructure/Email/SendGridEmailSender.cs
+- src/Infrastructure/Email/NullEmailSender.cs
+- src/Infrastructure/Outbox/OutboxDispatcherHostedService.cs
+- src/Infrastructure/Outbox/OutboxProcessor.cs
+- src/Infrastructure/Billing/BillingJobsHostedService.cs
+- src/Infrastructure/Activities/ActivityExpirationHostedService.cs
+- src/Infrastructure/Clients/FollowUpDigestHostedService.cs
+- src/Infrastructure.Tests/Infrastructure.Tests.csproj
+- src/Infrastructure.Tests/Observability/TelemetryRedactorTests.cs
+- src/Infrastructure.Tests/Observability/TelemetryRedactingProcessorTests.cs
+- src/Infrastructure.Tests/Observability/CohestraTraceSamplerTests.cs
+- src/Infrastructure.Tests/Observability/ObservabilityOptionsTests.cs
+- src/Infrastructure.Tests/Observability/CohestraTelemetryInstrumentationTests.cs
+- src/Infrastructure.Tests/Observability/SendGridEmailSenderLoggingTests.cs
+- src/Infrastructure.Tests/Observability/SyntheticOtlpExportTests.cs
+- src/Infrastructure.Tests/Observability/OpenTelemetryRegistrationTests.cs
+- src/Infrastructure.Tests/Observability/ListLogger.cs
+- src/Infrastructure.Tests/Observability/FakeHostEnvironment.cs
+
 ### Change Log
+
+- 2026-10-24: Implemented Story 46.6 OTel SDK, redaction, SendGrid leak fix, and exact-HEAD tests. Status → review.

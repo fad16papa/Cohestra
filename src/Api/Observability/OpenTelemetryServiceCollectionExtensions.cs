@@ -6,7 +6,6 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using StackExchange.Redis;
 
 namespace Cohestra.Api.Observability;
 
@@ -60,7 +59,11 @@ public static class OpenTelemetryServiceCollectionExtensions
                     {
                         http.RecordException = true;
                     })
-                    .AddEntityFrameworkCoreInstrumentation();
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddRedisInstrumentation(redis =>
+                    {
+                        redis.SetVerboseDatabaseStatements = false;
+                    });
 
                 TryAddOtlpExporter(tracing, options, configuration);
             })
@@ -82,20 +85,6 @@ public static class OpenTelemetryServiceCollectionExtensions
                 logging.AddProcessor(new TelemetryRedactingLogProcessor());
                 TryAddOtlpExporter(logging, options, configuration);
             });
-
-        services.ConfigureOpenTelemetryTracerProvider((provider, tracing) =>
-        {
-            var multiplexer = provider.GetService<IConnectionMultiplexer>();
-            if (multiplexer is null)
-            {
-                return;
-            }
-
-            tracing.AddRedisInstrumentation(multiplexer, redis =>
-            {
-                redis.SetVerboseDatabaseStatements = false;
-            });
-        });
 
         _ = environment;
         return services;

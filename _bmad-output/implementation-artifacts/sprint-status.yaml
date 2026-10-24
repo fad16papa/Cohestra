@@ -503,7 +503,7 @@ development_status:
   46-3-github-production-environment-and-owner-gated-ci-cd: done
   46-4-production-runtime-config-and-secrets-isolation: backlog
   46-5-postgresql-backup-restore-and-dr: backlog
-  46-6-production-observability-instrumentation: in-progress
+  46-6-production-observability-instrumentation: review
   46-7-metrics-dashboards-and-alerting: backlog
   46-8-platform-admin-production-support-telemetry-integration: backlog
   46-9-production-security-and-tenant-isolation-hardening: backlog

@@ -124,6 +124,7 @@ public static partial class TelemetryRedactor
         }
 
         var text = SshPrivateKey().Replace(value, Redacted);
+        text = TokenAssignment().Replace(text, "$1=[redacted]");
         text = PlatformHealthDescriptionSanitizer.Sanitize(text) ?? string.Empty;
         text = PhoneNumber().Replace(text, Redacted);
         text = PaymentCard().Replace(text, Redacted);
@@ -179,6 +180,9 @@ public static partial class TelemetryRedactor
             || text.Contains("ApiKey=", StringComparison.OrdinalIgnoreCase)
             || text.Contains("BEGIN ", StringComparison.Ordinal);
     }
+
+    [GeneratedRegex(@"(?i)\b(refresh[_-]?token|access[_-]?token|id[_-]?token)\s*[=:]\s*\S+")]
+    private static partial Regex TokenAssignment();
 
     [GeneratedRegex(@"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]+?-----END [A-Z ]*PRIVATE KEY-----")]
     private static partial Regex SshPrivateKey();
