@@ -133,7 +133,7 @@ so that **sandbox Paddle, UAT SendGrid, and UAT JWT material cannot boot the ded
 - [x] Task 4: Compose / env-example / launch-program contract updates (AC 1, 6, 7)
 - [x] Task 5: Owner host-env procedure + classified isolation scripts with synthetic fixtures (AC 5, 6)
 - [x] Task 6: Deterministic validators + CI + unit tests; UAT / TenantIsolation freeze (AC 2, 5, 7)
-- [ ] Task 7: Exact-HEAD BMAD code review PASS (BLOCKER=0, MAJOR=0)
+- [x] Task 7: Exact-HEAD BMAD code review PASS (BLOCKER=0, MAJOR=0) on `ee5035ac`
 
 ### Review Follow-ups (AI)
 
@@ -221,6 +221,8 @@ Cursor Grok 4.6
 - _bmad-output/implementation-artifacts/sprint-status.yaml
 - _bmad-output/implementation-artifacts/evidence/46-4/code-review-1.md
 - _bmad-output/implementation-artifacts/evidence/46-4/product-acceptance.md
+- _bmad-output/implementation-artifacts/evidence/46-4/code-review-2.md
+- _bmad-output/implementation-artifacts/evidence/46-4/code-review-3.md
 
 ### Change Log
 
@@ -231,7 +233,9 @@ Cursor Grok 4.6
 
 **Review 1 HEAD:** `5bca15f0` — Changes Requested (1 BLOCKER, 4 MAJOR). Patched.
 
-**Review 2:** required on the successor HEAD after this patch commit. Story cannot close until that review is BLOCKER=0 / MAJOR=0.
+**Review 2 HEAD:** `52a59a6f` — Changes Requested (1 new BLOCKER: CORS appsettings leftovers). Patched.
+
+**Review 3 HEAD:** `ee5035ac` — **PASS** (BLOCKER=0, MAJOR=0).
 
 ### Action Items
 

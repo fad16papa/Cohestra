@@ -2,6 +2,7 @@
 
 Story: Production runtime, configuration and secrets isolation  
 Baseline: `e962c8c3eead953a1f56f2b397b3e9d4fc669041`  
+Implementation HEAD reviewed: `ee5035ac54fd5c664ebc79c5f5e54752d4cbd77f`  
 PR: https://github.com/fad16papa/Cohestra/pull/502 (draft)  
 Production: **NO-GO**
 
