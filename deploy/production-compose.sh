@@ -6,6 +6,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+# shellcheck disable=SC1091
+. "$ROOT_DIR/deploy/lib/production-compose-config-placeholders.sh"
 
 normalize_flag() {
   printf '%s' "${1:-}" | sed 's/#.*//' | tr -d '[:space:]' | tr -d \"\' | tr '[:upper:]' '[:lower:]'
@@ -97,6 +99,17 @@ compose=(docker compose --project-name cohestra-production -f "$ROOT_DIR/docker-
 
 # Never print interpolated secrets (config/convert dump resolved env).
 if [[ "$redact_config" -eq 1 ]]; then
+  # Config-only placeholders fill missing ${VAR:?} names so syntax can be
+  # checked before Story 46.4 creates a Production .env. If a host .env
+  # exists, use it unchanged — do not mask real values. Real `up` still
+  # requires the host .env. Placeholders are process-only and never written.
+  if [[ ! -f "$ROOT_DIR/.env" ]]; then
+    production_compose_apply_config_placeholders
+    if ! production_compose_report_missing_required_vars; then
+      echo "compose config FAILED (interpolated output not printed)"
+      exit 1
+    fi
+  fi
   tmp="$(mktemp)"
   err="$(mktemp)"
   trap 'rm -f "$tmp" "$err"' EXIT
@@ -105,6 +118,7 @@ if [[ "$redact_config" -eq 1 ]]; then
     exit 0
   fi
   echo "compose config FAILED (interpolated output not printed)"
+  production_compose_missing_vars_from_compose_stderr "$err" || true
   exit 1
 fi
 

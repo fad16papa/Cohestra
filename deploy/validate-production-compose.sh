@@ -338,6 +338,17 @@ else
   fail "deploy/production-compose.sh must force --project-name cohestra-production"
 fi
 
+if [[ -f "$ROOT_DIR/deploy/lib/production-compose-config-placeholders.sh" ]] \
+  && grep -q 'production-compose-config-placeholders.sh' "$WRAPPER"; then
+  if bash "$ROOT_DIR/deploy/production-compose-config-placeholders.test.sh"; then
+    pass "config-only placeholder contract (no .env, no persisted secrets)"
+  else
+    fail "config-only placeholder contract"
+  fi
+else
+  fail "production-compose.sh must use the canonical config-only placeholder helper"
+fi
+
 if [[ -f "$WRAPPER" ]] && grep -q -- '--file' "$WRAPPER" && grep -q 'COHESTRA_SHARED_HOST_UAT' "$WRAPPER"; then
   pass "production-compose.sh refuses extra compose files and UAT shared host"
 else

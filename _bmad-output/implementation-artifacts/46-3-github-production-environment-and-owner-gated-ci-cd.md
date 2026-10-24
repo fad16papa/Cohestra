@@ -730,6 +730,7 @@ Cursor Grok 4.6 (planning + implementation)
 - 2026-10-23: Tailscale OIDC Production control plane implemented in-repo and left dormant. Workflow not dispatched. Tailscale not installed live. Federated identity not created. `deploy` user not created live. Secrets/variables not populated. Story 46.4 not started.
 - 2026-10-24: Owner live Tailscale join at `100.90.12.72` and Unix user `deploy` reported. Checkout directory exists without a Git repository. Added owner-run `deploy/bootstrap-production-checkout.sh` (unexecuted). Gate B remains blocked.
 - 2026-10-24: Live checkout PASS at `21e835604884a922f3a51d3b0d6039657affed15`. Gate B secrets/variables and the dedicated Production Actions SSH key are configured. Host `docker` is absent. Added owner-run `deploy/bootstrap-production-docker.sh` (unexecuted). Do not dispatch Gate B validation. Gate B remains blocked. Story 46.4 not started.
+- 2026-10-24: Owner ran Docker bootstrap. Engine install succeeded; `production-compose.sh config` refused because config-only placeholders omitted `SendGrid__ApiKey` / `SendGrid__FromEmail`. No compose-up. Added canonical placeholder helper. Do not create `.env`. Story 46.4 not started.
 
 ### File List
 
@@ -784,3 +785,7 @@ Cursor Grok 4.6 (planning + implementation)
 - `deploy/production-compose.sh`
 - `_bmad-output/implementation-artifacts/evidence/46-3/production-docker-bootstrap.md`
 - `_bmad-output/implementation-artifacts/evidence/46-3/production-docker-bootstrap-review.md`
+- `deploy/lib/production-compose-config-placeholders.sh`
+- `deploy/production-compose-config-placeholders.test.sh`
+- `_bmad-output/implementation-artifacts/investigations/story-46-3-docker-bootstrap-compose-config.md`
+- `_bmad-output/implementation-artifacts/evidence/46-3/production-compose-config-placeholders-review.md`

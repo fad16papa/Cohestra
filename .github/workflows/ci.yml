@@ -282,6 +282,9 @@ jobs:
       - name: Production Docker bootstrap contract
         run: bash deploy/bootstrap-production-docker.test.sh
 
+      - name: Production compose config-only placeholder contract
+        run: bash deploy/production-compose-config-placeholders.test.sh
+
       - name: Production Tailscale Grants contract
         run: bash deploy/validate-tailscale-production-grants.sh
 
