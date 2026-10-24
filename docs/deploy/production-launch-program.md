@@ -88,7 +88,7 @@ Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-e
 - Secrets: `PROD_DROPLET_*` + `PROD_PUBLIC_BASE_URL` names only. Fail closed with `MISSING_SECRET=<NAME>`.
 - Overlay variables (later, not populated here): `PROD_TAILSCALE_CLIENT_ID`, `PROD_TAILSCALE_AUDIENCE`, `PROD_TAILSCALE_HOST`.
 - Inventory identity: droplet `cohestra-production` / `159.223.55.242`. SSH transport identity: live Tailscale IPv4 `100.90.12.72` (Environment variable not populated). UAT `129.212.235.2` is forbidden.
-- `LIVE_TAILSCALE=YES` at `100.90.12.72`. `LIVE_DEPLOY_USER=YES`. `LIVE_CHECKOUT=YES` at `21e835604884a922f3a51d3b0d6039657affed15`. `PRODUCTION_ACTIONS_SSH_KEY=CREATED_AND_CONFIGURED`. `GATE_B_VALUES=CONFIGURED`. `DOCKER_RUNTIME=NOT_YET_INSTALLED`. `GATE_B_VALIDATION=NOT_DISPATCHED`. Federated identity is not created. Do not dispatch.
+- `LIVE_TAILSCALE=YES` at `100.90.12.72`. `LIVE_DEPLOY_USER=YES`. `LIVE_CHECKOUT=YES` at `7e1cf5d48064b28a831ba20b25ac06d27e1a17fc`. `PRODUCTION_ACTIONS_SSH_KEY=CREATED_AND_CONFIGURED`. `GATE_B_VALUES=CONFIGURED`. `DOCKER_RUNTIME=installed`. `RESULT_PASS=VERIFIED_FROM_OWNER_EVIDENCE`. `GATE_B_VALIDATION=NOT_DISPATCHED`. Federated identity is not created. Do not dispatch.
 - Rollback: `deploy/production-rollback.sh` with explicit SHA; DB restore is 46.5 and never implicit.
 - UAT `deploy.yml` / `deploy-uat` remains automatic and unchanged.
 - Control-plane files exist in-repo. Environment `production` is not created here. Do not dispatch. This file does not deploy Production.
