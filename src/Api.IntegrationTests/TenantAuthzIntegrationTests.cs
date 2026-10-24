@@ -215,6 +215,12 @@ public sealed class TenantAuthzIntegrationTests(IntegrationTestFixture fixture)
         using var supportList = await client.GetAsync("/api/v1/platform/support-issues?severity=High");
         await AssertForbiddenAsync(supportList);
 
+        using var supportReport = await client.GetAsync("/api/v1/platform/reports/support?preset=weekly");
+        await AssertForbiddenAsync(supportReport);
+
+        using var supportExport = await client.GetAsync("/api/v1/platform/reports/support/export?preset=weekly");
+        await AssertForbiddenAsync(supportExport);
+
         using var supportPatch = await client.PatchAsync(
             $"/api/v1/platform/support-issues/{Guid.CreateVersion7()}",
             JsonContent.Create(new { severity = "High" }));
