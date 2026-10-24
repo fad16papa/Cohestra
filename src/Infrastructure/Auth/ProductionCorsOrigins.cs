@@ -23,6 +23,11 @@ public static class ProductionCorsOrigins
             return false;
         }
 
+        if (!uri.IsDefaultPort)
+        {
+            return false;
+        }
+
         if (!string.IsNullOrEmpty(uri.UserInfo))
         {
             return false;
@@ -54,13 +59,32 @@ public static class ProductionCorsOrigins
             return false;
         }
 
+        if (!uri.IsDefaultPort)
+        {
+            return false;
+        }
+
         if (!string.IsNullOrEmpty(uri.UserInfo))
         {
             return false;
         }
 
-        return IsProductionHost(uri.IdnHost);
+        if (!string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(uri.AbsolutePath) && uri.AbsolutePath != "/")
+        {
+            return false;
+        }
+
+        return IsProductionApexHost(uri.IdnHost);
     }
+
+    public static bool IsProductionApexHost(string? host) =>
+        string.Equals(host, ApexHost, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(host, WwwHost, StringComparison.OrdinalIgnoreCase);
 
     public static bool IsProductionHost(string? host)
     {

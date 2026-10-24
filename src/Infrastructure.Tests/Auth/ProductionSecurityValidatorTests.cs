@@ -271,15 +271,23 @@ public sealed class ProductionSecurityValidatorTests
     }
 
     [Fact]
-    public void Validate_rejects_platform_admin_seed_in_production()
+    public void Validate_allows_platform_admin_seed_on_uat_production_environment()
     {
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
-                ["PlatformAdminSeed:Enabled"] = "true",
-            })
-            .Build();
+        var configuration = ProductionConfig(
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=uat-isolated-secret-with-sufficient-length",
+            publicBaseUrl: "https://uat.cohestra.app");
+        configuration["PlatformAdminSeed:Enabled"] = "true";
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_rejects_platform_admin_seed()
+    {
+        var configuration = DedicatedProductionConfig(platformAdminSeed: true);
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
             ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
@@ -371,6 +379,51 @@ public sealed class ProductionSecurityValidatorTests
             ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
 
         Assert.Contains("localhost", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_rejects_option_first_loopback_redis()
+    {
+        var configuration = DedicatedProductionConfig(
+            redis: "password=synthetic-redis-password-32chars,127.0.0.1:6379");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("localhost", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_rejects_missing_postgres()
+    {
+        var configuration = DedicatedProductionConfig(postgres: "");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("DefaultConnection", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_rejects_tenant_public_base_url()
+    {
+        var configuration = DedicatedProductionConfig(publicBaseUrl: "https://harbourline.cohestra.app");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("https://cohestra.app", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_rejects_truthy_seed_one()
+    {
+        var configuration = DedicatedProductionConfig(operatorSeed: "1");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("OperatorSeed:Enabled", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -508,6 +561,8 @@ public sealed class ProductionSecurityValidatorTests
 
     private static IConfiguration DedicatedProductionConfig(
         string? redis = "redis:6379,password=synthetic-redis-password-32chars",
+        string? postgres =
+            "Host=postgres;Port=5432;Database=cohestra;Username=cohestra;Password=synthetic-postgres-password-32",
         string? publicBaseUrl = "https://cohestra.app",
         string? corsOrigin = "https://cohestra.app",
         string? sendGridApiKey = "SG.syntheticIndependentProdKey",
@@ -516,6 +571,8 @@ public sealed class ProductionSecurityValidatorTests
         string? devTenantSlug = null,
         string? tenancyDevTenantSlug = null,
         bool sharedHostUat = false,
+        bool platformAdminSeed = false,
+        string? operatorSeed = null,
         string? recaptchaBypass = null,
         string? paddleEnvironment = "sandbox",
         string? paddleApiKey = "pdl_sdbx_apikey",
@@ -525,8 +582,7 @@ public sealed class ProductionSecurityValidatorTests
         {
             ["Cohestra:DeploymentPlane"] = "Production",
             ["Jwt:SigningKey"] = "synthetic-production-jwt-signing-key-44chars",
-            ["ConnectionStrings:DefaultConnection"] =
-                "Host=postgres;Port=5432;Database=cohestra;Username=cohestra;Password=synthetic-postgres-password-32",
+            ["ConnectionStrings:DefaultConnection"] = postgres,
             ["ConnectionStrings:Redis"] = redis,
             ["PublicWeb:BaseUrl"] = publicBaseUrl,
             ["Cors:AllowedOrigins:0"] = corsOrigin,
@@ -556,6 +612,16 @@ public sealed class ProductionSecurityValidatorTests
         if (recaptchaBypass is not null)
         {
             values["SelfServeSignup:Recaptcha:TestBypassToken"] = recaptchaBypass;
+        }
+
+        if (platformAdminSeed)
+        {
+            values["PlatformAdminSeed:Enabled"] = "true";
+        }
+
+        if (operatorSeed is not null)
+        {
+            values["OperatorSeed:Enabled"] = operatorSeed;
         }
 
         return new ConfigurationBuilder().AddInMemoryCollection(values).Build();

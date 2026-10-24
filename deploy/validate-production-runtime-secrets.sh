@@ -170,10 +170,12 @@ else
 fi
 
 # Telemetry / 46.9 ownership freeze — 46.4 must not add OTel SDK usage or 46.9 audit files.
-if git -C "$ROOT_DIR" diff --name-only origin/main...HEAD 2>/dev/null | grep -qE 'OpenTelemetry|46-9-|46-6-'; then
+if ! git -C "$ROOT_DIR" rev-parse --verify origin/main >/dev/null 2>&1; then
+  fail "origin/main is required to prove the 46.6 / 46.9 ownership freeze"
+elif git -C "$ROOT_DIR" diff --name-only origin/main...HEAD | grep -qE 'OpenTelemetry|46-9-|46-6-'; then
   fail "46.4 must not edit 46.6 telemetry or 46.9 audit artifacts"
 else
-  pass "no 46.6 / 46.9 owned artifact edits in this range (or range unavailable locally)"
+  pass "no 46.6 / 46.9 owned artifact edits versus origin/main"
 fi
 
 echo ""

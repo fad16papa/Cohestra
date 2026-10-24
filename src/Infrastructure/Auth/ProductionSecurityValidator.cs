@@ -39,8 +39,7 @@ public static class ProductionSecurityValidator
         RejectEnabledSeed(configuration, "OperatorSeed:Enabled");
         RejectEnabledSeed(configuration, "LoadTestSeed:Enabled");
         RejectEnabledSeed(configuration, "DemoDataSeed:Enabled");
-        RejectEnabledSeed(configuration, "PlatformAdminSeed:Enabled");
-        ValidateProductionPostgres(configuration.GetConnectionString("DefaultConnection"));
+        ValidateProductionPostgres(configuration.GetConnectionString("DefaultConnection"), require: false);
 
         if (dedicatedProduction)
         {
@@ -58,7 +57,12 @@ public static class ProductionSecurityValidator
 
         RejectConfiguredValue(configuration, TenantHostResolver.DevTenantSlugConfigKey, "DEV_TENANT_SLUG");
         RejectConfiguredValue(configuration, "Tenancy:DevTenantSlug", "Tenancy:DevTenantSlug");
+        RejectTruthySeed(configuration, "OperatorSeed:Enabled");
+        RejectTruthySeed(configuration, "LoadTestSeed:Enabled");
+        RejectTruthySeed(configuration, "DemoDataSeed:Enabled");
+        RejectTruthySeed(configuration, "PlatformAdminSeed:Enabled");
 
+        ValidateProductionPostgres(configuration.GetConnectionString("DefaultConnection"), require: true);
         ValidateDedicatedProductionRedis(configuration.GetConnectionString("Redis"));
         ValidateDedicatedProductionCors(configuration);
         ValidateDedicatedProductionSendGrid(configuration);
@@ -112,6 +116,14 @@ public static class ProductionSecurityValidator
         }
     }
 
+    private static void RejectTruthySeed(IConfiguration configuration, string key)
+    {
+        if (configuration.GetValue(key, false) || IsTruthy(configuration[key]))
+        {
+            throw new InvalidOperationException($"{key} must be false on the dedicated Production plane.");
+        }
+    }
+
     private static void RejectConfiguredValue(IConfiguration configuration, string key, string displayName)
     {
         if (!string.IsNullOrWhiteSpace(configuration[key]))
@@ -142,12 +154,18 @@ public static class ProductionSecurityValidator
                 "ConnectionStrings:Redis password appears to be a development placeholder.");
         }
 
-        var endpoint = redis.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[0];
-        var host = endpoint.Split(':', StringSplitOptions.TrimEntries)[0];
-        if (IsLoopbackHost(host))
+        foreach (var part in redis.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {
-            throw new InvalidOperationException(
-                "ConnectionStrings:Redis must not target localhost or 127.0.0.1 on the dedicated Production plane.");
+            if (part.Contains('=', StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (RedisEndpointIsLoopback(part))
+            {
+                throw new InvalidOperationException(
+                    "ConnectionStrings:Redis must not target localhost or 127.0.0.1 on the dedicated Production plane.");
+            }
         }
     }
 
@@ -176,10 +194,16 @@ public static class ProductionSecurityValidator
         SendGridSettingsValidator.ValidateForDedicatedProduction(settings);
     }
 
-    private static void ValidateProductionPostgres(string? postgres)
+    private static void ValidateProductionPostgres(string? postgres, bool require)
     {
         if (string.IsNullOrWhiteSpace(postgres))
         {
+            if (require)
+            {
+                throw new InvalidOperationException(
+                    "ConnectionStrings:DefaultConnection must be configured on the dedicated Production plane.");
+            }
+
             return;
         }
 
@@ -224,6 +248,22 @@ public static class ProductionSecurityValidator
         string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
         || string.Equals(host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
         || string.Equals(host, "::1", StringComparison.OrdinalIgnoreCase);
+
+    private static bool RedisEndpointIsLoopback(string endpoint)
+    {
+        var host = endpoint.Trim();
+        if (host.StartsWith('[') && host.Contains(']', StringComparison.Ordinal))
+        {
+            host = host[1..host.IndexOf(']')];
+        }
+        else if (host.Count(static c => c == ':') == 1)
+        {
+            host = host.Split(':', 2)[0];
+        }
+
+        return IsLoopbackHost(host)
+            || host.Equals("::ffff:127.0.0.1", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static bool IsIsolatedComposePostgresHost(string? host) =>
         string.Equals(host, "postgres", StringComparison.OrdinalIgnoreCase);

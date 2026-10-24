@@ -33,10 +33,6 @@ if [[ "${1:-}" == "" || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 2
 fi
 
-normalize_flag() {
-  printf '%s' "${1:-}" | sed 's/#.*//' | tr -d '[:space:]' | tr -d \"\' | tr '[:upper:]' '[:lower:]'
-}
-
 is_under_repo() {
   local target="$1"
   python3 - "$ROOT_DIR" "$target" <<'PY'
@@ -134,8 +130,8 @@ for raw in open(path, encoding="utf-8"):
     line = raw.strip()
     if not line or line.startswith("#"):
         continue
-    if line.startswith("export "):
-        line = line[7:].strip()
+    if line.lower().startswith("export"):
+        line = line.split(None, 1)[1] if len(line.split(None, 1)) == 2 else line
     if "=" not in line:
         continue
     name, value = line.split("=", 1)
@@ -155,6 +151,10 @@ for name in required:
         print(f"PLACEHOLDER_SECRET={name}")
         failed = True
         continue
+    if name == "JWT_SIGNING_KEY" and len(value.strip()) < 32:
+        print("INVALID_JWT_SIGNING_KEY_LENGTH")
+        failed = True
+        continue
     print(f"{name}=present")
 
 if values.get("DEV_TENANT_SLUG", "").strip() or values.get("Tenancy__DevTenantSlug", "").strip():
@@ -168,13 +168,24 @@ for name in forbidden_true:
         print(f"FORBIDDEN_FLAG={name}")
         failed = True
 
+from urllib.parse import urlparse
 base = values.get("PUBLIC_BASE_URL", "").strip()
-if base and not base.lower().startswith("https://"):
-    print("INVALID_PUBLIC_BASE_URL_SCHEME")
-    failed = True
-if base and ("uat.cohestra.app" in base.lower() or "localhost" in base.lower()):
-    print("INVALID_PUBLIC_BASE_URL_HOST")
-    failed = True
+if base:
+    parsed = urlparse(base)
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme.lower() != "https" or parsed.username or parsed.query or parsed.fragment \
+       or (parsed.path not in ("", "/")) or (parsed.port not in (None, 443)) \
+       or host not in {"cohestra.app", "www.cohestra.app"}:
+        print("INVALID_PUBLIC_BASE_URL_HOST")
+        failed = True
+
+from_email = values.get("SendGrid__FromEmail", "").strip()
+if from_email and "@" in from_email:
+    sender_host = from_email.rsplit("@", 1)[1].lower()
+    if sender_host == "uat.cohestra.app" or sender_host.startswith("uat.") \
+       or ".uat." in sender_host or sender_host.endswith(".local"):
+        print("FORBIDDEN_SENDGRID_SENDER")
+        failed = True
 
 if failed:
     print("OWNER_GATE=production_host_application_secrets")

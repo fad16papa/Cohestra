@@ -85,6 +85,24 @@ def load(blob):
 
 uat = load(sys.argv[1])
 prod = load(sys.argv[2])
+required_both = ["JWT_SIGNING_KEY", "POSTGRES_PASSWORD", "SendGrid__ApiKey"]
+required_prod = ["REDIS_PASSWORD"]
+missing = False
+for name in required_both:
+    if name not in uat:
+        print(f"MISSING_CLASSIFIED_NAME_UAT={name}")
+        missing = True
+    if name not in prod:
+        print(f"MISSING_CLASSIFIED_NAME_PRODUCTION={name}")
+        missing = True
+for name in required_prod:
+    if name not in prod:
+        print(f"MISSING_CLASSIFIED_NAME_PRODUCTION={name}")
+        missing = True
+if missing:
+    print("OWNER_GATE=classified_inventory_incomplete")
+    print("REFUSE: required classified names were not compared.")
+    sys.exit(1)
 shared = sorted(set(uat) & set(prod))
 collisions = [name for name in shared if uat[name] == prod[name]]
 print(f"CLASSIFIED_NAMES_UAT={len(uat)}")
@@ -97,7 +115,8 @@ if collisions:
     print("REFUSE: UAT and Production classified suffixes collide.")
     print("Do not reuse UAT secret values on Production.")
     sys.exit(1)
-print("CLASSIFIED_ISOLATION=PASS")
-print("OWNER_GATE=synthetic_or_owner_classified_check")
-print("No overlapping name+suffix pairs. Values were not printed.")
+print("CLASSIFIED_COMPARE=NO_COLLISION")
+print("LIVE_ISOLATION_PROVEN=NO")
+print("OWNER_GATE=owner_classified_verification_still_required")
+print("Required names compared. Values were not printed.")
 PY
