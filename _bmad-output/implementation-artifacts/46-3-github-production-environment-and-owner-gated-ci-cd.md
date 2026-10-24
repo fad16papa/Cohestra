@@ -2,7 +2,7 @@
 id: 46.3
 key: 46-3-github-production-environment-and-owner-gated-ci-cd
 title: GitHub Production Environment and owner-gated CI/CD
-status: review
+status: done
 epic: 46
 created: 2026-10-21
 baseline_commit: 5d52d6e3dc99bce01545eda6eb10f378d469c374
@@ -11,8 +11,8 @@ depends_on:
   - 46.2
 owner_gate: production_environment_protections
 owner_gate_status: PASS — OWNER CONFIGURED / BOT API UNAVAILABLE
-overlay_code_path: IMPLEMENTED / NOT LIVE
-owner_gate_b: BLOCKED — DOCKER BOOTSTRAP RESULT=PASS NOT VISIBLE / GATE B VALIDATION NOT DISPATCHED
+overlay_code_path: IMPLEMENTED / LIVE PREREQUISITES OWNER-ATTESTED
+owner_gate_b: PASS — DOCKER BOOTSTRAP OWNER-ATTESTED / GATE B VALIDATION NOT DISPATCHED
 implementation_authorized: true
 cutover_authorization: GRANTED
 production_release_readiness: NOT_YET_COMPLETE
@@ -21,7 +21,7 @@ production: NO-GO
 
 # Story 46.3: GitHub Production Environment and owner-gated CI/CD
 
-Status: review
+Status: done
 
 <!-- Ultimate context engine analysis completed — comprehensive developer guide created. -->
 <!-- DONE requires Mandatory Code Review Loop on the final HEAD: IMPLEMENT → BUILD → TEST → BMAD CODE REVIEW (repeat until clean) → PRODUCT ACCEPTANCE → CLOSE. Code review is repeating, not one-shot. -->
@@ -140,7 +140,7 @@ Required delivery chain:
 | Gate | Who | When | Blocks |
 | --- | --- | --- | --- |
 | `production_environment_protections` | Owner in GitHub Settings | Before first live Environment deployment | Unprotected `production` environment. 2026-10-23: owner attested Environment `production` from the GitHub web UI (`OWNER_ATTESTED_CONFIGURATION=PASS`). Cursor App Settings verification remains unavailable (`AUTOMATED_SETTINGS_VERIFICATION=UNAVAILABLE_DUE_TO_GITHUB_APP_PERMISSIONS`). See `evidence/46-3/owner-gate-a-environment-protections.md`. |
-| `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Missing `PROD_*` (fail-closed names only). **2026-10-24 BLOCKED — DOCKER BOOTSTRAP RESULT=PASS NOT VISIBLE.** Owner reported Engine `29.9.2`, Compose `v5.6.1`, `COMPOSE_CONFIG=PASS`, and all safety markers `false`. The provided transcript does not show `RESULT=PASS`. Do not dispatch Gate B / Deploy Production until that line is attested. See `evidence/46-3/production-docker-bootstrap-acceptance.md`. |
+| `production_secrets` | Owner populates Environment `production` secrets | Before first live SSH | Environment `production` secrets/variables and the dedicated Actions SSH key are configured. Owner-attested Docker bootstrap `RESULT=PASS` on checkout `7e1cf5d48064b28a831ba20b25ac06d27e1a17fc`. Deploy Production remains undispatched (AC 8). See `evidence/46-3/production-docker-bootstrap-acceptance.md`. |
 | Each deploy approval | Owner required reviewer | Every Environment `production` job | Deploy without approval |
 | Implementation authorization | Owner | After this planning artifact is accepted | `bmad-dev-story` for 46.3 |
 
@@ -732,6 +732,7 @@ Cursor Grok 4.6 (planning + implementation)
 - 2026-10-24: Live checkout PASS at `21e835604884a922f3a51d3b0d6039657affed15`. Gate B secrets/variables and the dedicated Production Actions SSH key are configured. Host `docker` is absent. Added owner-run `deploy/bootstrap-production-docker.sh` (unexecuted). Do not dispatch Gate B validation. Gate B remains blocked. Story 46.4 not started.
 - 2026-10-24: Owner ran Docker bootstrap. Engine install succeeded; `production-compose.sh config` refused because config-only placeholders omitted `SendGrid__ApiKey` / `SendGrid__FromEmail`. No compose-up. Added canonical placeholder helper. Do not create `.env`. Story 46.4 not started.
 - 2026-10-24: Owner reran checkout + Docker bootstrap after #500. Fragment shows safety markers `false` and `COMPOSE_CONFIG=PASS`. `RESULT=PASS` is not visible. Story remains review / IN PROGRESS. Do not dispatch Gate B. Do not start 46.4.
+- 2026-10-24: Owner attested `RESULT=PASS` with `DOCKER_RUNTIME=installed`, official apt source, compose plugin, checkout `7e1cf5d4`, origin canonical, `deploy` not in `docker`, `.env` absent. Evidence is transcribed owner terminal; Cursor did not SSH. Story 46.3 proposed DONE. Production remains NO-GO. Do not start 46.4.
 
 ### File List
 

@@ -4,19 +4,24 @@ Date: 2026-10-24 (Asia/Singapore)
 Baseline main: `7e1cf5d48064b28a831ba20b25ac06d27e1a17fc`
 PR #500: MERGED
 Production: NO-GO
-Story 46.3: IN PROGRESS
-`LIVE_EVIDENCE=PARTIAL`
-`RESULT_PASS=NOT_VISIBLE`
-`OWNER_EVIDENCE_REQUIRED=YES`
+Story 46.3: CLOSURE_READY (proposed; pending owner merge of PR #501)
+`LIVE_EVIDENCE=TRANSCRIBED_OWNER_TERMINAL`
+`RESULT_PASS=VERIFIED_FROM_OWNER_EVIDENCE`
+`OWNER_EVIDENCE_REQUIRED=NO`
 
-## What the owner provided
+Cursor did not receive the screenshot file and did not SSH Production.
+The following is owner-provided terminal evidence transcribed in chat.
 
-Observed terminal fragments (not a complete bootstrap transcript):
+## Owner-provided bootstrap footer
 
 ```text
+RESULT=PASS
+DOCKER_RUNTIME=installed
+DOCKER_SOURCE=official_apt_download.docker.com
+COMPOSE_METHOD=docker-compose-plugin
 ENGINE_VERSION_RECORDED=true
 COMPOSE_VERSION_RECORDED=true
-COMPOSE_CONFIG=PASS
+COMPOSE_CONFIG=pass
 DEPLOY_USER_IN_DOCKER_GROUP=false
 PASSWORDLESS_SUDO=false
 DOCKER_TCP_LISTENER=false
@@ -26,52 +31,39 @@ DATABASE_MUTATED=false
 FIREWALL_CHANGED=false
 ```
 
-Owner-stated versions (not independently re-read from the host by Cursor):
+## Owner-provided read-only verification
 
 - Docker Engine: `29.9.2`
 - Docker Compose: `v5.6.1`
+- Production checkout: `7e1cf5d48064b28a831ba20b25ac06d27e1a17fc`
+- Git origin: `https://github.com/fad16papa/Cohestra.git`
+- Deploy groups: `deploy` only
+- Production `.env`: `ENV_ABSENT`
 
-The screenshot does **not** show `RESULT=PASS`, `DOCKER_RUNTIME=installed`,
-`DOCKER_SOURCE`, or `COMPOSE_METHOD`. Cursor did not SSH. This file does not
-treat the fragment as full acceptance.
+Checkout SHA matches merged main. Origin is the canonical public HTTPS remote.
+`deploy` is not in group `docker`. No Production application `.env` exists.
 
-Script on `7e1cf5d4` emits `RESULT=PASS` only after compose config succeeds,
-and emits `COMPOSE_CONFIG=pass` (lowercase). The owner fragment used `PASS`.
+## Security invariants
 
-## What remains required
+| Marker | Owner evidence |
+| --- | --- |
+| `DEPLOY_USER_IN_DOCKER_GROUP` | `false` |
+| `PASSWORDLESS_SUDO` | `false` |
+| `DOCKER_TCP_LISTENER` | `false` |
+| `CONTAINERS_STARTED` | `false` |
+| `COMPOSE_UP` | `false` |
+| `DATABASE_MUTATED` | `false` |
+| `FIREWALL_CHANGED` | `false` |
 
-`OWNER_EVIDENCE_REQUIRED` — non-destructive, owner-only, no Cursor SSH:
+## What this does not authorize
 
-1. Scroll the same terminal to the bootstrap header/footer and confirm the
-   exact line `RESULT=PASS` (or paste `RESULT=REFUSE` if that is what ran).
-2. Confirm these sibling lines from the same run:
-   - `DOCKER_RUNTIME=installed`
-   - `DOCKER_SOURCE=official_apt_download.docker.com`
-   - `COMPOSE_METHOD=docker-compose-plugin`
-3. Confirm checkout pin (read-only):
+- Deploy Production dispatch
+- Story 46.4
+- Production `.env` / application secrets
+- compose-up, migrations, DNS, live Paddle
+- Public Production GO
 
-```bash
-sudo -u deploy git -C /home/deploy/cohestra-production rev-parse HEAD
-sudo -u deploy git -C /home/deploy/cohestra-production config --get remote.origin.url
-```
-
-Expected HEAD: `7e1cf5d48064b28a831ba20b25ac06d27e1a17fc`  
-Expected origin: `https://github.com/fad16papa/Cohestra.git`
-
-4. Optional read-only corroboration (do not compose-up, do not create `.env`):
-
-```bash
-docker --version
-docker compose version
-id -nG deploy
-test -f /home/deploy/cohestra-production/.env && echo ENV_PRESENT || echo ENV_ABSENT
-```
-
-`id -nG deploy` must not include `docker`. `.env` must remain absent.
-
-Do not dispatch Deploy Production. Do not start Story 46.4.
-
-## Repository tests on this baseline (non-destructive)
+## Repository tests on baseline `7e1cf5d4` (non-destructive)
 
 - `deploy/bootstrap-production-docker.test.sh` PASS
 - `deploy/production-compose-config-placeholders.test.sh` PASS
