@@ -12,6 +12,7 @@ related: 10-architecture-amendment-proposal.md
 
 Decision status vocabulary:
 - **DIRECTION SELECTED** = intended route acknowledged by Product Owner; not authority to change settings, start a model-unverified agent, or adopt an unreconciled ADR.
+- **PRELIMINARY DIRECTION AGREED** = owner agrees with the proposed approach **in principle only**; final ADR adoption, implementation, settings, credentials, merges and Production require separate explicit authorization and completion of review/security gates.
 - **OWNER_GATE OPEN** = new explicit owner approval required.
 - **APPROVED** = explicit, recorded owner decision with evidence link (not merely a planner assertion).
 - **NOT ACTIVATED** = no implementation or credential/agent activity yet.
@@ -21,19 +22,36 @@ Decision status vocabulary:
 | D1 | Autonomous Control as separate workstream | proceed | **DIRECTION SELECTED** — [owner direction](https://github.com/fad16papa/Cohestra/issues/506#issuecomment-6395401988); no unrestricted implementation |
 | D2 | Reserve next epic number | 47 | **DIRECTION SELECTED** — next unused at reviewed baseline; no `sprint-status.yaml` changes until final architecture |
 | D3 | Pilot orchestrator topology | A: GitHub Actions + Cursor Cloud Agents API | **DIRECTION SELECTED** — owner authorization for detailed design; credential-free dry run follows ADR approval |
-| D4 | New Environment and reviewers | **single owner** required reviewer in `adcp`; **Prevent self-review OFF for `adcp` only** for owner-started pilot | **OWNER_GATE OPEN** — sole-owner design proposed; owner must approve actual protection/secret scope. No second reviewer; self-confirmation is not independent human review |
+| D4 | New Environment and reviewers | **single owner** required reviewer in `adcp`; **Prevent self-review OFF for `adcp` only** for owner-started pilot | **PRELIMINARY DIRECTION AGREED (2026-10-25)** — owner agrees in principle with solo-owner `adcp`. **OWNER_GATE OPEN** for actual reviewer settings, secret scope, credential provisioning and live use. No second human review is implied |
 | D5 | Create credentials | dedicated service-account Cursor API key only after safeguards | **OWNER_GATE OPEN** — NO KEYS until D4/D8/D10/D11/D12 and model eligibility are verified; separate consent and cost/rotation |
 | D6 | ChatGPT invocation | interactive ChatGPT for controlled pilot; OpenAI API only in separately approved later phase | **DIRECTION SELECTED FOR PILOT**; full autonomy API/data flow is **OWNER_GATE OPEN** |
 | D7 | Engineering executor model | Grok 4.6 hard pin, no Auto/default fallback | **DIRECTION SELECTED**; concrete `GET /v1/models` id **NOT VERIFIED**; refuse launch until verified |
-| D8 | Adopt AD-1..AD-10 architecture | **amend before adoption** per A1–A6 | **OWNER_GATE OPEN** — current drafts `[PROPOSED]`; review `10-architecture-amendment-proposal.md` and sign amended ADRs |
+| D8 | Adopt AD-1..AD-10 architecture | **amend before adoption** per A1–A6 | **PRELIMINARY DIRECTION AGREED (2026-10-25)** — owner agrees in principle with proposed responsibilities and architecture direction. **OWNER_GATE OPEN** for current-HEAD Grok 4.6 reviews and separate **final ADR adoption**; all ADs remain `[PROPOSED]` |
 | D9 | Dedicated orchestrator host later | may be proposed only after pilot retrospective | **NOT APPROVED** — no server/new vendor/data flow authorized |
-| D10 | Harden `main` and protected workflow paths | required PR + exact-HEAD checks + no force-push + controls on privileged changes, **without mandatory second-human PR approval** | **DIRECTION SELECTED**; **OWNER_GATE OPEN** for exact settings, CI checks and audit/merge behavior; preserve two-parent Production history |
+| D10 | Harden `main` and protected workflow paths | required PR + exact-HEAD checks + no force-push + controls on privileged changes, **without mandatory second-human PR approval** | **PRELIMINARY DIRECTION AGREED (2026-10-25)** — owner supports proposed protections in principle. **OWNER_GATE OPEN** for concrete rules, compatibility assessment and any GitHub settings change; preserve two-parent Production history |
 | D11 | Who may launch a run | owner-initiated `workflow_dispatch` for first pilot | **DIRECTION SELECTED**; actor/identity allowlist policy must be approved and tested; no label/comment trigger yet |
-| D12 | Privilege expansion / secret classes | inherit existing approved merge-policy exceptions; explicitly owner-gate new permissions | **OWNER_GATE OPEN** — review precise permissions and secret scope; no Environment/secrets created |
+| D12 | Privilege expansion / secret classes | inherit existing approved merge-policy exceptions; explicitly owner-gate new permissions | **PRELIMINARY DIRECTION AGREED (2026-10-25)** — owner supports least privilege in principle. **OWNER_GATE OPEN** for exact permissions, secrets classes and any expanded access. No Environment, workflow, credentials or settings authorized |
 | D13 | Architecture participation | owner reviews material system, software/code, infrastructure, data and security decisions, even within existing standards | **BINDING INTENT** — execution contract must enforce semantic AND path-based escalation; implementation design still **OWNER_GATE OPEN** |
 | D14 | Definition of "fully autonomous" | durable scheduled/event-driven loop, model-pinned Cursor, monitored PR/CI, advisor invocation, owner notifications | **OWNER_GATE OPEN FOR FULL AUTONOMY** — pilot alone does not satisfy this criterion |
 | D15 | Permanent sole-owner operating structure | One human Product Owner, no second human collaborator or reviewer required; human approvals via owner-controlled gates; independent Grok/CI checks do not impersonate humans | **OWNER FACT CONFIRMED** — architecture change to comply is PROPOSED, not adopted |
 | D16 | Unattended runtime without owner approval every task | Separate tightly restricted non-interactive P5 execution boundary for pre-approved low-risk tasks; preserve manual owner gates for privileged/material changes | **OWNER_GATE OPEN FOR P5** — do not weaken the pilot `adcp` reviewer protection to claim full autonomy |
+
+## Preliminary owner review preferences — 2026-10-25 (Asia/Singapore)
+
+**Source of preference:** Product Owner explicitly submitted these selections in the current ChatGPT conversation. This document change is performed by ChatGPT through the connected GitHub account and **does not** constitute GitHub-authenticated independent human approval or final architectural signoff.
+
+| Decision | Preliminary owner preference | Scope and prohibition |
+| --- | --- | --- |
+| **D8** Architecture and responsibilities | **AGREE WITH PROPOSED DIRECTION** | No AD-1..AD-10 adoption, Grok 4.6 review attestation, implementation, merge or Production authorization |
+| **D10** GitHub branch protections | **AGREE WITH PROPOSED DIRECTION** | No GitHub branch/ruleset settings changed or approved for immediate execution; exact control set and compatibility remain owner-gated |
+| **D4** Single-owner `adcp` Environment | **AGREE WITH PROPOSED DIRECTION** | No Environment creation or reviewer setting change; `production` untouched; secret scope and pilot approval remain owner-gated |
+| **D12** Least-privilege permissions | **AGREE WITH PROPOSED DIRECTION** | No new token permissions, credentials, workflow permissions, key access or privilege expansion authorized |
+
+**Change requests from owner:** **NONE** for these four preliminary directions. This does not mean all technical prerequisites or residual findings have been resolved.
+
+**Required next evidence before a final approval request:** fresh current-HEAD Grok 4.6 BMAD adversarial, edge-case, security and readiness review; proposed exact GitHub branch/ruleset + `adcp` configuration; secret/permission inventory and any material tradeoffs. Present the owner with exactly what will be adopted or changed, the risks, the evidence and separate approve/modify/defer choices.
+
+**Unchanged:** all other decision rows, prior inherited owner policies, no running Cursor dispatch, no secret provisioning, no Production GO, and no new merge authority.
 
 ## Implementation and authorization sequence
 
