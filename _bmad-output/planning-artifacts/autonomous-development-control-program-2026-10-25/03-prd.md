@@ -1,0 +1,82 @@
+---
+title: Autonomous Development Control Program — PRD
+status: draft
+created: 2026-10-25
+updated: 2026-10-25
+stakes: internal-control-plane
+---
+
+# PRD — Autonomous Development Control Program
+
+Capabilities for the **control plane**. Not tenant-facing. Implementation choices live in the architecture spine and addendum.
+
+## Vision
+
+Give Cohestra a governed way to run BMAD work with ChatGPT as advisor, Cursor Cloud Agents as executors, GitHub as source of truth, and the Product Owner as the only authority for strategy, architecture, and Production.
+
+## Users
+
+| Actor | Job |
+| --- | --- |
+| Product Owner | Approves architecture, secrets, Production, and program go-live |
+| ChatGPT (advisor) | Impact assessment, BMAD routing advice, review commentary |
+| Cursor Cloud Agent | Implements/reviews/tests inside a git worktree and opens PRs |
+| GitHub Actions | Event runner, CI, UAT deploy (existing), provenance |
+| BMAD skills | Methodology contracts already installed in this repo |
+
+## Features
+
+### F1 — Authority lock
+
+- **FR-1** Product Owner retains final authority for product strategy, system/code/infra/security/data architecture, significant technical decisions, and Production authorization.
+- **FR-2** ChatGPT may advise, draft impact-assessment prose, and *suggest* an installed BMAD skill. It cannot merge Production, dispatch Deploy Production, adopt an ADR, or replace Grok 4.6 as architecture/security/review signoff (Epic 45 AD-12).
+- **FR-3** Cursor/BMAD may execute routine work only inside an approved story contract and the existing autonomous-merge policy (UAT/non-prod).
+- **FR-4** Every material architecture decision requires a written impact assessment, Product Owner participation, explicit approval, and an ADR before implementation continues.
+
+### F2 — Orchestrated BMAD loop
+
+- **FR-5** The program routes work through installed skills only. The allowlist is `_bmad/_config/bmad-help.csv` union `_bmad/custom/*.toml`. Typical implementation loop names include `bmad-create-story`, `bmad-dev-story`, `bmad-code-review`, `bmad-sprint-status`. It must not invent skill names.
+- **FR-6** A task is not “implement” until a story file exists or `bmad-quick-dev` is explicitly selected for a scoped exception.
+- **FR-7** The mandatory code-review loop remains the close gate. Unresolved BLOCKER/MAJOR blocks done.
+- **FR-8** Epic 46 work stays on its own branches/PRs. This program must not rewrite 46 story files or `sprint-status.yaml` as a side effect of planning.
+
+### F3 — GitHub control plane
+
+- **FR-9** GitHub remains the source of truth for code, PRs, CI, Environments, and audit.
+- **FR-10** Agent work lands on `cursor/<slug>-<id>` branches and draft PRs unless the owner authorizes a different convention.
+- **FR-11** Required milestone fields include exact PR number, HEAD SHA, and CI run URL. Agent-reported PASS without a check-run URL is a claim, not evidence.
+
+### F4 — Dispatch and supervision
+
+- **FR-12** Cursor Cloud Agents are launched and steered through the documented Cloud Agents API (create agent, follow-up/steer, get run, cancel, list artifacts).
+- **FR-13** ChatGPT is invoked on demand by the orchestrator. The program must not assume a continuous ChatGPT process.
+- **FR-14** Loops have a retry budget, a wall-clock timeout, and a hard stop that escalates to the Product Owner. Infinite self-dispatch is forbidden.
+- **FR-15** Architecture-path changes (spines, compose Production, deploy-production workflow, provenance, security validators, Environments) halt for impact assessment.
+
+### F5 — Security isolation
+
+- **FR-16** ADCP secrets (Cursor API key, optional ChatGPT API key) live in a dedicated GitHub Environment (proposed name `adcp`), not Environment `production` or `uat`, and not a name that collides with Epic 46's "control plane" (Actions + Environment `production`). Creating that Environment and adding required reviewers is an owner gate (D4).
+- **FR-17** Agents must not receive Production host `.env`, `PROD_DROPLET_*`, live Paddle, or Production SendGrid values.
+- **FR-18** Evidence artifacts follow Epic 45 AD-4: names, booleans, SHAs, HTTP codes; no secret values.
+- **FR-19** Privilege expansion (new write permissions, new secret classes, weakening gates) is an owner gate, matching `autonomous-merge-policy.md`.
+
+### F6 — Milestone reporting
+
+- **FR-20** Standard milestone reports use the ten-section template in `06-milestone-reports.md`.
+- **FR-21** A milestone is complete only when required evidence and approvals are present. Missing evidence is FAIL.
+
+## Non-functional
+
+- **NFR-1 Security:** Least privilege. No droplet SSH in Cursor. Fail closed on missing secret **names**.
+- **NFR-2 Reliability:** Orchestrator failures must not leave Production or UAT in a mutated state. Cancel in-flight agent runs on timeout.
+- **NFR-3 Audit:** Every dispatch, follow-up, cancel, and owner decision is attributable in GitHub (workflow log, issue comment, or PR comment).
+- **NFR-4 Cost:** Pilot must not require a new always-on VM. A dedicated orchestrator service is a later owner decision.
+- **NFR-5 Compatibility:** Must not weaken Epic 45 UAT isolation or Epic 46 Production provenance.
+
+## Out of scope
+
+Production GO, live DNS, live Paddle, tenant product features, replacing BMAD with a custom methodology.
+
+## Open questions (owner)
+
+See `09-owner-decision-register.md`. Critical OPEN rows: D3 topology, D4 Environment `adcp` + reviewers, D8 adopt ADs, D11 actor allowlist, D2 epic number. Do not write `47.n` story files until D2.
