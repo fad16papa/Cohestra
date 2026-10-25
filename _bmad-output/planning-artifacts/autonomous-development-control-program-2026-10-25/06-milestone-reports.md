@@ -6,7 +6,7 @@ created: 2026-10-25
 
 # Mandatory milestone reports
 
-A milestone is **not complete** without the required evidence and the required approvals. Missing evidence is FAIL.
+A milestone is **not complete** without the required evidence, exact-current-HEAD validation and required approvals. Missing evidence or an unresolved OWNER_GATE is FAIL/HOLD. Reports must serve both an executive summary and a detailed engineering decision record. **Agent narrative is never equivalent to independent verification.**
 
 ## Evidence vs claim
 
@@ -76,9 +76,12 @@ AUTHOR_ROLE: owner | chatgpt | cursor-agent | orchestrator
 - HEAD SHA (40 hex):
 - Base SHA:
 - CI run URL:
-- Cursor agent id / run id:
-- Orchestrator workflow run URL:
-- github.actor (human who authorized the run):
+- Cursor agent id / run id (or explicitly NOT_STARTED):
+- Requested Grok 4.6 model ID + model catalog evidence; actual model usage attestation (or NOT_VERIFIED):
+- Orchestrator workflow run URL (or NOT_STARTED):
+- Authenticated github.actor (human who authorized the run):
+- Idempotency / task key, retries, timeout, usage/budget:
+- Grok 4.6 review evidence + reviewer/run identity (or NOT_RUN):
 - Environment name actually used:
 - Follow-ups / steers (ids or "none"):
 - Cancels (ids or "none"):
@@ -96,6 +99,9 @@ The orchestrator must refuse `MILESTONE=complete` unless **all** of the followin
 6. `github.actor` of the authorizing human is recorded. `AUTHOR_ROLE` is not a substitute
 7. Follow-ups, steers, and cancels are listed (or explicitly `none`)
 8. Environment name actually used is recorded and is not `production` or `uat`
+9. For Cursor-executed work, model pin and authenticated availability have evidence, and any unknown subagent-model usage is explicitly described rather than implied verified
+10. Architecture impact assessment covers semantics as well as protected paths; Product Owner's required decision is recorded before any material design change proceeds
+11. Separate milestones exist for controlled pilot and full event-driven autonomy; do not mark full autonomy complete using a manual-only trial
 
 For UAT/non-prod merge, GitGuardian NEUTRAL is recorded as a risk in section 6, not treated as SUCCESS evidence.
 
@@ -112,4 +118,12 @@ Required before implementation continues:
 
 ## Notification
 
-Pilot: post the report as a PR or issue comment. Slack/email is an owner decision and is not required to close a milestone.
+Pilot: post the report as a PR or issue comment without requiring the Product Owner to transfer prompts. Notify the owner of any gate, operational failure or unresolved security risk; the approved notification channel is an owner decision. Slack/email integrations are not installed by this document.
+
+## Executive recommendation at each milestone
+
+- **GO / NO-GO / OWNER_GATE** for the specific milestone; do not conflate code readiness, merge approval, pilot activation and Production authorization.
+- Top outcomes, important design changes, unresolved BLOCKER/MAJOR/MINOR risks, dependency state, required owner decisions, and next autonomous action.
+- Separate *confirmed by direct GitHub/CI evidence*, *Cursor-reported but not independently verified*, and *proposal/assumption*.
+- If evidence is on a previous HEAD, label **STALE**. If any required check is pending, label **INCOMPLETE**, not PASS.
+- Preserve a report's exact PR/commit/check-run links in the GitHub task record to make audits possible after the conversation ends.

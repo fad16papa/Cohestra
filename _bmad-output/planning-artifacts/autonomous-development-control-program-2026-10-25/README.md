@@ -25,6 +25,13 @@ Planning-only package. No application code, GitHub settings, secrets, or Epic 46
 | [06-milestone-reports.md](./06-milestone-reports.md) | Mandatory report templates |
 | [07-implementation-proposal.md](./07-implementation-proposal.md) | Sequence, pilot, risks |
 | [08-epics-and-stories.md](./08-epics-and-stories.md) | Proposed story breakdown |
-| [09-owner-decision-register.md](./09-owner-decision-register.md) | Decisions requiring Product Owner approval |
+| [09-owner-decision-register.md](./09-owner-decision-register.md) | Owner-selected direction versus explicit architecture/security approval gates |
+| [10-architecture-amendment-proposal.md](./10-architecture-amendment-proposal.md) | Architecture amendment packet A1–A6 (PROPOSED, not adopted) |
 
 Baseline for this branch: `main` `e962c8c3eead953a1f56f2b397b3e9d4fc669041`.
+
+## Current architecture reconciliation status
+
+Owner selected GitHub-native orchestration as the **pilot direction**, but has **not adopted AD-1..AD-10** or authorized production, credentials or live agent dispatch. The draft package now separates controlled pilot from future fully event-driven autonomy, requires Grok 4.6 on all engineering runs, preserves human Product Owner architecture authority and requires protection of privileged GitHub workflows before any secret-backed run.
+
+This planning PR remains a draft and cannot be merged or called implementation-complete based solely on a successful CI run. **Independent current-HEAD Grok 4.6 BMAD adversarial, edge-case and security reviews are still required**, followed by explicit owner architecture decisions. Historical first-pass FAIL reviews remain historical evidence.
