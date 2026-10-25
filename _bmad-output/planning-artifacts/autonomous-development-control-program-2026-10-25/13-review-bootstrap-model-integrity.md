@@ -11,6 +11,10 @@ production: NO_GO
 
 # Independent Grok 4.6 review bootstrap and strict model integrity
 
+> **HISTORICAL ANALYSIS, SUPERSEDED IN PART BY OWNER MODEL DECISION OF 2026-10-25:** This document records the former requirement to prove every parent/helper inference used Grok 4.6. The owner subsequently established a simpler **task-level model-routing policy** in [16-owner-model-routing-policy.md](./16-owner-model-routing-policy.md): Grok 4.6 for main planning/coding/security/review/release responsibilities, Composer 2.5 only for eligible simple bugs with Grok review. Hidden provider-helper model telemetry may be missing; disclose it rather than block solely on that absence. **Do not use older recommendations here to demand a local SDK fallback or prevent a new owner-authorized review attempt solely over hidden helper telemetry.** The historical D18-A run never executed BMAD, so no review PASS is inherited. No new run, key or settings action is authorized.
+
+
+
 ## Verified source findings
 
 1. [Cursor Cloud Agents API](https://prod.cursor.com/docs/cloud-agent/api/endpoints) supports `GET /v1/models` for available IDs and explicit parent `model.id` on `POST /v1/agents`. This ensures an API *requested model*, **not** every helper model used during execution.

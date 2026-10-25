@@ -147,7 +147,7 @@ flowchart TB
 | PRs | Draft until the task's milestone report exists |
 | Reports | Ten-section template; Evidence vs Claim labels |
 | Secret output | Names only; `MISSING_SECRET=<NAME>` |
-| Models | Grok 4.6 REQUIRED for planning, execution, testing, security, CI/CD and review; Cursor API `model.id` must be verified and explicitly pinned, no fallback |
+| Models | **Owner-approved D7/D17:** Grok 4.6 for planning, substantial coding, architecture, reviews, security and release evaluation; Composer 2.5 only for qualified isolated low-risk bug fixes with Grok final review. Explicit assigned main-model selection, no Auto; hidden helper telemetry disclosed, not an all-inference gate |
 | Dates | ISO date; times in Asia/Singapore when reporting to the owner |
 
 ## Stack
@@ -197,3 +197,7 @@ As of 2026-10-25, **AD-1..AD-10 remain [PROPOSED]**. Owner selected detailed pla
 ## Review-start circular dependency (PROPOSED)
 
 Independent current-HEAD Grok review is required before owner ADCP architecture adoption. A secure fully automated Grok reviewer would itself require an owner-approved ADCP runner, protected main, secrets and provider model integrity verification. This cannot be satisfied by simply posting `@cursor` in GitHub or by assuming a selected Cloud Agent parent model governs helpers. A one-time **owner-initiated review-only bootstrap** is a separate option that uses the prewritten GitHub review task without authorizing merge, Production, GitHub settings or credentials. Even this option must **fail closed** if Grok-only child/helper model evidence is unavailable. Details: `../13-review-bootstrap-model-integrity.md`.
+
+## Owner superseding model-routing clarification (2026-10-25, BINDING)
+
+`../16-owner-model-routing-policy.md` controls D7/D17 notwithstanding historical language above suggesting no unknown helper models. Grok 4.6 remains the **assigned engineering main agent** for planning, substantive coding, security and BMAD reviews/release decisions; Composer 2.5 is allowed only for narrow simple defect implementation and always requires a fresh independent Grok code/security review. Unknown internal provider-managed helper inference is **disclosed**, not a standalone hard-block; known assignments of substantive engineering authority to off-policy agents **are blocked**. Do not claim every inference was Grok without such evidence. D18-A failed before BMAD under the old policy, so a new owner-authorized review is still needed before final architecture adoption. All other AD-1..AD-10 remain PROPOSED.

@@ -59,3 +59,7 @@ A **control program**, not a product feature for tenants. After a pilot:
 - **Controlled pilot:** ChatGPT places an execution contract directly in GitHub, authorized GitHub Actions dispatches exactly one model-pinned Cursor agent, a draft PR and exact-HEAD checks result, and a verifiable milestone report is posted. No manual copying; first run may need manual GitHub Environment approval.
 - **Full autonomy:** Subsequent approved stories are event-driven with durable state, bounded automatic correction and independent reviews, alerts for owner architecture decisions, and an owner-approved API-driven advisory step. This is **not** achieved by a manual pilot or GitHub comment alone.
 - Hard owner boundaries include system design, software/code architecture, infrastructure, security, data architecture, any material product change, Production deploy and credential/privilege expansion. See 10-architecture-amendment-proposal.md.
+
+## Owner-approved model routing override (2026-10-25)
+
+**16-owner-model-routing-policy.md is authoritative:** Grok 4.6 owns planning, architecture, substantive development, code/security reviews and release evaluation. Composer 2.5 may implement *simple, isolated low-risk bug fixes* only, with targeted tests and independent Grok 4.6 `bmad-code-review`. No Auto model routing. Provider-internal helper inference need not be completely model-attested; its lack of telemetry must be disclosed, not treated as a standalone block. All owner/security/Production gates remain. This policy decision does not authorize implementation.

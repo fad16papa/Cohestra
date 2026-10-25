@@ -39,7 +39,7 @@ https://github.com/fad16papa/Cohestra/pull/507#issuecomment-6395301030
 
 **Tradeoff:** Greater orchestration usefulness, but future model-driven advisor integration adds vendor processing and permission scope. **Owner decision:** Explicitly approve reconciled role split and any amendment to AD-12 before adoption.
 
-## A2 — Hard-pin Grok 4.6 for Cursor engineering
+## A2 — Explicit task-model routing (updated by owner decision, 2026-10-25): Grok 4.6 + limited Composer 2.5
 
 **Problem:** Existing D7 says executor model may follow defaults or be set by owner, contrary to Cohestra's selected exclusive model policy.
 
@@ -132,3 +132,7 @@ https://github.com/fad16papa/Cohestra/pull/507#issuecomment-6395301030
 2. Invoke installed BMAD adversarial, edge-case and security reviews on the **new exact HEAD** using Grok 4.6; report findings and patches accurately.
 3. Produce a decision-ready milestone report containing explicit Product Owner approvals **before** adopting any ADR.
 4. Only then implement a **credential-free, no-live-Cursor-API dry run** in a separate PR. Live dispatch remains a separate gate.
+
+## A2 owner policy reconciliation (approved task routing only, 2026-10-25)
+
+The owner's explicit new model policy `16-owner-model-routing-policy.md` supersedes earlier statements suggesting every hidden helper inference must be Grok. Choose Grok 4.6 for all planning, substantive coding, security and reviews; Composer 2.5 is permitted to implement only narrowly qualified low-risk simple defects, followed by direct Grok code/security review. API `model.id` evidence applies to **deliberately assigned main agents/reviewers**. Record unknown internal helper models without an all-inference hard-stop, and do not assign them engineering decision authority. The amendment as a whole is still PROPOSED and requires final D8 adoption.

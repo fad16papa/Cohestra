@@ -126,3 +126,7 @@ AD-1..AD-10 cover owner authority, ChatGPT on-demand coordination, Grok 4.6 exec
 - No `.github/workflows/**` or deploy code changed.
 - No Cursor agent launched, no Grok review falsely claimed, no PR merged.
 - No UAT/Production deployment, secrets, cloud resource changes or Epic 46 mutation.
+
+## Updated D7/D17 model routing policy (owner-approved, 2026-10-25)
+
+This packet's security settings remain PROPOSED. The task-model policy is now **binding** via `16-owner-model-routing-policy.md`: Grok 4.6 for substantive engineering and reviews, Composer 2.5 only for isolated low-risk simple bug fixes with Grok code/security re-review. Hidden provider-helper inference IDs need not all be audited; disclose missing telemetry instead. An absent assigned-main model ID or unapproved model switch is still a refusal. Old D17 full-inference provenance references in historical documents are superseded. No setting/credential or architecture implementation was authorized by this policy change.

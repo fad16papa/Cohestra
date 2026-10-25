@@ -79,7 +79,7 @@ AUTHOR_ROLE: owner | chatgpt | cursor-agent | orchestrator
 - Base SHA:
 - CI run URL:
 - Cursor agent id / run id (or explicitly NOT_STARTED):
-- Requested Grok 4.6 model ID + model catalog evidence; actual model usage attestation (or NOT_VERIFIED):
+- Assigned main executor model (`Grok 4.6` or `Composer 2.5` for qualified simple bug fix), exact selection/catalog evidence and task classification; known provider-internal helper models or `INTERNAL_HELPER_MODELS_NOT_ATTESTED` (disclosure only):
 - Orchestrator workflow run URL (or NOT_STARTED):
 - Authenticated github.actor (human who authorized the run):
 - Idempotency / task key, retries, timeout, usage/budget:
@@ -101,7 +101,7 @@ The orchestrator must refuse `MILESTONE=complete` unless **all** of the followin
 6. `github.actor` of the authorizing human is recorded. `AUTHOR_ROLE` is not a substitute
 7. Follow-ups, steers, and cancels are listed (or explicitly `none`)
 8. Environment name actually used is recorded and is not `production` or `uat`
-9. For Cursor-executed work, model pin and authenticated availability have evidence, and any unknown subagent-model usage is explicitly described rather than implied verified
+9. For Cursor-executed work, **task-level assigned model selection** and account-supported availability have evidence, task-class eligibility is recorded, Composer 2.5 fixes receive an independent Grok 4.6 review, and unknown provider-helper model use is disclosed without claiming it was Grok
 10. Architecture impact assessment covers semantics as well as protected paths; Product Owner's required decision is recorded before any material design change proceeds
 11. Separate milestones exist for controlled pilot and full event-driven autonomy; do not mark full autonomy complete using a manual-only trial
 
@@ -132,6 +132,6 @@ Pilot: post the report as a PR or issue comment without requiring the Product Ow
 
 ## CAT-SEC review loop evidence (owner methodology approved)
 
-A report claiming a code-review success must show a cycle ledger: `ITERATION`, reviewed exact `HEAD`, GROK model provenance, findings by severity, fixes and changed paths, tests rerun (including security/regression and any applicable integration/E2E), new `HEAD`, and new `bmad-code-review` result. Include accepted N/A security criteria and rationale. `REVIEW_PASS` requires 0 BLOCKER/0 MAJOR and exact-current-HEAD required tests/checks. Fixes after a PASS revoke that PASS until re-reviewed.
+A report claiming a code-review success must show a cycle ledger: `ITERATION`, reviewed exact `HEAD`, Grok 4.6 **reviewer selection evidence** (not an invented every-inference attestation), implementation model/task class (Composer 2.5 only for eligible simple fixes), findings by severity, fixes and changed paths, tests rerun (including security/regression and any applicable integration/E2E), new `HEAD`, and new `bmad-code-review` result. Include accepted N/A security criteria and rationale. `REVIEW_PASS` requires 0 BLOCKER/0 MAJOR and exact-current-HEAD required tests/checks. Fixes after a PASS revoke that PASS until re-reviewed.
 
 The normal automated max is **3** fix/test/review cycles per authorized run. If the third still fails, report `INCOMPLETE:RETRY_BUDGET_EXHAUSTED`; the Product Owner sees exact findings and options, including a narrowly scoped additional budget. Critical architecture/security privilege changes halt immediately regardless of iterations. This approved method does not waive the existing Grok-only D17 gate or provide authorization for an agent run or Production.

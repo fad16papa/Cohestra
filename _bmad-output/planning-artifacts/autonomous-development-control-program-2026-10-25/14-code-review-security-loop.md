@@ -4,7 +4,8 @@ date: 2026-10-25
 methodology_approval: OWNER_APPROVED
 approval_scope: PROCESS_DESIGN_ONLY
 review_executed: NO
-D17_model_integrity: BLOCKED
+D17_task_routing_policy: OWNER_APPROVED
+D17_dispatcher_enforcement: NOT_IMPLEMENTED
 architecture_adoption: NOT_APPROVED
 production: NO_GO
 ---
@@ -15,14 +16,14 @@ production: NO_GO
 
 Product Owner explicitly instructed on 2026-10-25: "yes we can use bmad-code-review skills when it catches some bug and issue, inspect the code an rerun code review again until it pasess all required test."
 
-**Interpretation:** This approves the method to be used by future already-authorized engineering stories. It is not an authorization to run another Cursor agent, begin implementation of ADCP, expand privileges, merge a PR or deploy Production. D17 strict Grok-only *actual model-use provenance* remains blocked; the D18-A review yielded `MODEL_USAGE_UNVERIFIED` and executed no BMAD skills.
+**Interpretation:** This approves the method to be used by future already-authorized engineering stories. It is not an authorization to run another Cursor agent, begin implementation of ADCP, expand privileges, merge a PR or deploy Production. D17 now requires **correct selected main/reviewer model** rather than exhaustive hidden-helper inference attestation. Grok 4.6 owns all technical code/security reviews; Composer 2.5 may implement only narrowly qualified simple bug fixes. The D18-A review yielded `MODEL_USAGE_UNVERIFIED` under the old policy and executed no BMAD skills, so no PASS is inherited.
 
 `bmad-code-review` (`CR`) is present in `_bmad/_config/bmad-help.csv`. There is no installed `bmad-security-review` skill. The security review requirements become an **explicit rubric inside the existing cataloged `bmad-code-review`**, with written results per criterion. This does not replace still-required BMAD adversarial (`AR`), edge-case hunter (`ECH`), or implementation readiness (`IR`) reviews in the architecture acceptance program.
 
 ## Mandatory future execution loop
 
 ```text
-Owner-approved story + verified Grok-only executor/reviewer model
+Owner-approved story + Grok 4.6-selected main model (or qualified Composer 2.5 simple-fix implementer) + Grok 4.6-selected reviewer
     ↓
 IMPLEMENT (authorized story scope only)
     ↓
@@ -88,5 +89,5 @@ For every review/fix attempt, preserve:
 
 ## Exact boundary
 
-This methodology is **APPROVED** because the owner explicitly selected it. No implementation, security-runner credential, Cursor model-policy exception, final D8 architecture adoption, or CI workflow change was approved. Current PR #507 D17 Grok-model attestation remains `MODEL_USAGE_UNVERIFIED`; its prior D18-A launch was consumed and requires separate authorization for any repeat.
+This methodology is **APPROVED** because the owner explicitly selected it. No implementation, security-runner credential, Cursor model-policy exception, final D8 architecture adoption, or CI workflow change was approved. Current PR #507's historical D18-A attempt remains `MODEL_USAGE_UNVERIFIED` under a **superseded evidence rule** and did not run BMAD. The revised D17 task routing policy is owner-approved, but no new run has been authorized; its prior launch was consumed and needs separate authorization for a repeat.
 

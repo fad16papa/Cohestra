@@ -12,6 +12,10 @@ production: NO_GO
 
 # D17: How Cohestra can verify Grok 4.6 without falsely claiming model purity
 
+> **HISTORICAL ANALYSIS, SUPERSEDED IN PART BY OWNER MODEL DECISION OF 2026-10-25:** This document records the former requirement to prove every parent/helper inference used Grok 4.6. The owner subsequently established a simpler **task-level model-routing policy** in [16-owner-model-routing-policy.md](./16-owner-model-routing-policy.md): Grok 4.6 for main planning/coding/security/review/release responsibilities, Composer 2.5 only for eligible simple bugs with Grok review. Hidden provider-helper model telemetry may be missing; disclose it rather than block solely on that absence. **Do not use older recommendations here to demand a local SDK fallback or prevent a new owner-authorized review attempt solely over hidden helper telemetry.** The historical D18-A run never executed BMAD, so no review PASS is inherited. No new run, key or settings action is authorized.
+
+
+
 ## 1. Executive finding
 
 The single owner requires **Grok 4.6 for engineering planning, implementation, tests, security and review**, with no Auto fallback (except separately scoped Composer 2.5 for simple fixes). D18-A attempted one Cursor Cloud review on PR #507 but **stopped before BMAD** because the selected parent `cursor-grok-4.6-high-fast` was not proof of **actual** parent/helper inference. That attempt is exhausted; neither `@cursor` nor another Cloud run is currently approved.

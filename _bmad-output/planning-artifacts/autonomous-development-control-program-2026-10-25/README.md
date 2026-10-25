@@ -31,13 +31,16 @@ Planning-only package. No application code, GitHub settings, secrets, or Epic 46
 | [12-exact-owner-security-review-packet.md](./12-exact-owner-security-review-packet.md) | Exact branch/Environment/permissions review packet (PROPOSED) |
 | [13-review-bootstrap-model-integrity.md](./13-review-bootstrap-model-integrity.md) | Independent Grok review start / unverified helper-model hard blocker and owner decision (PROPOSED) |
 | [14-code-review-security-loop.md](./14-code-review-security-loop.md) | Owner-approved CAT-SEC methodology: cataloged BMAD code review + security, fix/test/re-review loops; execution still gated |
-| [15-d17-verification-options-and-tests.md](./15-d17-verification-options-and-tests.md) | Source-verified D17 model-integrity alternatives, tests and owner decision packet (PROPOSED only) |
+| [15-d17-verification-options-and-tests.md](./15-d17-verification-options-and-tests.md) | Historical D17 strict every-inference feasibility research (partly superseded) |
+| [16-owner-model-routing-policy.md](./16-owner-model-routing-policy.md) | **Binding owner model policy:** Grok 4.6 for engineering, Composer 2.5 for low-risk simple bugs with Grok review; helper-inference attestation no longer a standalone blocker |
 
 Baseline for this branch: `main` `e962c8c3eead953a1f56f2b397b3e9d4fc669041`.
 
 ## Current architecture reconciliation status
 
-Owner selected GitHub-native orchestration as the **pilot direction**, but has **not adopted AD-1..AD-10** or authorized production, credentials or live agent dispatch. The draft package now separates controlled pilot from future fully event-driven autonomy, requires Grok 4.6 on all engineering runs, preserves human Product Owner architecture authority and requires protection of privileged GitHub workflows before any secret-backed run.
+Owner selected GitHub-native orchestration as the **pilot direction**, but has **not adopted AD-1..AD-10** or authorized production, credentials or live agent dispatch. The draft package now separates controlled pilot from future fully event-driven autonomy, requires Grok 4.6 for substantive engineering and reviews, with Composer 2.5 allowed only for narrowly scoped simple bug fixes, preserves human Product Owner architecture authority and requires protection of privileged GitHub workflows before any secret-backed run.
 
 This planning PR remains a draft and cannot be merged or called implementation-complete based solely on a successful CI run. **Independent current-HEAD Grok 4.6 BMAD adversarial, edge-case and security reviews are still required**, followed by explicit owner architecture decisions. Historical first-pass FAIL reviews remain historical evidence.
 
+
+**Current controlling model policy:** The sole Product Owner expressly approved `16-owner-model-routing-policy.md` on 2026-10-25. Prior D17 all-inference helper model-provenance stop is superseded, not a reason by itself to halt a future Grok-selected review. The old D18-A run still never executed BMAD and is not a PASS. No new agent, infrastructure change, code implementation or merge was authorized.

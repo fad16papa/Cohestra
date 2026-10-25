@@ -38,7 +38,7 @@ flowchart TB
 | Product strategy and functionality | **Decide** | Advise | Execute approved stories | Record |
 | System / code / infra / security / data architecture | **Decide + ADR** | Propose alternatives + impact assessment | Halt if material; implement after approval | Protected paths **and semantic review**; fail closed |
 | Significant technical decisions | **Decide** | Options + risks | No silent adoption | Audit |
-| Routine story implementation | Authorize epic/story and boundaries | Author approved GitHub contracts, select catalog-verified BMAD route, coordinate evidence | Execute under Grok 4.6 | CI and durable state |
+| Routine story implementation | Authorize epic/story and boundaries | Author approved GitHub contracts, choose verified Grok 4.6; classify narrow simple bugs for Composer 2.5 | Grok 4.6 primary; Composer 2.5 **simple-fix implementation only**, Grok review | CI and durable state |
 | Code review (BMAD) | Decides scope changes/critical exceptions | Inspect evidence and report | Cataloged `bmad-code-review` **with security criteria**, new review after every fix | Exact-HEAD CI/GitGuardian checks |
 | UAT deploy | Already automated | Observe | No SSH | Existing `deploy.yml` |
 | Production authorization | **Only** | Never | Never | `deploy-production.yml` after owner dispatch |
@@ -127,7 +127,7 @@ Creating Environment `adcp` without required reviewers is privilege expansion (D
 ## Execution and privileged-operation policy (PROPOSED)
 
 - `workflow_dispatch` by a GitHub allowlisted human is the **only** pilot trigger. Issue/PR comments and bot events are NOT launch authorization until D11 authorizes and tests their ACL.
-- Agent work stays on an isolated draft branch; model ID must be explicitly pinned after authenticated inventory; avoid any fallback, including child/review agents.
+- Agent work stays on an isolated draft branch; the **assigned task executor and Grok reviewer** must use explicitly selected/account-verified model IDs, with no default/Auto fallback. Simple fixes may use Composer 2.5 only per the approved task-class rules; known off-policy helpers must not own substantive work. Provider-hidden internal helper-model telemetry is disclosed as NOT_ATTESTED, not automatically fatal.
 - The credential-bearing dispatcher must not use unreviewed PR code, expose Cursor credentials to agents through environment or MCP configuration, or consume `production`/`uat` Environments.
 - New privilege scopes, control workflows, secrets, branch/ruleset settings, service accounts, OpenAI API data egress, and semantic architecture changes require owner approval.
 - Repo main remains unprotected at the 2026-10-25 baseline; this is a **blocking prerequisite for live credential-backed dispatch**, not deferred pilot debt.
@@ -157,6 +157,6 @@ The Product Owner has confirmed there are **no human collaborators and none are 
 - **Only the installed `bmad-code-review` workflow** performs the mandatory Grok 4.6 code-review/security review, using the explicit checklists in `14-code-review-security-loop.md`. Do not claim an absent `bmad-security-review` skill exists, and do not substitute a model-unverified Cursor helper's `security-review` for approved Grok.
 - For an authorized story, repeat `IMPLEMENT → TEST → bmad-code-review (security lens) → inspect findings → FIX → TEST → RE-REVIEW`. Every change invalidates prior review/CI evidence for the new HEAD. A review reporting BLOCKER/MAJOR, missing tests, failed security check or unverified actual model usage is **not** PASS.
 - Each run has an explicit maximum of **three fix/review iterations**; after that, escalate with evidence, not blanket failure acceptance or endless retries. Owner may approve a new limited budget after seeing exact remaining findings.
-- Reviewer/executor must remain Grok 4.6 in fact, not merely prompt request; existing D17 model-provenance hard blocker remains. No CODE/BMAD runtime review in D18-A was performed.
+- Assigned substantive engineering executor and `bmad-code-review` reviewer must be **Grok 4.6-selected**, except Composer 2.5 may implement an explicitly qualified simple bug fix and still requires fresh Grok review. Internal provider-managed helper inference completeness is **not** an enforcement gate; never claim full inference-level model attestation without proof. Prior D18-A executed no BMAD, and a new run still requires authorization. See `16-owner-model-routing-policy.md`.
 - Material API/data/tenancy/security/infrastructure/privilege/billing/Production decisions discovered during a fix are **immediate owner gates**, not grounds for an agent to change architecture autonomously.
 - Completion/merge may be considered only under the separate approved Epic 45 14-point non-production merge policy; this CAT-SEC methodology grants **no** new merge authority.

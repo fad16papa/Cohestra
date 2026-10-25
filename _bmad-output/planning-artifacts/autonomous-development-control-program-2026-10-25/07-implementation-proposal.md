@@ -63,7 +63,7 @@ workflow_dispatch by allowlisted human
 - **Credential-free dry run:** execute only mock functionality after architecture approval; no `adcp` secrets or live API necessary.
 - **Before live dispatch:** D4 + D5 + D10 + D11 + D12 must be explicitly approved and enforced; protected `main`, reviewed workflow scope and repo/org secrets inventory are mandatory. A separate Cursor **service-account** API key is required; personal owner keys are refused.
 - The GitHub Environment `adcp` (or owner-chosen name) must have effective required reviewers and a documented solution to GitHub's prevent-self-review deadlock, not simply 'owner' assumed to be able to approve their own run.
-- Authenticated Cursor model inventory must prove an available Grok 4.6 `model.id`, explicitly passed on every engineering run (and reviewers/subagents controlled or prohibited).
+- Authenticated Cursor model inventory must show the assigned Grok 4.6 ID for substantive work and review, or Composer 2.5 ID for an eligible simple-fix implementer. Pass the **explicit selected task model** at creation; no default/Auto. Undisclosed provider-internal helper inference does not itself fail D17; substantive engineering ownership stays with Grok and all Composer fixes get an independent Grok review.
 - Existing BMAD skills and Epic 45 merge policy (already present)
 - Epic 46 continues independently; do not block it
 
@@ -125,4 +125,4 @@ The controlled pilot proves model-pinned dispatch, GitHub PR/CI evidence and no-
 
 For future owner-authorized stories, use the installed `bmad-code-review` workflow as the **mandatory technical plus security review**, not a fictitious `bmad-security-review` skill and not a non-Grok helper. Review against security-specific acceptance criteria in `14-code-review-security-loop.md`; on a BLOCKER/MAJOR, inspect and fix within approved story boundaries, rerun tests and perform a fresh model-attested `bmad-code-review` against the new HEAD. Allow **up to three bounded review/fix cycles** within a run; escalate unresolved issues with evidence and owner options rather than silently declaring PASS. Other BMAD AR/ECH/IR reviews retain their own planned gates and must not be mislabeled as completed by a code review.
 
-Do not start this workflow for the blocked PR #507/Issue #509 D18-A attempt: worker model provenance remains unverified (D17), and no additional Cursor launch or implementation was authorized.
+The D18-A historical PR #507 / Issue #509 attempt was stopped under the **superseded all-inference attestation rule** and executed no BMAD. The owner-approved `16-owner-model-routing-policy.md` replaces that strict internal-helper evidence requirement; nonetheless, **no additional Cursor launch, architecture adoption or implementation is authorized** without its separate approval and security gates.

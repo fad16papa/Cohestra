@@ -145,10 +145,10 @@ So that **ChatGPT-directed engineering is operationally autonomous while archite
 
 ## Additional pre-implementation acceptance: model provenance and bootstrap
 
-- Given a parent Cursor Cloud Agent on approved Grok 4.6 that starts or delegates a helper run on another model, the evaluator must return `REFUSE_MODEL_POLICY` and must not mark the task completed or reviewed. Do **not** infer child compliance from parent `model.id` or IDE Settings > Models.
-- Given missing model-provenance data for a cloud helper/worker/subagent or unverified steer-inheritance, result is `MODEL_USAGE_UNVERIFIED` / OWNER_GATE, not PASS; unresolved implementation remains NO-GO.
+- Given a task deliberately assigned to Grok 4.6, the main executor/reviewer must have explicit Grok selection evidence. **Do not require proof of the model used for each invisible provider helper inference.** If a known off-policy helper is deliberately given substantive engineering/decision authority, halt and route that work to Grok. An assigned Composer 2.5 implementer is permitted only for qualified simple bug fixes with independent Grok review.
+- Given unknown provider-internal helper inference models, record `INTERNAL_HELPER_MODELS_NOT_ATTESTED`, **not a standalone block**. Given missing/ambiguous **main task/reviewer model selection**, an inappropriate Composer task, or unverified assigned-model steering, result is `MODEL_ROUTING_VIOLATION` / HOLD until corrected.
 - Current-HEAD Grok review must be obtained by a separately owner-approved review-only bootstrap path or future authenticated trusted runner, **without** a permissive `@cursor` comment-only trigger. It must not write to main, merge, create credentials, change GitHub settings, or deploy.
-- D17/D18 remain owner-gated decisions. New model switch or unsupported helper behavior reopens technical security review, even if all GitHub CI is green.
+- D17 **task routing policy is owner-approved**; its dispatcher enforcement is NOT IMPLEMENTED. D18's previous one-time review attempt is consumed; another launch requires owner authorization. A switch of the **assigned main executor or reviewer** to an ineligible model reopens the gate, even if CI is green.
 
 ## CAT-SEC acceptance criteria (methodology approval only)
 
@@ -157,4 +157,4 @@ So that **ChatGPT-directed engineering is operationally autonomous while archite
 - Review must explicitly test security criteria: authentication/authorization, tenant and data isolation, credentials/exfiltration, GitHub workflow injection and secret exposure, external API trust, validation/CORS/reCAPTCHA/JWT, Paddle/billing/webhooks where applicable, migrations/data loss, infra/network ports, logging/PII, dependency/tool provenance and UAT/Production separation. Record N/A with rationale when not applicable.
 - Completion only after current HEAD has **0 BLOCKER and 0 MAJOR**, all required automated tests pass, GitGuardian exact conclusion meets applicable success policy, resolved regression and no model/architecture/owner gate is outstanding. No separate `bmad-security-review` skill exists in installed catalog; do not invent one.
 - Proposed review-fix retry budget: **3 cycles** per authorized run, with bounded time/cost. Exhaustion => INCOMPLETE + owner escalation, not a forced PASS or indefinite spin. New owner authorization is needed for additional cycles.
-- `MODEL_USAGE_UNVERIFIED` from D18-A is still a blocker. These ACs **do not authorize launching any further Cursor agent, modifying non-planning code, changing permissions, merging or deploying**.
+- Historical D18-A `MODEL_USAGE_UNVERIFIED` is an incomplete review under an **older, now superseded** every-inference proof rule; it is NOT retroactively a PASS. These ACs **do not authorize launching a further Cursor agent, modifying non-planning code, changing permissions, merging or deploying**.
