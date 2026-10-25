@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "taskId": "ADCP-MOCK-001",
+  "repo": "fad16papa/Cohestra",
+  "sha": "e962c8c3eead953a1f56f2b397b3e9d4fc669041",
+  "kind": "planning",
+  "selectedModel": "grok-4.6",
+  "paths": [
+    "docs/mock-task.md"
+  ],
+  "impact": {
+    "architecture": false,
+    "authentication": false,
+    "authorization": false,
+    "tenantIsolation": false,
+    "billing": false,
+    "dataSchema": false,
+    "secrets": false,
+    "infrastructure": false,
+    "production": false,
+    "uat": false,
+    "ciCd": false,
+    "externalApi": false,
+    "publicContract": false
+  },
+  "reviewCycles": 3
+}
