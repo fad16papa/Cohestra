@@ -35,6 +35,8 @@ Decision status vocabulary:
 | D14 | Definition of "fully autonomous" | durable scheduled/event-driven loop, model-pinned Cursor, monitored PR/CI, advisor invocation, owner notifications | **OWNER_GATE OPEN FOR FULL AUTONOMY** — pilot alone does not satisfy this criterion |
 | D15 | Permanent sole-owner operating structure | One human Product Owner, no second human collaborator or reviewer required; human approvals via owner-controlled gates; independent Grok/CI checks do not impersonate humans | **OWNER FACT CONFIRMED** — architecture change to comply is PROPOSED, not adopted |
 | D16 | Unattended runtime without owner approval every task | Separate tightly restricted non-interactive P5 execution boundary for pre-approved low-risk tasks; preserve manual owner gates for privileged/material changes | **OWNER_GATE OPEN FOR P5** — do not weaken the pilot `adcp` reviewer protection to claim full autonomy |
+| D17 | Cursor Cloud Agent worker/helper model integrity | Grok 4.6-only for parent **AND every child/helper/steered execution**; explicit per-run evidence, fail closed when unverifiable | **NEW TECHNICAL BLOCKER — OWNER_GATE OPEN**. Provider docs/support show coordinator can change worker model; a pinned parent model is **not sufficient**. No exception or model relaxation authorized |
+| D18 | One-time Grok 4.6 architecture-review bootstrap | Prefer owner-initiated, **planning-only** review in Cursor UI using existing PR/issue instructions and explicit Grok model; otherwise defer for approved review-only runner design | **CHOICE PENDING** — no automatic model-unverified `@cursor` launch or credential setup. Any one-time action must be explicitly owner-approved; do not count an unverified helper-model run as exclusive Grok review |
 
 ## Preliminary owner review preferences — 2026-10-25 (Asia/Singapore)
 
@@ -87,3 +89,14 @@ Product Owner states they have **no other collaborator and intend Cohestra to re
 - For `main`: required checks and PR reviewable history, **without one mandatory approving human review on owner-authored PRs**; Grok 4.6 BMAD validation is a recorded technical gate, not an impersonated human GitHub review.
 - For full autonomy: an owner-approved no-manual-confirmation-per-task runtime must be designed separately from the pilot gated Environment, with task-class restrictions and audited escalation. No approval to implement that new runtime yet.
 - Never treat GitHub comments authored through the owner's ChatGPT connector as automatic `OWNER_APPROVE` evidence without explicit human confirmation; role attribution and approval audit must be designed.
+
+## Model-integrity and review-bootstrap technical finding (2026-10-25)
+
+**Cursor's own release notes / staff support** report Cloud Agent Project coordinators can switch worker model, and helper/subagent tasks may use models other than the selected Grok 4.6. These are source-derived observations, **not proof that the issue has been resolved**:
+- https://cursor.com/docs/release-notes/cloud-agents
+- https://forum.cursor.com/t/cloud-agents-dont-adhere-to-my-selected-model/171688
+- https://forum.cursor.com/t/cloud-agent-logs-claude-4-5-sonnet-when-picker-is-grok-4-6-and-claude-is-not-enabled/169638/39
+
+**Owner's existing Grok 4.6 exclusivity policy is NOT weakened.** A model-pinned parent agent is only a request-level check. A current-HEAD Grok/BMAD planning review may not be marked conformant unless all participating execution models are verified or unsupported helper paths are demonstrably disabled. Account model-picking settings and natural-language instructions alone do not prove this. Refuse to declare full autonomy or security readiness if this cannot be proven.
+
+**Bootstrap deadlock:** The architecture currently demands an independent Grok review before adopting ADCP, but a secure automated model-verified reviewer depends on that not-yet-adopted ADCP and credentials. The next owner decision should explicitly choose an exceptional **review-only, no-merge** starting mechanism or defer, with exact steps and observable worker-model evidence. See `13-review-bootstrap-model-integrity.md`.

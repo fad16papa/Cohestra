@@ -142,3 +142,10 @@ So that **ChatGPT-directed engineering is operationally autonomous while archite
 - Approval identity must distinguish the human's actual confirmation from comments generated via ChatGPT under the same GitHub account.
 - No second human GitHub PR approver, CODEOWNER or Environment reviewer may be required. Independent Grok 4.6 reviews and CI are mandatory engineering evidence but are not represented as a second human approval.
 - Production or privilege-changing workflows still stop for actual Product Owner action; no unattended Production cutover, even after successful routine-task automation.
+
+## Additional pre-implementation acceptance: model provenance and bootstrap
+
+- Given a parent Cursor Cloud Agent on approved Grok 4.6 that starts or delegates a helper run on another model, the evaluator must return `REFUSE_MODEL_POLICY` and must not mark the task completed or reviewed. Do **not** infer child compliance from parent `model.id` or IDE Settings > Models.
+- Given missing model-provenance data for a cloud helper/worker/subagent or unverified steer-inheritance, result is `MODEL_USAGE_UNVERIFIED` / OWNER_GATE, not PASS; unresolved implementation remains NO-GO.
+- Current-HEAD Grok review must be obtained by a separately owner-approved review-only bootstrap path or future authenticated trusted runner, **without** a permissive `@cursor` comment-only trigger. It must not write to main, merge, create credentials, change GitHub settings, or deploy.
+- D17/D18 remain owner-gated decisions. New model switch or unsupported helper behavior reopens technical security review, even if all GitHub CI is green.
