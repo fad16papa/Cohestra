@@ -127,7 +127,7 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-  Issue[Labeled issue or dispatch] --> Gate{Owner gate or architecture path?}
+  Issue[Owner workflow_dispatch on trusted main] --> Gate{Owner approval and architecture path?}
   Gate -->|yes| PO[Stop — Product Owner]
   Gate -->|no| Route[ChatGPT or BMAD route]
   Route --> Agent[Cursor Cloud Agent]
@@ -196,7 +196,7 @@ As of 2026-10-25, **AD-1..AD-10 remain [PROPOSED]**. Owner selected detailed pla
 
 ## Review-start circular dependency (PROPOSED)
 
-Independent current-HEAD Grok review is required before owner ADCP architecture adoption. A secure fully automated Grok reviewer would itself require an owner-approved ADCP runner, protected main, secrets and provider model integrity verification. This cannot be satisfied by simply posting `@cursor` in GitHub or by assuming a selected Cloud Agent parent model governs helpers. A one-time **owner-initiated review-only bootstrap** is a separate option that uses the prewritten GitHub review task without authorizing merge, Production, GitHub settings or credentials. Even this option must **fail closed** if Grok-only child/helper model evidence is unavailable. Details: `../13-review-bootstrap-model-integrity.md`.
+Independent current-HEAD Grok review is required before owner ADCP architecture adoption. A secure fully automated Grok reviewer would itself require an owner-approved ADCP runner, protected main, secrets and provider model integrity verification. This cannot be satisfied by simply posting `@cursor` in GitHub or by assuming parent model selection proves all provider-helper inference IDs. A bounded **owner-initiated review-only bootstrap** was actually performed as D18-B2 under #511 with Grok 4.6 selected: AR/ECH/IR and CAT-SEC reported BLOCKER=1, MAJOR=6, MINOR=7, so D8 was NOT adopted. **Current D7/D17 policy does NOT require all invisible helper model IDs to be attested**; that older fail-closed rule is superseded. The next gate is a new-current-HEAD Grok review of R1 remediation and explicit Product Owner architecture adoption. Details: `../13-review-bootstrap-model-integrity.md`.
 
 ## Owner superseding model-routing clarification (2026-10-25, BINDING)
 

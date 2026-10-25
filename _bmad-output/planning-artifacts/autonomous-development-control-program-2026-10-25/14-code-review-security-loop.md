@@ -89,5 +89,5 @@ For every review/fix attempt, preserve:
 
 ## Exact boundary
 
-This methodology is **APPROVED** because the owner explicitly selected it. No implementation, security-runner credential, Cursor model-policy exception, final D8 architecture adoption, or CI workflow change was approved. Current PR #507's historical D18-A attempt remains `MODEL_USAGE_UNVERIFIED` under a **superseded evidence rule** and did not run BMAD. The revised D17 task routing policy is owner-approved, but no new run has been authorized; its prior launch was consumed and needs separate authorization for a repeat.
+This methodology is **APPROVED** because the owner explicitly selected it. No implementation, security-runner credential, Cursor model-policy exception, final D8 architecture adoption, or CI workflow change was approved. Current PR #507's historical D18-A attempt remains `MODEL_USAGE_UNVERIFIED` under a **superseded evidence rule** and did not run BMAD. The revised D17 task routing policy is owner-approved, and a subsequent bounded owner-authorized D18-B2 review actually ran under Issue #511: AR/ECH/IR plus CAT-SEC found B-1, 6 MAJOR and 7 MINOR, **not PASS**; planning-only `bmad-code-review` was not claimed complete. Owner authorized R1 planning corrections in #512 but no general Cursor dispatch/merge/credential rights. New HEADs need new Grok reviews before D8 adoption.
 

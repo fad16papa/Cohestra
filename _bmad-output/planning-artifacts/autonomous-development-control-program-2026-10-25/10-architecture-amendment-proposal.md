@@ -136,3 +136,7 @@ https://github.com/fad16papa/Cohestra/pull/507#issuecomment-6395301030
 ## A2 owner policy reconciliation (approved task routing only, 2026-10-25)
 
 The owner's explicit new model policy `16-owner-model-routing-policy.md` supersedes earlier statements suggesting every hidden helper inference must be Grok. Choose Grok 4.6 for all planning, substantive coding, security and reviews; Composer 2.5 is permitted to implement only narrowly qualified low-risk simple defects, followed by direct Grok code/security review. API `model.id` evidence applies to **deliberately assigned main agents/reviewers**. Record unknown internal helper models without an all-inference hard-stop, and do not assign them engineering decision authority. The amendment as a whole is still PROPOSED and requires final D8 adoption.
+
+## R1 owner-gated design alternatives (review required, not adopted)
+
+The latest [R1 remediation contract](17-r1-remediation-contracts-and-owner-gates.md) defines M-3 **proposed** Epic 45 AD-12 clarification, M-4 deterministic two-stage architecture detector, and M-5 actual human owner approval distinct from GitHub comments. D7/D17 task-routing policy and D10/D4/D11/D12/D13 **settings/design directions** are already owner approved, with main protection API-verified and adcp owner-confirmed. **Do not treat those approvals as final D8 adoption**. B-1 persists: a merge to main can auto-deploy UAT. PR #507 remains draft and unmerged, and all new-HEAD reviews are stale until Grok 4.6 rechecks the latest diff.

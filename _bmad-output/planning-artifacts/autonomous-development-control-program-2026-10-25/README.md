@@ -29,10 +29,11 @@ Planning-only package. No application code, GitHub settings, secrets, or Epic 46
 | [10-architecture-amendment-proposal.md](./10-architecture-amendment-proposal.md) | Architecture amendment packet A1–A6 (PROPOSED, not adopted) |
 | [11-solo-owner-governance-proposal.md](./11-solo-owner-governance-proposal.md) | Permanent sole-owner approvals and secure unattended-path constraints (PROPOSED) |
 | [12-exact-owner-security-review-packet.md](./12-exact-owner-security-review-packet.md) | Exact branch/Environment/permissions review packet (PROPOSED) |
-| [13-review-bootstrap-model-integrity.md](./13-review-bootstrap-model-integrity.md) | Independent Grok review start / unverified helper-model hard blocker and owner decision (PROPOSED) |
+| [13-review-bootstrap-model-integrity.md](./13-review-bootstrap-model-integrity.md) | **Historical** D18-A strict all-helper-inference requirement, now superseded by binding D7/D17 task-model routing |
 | [14-code-review-security-loop.md](./14-code-review-security-loop.md) | Owner-approved CAT-SEC methodology: cataloged BMAD code review + security, fix/test/re-review loops; execution still gated |
 | [15-d17-verification-options-and-tests.md](./15-d17-verification-options-and-tests.md) | Historical D17 strict every-inference feasibility research (partly superseded) |
 | [16-owner-model-routing-policy.md](./16-owner-model-routing-policy.md) | **Binding owner model policy:** Grok 4.6 for engineering, Composer 2.5 for low-risk simple bugs with Grok review; helper-inference attestation no longer a standalone blocker |
+| [17-r1-remediation-contracts-and-owner-gates.md](./17-r1-remediation-contracts-and-owner-gates.md) | **R1 candidate corrections:** protected path fixtures, Composer restriction draft, M-3/M-4/M-5 architecture proposals and post-D18-B2 status, NOT Grok-reviewed or adopted |
 
 Baseline for this branch: `main` `e962c8c3eead953a1f56f2b397b3e9d4fc669041`.
 

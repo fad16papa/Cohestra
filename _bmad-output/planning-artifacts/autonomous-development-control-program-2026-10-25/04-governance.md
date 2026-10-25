@@ -50,15 +50,9 @@ flowchart TB
 
 Treat as material (halt) if the change would let two future stories diverge, or if it touches any of:
 
-- `_bmad-output/planning-artifacts/architecture/**`
-- this program folder `_bmad-output/planning-artifacts/autonomous-development-control-program-2026-10-25/**`
-- `_bmad-output/planning-artifacts/autonomous-merge-policy.md`
-- `_bmad-output/planning-artifacts/autonomous-delivery-loop.md`
-- `_bmad/custom/**`
-- `docker-compose.production.yml`, `docker-compose.uat.yml`
-- `deploy/production-*.sh`, `deploy/validate-production-*.sh`, `deploy/validate-uat-*.sh`, `deploy/remote-deploy.sh`, `deploy/uat-*.sh`
-- `.github/workflows/**` (including `ci.yml`, `deploy.yml`, `deploy-production.yml`, and any future ADCP dispatcher)
-- provenance scripts and `ProductionSecurityValidator`, tenant filters, recaptcha/CORS/JWT/Paddle guards
+- **Canonical owner-gated path registry:** `17-r1-remediation-contracts-and-owner-gates.md` M-2. It includes `.github/**`, `deploy/**`, `_bmad/custom/**`, `_bmad-output/planning-artifacts/architecture/**`, `_bmad-output/planning-artifacts/autonomous-merge-policy.md`, `_bmad-output/planning-artifacts/autonomous-delivery-loop.md`, **this entire program folder**, `docker-compose.production.yml`, `docker-compose.prod.yml`, `docker-compose.uat.yml`, any provenance script and `ProductionSecurityValidator`.
+- **Sensitive semantics anywhere in the tree**, including tenant filters, authentication/authorization, CORS/reCAPTCHA/JWT, Paddle/billing/webhooks, migrations/DB schema, credential/PII/privilege changes, service interfaces or external/public API contracts; path inspection is only a necessary minimum.
+- GitHub Environment names/reviewers, token/secret classes, new external vendors/services, and public network ports. Any uncertain or unrecognized path/classification **HALTS** (owner gate).
 - GitHub Environment names, required reviewers, or secret classes
 - New external vendors, new always-on services, new public ports
 
@@ -70,8 +64,8 @@ Routine story UI/API work inside an approved contract is **not** material unless
 
 1. ChatGPT (or the executing agent) writes an impact assessment (template in milestone reports).
 2. Product Owner participates (comment, review, or recorded decision).
-3. Explicit approval: `OWNER_APPROVE ADR-<id>` (or equivalent recorded phrase).
-4. ADR appended to the program spine or a dated ADR file. Status `[ADOPTED]` only after that phrase exists.
+3. **Trusted owner confirmation only:** an actual human-controlled approval action bound to an immutable ADR ID and reviewed SHA; an issue/PR comment saying `OWNER_APPROVE ADR-<id>` or a message from ChatGPT's connected owner account is NOT independently sufficient. First-pilot privileged execution requires a trusted `workflow_dispatch` plus the owner-released `adcp` Environment gate. Any broader ADR attestation contract remains separately owner-gated (M-5).
+4. ADR appended to the program spine or a dated ADR file. Status `[ADOPTED]` only after independently recorded explicit owner decision with verifiable evidence; no bot-authored issue text can adopt an ADR.
 5. Implementation may resume on a new HEAD. Prior review is invalid.
 
 ## ChatGPT role limits
@@ -155,7 +149,7 @@ The Product Owner has confirmed there are **no human collaborators and none are 
 ## CAT-SEC: mandatory iterative code and security review (methodology approved 2026-10-25)
 
 - **Only the installed `bmad-code-review` workflow** performs the mandatory Grok 4.6 code-review/security review, using the explicit checklists in `14-code-review-security-loop.md`. Do not claim an absent `bmad-security-review` skill exists, and do not substitute a model-unverified Cursor helper's `security-review` for approved Grok.
-- For an authorized story, repeat `IMPLEMENT → TEST → bmad-code-review (security lens) → inspect findings → FIX → TEST → RE-REVIEW`. Every change invalidates prior review/CI evidence for the new HEAD. A review reporting BLOCKER/MAJOR, missing tests, failed security check or unverified actual model usage is **not** PASS.
+- For an authorized story, repeat `IMPLEMENT → TEST → bmad-code-review (security lens) → inspect findings → FIX → TEST → RE-REVIEW`. Every change invalidates prior review/CI evidence for the new HEAD. A review reporting BLOCKER/MAJOR, missing tests, failed security check or unverified **assigned main/reviewer task model selection** is **not** PASS. Missing invisible provider-helper inference telemetry alone is disclosed per D7/D17, not a model-routing refusal.
 - Each run has an explicit maximum of **three fix/review iterations**; after that, escalate with evidence, not blanket failure acceptance or endless retries. Owner may approve a new limited budget after seeing exact remaining findings.
 - Assigned substantive engineering executor and `bmad-code-review` reviewer must be **Grok 4.6-selected**, except Composer 2.5 may implement an explicitly qualified simple bug fix and still requires fresh Grok review. Internal provider-managed helper inference completeness is **not** an enforcement gate; never claim full inference-level model attestation without proof. Prior D18-A executed no BMAD, and a new run still requires authorization. See `16-owner-model-routing-policy.md`.
 - Material API/data/tenancy/security/infrastructure/privilege/billing/Production decisions discovered during a fix are **immediate owner gates**, not grounds for an agent to change architecture autonomously.

@@ -42,7 +42,7 @@ production: NO_GO
 
 **Review execution contract:** Inspect current exact PR HEAD and proposed architecture, run installed BMAD adversarial/edge/security/implementation-readiness reviews, write an evidence-only review artifact/draft PR comment. No code changes, merges, environment/secret/workflow changes, deploys, helper agent fanout or follow-up steering. Declare requested model and whether any helper inference occurred.
 
-**Limitations:** UI-selected model may not guarantee helper compliance. If provider logs/usage cannot establish Grok-only inference, flag review as MODEL_USAGE_UNVERIFIED and do NOT call it a conformant Grok signoff. Full end-to-end ADCP remains blocked. The current ChatGPT connection cannot start this Cursor run directly. Owner may need to initiate a single short action; do not pretend the GitHub issue automatically wakes an agent.
+**HISTORICAL LIMITATION UNDER THE FORMER RULE:** UI-selected model did not prove every helper inference was Grok; D18-A therefore reported MODEL_USAGE_UNVERIFIED without doing BMAD. This strict all-helper proof STOP has been superseded by binding D7/D17 task-level model routing. Do not use this archived condition for new reviews. Full end-to-end ADCP remains blocked. The current ChatGPT connection cannot start this Cursor run directly. Owner may need to initiate a single short action; do not pretend the GitHub issue automatically wakes an agent.
 
 ### B. Owner-gated review-only API/bootstrap runner (defer pending detailed review)
 

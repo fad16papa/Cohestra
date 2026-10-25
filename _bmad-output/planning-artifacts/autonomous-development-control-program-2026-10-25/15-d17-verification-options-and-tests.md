@@ -20,7 +20,7 @@ production: NO_GO
 
 The single owner requires **Grok 4.6 for engineering planning, implementation, tests, security and review**, with no Auto fallback (except separately scoped Composer 2.5 for simple fixes). D18-A attempted one Cursor Cloud review on PR #507 but **stopped before BMAD** because the selected parent `cursor-grok-4.6-high-fast` was not proof of **actual** parent/helper inference. That attempt is exhausted; neither `@cursor` nor another Cloud run is currently approved.
 
-Official Cursor documentation offers **three feasibility directions**, but no evidence that ANY is already enforcing Grok-only across Cohestra's Cloud and parent inference. Strict D17 remains NO-GO. Do not dilute it without separate owner approval.
+Official Cursor documentation offers **three feasibility directions**, but no evidence that ANY is already enforcing Grok-only across Cohestra's Cloud and parent inference. **At the time of this historical research,** strict D17 remained NO-GO; its every-inference proof requirement was subsequently superseded. Do not dilute the *archived* research without separate owner approval.
 
 ## 2. Source-backed technical controls, with limitations
 

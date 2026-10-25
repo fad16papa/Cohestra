@@ -10,7 +10,7 @@ epic_assignment: OWNER_GATE
 
 `sprint-status.yaml` highest epic is **46** (in-progress). **Do not assign a number in the tracker until the owner signs D2.** The next unused number is **47**; that is a recommendation, not an assignment.
 
-This file is a proposal. It was not written into `sprint-status.yaml`. Story IDs are **ADCP-P1..ADCP-P4** until D2 is signed. Do not create `47.n` (or any `N.n`) files until D2.
+This file is a proposal. It was not written into `sprint-status.yaml`. Story IDs are **ADCP-P1..ADCP-P5** until D2 is signed (P5 future/owner-gated). Do not create `47.n` (or any `N.n`) files until D2.
 
 **No implementation story is authorized before the amended architecture has explicit owner adoption (D8) and privilege scope (D12).** Owner has selected the direction of Option A and reserved Epic 47, but the live tracker remains unchanged. Credential-free P1/P2/P3 may proceed **only after** D8 adoption; live P4 additionally requires D4/D5/D10/D11/D12, effective `main` protection, verified Grok 4.6 availability and reviewer identity. D3 chooses topology; ADCP-P2 exists only if D3=A.
 
@@ -40,9 +40,9 @@ So that **agents cannot invent workflows or silently edit Production, UAT isolat
 
 **AC**
 
-- Given a fixture diff that touches **any** of: this program spine, `_bmad-output/planning-artifacts/architecture/**`, `autonomous-merge-policy.md`, `_bmad/custom/**`, `docker-compose.production.yml`, `docker-compose.uat.yml`, `.github/workflows/deploy.yml`, `.github/workflows/deploy-production.yml`, `.github/workflows/ci.yml`, or a future ADCP dispatcher YAML — the halt script exits non-zero with `OWNER_GATE=architecture`
+- Given a fixture diff touching **any family in the single canonical M-2 registry** in `17-r1-remediation-contracts-and-owner-gates.md` (including the **whole** ADCP program folder, **all** `.github/**` and `deploy/**`, Production/UAT compose, provenance and security validators), the future halt script must exit non-zero with `OWNER_GATE=architecture`. Assert one negative fixture for **every** enumerated family, plus additional files introduced after initial dispatch; this acceptance is SPEC ONLY, no runtime script installed.
 - Given a fixture diff that only touches `web/lib/plan-limit-utils.test.ts` and makes no material contract/design changes, the halt script exits 0
-- Given a fixture affecting auth, API contracts, tenancy, DB schema, billing or service boundaries **outside** the protected paths, the semantic impact review halts or requests owner approval unless a matching adopted ADR and story contract already authorize it
+- Given a fixture affecting auth, API contracts, tenancy, DB schema, billing or service boundaries **outside** the protected paths, the semantic impact review must halt or request owner approval unless the actual immutable SHA is within a **separately owner-authorized** story/ADR contract. Its deterministic staged detector, uncertainty handling and required fixtures remain **PROPOSED** under M-4 in `17-r1-remediation-contracts-and-owner-gates.md`.
 - Given missing semantic review evidence, it fails closed instead of assuming a clean path diff is safe
 - Halt is evaluated at dispatch preview **and** on the PR HEAD diff
 - Skill router refuses names absent from `_bmad/_config/bmad-help.csv` **and** absent from `_bmad/custom/`
@@ -148,7 +148,7 @@ So that **ChatGPT-directed engineering is operationally autonomous while archite
 - Given a task deliberately assigned to Grok 4.6, the main executor/reviewer must have explicit Grok selection evidence. **Do not require proof of the model used for each invisible provider helper inference.** If a known off-policy helper is deliberately given substantive engineering/decision authority, halt and route that work to Grok. An assigned Composer 2.5 implementer is permitted only for qualified simple bug fixes with independent Grok review.
 - Given unknown provider-internal helper inference models, record `INTERNAL_HELPER_MODELS_NOT_ATTESTED`, **not a standalone block**. Given missing/ambiguous **main task/reviewer model selection**, an inappropriate Composer task, or unverified assigned-model steering, result is `MODEL_ROUTING_VIOLATION` / HOLD until corrected.
 - Current-HEAD Grok review must be obtained by a separately owner-approved review-only bootstrap path or future authenticated trusted runner, **without** a permissive `@cursor` comment-only trigger. It must not write to main, merge, create credentials, change GitHub settings, or deploy.
-- D17 **task routing policy is owner-approved**; its dispatcher enforcement is NOT IMPLEMENTED. D18's previous one-time review attempt is consumed; another launch requires owner authorization. A switch of the **assigned main executor or reviewer** to an ineligible model reopens the gate, even if CI is green.
+- D17 **task routing policy is owner-approved**; its dispatcher enforcement is NOT IMPLEMENTED. D18-A (#509) was consumed under the superseded strict rule, and D18-B2 (#511) subsequently executed review and reported B-1, six major and seven minor findings, **not PASS**. Any further independent review dispatch still requires bounded owner-authorized scope. A switch of the **assigned main executor or reviewer** to an ineligible model reopens the gate, even if CI is green.
 
 ## CAT-SEC acceptance criteria (methodology approval only)
 
