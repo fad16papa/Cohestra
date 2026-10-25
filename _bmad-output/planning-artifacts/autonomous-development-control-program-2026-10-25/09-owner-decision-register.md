@@ -1,54 +1,60 @@
 ---
 title: ADCP owner decision register
-status: draft
+status: pending-owner-architecture-approval
 created: 2026-10-25
 updated: 2026-10-25
+related: 10-architecture-amendment-proposal.md
 ---
 
 # Owner decision register
 
-**STOP AT OWNER_GATE.** No implementation, GitHub setting, or secret creation until the rows you accept are recorded.
+**STOP AT OWNER_GATE FOR ARCHITECTURE ADOPTION, CREDENTIALS, LIVE DISPATCH AND MERGES.** The Product Owner has instructed ChatGPT to **proceed** with the autonomous-control workstream and selected the recommended GitHub-native pilot direction, but **has not approved the AD-1..AD-10 architecture as written**. See [amendment proposal](10-architecture-amendment-proposal.md).
 
-Reply with `OWNER_APPROVE D<n>=<choice>` (or refuse).
+Decision status vocabulary:
+- **DIRECTION SELECTED** = intended route acknowledged by Product Owner; not authority to change settings, start a model-unverified agent, or adopt an unreconciled ADR.
+- **OWNER_GATE OPEN** = new explicit owner approval required.
+- **APPROVED** = explicit, recorded owner decision with evidence link (not merely a planner assertion).
+- **NOT ACTIVATED** = no implementation or credential/agent activity yet.
 
-| ID | Decision | Options | Recommendation | Status |
-| --- | --- | --- | --- | --- |
-| D1 | Authorize this program as a separate workstream | approve / defer / reject | approve | **OPEN** |
-| D2 | Assign epic number in `sprint-status.yaml` | 47 / other / later | **47** (next unused; 46 is in-progress). Stories stay `ADCP-P*` until this is signed | **OPEN** |
-| D3 | Pilot orchestrator | A GitHub-native / B dedicated service / C manual-only | **A** (recommendation only; ADCP-P2 exists only if A) | **OPEN** |
-| D4 | Dedicated ADCP Environment name + required reviewers | `adcp` + owner as required reviewer / other name + reviewer / defer creation | **`adcp` + owner reviewer**. Not `production`, not `uat`, not `control-plane` | **OPEN** |
-| D5 | Create Cursor API key + optional ChatGPT API key | create after D1+D3+D4+D8+D11 / never in this program | create only after those rows; **service-account** Cursor key, not a personal owner key | **OPEN** |
-| D6 | ChatGPT invocation | OpenAI API from Actions / human ChatGPT only / none | **human ChatGPT only for the pilot**; OpenAI API is a later privilege expansion | **OPEN** |
-| D7 | Executor model pin | Grok 4.6 only / owner default Cloud Agent model / per-task | Grok 4.6 for architecture/security/review; owner pins executor `model.id` | **OPEN** |
-| D8 | Adopt AD-1..AD-10 as written | adopt / amend | adopt (required before any implementation story) | **OPEN** |
-| D9 | Allow later Option B host | allowed to propose after pilot / forbidden | allowed to propose | **OPEN** |
-| D10 | `main` branch protection hardening | do now / later / never | later (does not block ADCP pilot; remains a known risk) | **OPEN** |
-| D11 | Dispatch actor allowlist | owner-maintained GitHub login list / defer (no unattended dispatch) | sign a login list before any label/comment trigger; default trigger is `workflow_dispatch` only | **OPEN** |
-| D12 | Privilege-expansion list | inherit merge-policy control-plane list as written / amend | inherit. Creating Environment `adcp` and storing keys is itself privilege expansion and requires this row plus D4 | **OPEN** |
+| ID | Decision | Recommended choice | Current status / gate |
+| --- | --- | --- | --- |
+| D1 | Autonomous Control as separate workstream | proceed | **DIRECTION SELECTED** — [owner direction](https://github.com/fad16papa/Cohestra/issues/506#issuecomment-6395401988); no unrestricted implementation |
+| D2 | Reserve next epic number | 47 | **DIRECTION SELECTED** — next unused at reviewed baseline; no `sprint-status.yaml` changes until final architecture |
+| D3 | Pilot orchestrator topology | A: GitHub Actions + Cursor Cloud Agents API | **DIRECTION SELECTED** — owner authorization for detailed design; credential-free dry run follows ADR approval |
+| D4 | New Environment and reviewers | `adcp`, with owner-governed approval | **OWNER_GATE OPEN** — name selected in direction only; prove reviewer self-approval behavior, trusted branch restrictions and secret scope before creating |
+| D5 | Create credentials | dedicated service-account Cursor API key only after safeguards | **OWNER_GATE OPEN** — NO KEYS until D4/D8/D10/D11/D12 and model eligibility are verified; separate consent and cost/rotation |
+| D6 | ChatGPT invocation | interactive ChatGPT for controlled pilot; OpenAI API only in separately approved later phase | **DIRECTION SELECTED FOR PILOT**; full autonomy API/data flow is **OWNER_GATE OPEN** |
+| D7 | Engineering executor model | Grok 4.6 hard pin, no Auto/default fallback | **DIRECTION SELECTED**; concrete `GET /v1/models` id **NOT VERIFIED**; refuse launch until verified |
+| D8 | Adopt AD-1..AD-10 architecture | **amend before adoption** per A1–A6 | **OWNER_GATE OPEN** — current drafts `[PROPOSED]`; review `10-architecture-amendment-proposal.md` and sign amended ADRs |
+| D9 | Dedicated orchestrator host later | may be proposed only after pilot retrospective | **NOT APPROVED** — no server/new vendor/data flow authorized |
+| D10 | Harden `main` and protected workflow paths | before credentials or live dispatch | **DIRECTION SELECTED**; **OWNER_GATE OPEN** for exact rules, reviewer identities and settings |
+| D11 | Who may launch a run | owner-initiated `workflow_dispatch` for first pilot | **DIRECTION SELECTED**; actor/identity allowlist policy must be approved and tested; no label/comment trigger yet |
+| D12 | Privilege expansion / secret classes | inherit existing approved merge-policy exceptions; explicitly owner-gate new permissions | **OWNER_GATE OPEN** — review precise permissions and secret scope; no Environment/secrets created |
+| D13 | Architecture participation | owner reviews material system, software/code, infrastructure, data and security decisions, even within existing standards | **BINDING INTENT** — execution contract must enforce semantic AND path-based escalation; implementation design still **OWNER_GATE OPEN** |
+| D14 | Definition of "fully autonomous" | durable scheduled/event-driven loop, model-pinned Cursor, monitored PR/CI, advisor invocation, owner notifications | **OWNER_GATE OPEN FOR FULL AUTONOMY** — pilot alone does not satisfy this criterion |
 
-## Signing order
+## Implementation and authorization sequence
 
-1. D1 (authorize workstream)
-2. D8 (adopt or amend architecture) and D12 (privilege list)
-3. D3 (topology) then D4 (Environment name + reviewers) then D11 (actor allowlist)
-4. D2 (epic number) before any `N.n` story files or `sprint-status.yaml` rows
-5. D5 (keys) only after D1+D3+D4+D8+D11+D12
-6. D6, D7, D9, D10 may be signed independently; D6=API is privilege expansion
+1. Review the A1–A6 architectural amendments as **proposals** and verify consistency with Epic 45 AD-12 and the existing owner authority.
+2. Grok 4.6 review of the new planning HEAD using actual installed BMAD adversarial, edge-case and security workflows. Previous FAILs remain historical; do not relabel without a real current-HEAD review.
+3. Owner explicitly approves or amends D8, D12, identity/branch control D10/D11, and D4; record exact approval URL/time and what scope is authorized.
+4. Draft a **credential-free** dispatcher/milestone validation implementation in a separate PR after architectural approval; do not start any live Cursor run.
+5. Independently verify `GET /v1/models` lists the requested Grok 4.6; the model ID is an owner-reviewed pin, never guessed.
+6. Only after protected-main and the `adcp` Environment safeguards are demonstrably effective, obtain separate owner approval for D5 and launch one docs/test-only, non-main, model-pinned pilot.
+7. Distinguish pilot success from full autonomous engineering. Later continuous advisory/model API credentials, data processing, spend budgets and event triggers require separate explicit owner decisions.
 
-## Already binding (do not re-open)
+## Existing policies remain binding
 
-- Epic 45 autonomous merge policy (UAT/non-prod only) — APPROVED 2026-10-15
-- Epic 45 AD-1 (no Cursor SSH)
-- Epic 45 AD-12 (Grok 4.6 owns architecture/security/CI/CD/review)
-- Epic 46 Production NO-GO and provenance Layer A/B
-- Mandatory Code Review Loop
-- Auto routing disabled; Composer 2.5 remains light-only
+- Epic 45 autonomous UAT/non-production merge authority continues **only** where its already-approved strict policy applies. There is **no new standing main-merge approval**; the Product Owner explicitly withdrew the broader proposal.
+- Grok 4.6 exclusively owns Cohestra engineering planning, architecture, implementation, testing, security and review; Composer 2.5 exception only when separately authorized for small fixes; Auto disabled.
+- No Cursor host SSH, no Production or UAT secret transfer, no Production deploy dispatch.
+- Exact HEAD CI/security evidence, tenant and Production isolation, mandatory Code Review Loop, story approval and Product Owner architecture review remain mandatory.
+- PR #505 and Epic 46 are separate; Production NO-GO.
 
-## This planning PR does not
+## This planning PR does not authorize
 
-- Merge anything
-- Close #502 / #503 / #504 / #505
-- Create Environments or secrets
-- Edit Epic 46 stories or `sprint-status.yaml`
-- Dispatch Deploy Production
-- Adopt AD-1..AD-10
+- Merge of #507 or #505 (or closing #502/#503/#504).
+- GitHub workflow, Environment, branch-protection or secret modification.
+- Cloud API credential creation, model-unpinned Cursor dispatch, agent fanout or autonomous merges.
+- Production environment changes, deploy, DNS, TLS, live billing, migrations or cutover.
+- Marking any ADR `[ADOPTED]` without recorded Product Owner approval.
