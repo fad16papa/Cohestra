@@ -69,6 +69,7 @@ So that **ChatGPT does not need to run continuously**.
 - Occupancy and idempotency: refuse duplicate task IDs and simultaneous launches to an occupied output branch; validate Cursor `agentId` conflict/retry semantics before using them as the only dedupe guard
 - `workOnCurrentBranch` is forbidden on `main`. `repos[]` is pinned to `fad16papa/Cohestra`. No host secrets via `envVars`. No Cloud Agent environment-secret creation
 - Self-dispatch: ignore events the dispatcher created. Retry budget does not increment on ignored events
+- Follow-up/steer is disabled until model pin inheritance can be authenticated; v1 steer rejects `model` in its payload. Otherwise create a fresh explicitly pinned agent, maintaining idempotency and budgets
 - Missing key prints `MISSING_SECRET=CURSOR_API_KEY` and no value
 - Cursor artifact list/download: do not post presigned URLs into public issue comments
 - Privilege-expansion diffs (merge-policy list, D12) halt with `OWNER_GATE=privilege`

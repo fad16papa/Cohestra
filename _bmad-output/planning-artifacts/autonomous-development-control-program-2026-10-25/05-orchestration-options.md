@@ -17,8 +17,8 @@ ChatGPT cannot autonomously run continuously. Something else must wake it, call 
 | --- | --- |
 | Launch | `POST /v1/agents` (durable agent + first run) |
 | Inspect | `GET /v1/agents`, `GET /v1/agents/{id}` |
-| Follow-up / steer | `POST /v1/agents/{id}/follow-up` (`delivery: steer` optional) |
-| Runs | `GET /v1/agents/{id}/runs`, `GET` run, stream, `POST` cancel |
+| Follow-up / steer | `POST /v1/agents/{id}/runs` (`delivery: steer` may be unavailable; steering rejects `model` field) |
+| Runs | `GET /v1/agents/{id}/runs`, `GET /v1/agents/{id}/runs/{runId}`, `POST /v1/agents/{id}/runs/{runId}/cancel` |
 | Artifacts | list / download |
 | Lifecycle | archive / unarchive / delete |
 | Auth | user API key or service-account key; Basic or Bearer |
@@ -126,3 +126,7 @@ If the owner later wants parallel agents: one branch per agent, no shared worktr
 **Runner invariants:** default/Auto model routing is disallowed; secret-backed jobs never run untrusted workflow changes; use an idempotent task key and per-task cost/retry budget; never infer a successful execution from a GitHub issue/comment alone. A credential must not reach Cursor agent prompts, `envVars`, MCP server secrets, log lines or artifacts.
 
 **Reviewer deadlock:** GitHub Environment prevent-self-review can block the workflow initiator from approving their own run. If only one owner can dispatch, determine a secure separate reviewer or formally assess an alternate protected control. Do not accidentally make this safeguard impossible to satisfy.
+
+## Verified follow-up model limitation (API v1)
+
+The current Cloud Agents API allows explicit `model.id` at **agent creation**, but `delivery: "steer"` rejects a `model` field and may return `403 feature_unavailable`. Until an authenticated contract test proves the required model remains pinned across follow-up/steer runs and subagents, the production ADCP dispatcher must **refuse** those paths (or create a fresh, explicitly pinned agent). A blanket assertion that all follow-up runs can be passed `model.id` is unsupported. This is a **live dispatch owner/security gate**, not permission to use Auto fallback. Reference: https://prod.cursor.com/docs/cloud-agent/api/endpoints.

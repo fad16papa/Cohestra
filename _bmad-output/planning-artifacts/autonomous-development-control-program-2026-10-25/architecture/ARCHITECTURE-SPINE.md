@@ -81,7 +81,7 @@ flowchart LR
 
 - **Binds:** FR-12
 - **Prevents:** Agents launching unbounded child agents without a budget
-- **Rule:** One executor per task in the pilot; task IDs and branch occupancy are idempotent and fail closed on duplicate run. No `workOnCurrentBranch` on `main`. Grok 4.6 exact model ID must be verified through authenticated `GET /v1/models` then explicitly pinned for every engineering run, including review agents; unsupported/default/Auto => REFUSE. Child-agent model behavior must be verified or child fanout disabled. Executors open draft PRs; no pilot merge/Production dispatch. The API client must never forward its own or host credentials in `envVars`, prompts, MCP headers/env or agent secrets, and must pin `repos[]` to `fad16papa/Cohestra`.
+- **Rule:** One executor per task in the pilot; task IDs and branch occupancy are idempotent and fail closed on duplicate run. No `workOnCurrentBranch` on `main`. Grok 4.6 exact model ID must be verified through authenticated `GET /v1/models` then explicitly pinned for every engineering run, including review agents; unsupported/default/Auto => REFUSE. Follow-up/steer model inheritance and child-agent model behavior must be authenticated or those paths disabled; the v1 steer API cannot accept an explicit `model` field. Executors open draft PRs; no pilot merge/Production dispatch. The API client must never forward its own or host credentials in `envVars`, prompts, MCP headers/env or agent secrets, and must pin `repos[]` to `fad16papa/Cohestra`.
 
 ### AD-4 — GitHub-native orchestration is the pilot runner [PROPOSED]
 
