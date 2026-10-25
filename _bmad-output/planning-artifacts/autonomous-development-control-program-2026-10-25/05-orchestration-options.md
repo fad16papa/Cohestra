@@ -28,7 +28,7 @@ ChatGPT cannot autonomously run continuously. Something else must wake it, call 
 
 **GitHub (already in this repo):** `pull_request` / `push` CI, `workflow_run` UAT deploy, `workflow_dispatch` Production, issue/PR comments, Environments, check runs, GitGuardian app.
 
-**ChatGPT:** no standing process in this repository today. Invocation would be an owner-gated API key used by the orchestrator, or a human pasting into ChatGPT. Neither is continuous.
+**ChatGPT:** no standing process in this repository today. In the pilot, the human invokes ChatGPT, which can **directly write tasks and review evidence into GitHub without pasting**. A later OpenAI API integration may invoke an on-demand advisory worker from a durable Actions orchestrator, but requires owner approval of vendor credentials, data egress, privacy/retention, cost and permissions. The conversational ChatGPT instance itself does not persist or self-wake.
 
 ## Option A — GitHub-native orchestrator (recommended for pilot)
 
@@ -36,11 +36,11 @@ A new **draft-only** workflow, for example `.github/workflows/adcp-dispatch.yml`
 
 - Triggers: `workflow_dispatch` from an allowlisted human only. Optional later: `issues` labeled `adcp/task` or `issue_comment` `/adcp run` **after** an actor-allowlist contract exists. No `schedule` self-start of new work (watchdog poll of an in-flight run is allowed).
 - Job environment: a **new** Environment (proposed name `adcp`) holding a **service-account** `CURSOR_API_KEY` and optional ChatGPT API key. Not `uat`. Not `production`. Must not inherit org/repo Production secrets. Required reviewers on that Environment are an owner gate.
-- Steps: validate label/path/owner gate → optional ChatGPT routing call → `POST /v1/agents` with repo URL + `startingRef` → poll run until terminal or timeout → post milestone comment with agent id, SHA, CI URL.
+- Steps: verify actor + architecture/privilege gates + semantic story contract → resolve approved Grok 4.6 model ID through authenticated `GET /v1/models` → `POST /v1/agents` with **explicit** `model.id`, pinned repo and non-main write target → poll run through terminal state and CI/review → report agent/run, SHA and check URLs; optional future advisor API call requires owner approval.
 - Retries: bounded (proposed 2 automatic on `ERROR`/`EXPIRED`, then escalate).
 - Timeouts: proposed 120 minutes wall clock; `POST` cancel on expiry.
-- Architecture detection: `paths` filters + a script that diffs the `04-governance.md` path set at dispatch **and** on the PR HEAD before milestone-complete.
-- Skill names from ChatGPT are checked against `_bmad/_config/bmad-help.csv` before `POST /v1/agents`.
+- Architecture detection: protected-path checks **plus mandatory semantic story/PR impact review** at dispatch and final HEAD. Unavailable/ambiguous classification is HOLD, never PASS.
+- ChatGPT may select an installed BMAD skill when invoked; dispatcher verifies the skill against `_bmad/_config/bmad-help.csv` **union** `_bmad/custom/*.toml` before any POST.
 - Recovery: cancel run, leave draft PR, do not merge, do not dispatch deploy.
 - Self-dispatch: the workflow ignores its own comments, labels, and PRs. Retry budget does not increment on ignored events.
 
@@ -82,7 +82,7 @@ Owner (or ChatGPT in a desktop session) pastes prompts; Cloud Agents are started
 
 ## Recommendation
 
-**Adopt Option A for the pilot (PROPOSED).** Keep Option B as a deferred owner decision if the pilot hits Actions time limits or ChatGPT-state pain. Do not implement either until the decision register is signed.
+**OWNER-SELECTED DIRECTION, NOT AN ADOPTED ADR:** Proceed with detailed design for Option A's controlled pilot. Keep Option B deferred. Do not implement a privileged runner until the amended design and permission gates are expressly approved. **Success of one owner-started pilot is NOT full autonomous development**; see proposed full-loop milestones below.
 
 Do not put the Cursor or ChatGPT keys in Environment `uat` or `production`.
 
@@ -113,3 +113,16 @@ If the owner later wants parallel agents: one branch per agent, no shared worktr
 - Do not close unrelated PRs
 - Record `RECOVERY=agent_timeout` (or similar) on the issue
 - Owner decides whether to resume with a follow-up or discard the branch
+
+## Separate activation phases and mandatory prerequisites (PROPOSED)
+
+| Phase | Admission gate | Observable completion |
+| --- | --- | --- |
+| Architecture reconciliation | Current planning draft; owner-selected Option A direction | Consistent PRD/spine/story docs, current-HEAD Grok 4.6 reviews, final owner ADR decisions |
+| Offline mock / dry-run | Adopted ADCP ADRs, no keys or live API | Contract-tested dispatcher state transitions, deny-list, model-required refusal, mock agent/CI callbacks |
+| Credential-backed controlled pilot | Protected `main`, safe `adcp` required-reviewer mechanics, audited secret classes, verified Grok 4.6 ID, approved D5/D12 | One owner-started docs/test-only dispatch, branch/draft PR, successful exact-HEAD CI + BMAD reviews + report, no UAT/Production touch or merge |
+| Full autonomous delivery | Separate owner-approved ChatGPT advisory API or clear no-API alternative, queue trigger ACL, data-egress and cost bounds, semantic impact gates | No-copy task initiation, event-driven planning/routing, bounded implementation/fix/review loops, independent CI verification, owner notifications, durable recovery |
+
+**Runner invariants:** default/Auto model routing is disallowed; secret-backed jobs never run untrusted workflow changes; use an idempotent task key and per-task cost/retry budget; never infer a successful execution from a GitHub issue/comment alone. A credential must not reach Cursor agent prompts, `envVars`, MCP server secrets, log lines or artifacts.
+
+**Reviewer deadlock:** GitHub Environment prevent-self-review can block the workflow initiator from approving their own run. If only one owner can dispatch, determine a secure separate reviewer or formally assess an alternate protected control. Do not accidentally make this safeguard impossible to satisfy.

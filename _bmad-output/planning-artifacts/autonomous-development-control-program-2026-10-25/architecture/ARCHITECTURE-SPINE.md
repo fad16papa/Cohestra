@@ -75,31 +75,31 @@ flowchart LR
 
 - **Binds:** FR-2, FR-13
 - **Prevents:** Treating a ChatGPT session as a 24/7 control plane, as Production GO, or as a substitute for Grok 4.6 review
-- **Rule:** ChatGPT runs only when the orchestrator or a human invokes it. It may suggest an installed skill name; the runner refuses names absent from `_bmad/_config/bmad-help.csv`. Architecture, security, CI/CD, and BMAD review signoff remain Grok 4.6 (Epic 45 AD-12). ChatGPT cannot adopt an ADR.
+- **Rule (proposed clarification subject to owner AD-12 reconciliation):** ChatGPT runs only when invoked by a human or an expressly approved API worker. During human-invoked sessions it may create approved GitHub task contracts, **select catalog-validated BMAD workflows**, review PR/CI evidence and coordinate feedback. It is not the mandatory Grok 4.6 engineering reviewer, cannot silently adopt an ADR, and is not an always-on service. Any future OpenAI API advisor is a separate owner-gated credential/data-processing decision.
 
 ### AD-3 — Cursor Cloud Agents are executors, not the orchestrator [PROPOSED]
 
 - **Binds:** FR-12
 - **Prevents:** Agents launching unbounded child agents without a budget
-- **Rule:** One executor per task in the pilot. Occupancy is exclusive: a second launch against the same branch or `startingRef` is refused. `workOnCurrentBranch` is forbidden on `main`. Child agents require an explicit owner-approved fan-out ADR. Executors open draft PRs; they do not dispatch Production. The API client must not pass host secrets via `envVars`, must not create Cloud Agent environment secrets, and must pin `repos[]` to `fad16papa/Cohestra`.
+- **Rule:** One executor per task in the pilot; task IDs and branch occupancy are idempotent and fail closed on duplicate run. No `workOnCurrentBranch` on `main`. Grok 4.6 exact model ID must be verified through authenticated `GET /v1/models` then explicitly pinned for every engineering run, including review agents; unsupported/default/Auto => REFUSE. Child-agent model behavior must be verified or child fanout disabled. Executors open draft PRs; no pilot merge/Production dispatch. The API client must never forward its own or host credentials in `envVars`, prompts, MCP headers/env or agent secrets, and must pin `repos[]` to `fad16papa/Cohestra`.
 
 ### AD-4 — GitHub-native orchestration is the pilot runner [PROPOSED]
 
 - **Binds:** FR-9, NFR-4
 - **Prevents:** An unapproved always-on orchestrator host
-- **Rule:** Pilot dispatch uses GitHub Actions plus the Cloud Agents API. A dedicated orchestrator service is deferred until the owner approves new infrastructure.
+- **Rule:** Option A (GitHub Actions + Cursor Cloud Agents API) is the **owner-selected pilot direction**, not yet an adopted ADR or deployed workflow. Only implement it after the amended ADCP architecture is explicitly adopted; dedicated orchestrator and event-driven advisor API are separately owner-gated.
 
 ### AD-5 — Control-plane secrets are a new Environment class [PROPOSED]
 
 - **Binds:** FR-16, FR-19
 - **Prevents:** Mixing Cursor/ChatGPT keys with UAT deploy keys or Production host secrets
-- **Rule:** Proposed Environment name `adcp` (not `production`, not `uat`, and not the word `control-plane`, which Epic 46 already uses for GitHub Actions + Environment `production`). Creating it, storing a **service-account** Cursor key (not a personal owner key), and adding required reviewers is an owner gate. The Environment must not be configured to inherit org/repo Production secrets. This planning PR does not create them.
+- **Rule:** Proposed Environment name `adcp`, isolated from `production` and `uat`. Before creating any key-backed runner, owner must approve main/workflow protection, inventory repo/org secret scopes, approve the Environment name/branch restrictions and required reviewer identities (including a self-review deadlock test), and authorize a dedicated Cursor service-account key. No personal owner, UAT or Production credentials are forwarded. This planning PR creates nothing privileged.
 
 ### AD-6 — Architecture-path changes halt [PROPOSED]
 
 - **Binds:** FR-4, FR-15
 - **Prevents:** Silent edits to spines, Production compose, provenance, security validators, UAT deploy, or the dispatcher itself
-- **Rule:** The path set in `04-governance.md` is evaluated at dispatch and again on the PR diff before milestone-complete. A hit stops with `OWNER_GATE=architecture` until an impact assessment and ADR approval exist.
+- **Rule:** The path set in `04-governance.md` is a minimum enforced at dispatch and on the final PR HEAD. Mandatory **semantic review** compares actual API/data/tenancy/auth/security/billing/service-boundary and software-design changes with the owner-approved story contract even outside protected paths. Material or uncertain changes halt with `OWNER_GATE=architecture` until impact assessment and owner-approved ADR.
 
 ### AD-7 — Loops terminate [PROPOSED]
 
@@ -147,7 +147,7 @@ flowchart TB
 | PRs | Draft until the task's milestone report exists |
 | Reports | Ten-section template; Evidence vs Claim labels |
 | Secret output | Names only; `MISSING_SECRET=<NAME>` |
-| Models | Grok 4.6 for architecture/security/review; owner may pin Cloud Agent `model.id` |
+| Models | Grok 4.6 REQUIRED for planning, execution, testing, security, CI/CD and review; Cursor API `model.id` must be verified and explicitly pinned, no fallback |
 | Dates | ISO date; times in Asia/Singapore when reporting to the owner |
 
 ## Stack
@@ -187,5 +187,9 @@ deploy/                     # no Production compose changes in this program
 - ChatGPT vendor/account selection (OpenAI API vs human session)
 - Exact Environment name and required reviewers for `adcp` (D4)
 - Epic number assignment (proposed 47; D2)
-- Whether Grok 4.6 remains mandatory for executor agents or only for review
-- Branch-protection hardening on `main` (Epic 46 AD-7 already calls Settings protection later hardening)
+- Authenticated availability and exact Cursor Cloud Agent `model.id` for Grok 4.6 (model policy itself already required; availability unverified)
+- Exact `main` ruleset / required reviewer implementation (now a blocking safeguard for credential-backed ADCP runner; requires owner approval and UAT/Production compatibility review)
+
+## Amendment proposal relationship
+
+As of 2026-10-25, **AD-1..AD-10 remain [PROPOSED]**. Owner selected detailed planning of Option A but did not adopt these ADRs. The companion `../10-architecture-amendment-proposal.md` and `../09-owner-decision-register.md` are required reading before any adoption, implementation, credential use or dispatch. A successful owner-started pilot and a fully event-driven ChatGPT-guided engineering loop are distinct milestones.

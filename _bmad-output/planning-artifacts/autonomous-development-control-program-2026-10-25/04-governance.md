@@ -11,7 +11,7 @@ created: 2026-10-25
 ```mermaid
 flowchart TB
   PO[Product Owner — final authority]
-  CG[ChatGPT — advisor / assessor / reviewer]
+  CG[ChatGPT — on-demand advisor + orchestrator]
   ORCH[Orchestrator runner — GitHub Actions proposed]
   BMAD[Installed BMAD skills]
   CUR[Cursor Cloud Agent — executor]
@@ -21,7 +21,8 @@ flowchart TB
 
   PO -->|approve / refuse| CG
   PO -->|approve architecture and Production| GH
-  CG -->|recommend skill and assess impact| ORCH
+  CG -->|approved task contract + catalog-checked BMAD route| GH
+  GH -->|authorized dispatch| ORCH
   ORCH -->|invoke| BMAD
   ORCH -->|POST /v1/agents| CUR
   CUR -->|branch + draft PR| GH
@@ -35,9 +36,9 @@ flowchart TB
 | Domain | Product Owner | ChatGPT | Cursor / BMAD | GitHub Actions |
 | --- | --- | --- | --- | --- |
 | Product strategy and functionality | **Decide** | Advise | Execute approved stories | Record |
-| System / code / infra / security / data architecture | **Decide + ADR** | Impact assessment | Halt if material; implement after approval | Enforce path filters |
+| System / code / infra / security / data architecture | **Decide + ADR** | Propose alternatives + impact assessment | Halt if material; implement after approval | Protected paths **and semantic review**; fail closed |
 | Significant technical decisions | **Decide** | Options + risks | No silent adoption | Audit |
-| Routine story implementation | Authorize epic/story | Route to skill | Execute | CI |
+| Routine story implementation | Authorize epic/story and boundaries | Author approved GitHub contracts, select catalog-verified BMAD route, coordinate evidence | Execute under Grok 4.6 | CI and durable state |
 | Code review (BMAD) | May override | May comment | `bmad-code-review` required | Exact-HEAD checks |
 | UAT deploy | Already automated | Observe | No SSH | Existing `deploy.yml` |
 | Production authorization | **Only** | Never | Never | `deploy-production.yml` after owner dispatch |
@@ -61,7 +62,7 @@ Treat as material (halt) if the change would let two future stories diverge, or 
 - GitHub Environment names, required reviewers, or secret classes
 - New external vendors, new always-on services, new public ports
 
-Halt is evaluated at **dispatch** (changed-path preview) **and again on the PR diff** before any complete-milestone or merge recommendation. An executor that adds Production or workflow files after launch still stops.
+Halt is evaluated at **dispatch** (story/changed-path preview) **and again on the exact PR HEAD diff** before milestone completion or merge consideration. **File paths are only the minimum safeguard.** A semantic impact review must also detect material changes to API contracts, tenancy, auth, database schemas, billing, privileges, infrastructure, observability data exposure, and software/system design anywhere in the tree. If the detector or reviewer is unavailable, uncertain, or disagrees with the approved story contract, stop at OWNER_GATE. An executor that adds Production or workflow files after launch still stops.
 
 Routine story UI/API work inside an approved contract is **not** material unless it expands privilege or weakens a gate.
 
@@ -77,9 +78,9 @@ Routine story UI/API work inside an approved contract is **not** material unless
 
 Inherited Epic 45 AD-12 remains binding: **Grok 4.6 owns architecture, security, CI/CD, and BMAD review signoff.** ChatGPT does not replace that.
 
-Allowed: summarize options, *suggest* (not bind) an installed BMAD skill name, draft impact-assessment prose for a human or Grok 4.6 to accept, answer owner questions.
+**Proposed owner-approved role clarification:** ChatGPT may author task instructions directly in GitHub, choose **catalog-verified** BMAD workflows for already-approved stories, assess PR/CI/security evidence, post technical reviews, coordinate follow-ups when actively invoked and prepare architecture alternatives and risk assessments for the Product Owner. It is **not** the mandatory Grok 4.6 reviewer and may not amend Epic 45 AD-12 without an owner-approved ADR. A standing OpenAI API adviser is a **separate, not-yet-approved design**.
 
-Forbidden: adopting ADRs; claiming Production GO; inventing BMAD skills; storing secrets; instructing Cursor to bypass review; being the required code-review signoff; merging; running as a 24/7 daemon; being invoked as the executor model for architecture/security stories.
+Forbidden: adopting ADRs; claiming Production GO; inventing BMAD skills; storing secrets; instructing Cursor to bypass review; representing ChatGPT feedback as Grok 4.6 review signoff; acting as a continuously running daemon; autonomously deploying Production; approving material design decisions. Existing specific UAT merge policy remains separate; this program grants no new blanket merge authority.
 
 ## Cursor / BMAD role limits
 
@@ -95,7 +96,8 @@ Minimum record for each dispatched run:
 - `github.actor` of the human who labeled, commented, or dispatched
 - Orchestrator workflow run URL
 - Cursor agent id and run id
-- Model id requested
+- Cursor model ID explicitly requested and availability evidence (Grok 4.6 / `GET /v1/models`); actual runtime usage independently attested or marked unknown
+- Immutable task/dispatch idempotency key and retry/cost budget
 - Branch and HEAD SHA produced
 - CI check-run conclusions (including GitGuardian)
 - Follow-ups, steers, and cancels
@@ -120,4 +122,13 @@ permissions: {}   # workflow default-deny
 
 Secret **name** allowlist the job may reference: `CURSOR_API_KEY` and optional ChatGPT key. YAML may name those secrets; it must never contain values.
 
-Creating Environment `adcp` without required reviewers is privilege expansion (D4 + D12). A same-repo `pull_request` workflow that adds `environment: adcp` after the key exists is in the blast radius; `ci.yml` must not request that Environment.
+Creating Environment `adcp` without required reviewers is privilege expansion (D4 + D12). Before **any** key-backed live dispatcher, protect `main` and policy/workflow-sensitive changes (D10) and inventory repo/org secret scopes. A same-repo `pull_request` workflow that adds `environment: adcp` after a key exists is in the blast radius; `ci.yml` must not request that Environment. GitHub's optional **prevent-self-review** can prohibit the sole owner from releasing a job they themselves initiated; D4 requires a vetted separate reviewer or an explicitly analyzed owner-approved alternative, without silently disabling protections.
+
+## Execution and privileged-operation policy (PROPOSED)
+
+- `workflow_dispatch` by a GitHub allowlisted human is the **only** pilot trigger. Issue/PR comments and bot events are NOT launch authorization until D11 authorizes and tests their ACL.
+- Agent work stays on an isolated draft branch; model ID must be explicitly pinned after authenticated inventory; avoid any fallback, including child/review agents.
+- The credential-bearing dispatcher must not use unreviewed PR code, expose Cursor credentials to agents through environment or MCP configuration, or consume `production`/`uat` Environments.
+- New privilege scopes, control workflows, secrets, branch/ruleset settings, service accounts, OpenAI API data egress, and semantic architecture changes require owner approval.
+- Repo main remains unprotected at the 2026-10-25 baseline; this is a **blocking prerequisite for live credential-backed dispatch**, not deferred pilot debt.
+- Existing UAT auto-deploy on main is a potential side effect of merging; the **first pilot cannot merge**. A merge is never Production authorization.
