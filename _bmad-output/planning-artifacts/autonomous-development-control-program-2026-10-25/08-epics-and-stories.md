@@ -73,7 +73,7 @@ So that **ChatGPT does not need to run continuously**.
 - Missing key prints `MISSING_SECRET=CURSOR_API_KEY` and no value
 - Cursor artifact list/download: do not post presigned URLs into public issue comments
 - Privilege-expansion diffs (merge-policy list, D12) halt with `OWNER_GATE=privilege`
-- `main` and privileged workflow/protection paths are safeguarded **before** enabling key-backed live dispatch; check reviewer self-approval deadlock and approval identity
+- `main` and privileged workflow/protection paths are safeguarded **before** enabling key-backed live dispatch; **no second-human PR review requirement**. Pilot `adcp` uses sole Product Owner required reviewer with `prevent_self_review=false` only after explicit owner approval. Do not modify Production protections or confuse self-confirmation with independent human review.
 - Audit actor, verified requested model, run IDs, limits/cost/usage, CI review evidence and PR HEAD. No `@cursor` GitHub comment launch without proof of model enforcement
 
 ### ADCP-P3 — Milestone reporter
@@ -103,7 +103,7 @@ So that **the program is proven without touching Production**.
 
 **AC**
 
-- Target is a docs-only or test-only task on a throwaway branch. ChatGPT must have authored the approved execution contract **directly in GitHub**, not through owner manual copy/paste
+- Target is a docs-only or test-only task on a throwaway branch. ChatGPT must have authored the approved execution contract **directly in GitHub**, not through owner manual copy/paste. In a single-owner setup the owner may separately initiate and approve the `adcp` job; the record must disclose that this is not a second-person review.
 - Milestone report posted and completeness-checked, referencing requested model, agent/run, exact HEAD, all applicable CI and independent Grok 4.6 BMAD review. **No merge in first live pilot**
 - Architecture halt does not fire on the pilot target
 - Rollback documented (disable workflow, revoke keys)
@@ -135,3 +135,10 @@ So that **ChatGPT-directed engineering is operationally autonomous while archite
 - ChatGPT input comes from a future explicitly approved API-based advisory worker or on-demand human ChatGPT session, never a fictional always-on chat
 - Material architecture, new data egress, sensitive security changes, privilege expansion, Production and deployment remain Product Owner approval-only
 - Document and validate queue restart/recovery, token costs and limits, privacy/retention, authorization, rollback and actual achieved independence from manual copy/paste
+
+## Solo-owner-specific P5 acceptance (PROPOSED)
+
+- Automatic dispatch cannot be gated by an `adcp` required human Environment approval **for every pre-approved routine task**; solve with a separate, tightly constrained owner-approved execution identity/Environment or equivalent, never by silently disabling all protection.
+- Approval identity must distinguish the human's actual confirmation from comments generated via ChatGPT under the same GitHub account.
+- No second human GitHub PR approver, CODEOWNER or Environment reviewer may be required. Independent Grok 4.6 reviews and CI are mandatory engineering evidence but are not represented as a second human approval.
+- Production or privilege-changing workflows still stop for actual Product Owner action; no unattended Production cutover, even after successful routine-task automation.

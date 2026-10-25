@@ -27,6 +27,7 @@ Planning-only package. No application code, GitHub settings, secrets, or Epic 46
 | [08-epics-and-stories.md](./08-epics-and-stories.md) | Proposed story breakdown |
 | [09-owner-decision-register.md](./09-owner-decision-register.md) | Owner-selected direction versus explicit architecture/security approval gates |
 | [10-architecture-amendment-proposal.md](./10-architecture-amendment-proposal.md) | Architecture amendment packet A1–A6 (PROPOSED, not adopted) |
+| [11-solo-owner-governance-proposal.md](./11-solo-owner-governance-proposal.md) | Permanent sole-owner approvals and secure unattended-path constraints (PROPOSED) |
 
 Baseline for this branch: `main` `e962c8c3eead953a1f56f2b397b3e9d4fc669041`.
 

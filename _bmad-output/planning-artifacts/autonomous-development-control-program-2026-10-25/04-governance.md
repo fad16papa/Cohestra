@@ -122,7 +122,7 @@ permissions: {}   # workflow default-deny
 
 Secret **name** allowlist the job may reference: `CURSOR_API_KEY` and optional ChatGPT key. YAML may name those secrets; it must never contain values.
 
-Creating Environment `adcp` without required reviewers is privilege expansion (D4 + D12). Before **any** key-backed live dispatcher, protect `main` and policy/workflow-sensitive changes (D10) and inventory repo/org secret scopes. A same-repo `pull_request` workflow that adds `environment: adcp` after a key exists is in the blast radius; `ci.yml` must not request that Environment. GitHub's optional **prevent-self-review** can prohibit the sole owner from releasing a job they themselves initiated; D4 requires a vetted separate reviewer or an explicitly analyzed owner-approved alternative, without silently disabling protections.
+Creating Environment `adcp` without required reviewers is privilege expansion (D4 + D12). Before **any** key-backed live dispatcher, protect `main` and policy/workflow-sensitive changes (D10) and inventory repo/org secret scopes. A same-repo `pull_request` workflow that adds `environment: adcp` after a key exists is in the blast radius; `ci.yml` must not request that Environment. GitHub's optional **prevent-self-review** can prohibit the sole owner from releasing a job they themselves initiated; The **single-owner** model has no second reviewer, so D4 proposes the Product Owner as the sole required `adcp` reviewer with **prevent-self-review disabled for `adcp` only**, subject to explicit owner signoff. This is an owner confirmation gate **not an independent human review**; keep `production` settings untouched and document the weaker separation-of-duties boundary.
 
 ## Execution and privileged-operation policy (PROPOSED)
 
@@ -132,3 +132,22 @@ Creating Environment `adcp` without required reviewers is privilege expansion (D
 - New privilege scopes, control workflows, secrets, branch/ruleset settings, service accounts, OpenAI API data egress, and semantic architecture changes require owner approval.
 - Repo main remains unprotected at the 2026-10-25 baseline; this is a **blocking prerequisite for live credential-backed dispatch**, not deferred pilot debt.
 - Existing UAT auto-deploy on main is a potential side effect of merging; the **first pilot cannot merge**. A merge is never Production authorization.
+
+## Permanent single-owner operating model (PROPOSED, 2026-10-25)
+
+The Product Owner has confirmed there are **no human collaborators and none are planned**. No Cohestra workflow may depend on a second human GitHub identity, team, code owner, approval or administrator. Independent **engineering** validation can come from separate Grok 4.6 BMAD review agents and externally generated CI/security checks, but must not be misrepresented as independent human review or a hard credential security boundary.
+
+### Pull requests / main
+
+- Protect `main` with required pull requests, exact-HEAD CI/security check policies, blocked forced pushes/deletions and controlled changes to privileged paths. Preserve any Production two-parent merge-history requirement; do not enable linear-only/squash-only enforcement that invalidates it.
+- **Do not require a human GitHub PR approving review** when only one person can author/approve. GitHub authors cannot approve their own PRs. Record separate BMAD Grok 4.6 review **evidence**, code tests, CI checks and Product Owner risk acceptance where material. For an agent-authored PR the owner may review manually, but absence of another human must not deadlock the entire workflow.
+- Protect `.github/workflows/**`, security policy/architecture and secrets-affecting changes through mandatory owner design gates and reviewable diffs, not by silently changing the branch strategy. This requires owner signoff on actual ruleset/branch-protection settings.
+- **Identity caveat:** GitHub comments written by ChatGPT using the owner's connected token may appear to be authored by the owner. Such comments are **not** evidence of explicit human owner approval. A privileged/architecture gate must require a verified owner action or separately documented owner-attested decision in the actual conversation, not arbitrary GitHub comment text.
+
+### ADCP Environment / pilot
+
+- Proposed `adcp` Environment: Product Owner as the *only* required deployment reviewer; **Prevent self-review = OFF only for `adcp`** so the person who initiates the pilot can approve it. Approval is an explicit confirmation, not a two-person review. Do not modify Environment `production` or claim equal separation of duties.
+- A required reviewer must approve each Environment-gated job. Therefore this `adcp` configuration supports the **owner-started pilot** but **not unattended execution of every routine task**.
+- Credential-backed pilot is prohibited until `main`/workflow boundary is hardened, sole-reviewer mechanics are tested, the exact Grok 4.6 model ID is authenticated, secret scopes are inventoried, and the owner approves D4/D5/D10/D12.
+- The later unattended P5 must separately design an **owner-approved non-interactive, least-privilege execution boundary** with no routine per-job human approval (for example, an isolated execution Environment or short-lived brokered credentials). It may dispatch **only pre-approved low-risk tasks**. Architecture, access/permission expansion, secret changes, deployment and Production continue to require explicit owner confirmation.
+- Remaining risks of a permanently single-owner team: no independent human audit or recovery authority, compromised owner account, same-person deployment approval, automated reviewer blind spots. Mitigate with phishing-resistant MFA/passkeys or hardware keys where available, scoped app identities, complete audit logs, independently checked CI/GitGuardian, protected critical GitHub workflows, rotation/revocation, offsite credential recovery, and explicit NO-GO on unknown risks. No claim of zero possible risk.
