@@ -1,7 +1,7 @@
 # Cohestra execution bridge: exact owner security-activation decision packet
 
 Date: 2026-10-25 (Asia/Singapore)
-Status: **PROPOSED FOR EXPLICIT PRODUCT OWNER APPROVAL**
+Status: **S1–S4 OWNER APPROVED FOR APPLICATION; SETTINGS NOT APPLIED / NOT VERIFIED**
 Applies to: Public GitHub repository fad16papa/Cohestra
 Owner: Single human Product Owner, GitHub account fad16papa
 Code branch: cursor/adcp-bridge-contract-mock-20261025
@@ -116,7 +116,7 @@ The Product Owner has already approved task-based Grok 4.6/Composer 2.5 model ro
 5. First live pilot: **one harmless non-Production documentation/test task**, no automatic merge; observe accepted task→agent/run IDs→draft PR→exact-head CI/GitGuardian→actual Grok BMAD review and report. Enforce bounded retries, concurrency, cancellation, stale SHA refusal and owner escalation.
 6. Fully unattended low-risk P5 is a **later separately authorized** architecture, not the manual-adcp-reviewer P4 pilot.
 
-## 8. Owner decision request: exact authority, not another direction poll
+## 8. Former owner decision request (resolved for S1–S4; see Section 10)
 
 D7/D17 task model policy and CAT-SEC methodology are already owner approved. D8/D10/D4/D12 have preliminary direction only. This packet makes the actual privileged change set explicit.
 
@@ -150,3 +150,34 @@ Official references:
 - GitHub required-check semantics: https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks
 - GitHub Environment controls: https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments
 - Cursor Cloud Agents API: https://prod.cursor.com/docs/cloud-agent/api/endpoints
+
+## 10. Product Owner explicit settings approval (2026-10-25; RECORDED, NOT APPLIED)
+
+**Authorized by the Product Owner in the current Cohestra ChatGPT conversation:** "yes approved" in direct response to "Do you approve D10, D4, D11/D13 and D12 as specified in the security packet, with no credentials, merges or deployments authorized yet?"
+
+This explicit approval changes the **configuration-design authority** for the precise S1–S4 values above from PROPOSED to **OWNER_APPROVED_FOR_APPLICATION**, subject to the security preflight and platform support described here. It is **NOT** a statement that the GitHub settings have been applied or that the connected GitHub account's issue comments constitute independent human UI approval.
+
+- **D10 / S1**: OWNER APPROVED exact `main` protection: PR requirement, 0 required human PR approvals, six named checks with their trusted apps, up-to-date branch, conversation resolution, prohibit force push and deletion, preserve merge commits and two-parent Production history, no linear-only history, no merge queue. Supplemental exact-`success` trusted verifier remains a required implementation before any autonomous merge.
+- **D4 / S2**: OWNER APPROVED creation of `adcp` only, `fad16papa` as sole required reviewer, `Prevent self-review` OFF for **adcp only**, main-only trusted deployment branch policy and **no secrets initially**. Existing `uat` and `production` remain unchanged. Check actual platform UI support and ensure admin recovery without altering any other Environment.
+- **D11/D13 / S3**: OWNER APPROVED authenticated owner-initiated `workflow_dispatch` plus true GitHub `adcp` Environment owner review, no `OWNER_APPROVE` GitHub comment/ChatGPT-connected account as sufficient human attestation; fail-closed material-impact classifier. **No workflow/runtime launch authorization** arises from this design signoff alone.
+- **D12 / S4**: OWNER APPROVED least-privilege, default-deny, separated trusted preflight/dispatcher/status/reporter roles, and no repo administration, main writes, UAT/Production secrets, arbitrary actions dispatch or OIDC privileges for model-facing jobs. No credential-bearing job until D5 separately approved.
+- **S5**: D8 final architecture adoption stays **OPEN** until PR #507 review findings and R1 are resolved, with a clean new-HEAD Grok 4.6 review and specific owner ADR decision.
+- **S6**: D5 key creation, real Cursor dispatch, main merge, any UAT deploy and Production remain **NOT AUTHORIZED**.
+
+### Actual application status after the owner decision
+
+Connected GitHub tool capabilities were inspected: the integration can read repo/branch/ruleset and write issues/PR documents, but **does not expose repository branch/ruleset/environment administration actions**. Its owner identity has GitHub `admin` permission, but that does not grant this tool an administrative settings action.
+
+**GitHub live recheck (2026-10-25):** `main.protected = false` and repository rulesets = `[]`. No `adcp` Environment creation or review rules were verified. Therefore `D10_APPLIED=NO`; `D4_APPLIED=NOT_VERIFIED`; `D11_D13_IMPLEMENTED=NO`; `D12_IMPLEMENTED=NO`. NEVER convert the approved design to `APPLIED` based only on a markdown commit.
+
+**Execution path:** owner administers GitHub once from official Settings UI (see [GitHub branch rules](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule) and [GitHub Environments](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments)). On completion, independently re-read protection/rules and validate `adcp` UI via owner-provided settings confirmation. Do not create Cursor API credentials, merge, or trigger UAT/Production while setting these controls.
+
+### One-owner admin application checklist
+
+1. Open [Cohestra Settings → Branches](https://github.com/fad16papa/Cohestra/settings/branches). Configure a classic branch protection rule matching `main`. Require PR but leave "Require approvals" **unchecked** (0 second-human reviewers). Select the five exact `github-actions` checks and `GitGuardian Security Checks` from `gitguardian`; require up-to-date branch, conversations resolved; do **not** enable linear history, merge queue, signed-commits policy or required successful deployment. Force pushes/deletions remain disabled. Preserve merge commits. **Do not merge any PR** as a test.
+2. Verify the rule saves and applies to `main`, and save recovery notes. See separately trusted exact-success verification limitation; this rule alone is **not** an autonomous-merge license.
+3. Open [Cohestra Settings → Environments](https://github.com/fad16papa/Cohestra/settings/environments). Create environment `adcp` if absent. Choose sole required reviewer `fad16papa`. Leave **Prevent self-review OFF** only for `adcp`. Restrict deployment branches to trusted `main`, set wait timer 0 and **add no secrets**. Do not modify `uat` or `production`. If any control/required reviewer cannot be saved on this GitHub plan/account, **STOP and report the exact limitation**.
+4. No live workflow exists for D11/D13/D12. Record settings verification, then review and implement these controls **through Grok 4.6 BMAD** on a separate draft branch after final D8 gate. Do not conflate owner settings approval with operational enforcement.
+5. GitHub-provided check conclusions may allow skipped/neutral values. Before any autonomous merge, require a separate trusted exact-`success` check against the current immutable SHA and approved check-source identities.
+
+**No Cursor prompt-pasting is required for this administrative step.** Applying protection/Environment settings is an intentional one-time owner action.
