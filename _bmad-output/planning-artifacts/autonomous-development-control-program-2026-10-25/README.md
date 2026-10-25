@@ -30,6 +30,7 @@ Planning-only package. No application code, GitHub settings, secrets, or Epic 46
 | [11-solo-owner-governance-proposal.md](./11-solo-owner-governance-proposal.md) | Permanent sole-owner approvals and secure unattended-path constraints (PROPOSED) |
 | [12-exact-owner-security-review-packet.md](./12-exact-owner-security-review-packet.md) | Exact branch/Environment/permissions review packet (PROPOSED) |
 | [13-review-bootstrap-model-integrity.md](./13-review-bootstrap-model-integrity.md) | Independent Grok review start / unverified helper-model hard blocker and owner decision (PROPOSED) |
+| [14-code-review-security-loop.md](./14-code-review-security-loop.md) | Owner-approved CAT-SEC methodology: cataloged BMAD code review + security, fix/test/re-review loops; execution still gated |
 
 Baseline for this branch: `main` `e962c8c3eead953a1f56f2b397b3e9d4fc669041`.
 

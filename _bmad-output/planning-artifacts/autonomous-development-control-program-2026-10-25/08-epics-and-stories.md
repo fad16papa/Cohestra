@@ -88,7 +88,7 @@ So that **agent-reported PASS is not treated as evidence**.
 
 - Template matches `06-milestone-reports.md` including actor, follow-up, cancel, and Environment name
 - Completeness checker fails unless section 10 has **all** of: PR number, 40-hex HEAD that still matches the PR, and CI run URL (`and`, not `or`)
-- Completeness refuses `MILESTONE=complete` without BMAD review evidence on that HEAD (0 BLOCKER / 0 MAJOR)
+- Completeness refuses `MILESTONE=complete` without **current-HEAD Grok 4.6 `bmad-code-review` plus explicit security criteria** evidence (0 BLOCKER / 0 MAJOR), required exact-HEAD CI/GitGuardian conclusions and model provenance; new code after review invalidates it
 - GitGuardian `neutral` cannot satisfy a Production-provenance complete flag. For UAT/non-prod, NEUTRAL is recorded as a risk, not SUCCESS evidence
 - `AUTHOR_ROLE` is not a substitute for recorded `github.actor`
 - Audit record is the union of NFR-3, `04-governance.md` audit trail, and template section 10
@@ -149,3 +149,12 @@ So that **ChatGPT-directed engineering is operationally autonomous while archite
 - Given missing model-provenance data for a cloud helper/worker/subagent or unverified steer-inheritance, result is `MODEL_USAGE_UNVERIFIED` / OWNER_GATE, not PASS; unresolved implementation remains NO-GO.
 - Current-HEAD Grok review must be obtained by a separately owner-approved review-only bootstrap path or future authenticated trusted runner, **without** a permissive `@cursor` comment-only trigger. It must not write to main, merge, create credentials, change GitHub settings, or deploy.
 - D17/D18 remain owner-gated decisions. New model switch or unsupported helper behavior reopens technical security review, even if all GitHub CI is green.
+
+## CAT-SEC acceptance criteria (methodology approval only)
+
+- Given an authorized story with a review finding, Grok 4.6 `bmad-code-review` must identify severity, affected code, threat/failure mode, exact tests to rerun and the permitted scope of remediation.
+- Given BLOCKER/MAJOR findings, agent must inspect code and apply only authorized fixes, then rerun affected tests and **fresh `bmad-code-review` against the new HEAD**. Previous reviews become STALE. Do not merge based on a prior passing SHA.
+- Review must explicitly test security criteria: authentication/authorization, tenant and data isolation, credentials/exfiltration, GitHub workflow injection and secret exposure, external API trust, validation/CORS/reCAPTCHA/JWT, Paddle/billing/webhooks where applicable, migrations/data loss, infra/network ports, logging/PII, dependency/tool provenance and UAT/Production separation. Record N/A with rationale when not applicable.
+- Completion only after current HEAD has **0 BLOCKER and 0 MAJOR**, all required automated tests pass, GitGuardian exact conclusion meets applicable success policy, resolved regression and no model/architecture/owner gate is outstanding. No separate `bmad-security-review` skill exists in installed catalog; do not invent one.
+- Proposed review-fix retry budget: **3 cycles** per authorized run, with bounded time/cost. Exhaustion => INCOMPLETE + owner escalation, not a forced PASS or indefinite spin. New owner authorization is needed for additional cycles.
+- `MODEL_USAGE_UNVERIFIED` from D18-A is still a blocker. These ACs **do not authorize launching any further Cursor agent, modifying non-planning code, changing permissions, merging or deploying**.

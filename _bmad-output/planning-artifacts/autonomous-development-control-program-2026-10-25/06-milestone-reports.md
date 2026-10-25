@@ -50,6 +50,8 @@ AUTHOR_ROLE: owner | chatgpt | cursor-agent | orchestrator
 
 ## 5. Security and testing evidence
 - EVIDENCE: unit / integration / contract / CI URLs
+- EVIDENCE: `bmad-code-review` current-HEAD review including security rubric, findings per cycle, fix commits, rerun tests and 0 BLOCKER/0 MAJOR final verdict
+- EVIDENCE: iteration count and budget consumed, plus any outstanding findings
 - EVIDENCE: GitGuardian conclusion + check-run URL
 - EVIDENCE: tenant-isolation if applicable
 - CLAIM: anything not backed by a URL
@@ -127,3 +129,9 @@ Pilot: post the report as a PR or issue comment without requiring the Product Ow
 - Separate *confirmed by direct GitHub/CI evidence*, *Cursor-reported but not independently verified*, and *proposal/assumption*.
 - If evidence is on a previous HEAD, label **STALE**. If any required check is pending, label **INCOMPLETE**, not PASS.
 - Preserve a report's exact PR/commit/check-run links in the GitHub task record to make audits possible after the conversation ends.
+
+## CAT-SEC review loop evidence (owner methodology approved)
+
+A report claiming a code-review success must show a cycle ledger: `ITERATION`, reviewed exact `HEAD`, GROK model provenance, findings by severity, fixes and changed paths, tests rerun (including security/regression and any applicable integration/E2E), new `HEAD`, and new `bmad-code-review` result. Include accepted N/A security criteria and rationale. `REVIEW_PASS` requires 0 BLOCKER/0 MAJOR and exact-current-HEAD required tests/checks. Fixes after a PASS revoke that PASS until re-reviewed.
+
+The normal automated max is **3** fix/test/review cycles per authorized run. If the third still fails, report `INCOMPLETE:RETRY_BUDGET_EXHAUSTED`; the Product Owner sees exact findings and options, including a narrowly scoped additional budget. Critical architecture/security privilege changes halt immediately regardless of iterations. This approved method does not waive the existing Grok-only D17 gate or provide authorization for an agent run or Production.

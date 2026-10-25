@@ -39,7 +39,7 @@ flowchart TB
 | System / code / infra / security / data architecture | **Decide + ADR** | Propose alternatives + impact assessment | Halt if material; implement after approval | Protected paths **and semantic review**; fail closed |
 | Significant technical decisions | **Decide** | Options + risks | No silent adoption | Audit |
 | Routine story implementation | Authorize epic/story and boundaries | Author approved GitHub contracts, select catalog-verified BMAD route, coordinate evidence | Execute under Grok 4.6 | CI and durable state |
-| Code review (BMAD) | May override | May comment | `bmad-code-review` required | Exact-HEAD checks |
+| Code review (BMAD) | Decides scope changes/critical exceptions | Inspect evidence and report | Cataloged `bmad-code-review` **with security criteria**, new review after every fix | Exact-HEAD CI/GitGuardian checks |
 | UAT deploy | Already automated | Observe | No SSH | Existing `deploy.yml` |
 | Production authorization | **Only** | Never | Never | `deploy-production.yml` after owner dispatch |
 | Secrets creation | **Only** | Never | Never | Consume Environment secrets |
@@ -151,3 +151,12 @@ The Product Owner has confirmed there are **no human collaborators and none are 
 - Credential-backed pilot is prohibited until `main`/workflow boundary is hardened, sole-reviewer mechanics are tested, the exact Grok 4.6 model ID is authenticated, secret scopes are inventoried, and the owner approves D4/D5/D10/D12.
 - The later unattended P5 must separately design an **owner-approved non-interactive, least-privilege execution boundary** with no routine per-job human approval (for example, an isolated execution Environment or short-lived brokered credentials). It may dispatch **only pre-approved low-risk tasks**. Architecture, access/permission expansion, secret changes, deployment and Production continue to require explicit owner confirmation.
 - Remaining risks of a permanently single-owner team: no independent human audit or recovery authority, compromised owner account, same-person deployment approval, automated reviewer blind spots. Mitigate with phishing-resistant MFA/passkeys or hardware keys where available, scoped app identities, complete audit logs, independently checked CI/GitGuardian, protected critical GitHub workflows, rotation/revocation, offsite credential recovery, and explicit NO-GO on unknown risks. No claim of zero possible risk.
+
+## CAT-SEC: mandatory iterative code and security review (methodology approved 2026-10-25)
+
+- **Only the installed `bmad-code-review` workflow** performs the mandatory Grok 4.6 code-review/security review, using the explicit checklists in `14-code-review-security-loop.md`. Do not claim an absent `bmad-security-review` skill exists, and do not substitute a model-unverified Cursor helper's `security-review` for approved Grok.
+- For an authorized story, repeat `IMPLEMENT → TEST → bmad-code-review (security lens) → inspect findings → FIX → TEST → RE-REVIEW`. Every change invalidates prior review/CI evidence for the new HEAD. A review reporting BLOCKER/MAJOR, missing tests, failed security check or unverified actual model usage is **not** PASS.
+- Each run has an explicit maximum of **three fix/review iterations**; after that, escalate with evidence, not blanket failure acceptance or endless retries. Owner may approve a new limited budget after seeing exact remaining findings.
+- Reviewer/executor must remain Grok 4.6 in fact, not merely prompt request; existing D17 model-provenance hard blocker remains. No CODE/BMAD runtime review in D18-A was performed.
+- Material API/data/tenancy/security/infrastructure/privilege/billing/Production decisions discovered during a fix are **immediate owner gates**, not grounds for an agent to change architecture autonomously.
+- Completion/merge may be considered only under the separate approved Epic 45 14-point non-production merge policy; this CAT-SEC methodology grants **no** new merge authority.

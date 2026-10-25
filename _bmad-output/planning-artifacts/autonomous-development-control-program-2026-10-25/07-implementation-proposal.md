@@ -21,7 +21,7 @@ Out: tenant features, Epic 46 Production cutover, dedicated orchestrator host, G
 3. Cursor API client: create, follow-up, poll, cancel
 4. Human-invoked ChatGPT creates contract/routing and reviews via authenticated GitHub integration (no copying). A future OpenAI API advisor is **separately owner-gated**, not an assumed pilot dependency
 5. **Semantic + protected-path** architecture detector: stage at contract dispatch and on final PR HEAD
-6. Milestone commenter that rejects complete-without-evidence and reports requested/verified model, budget, actor and independent Grok 4.6 review
+6. Milestone commenter that rejects complete-without-evidence and reports requested/verified model, budget, actor, security threat checklist, **per-HEAD iterative `bmad-code-review` ledger** and 0 BLOCKER/0 MAJOR final independent Grok 4.6 review
 7. Contract tests that prove: exact Grok 4.6 model ID required and no default fallback; secret-name allowlist; fail-closed ambiguous semantic impact; cancel-on-timeout covering CI wait; entire protected-path set; occupancy and idempotency refuse; self-dispatch ignore
 8. Credential-free mock dispatcher path tested before introducing any Cursor key
 
@@ -120,3 +120,9 @@ Pilot FAIL / rollback:
 ## Scope separation
 
 The controlled pilot proves model-pinned dispatch, GitHub PR/CI evidence and no-copy contract submission. It does **not** prove full unattended ChatGPT-guided autonomy. A later owner-approved advisory/API-worker design must address API credentials, payload redaction/PII, data retention, spend limits, queues and state replay; no such worker is built or credentialed by the pilot.
+
+## CAT-SEC approved review strategy (NOT code execution authority)
+
+For future owner-authorized stories, use the installed `bmad-code-review` workflow as the **mandatory technical plus security review**, not a fictitious `bmad-security-review` skill and not a non-Grok helper. Review against security-specific acceptance criteria in `14-code-review-security-loop.md`; on a BLOCKER/MAJOR, inspect and fix within approved story boundaries, rerun tests and perform a fresh model-attested `bmad-code-review` against the new HEAD. Allow **up to three bounded review/fix cycles** within a run; escalate unresolved issues with evidence and owner options rather than silently declaring PASS. Other BMAD AR/ECH/IR reviews retain their own planned gates and must not be mislabeled as completed by a code review.
+
+Do not start this workflow for the blocked PR #507/Issue #509 D18-A attempt: worker model provenance remains unverified (D17), and no additional Cursor launch or implementation was authorized.
