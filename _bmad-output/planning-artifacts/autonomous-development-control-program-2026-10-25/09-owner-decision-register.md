@@ -36,7 +36,7 @@ Decision status vocabulary:
 | D15 | Permanent sole-owner operating structure | One human Product Owner, no second human collaborator or reviewer required; human approvals via owner-controlled gates; independent Grok/CI checks do not impersonate humans | **OWNER FACT CONFIRMED** — architecture change to comply is PROPOSED, not adopted |
 | D16 | Unattended runtime without owner approval every task | Separate tightly restricted non-interactive P5 execution boundary for pre-approved low-risk tasks; preserve manual owner gates for privileged/material changes | **OWNER_GATE OPEN FOR P5** — do not weaken the pilot `adcp` reviewer protection to claim full autonomy |
 | D17 | Cursor Cloud Agent worker/helper model integrity | Grok 4.6-only for parent **AND every child/helper/steered execution**; explicit per-run evidence, fail closed when unverifiable | **NEW TECHNICAL BLOCKER — OWNER_GATE OPEN**. Provider docs/support show coordinator can change worker model; a pinned parent model is **not sufficient**. No exception or model relaxation authorized |
-| D18 | One-time Grok 4.6 architecture-review bootstrap | Prefer owner-initiated, **planning-only** review in Cursor UI using existing PR/issue instructions and explicit Grok model; otherwise defer for approved review-only runner design | **CHOICE PENDING** — no automatic model-unverified `@cursor` launch or credential setup. Any one-time action must be explicitly owner-approved; do not count an unverified helper-model run as exclusive Grok review |
+| D18 | One-time Grok 4.6 architecture-review bootstrap | **Option A: one owner-initiated review-only Cursor run** using prewritten Issue #509 instructions, explicit Grok 4.6 selection, and model-use reporting | **OWNER AUTHORIZATION: OPTION A SELECTED (2026-10-25)** — approval scope is ONE review-only attempt, NOT dispatched by ChatGPT; no implementation, helpers without verifiable Grok-only execution, credentials, settings, merge, ADR adoption, UAT/Production change or deployment. Review PASS blocked if model provenance cannot be verified |
 
 ## Preliminary owner review preferences — 2026-10-25 (Asia/Singapore)
 
@@ -89,6 +89,16 @@ Product Owner states they have **no other collaborator and intend Cohestra to re
 - For `main`: required checks and PR reviewable history, **without one mandatory approving human review on owner-authored PRs**; Grok 4.6 BMAD validation is a recorded technical gate, not an impersonated human GitHub review.
 - For full autonomy: an owner-approved no-manual-confirmation-per-task runtime must be designed separately from the pilot gated Environment, with task-class restrictions and audited escalation. No approval to implement that new runtime yet.
 - Never treat GitHub comments authored through the owner's ChatGPT connector as automatic `OWNER_APPROVE` evidence without explicit human confirmation; role attribution and approval audit must be designed.
+
+## Owner D18 Option A authorization — 2026-10-25 (Asia/Singapore)
+
+**Owner's explicit direction (in ChatGPT):** "ok I will take option A". This authorizes **one owner-initiated, planning-only Cursor Grok 4.6 review attempt**, using the prewritten review instructions in [Issue #509](https://github.com/fad16papa/Cohestra/issues/509). This is a narrow **execution-attempt authorization** for D18 A only, not permission for ChatGPT to trigger `@cursor` or invoke a model-unverified API, and not evidence that Cursor has actually been launched.
+
+**Execution restrictions:** One review executor; explicitly select Grok 4.6; no code or repository write, no child/helper/model switching unless verifiably Grok-only, no credential/Environment/branch/workflow modification, no merge or any UAT/Production work. Require exact-head independent BMAD adversarial/edge/security/implementation readiness evidence. If any worker/helper model cannot be attested, record `MODEL_USAGE_UNVERIFIED` and NO-GO for strict model-policy signoff.
+
+**Still open:** D17 provider-verified model purity; D8 final ADR adoption; D4/D10/D12 actual security settings and permissions; D5 credentials; P4 live dispatcher; Production remains NO-GO. The Product Owner must perform the one-time Cursor UI action; the connected GitHub tool cannot launch Cursor.
+
+**Audit identity:** the GitHub commit documenting this selection may appear under the connected owner's account, but the underlying human authorization was the user's selection in this conversation, not an independent GitHub review action.
 
 ## Model-integrity and review-bootstrap technical finding (2026-10-25)
 
