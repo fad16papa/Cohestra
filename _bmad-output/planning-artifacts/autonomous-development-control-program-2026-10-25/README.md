@@ -31,6 +31,7 @@ Planning-only package. No application code, GitHub settings, secrets, or Epic 46
 | [12-exact-owner-security-review-packet.md](./12-exact-owner-security-review-packet.md) | Exact branch/Environment/permissions review packet (PROPOSED) |
 | [13-review-bootstrap-model-integrity.md](./13-review-bootstrap-model-integrity.md) | Independent Grok review start / unverified helper-model hard blocker and owner decision (PROPOSED) |
 | [14-code-review-security-loop.md](./14-code-review-security-loop.md) | Owner-approved CAT-SEC methodology: cataloged BMAD code review + security, fix/test/re-review loops; execution still gated |
+| [15-d17-verification-options-and-tests.md](./15-d17-verification-options-and-tests.md) | Source-verified D17 model-integrity alternatives, tests and owner decision packet (PROPOSED only) |
 
 Baseline for this branch: `main` `e962c8c3eead953a1f56f2b397b3e9d4fc669041`.
 
@@ -40,4 +41,3 @@ Owner selected GitHub-native orchestration as the **pilot direction**, but has *
 
 This planning PR remains a draft and cannot be merged or called implementation-complete based solely on a successful CI run. **Independent current-HEAD Grok 4.6 BMAD adversarial, edge-case and security reviews are still required**, followed by explicit owner architecture decisions. Historical first-pass FAIL reviews remain historical evidence.
 
-| [15-d17-verification-options-and-tests.md](./15-d17-verification-options-and-tests.md) | Source-verified D17 model-integrity alternatives, tests and owner decision packet (PROPOSED only) |
