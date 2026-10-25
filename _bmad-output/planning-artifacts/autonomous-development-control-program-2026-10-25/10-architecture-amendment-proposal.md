@@ -117,7 +117,7 @@ https://github.com/fad16papa/Cohestra/pull/507#issuecomment-6395301030
 | Decision | Proposed direction | Status |
 | --- | --- | --- |
 | Role split / AD-12 compatibility | ChatGPT orchestrates when invoked; Grok 4.6 reviews/executes | PROPOSED amendment |
-| Model policy | Verified Grok 4.6 hard pin for all engineering runs | PROPOSED |
+| Model policy | **Owner-approved D7/D17:** Grok 4.6 for substantive engineering and reviews; Composer 2.5 for narrow simple bug fixes + Grok review; explicit assigned model, no Auto or every-hidden-inference proof requirement | OWNER APPROVED POLICY; runner implementation still PROPOSED |
 | GitHub trusted control plane | Protect `main` and workflow-sensitive paths before credentials | PROPOSED |
 | Pilot execution | GitHub Actions + Cursor API, owner-started first | SELECTED DIRECTION; implementation not authorized |
 | Environment | `adcp`, least privilege, protected, reviewer-deadlock assessed | SELECTED DIRECTION; not provisioned |

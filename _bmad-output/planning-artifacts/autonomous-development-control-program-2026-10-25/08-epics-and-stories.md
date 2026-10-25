@@ -130,7 +130,7 @@ So that **ChatGPT-directed engineering is operationally autonomous while archite
 **Proposed AC:**
 
 - Durable GitHub-backed state machine with explicit retry budgets and idempotent task transitions, no recursive self-dispatch or unbounded fan-out
-- Authorized event starts only an already-approved task; independent Grok 4.6 model pin and BMAD workflow allowlist on every agent/review task
+- Authorized event starts only a previously approved task; assigned main execution model is Grok 4.6 for substantive work or Composer 2.5 only for qualified simple fixes, followed in all cases by independent Grok 4.6 BMAD review and a cataloged workflow allowlist. No Auto/default; internal provider helper telemetry is disclosed, not an every-inference pass requirement.
 - Event-triggered PR/CI review and bounded fix loops produce milestone reports and separate BLOCKER/MAJOR/OWNER_GATE notifications
 - ChatGPT input comes from a future explicitly approved API-based advisory worker or on-demand human ChatGPT session, never a fictional always-on chat
 - Material architecture, new data egress, sensitive security changes, privilege expansion, Production and deployment remain Product Owner approval-only
