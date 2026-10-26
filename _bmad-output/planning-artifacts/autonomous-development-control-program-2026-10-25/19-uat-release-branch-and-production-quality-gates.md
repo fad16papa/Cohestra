@@ -1,14 +1,14 @@
 ---
 title: D8 UAT Branch and Clean-Lean Production Release Contract
 date: 2026-10-26
-status: OWNER_DIRECTION_SELECTED_REVIEW_PENDING
+status: UAT_FIRST_SEQUENCE_SELECTED_REVIEW_PENDING
 implementation: NOT_AUTHORIZED
 uat_cutover: NOT_AUTHORIZED
 production: NO_GO
 issue: 519
 ---
 
-# D8 release architecture: one repo, protected main and release/uat
+# D8 release architecture: PR and changes → UAT acceptance → protected main → owner-only Production
 
 ## 1. Product Owner direction and present evidence
 
@@ -21,15 +21,23 @@ Verified repository facts as of 2026-10-26:
 - deploy/validate-deploy-uat-workflow.sh and deploy/validate-uat-isolation.sh encode deployment safety contract checks. They must change with the workflow and cannot be bypassed.
 - .github/workflows/deploy-production.yml currently allows manually dispatched deploy/rollback only, with Production Environment, 40-character SHA, repeated provenance and overlay/host checks. deploy/validate-production-provenance.sh requires trusted main ancestry, merged PR provenance, CI and GitGuardian checks. Preserve these safeguards; do not weaken Epic 46 Production NO-GO.
 
-## 2. One-repository branch and release topology
+## 2. One-repository, UAT-FIRST release topology
 
-| Branch | Authority | Trigger | Deployment |
+**Owner clarification on 2026-10-26:** the intended sequence is **PR → changes → UAT → (if all clean) → main**. This supersedes the previous proposed main-to-release/uat promotion direction. It is a selected design direction, **not** a GitHub branch/ruleset/workflow/merge authorization.
+
+| Stage/ref | Source | Required gate | Result |
 | --- | --- | --- | --- |
-| main | Protected engineering integration and source of Production provenance | PR/merge with required CI and security checks | NO automatic UAT or Production from main CI |
-| release/uat | Protected UAT release reference; updates only by authorized promotion of a SHA already reachable from main | Trusted promotion after exact-SHA tests, security validation and approval | UAT may deploy accepted promoted SHA after independent release gates |
-| Production release | No separate release/prod branch proposed; exact SHA reachable from protected main | Separate human owner-authorized Production workflow_dispatch | Production only following ALL required tests, enhanced security, clean-lean evidence and Epic 46 gates |
+| feature/task branch | Branch from approved baseline and scope | Grok 4.6/BMAD implementation, targeted unit/integration/security checks and separate code review | PR proposing changes to protected release/uat |
+| protected release/uat | PR from feature branch; no direct untrusted pushes | Full pre-deployment CI/security gates on final candidate SHA, tenant/billing/auth isolation tests; immutable UAT release authorization | Deploy exact vetted SHA to isolated UAT |
+| UAT acceptance | Deployed release/uat SHA and runtime artifact digest | Post-deploy smoke, browser/end-to-end, integration/security probes, acceptance evidence, 0 BLOCKER/MAJOR | ACCEPTED_UAT_RELEASE or HOLD/ROLLBACK |
+| protected main | Promotion PR from the UAT-accepted release/uat branch, after acceptance | Revalidate merge result and actual resulting source tree; preserve 2-parent merge provenance, all CI/security; prove production runtime code is UAT-accepted or require UAT retest for any drift | Production-eligible commit on main, **NOT deployed** |
+| Production | main-reachable merged SHA under existing provenance | All tests, extra security and measured clean/lean artifact gates; owner production Environment approval | Separate owner-only deployment, Epic 46 still NO-GO |
 
-A normal green main CI must never implicitly deploy UAT after the cutover. Prefer fast-forward-only promotion of an approved main commit to release/uat, retaining exactly the same code SHA. If fast-forward conflicts with PR-only branch protection, resolve through a separately owner-approved narrowly scoped promotion mechanism, NOT a general bot bypass or force push. A release-only merge commit that changes the tested artifact is forbidden.
+**Trust and history rule:** protected main remains the Product Owner's *production release source*, not a bypass route for ordinary features. Production provenance currently requires a two-parent merge commit and immutable main ancestry. Therefore the promotion PR merge may create a new main SHA unlike the SHA tested in UAT. The gate MUST compare final main merge tree/build inputs and deployable runtime artifact(s) to the UAT-accepted source/build, verify no extra untested runtime code was included, and rerun exact-main-SHA CI/security. If the integration changes runtime behavior or security-sensitive build inputs, re-run UAT acceptance or HOLD. Don't claim hash equality when histories differ; prefer digest equality when actually reproducible.
+
+**Divergence management:** before making a new UAT candidate, check release/uat ancestry relative to main. After a promotion, an independently gated ref-alignment/sync may be required to avoid duplicate or unrelated content. Such a sync must NOT itself be treated as approval to deploy or bypass a PR rule. Block circular or untested merges, release drift, and stale PR-head reviews. The reliable architecture is a versioned release manifest and explicit state transitions, NOT a raw `push` as sole proof of authorization.
+
+**No new repository. No automatic Production deployment. No implicit UAT deploy on main CI.**
 
 ## 3. Shared branch quality and security floor
 
@@ -40,16 +48,15 @@ A normal green main CI must never implicitly deploy UAT after the cutover. Prefe
 - Normalize findings and approved exceptions in a tamper-evident record linked to exact SHA, PR, tests, source build, generated artifact digest and actor. Owner must approve any new vendor, scan cost, access/egress and exception mechanism before activation.
 - Unknown actor, missing approval evidence, scope drift, SHA change, uncertain classifier or inconsistent protected checks => RELEASE_HOLD.
 
-## 4. UAT promotion and deploy safety
+## 4. UAT-first validation, acceptance and promotion to main
 
-1. Select an exact previously tested main SHA and validate protection rules, main ancestry, all required tests and security checks on that SHA.
-2. Prove the requested release/uat ref update is from a trusted promotion action, fast-forward-only, current release monotonic, atomic/idempotent and replay resistant. GitHub issue comments, labels and task-authored impact fields alone are not owner approvals.
-3. Require release/uat CI/security validations to finish with applicable success on the same SHA before runtime deployment.
-4. Change deploy.yml so that a CI success on main cannot deploy UAT, and require a verified promotion SHA, release/uat provenance and accepted event for any new deploy. Do not silently trust any push by itself.
-5. Require DEPLOY_BRANCH=release/uat explicitly both in GitHub SSH execution and on-host remote-deploy.sh. No implicit main fallback. Verify deployed SHA exactly against authorized release/uat revision.
-6. Harden UAT Environment rules and workflow_dispatch actor/ref/SHA checking. Note: a GitHub workflow_run downstream workflow is defined on default branch and its GitHub ref can differ from the upstream release/uat ref. Do not rely on Environment branch allowlisting by itself with workflow_run; empirically verify event semantics and choose a compatible promotion-dispatch pattern.
-7. Preserve existing isolated Cohestra UAT Docker project, locked networks/secrets, HTTPS and tenant smoke, Playwright and lifecycle tests, post-deploy SHA proof, artifacts and rollback to last accepted release.
-8. Failure or uncertainty preserves currently running UAT. Repeated promotion events must not cause duplicate deploys. A manual dispatch on main, a non-main SHA, a skipped check or untrusted label must be refused.
+1. **PR to release/uat:** a scoped agent/task branch proposes changes. Protected branch policy requires trusted PR review (Grok BMAD/CAT-SEC on exact final PR HEAD), all applicable pre-deploy unit/integration/front-end/Docker/security checks, no unresolved BLOCKER/MAJOR, and owner gates for material changes. Required checks must be passed on the SHA that is actually merged or provably unchanged-equivalent under branch protection.
+2. **Controlled UAT deployment:** only vetted and authorized release/uat commits (not arbitrary branch pushes or untrusted labels) may deploy via the UAT Environment. Update `.github/workflows/deploy.yml`, SSH ref/source checks, `deploy/remote-deploy.sh`, `ci.yml` and validators so `DEPLOY_BRANCH=release/uat` is explicit and `workflow_run(main)` can never trigger UAT. Verify approved exact SHA, actor/event, release manifest and monotonic sequencing. The special semantics of `workflow_run` versus GitHub Environment branch rules must be tested; neither event nor branch protection alone is human authorization.
+3. **Two-stage test interpretation:** all executable **pre-deploy** tests/security checks must pass before UAT rollout. The UAT **post-deploy** browser/smoke/end-to-end and runtime security checks necessarily run *after* UAT starts. All post-deploy required checks must pass before promotion toward main. Missing, neutral or skipped checks = HOLD, not PASS.
+4. **UAT acceptance:** prove exact deployed release/uat SHA and runtime artifact digest, health, tenant isolation, auth/registration/billing/Paddle, browser/E2E and audit evidence. Failure holds acceptance, maintains or returns to last accepted UAT release and blocks main promotion; no agent may mark its own blocker waived.
+5. **Promotion PR to main:** only accepted UAT release commits are eligible. PR merge preserves protected main review/test policy and two-parent provenance expected by `validate-production-provenance.sh`. Confirm every changed runtime file/artifact was UAT-tested; assert final merge-tree or runtime-artifact equivalence and rerun main SHA-specific CI, scanners and security evidence. If UAT-to-main merge introduces additional runtime changes through conflicts or differing main state, HOLD for a fresh UAT round. Main merger cannot be treated as owner Production authorization.
+6. **Production handoff:** after main promotion, require enhanced security and clean/lean gates in section 5, plus a separate human owner approval for the existing Production `workflow_dispatch`. Production remains NO-GO during Epic 46.
+7. **History/replay safety:** one active release, idempotent deploy/promote records, nonregressing UAT revisions, no force push, approval identity not inferred from issue comments, review invalidation on new SHA and no direct agent push to protected main.
 
 ## 5. Production hardening in addition to the shared baseline
 
@@ -64,23 +71,23 @@ Production release is OWNER ONLY and remains NO-GO pending Epic 46. It must requ
 - Measured immutable artifact budgets: collect baseline sizes/layers/packages/SBOM, memory/CPU/startup metrics and digest inventory; introduce numerical growth thresholds only after baseline and owner acceptance. Unexplained release bloat => OWNER_GATE, not silently deploy.
 - Required Production owner Environment approval, deployment provenance and SHA verification just before SSH, and retained manual deploy/rollback route. No autonomous Production promotion.
 
-## 6. Exact migration and test contract
+## 6. Controlled cutover and end-to-end test contract
 
-This cutover has an unavoidable special hazard: the currently deployed workflow can still see the main CI success from the merge that replaces it. Mitigation must be explicitly designed, reviewed, tested and owner-approved before that merge. A separate branch alone does NOT remove this hazard.
+The first main merge installing new UAT trigger logic is **special**: the currently active old workflow may still auto-deploy UAT on `main` CI success. It needs a separately reviewed/owner-authorized no-unintended-deploy cutover plan. A new release branch alone does not switch the old workflow off.
 
-Implementation sequence only AFTER owner approves design/permissions:
-1. Record current actual UAT deployed SHA; verify its main ancestry and whether fast-forward release/uat initialization is safe.
-2. Define exact branch protections, required-status checks, UAT Environment dispatch rules and narrowly privileged owner-authenticated promotion operation. No rule relaxation without owner gate.
-3. Implement CI(main + release/uat), UAT promoted-SHA-only workflow, GitHub SSH DEPLOY_BRANCH, on-host remote-deploy.sh, and all existing deployment validators coherently; retain SHA pinning.
-4. Add negative tests for main CI never deploying UAT, wrong ref/manual dispatch, unauthorized label, bot actor, missing/failed/neutral status, stale SHA, divergence/non-fast-forward, unknown secrets, race/replay and malformed input.
-5. Validate positive path: authorized main SHA fast-forward to release/uat, successful full tests/security, exactly one UAT deployment of the accepted digest/SHA, tenant/browser/smoke acceptance and auditable rollback.
-6. Validate Production regression: manual owner only, exact merge-provenance main SHA, six required checks plus new security/clean/lean quality gates, no UAT secrets or resources and no Production deployment during test.
-7. Run independent Grok 4.6 code/security review on actual latest SHA, clear BLOCKER/MAJOR; specific owner cutover and main-merge/UAT-impact approval.
+Implementation stages only after owner signoff:
+1. Inventory existing UAT deployed SHA, release/uat initial baseline and main/release divergence; record branch and event/ruleset plan before code implementation.
+2. Draft protected branch and security check rules for release/uat and main, allowing owner-controlled PR promotion without enabling unchecked bypasses or requiring a second human reviewer.
+3. Update CI triggers, UAT workflow, SSH explicit release/uat source, fail-closed manual dispatch, UAT environment restrictions, on-host scripts, SHA validators and related contract tests **together**. Ensure default branch workflow_run semantics cannot make `main` CI eligible for UAT.
+4. **Positive demonstration:** feature PR → pre-deploy CI/GitGuardian/BMAD security checks pass → approved UAT release → post-deploy browser/tenant/auth/billing and security acceptance passes → promotion PR to main → exact final-main-SHA CI/GitGuardian + source/artifact equivalence PASS → Production remains un-dispatched.
+5. **Negative demonstrations:** simple main PR merge + green main CI produce ZERO UAT deployment; premature UAT-to-main PR before acceptance is rejected; an extra code change in main after UAT acceptance fails equivalence; skipped/missing/neutral tests HOLD; stale SHA/review, release branch drift, untrusted actor/label, malformed input, duplicate event and unauthorized ref all fail closed.
+6. Preserve Production two-parent protected-main merge/provenance security, backup/restore, host isolation and manual owner approval. No UAT/Production deployment during automated negative tests.
+7. Require a separate latest-HEAD Grok 4.6 BMAD architecture + code/security review with zero unresolved BLOCKER/MAJOR, and exact owner cutover authorization.
 
 ## 7. Governance and D8 impact
 
-Owner-selected direction: SINGLE repo + protected main + protected release/uat, shared all-test security floor and elevated secure clean/lean Production quality. These requirements must be integrated into D8 and the [ADCP v1 controller] design because main must be free to accept reviewed changes without automatically redeploying UAT.
+The owner has selected the **UAT-first** direction. This replaces earlier language saying UAT is a downstream promotion of a main commit. `main` is the protected Production release source; release/uat is the protected UAT acceptance branch. Existing Production owner-only gates and the clean/lean security requirements remain intact.
 
-Open material architecture decisions: implementable fast-forward authority under branch protection; exact trustworthy release promotion and event/Environment gate; cutover procedure without unintended old-workflow UAT deployment; concrete new scanner vendors/thresholds and artifact budget; Production Epic 46 deployment gating and additional checks. No prior owner approval of a topology translates into permission to change workflows or release.
+**Unresolved implementation details:** actor/ruleset/protected-PR mechanics for bidirectional release history, exact runtime/source equivalence after the UAT→main merge, authentication of release acceptance, ref selection under GitHub Actions workflow_run, cutover safety and final owner-approved scanner/budget choices. No previous issue comment or owner request authorizes changing these operational controls without review.
 
-Tracking: GitHub Issues #517 and #519; pending independent D8 architecture review #518; proposed ADCP planning PR #507. Production NO-GO.
+Tracking: Issues #517, #518, #519; draft PR #507. **Planning changes only**; no new branch, secrets, workflow, UAT, Production or main merges performed. Production NO-GO.
