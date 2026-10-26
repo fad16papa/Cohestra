@@ -18,7 +18,8 @@ This tree is a review-only GitHub → Cursor Automation dispatcher. It is not in
 - Manual `workflow_dispatch` only, from `refs/heads/main`, actor `fad16papa`, repository `fad16papa/Cohestra`.
 - Phase 1 preflight: no `adcp` environment, no webhook secrets, read-only GitHub API (`issues: read` included to fetch the review-contract issue).
 - Phase 2: `environment: adcp`, independently revalidates PR HEAD + six required checks, then one JSON POST.
-- GitHub Actions checks bind to trusted default-branch workflow path `.github/workflows/ci.yml` and event `pull_request` on the **exact PR HEAD SHA**. Merge-commit success cannot mask a failing head. Same job names from another workflow HOLD.
+- GitHub Actions checks bind to trusted default-branch workflow path `.github/workflows/ci.yml`, event `pull_request`, the exact PR HEAD SHA, the default-branch workflow ID, and the jobs actually present on that run. Merge-commit success cannot mask a failing head. Same job names from another workflow HOLD.
+- Trusted CI **definition** is fail-closed: the dispatcher fetches `.github/workflows/ci.yml` at the protected-main SHA and at the PR HEAD as git blobs, compares blob SHA and bytes, and HOLDs on add/rename/delete, file-list hits, hash mismatch, unverifiable refs, or a main-tip vs dispatch-SHA race. `security_escalation` cannot convert a CI integrity HOLD into PASS.
 - Review contract issue is allowlisted in trusted policy (pilot: `#518` → PR `#507` / SHA `aeb7d0fbe34240359dd21af3583eae4f387add97` / `review-only`). The issue is fetched; its body is untrusted mutable data and is never owner approval.
 - HTTP 2xx is `DISPATCH_ACCEPTED`. It is never `REVIEW_PASS`.
 

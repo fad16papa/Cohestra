@@ -16,6 +16,8 @@ export const POLICY = Object.freeze({
     /^\/automations\/webhook\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
   trustedActionsWorkflowPath: ".github/workflows/ci.yml",
   trustedActionsEvents: Object.freeze(["pull_request"]),
+  trustedGithubApiHost: "api.github.com",
+  protectedMainRef: "heads/main",
   allowedReviewContracts: Object.freeze({
     518: Object.freeze({
       pull_request: 507,
@@ -83,6 +85,7 @@ export const HOLD = Object.freeze({
   CHECK_WRONG_EVENT: "required_check_wrong_event",
   CHECK_AMBIGUOUS: "required_check_ambiguous_origin",
   CHECK_STALE: "required_check_stale",
+  CHECK_WORKFLOW_DEFINITION: "required_check_untrusted_workflow_definition",
   REVIEW_CONTRACT: "review_contract_untrusted",
   GITHUB_API: "github_api_fail_closed",
   PAGINATION_INCOMPLETE: "github_pagination_incomplete",

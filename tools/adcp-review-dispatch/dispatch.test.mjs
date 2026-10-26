@@ -27,7 +27,29 @@ const CI = path.join(ROOT, ".github/workflows/ci.yml");
 const SHA = "aeb7d0fbe34240359dd21af3583eae4f387add97";
 const OTHER_SHA = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 const MERGE_SHA = "cccccccccccccccccccccccccccccccccccccccc";
+const MAIN_SHA = "e962c8c3eead953a1f56f2b397b3e9d4fc669041";
 const CI_RUN_ID = 1001;
+const TRUSTED_CI_BLOB = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const SPOOF_CI_BLOB = "ffffffffffffffffffffffffffffffffffffffff";
+const TRUSTED_CI_BYTES = Buffer.from("name: CI\n# trusted-main-definition\n", "utf8");
+const SPOOF_CI_BYTES = Buffer.from("name: CI\n# rewritten-pr-definition\n", "utf8");
+const TRUSTED_WORKFLOW = {
+  id: 42,
+  path: ".github/workflows/ci.yml",
+  state: "active",
+};
+
+function defaultJobs(runId = CI_RUN_ID) {
+  return POLICY.requiredChecks
+    .filter((item) => item.appSlug === "github-actions")
+    .map((item, index) => ({
+      id: 10 + index,
+      name: item.name,
+      run_id: runId,
+      status: "completed",
+      conclusion: "success",
+    }));
+}
 const WEBHOOK_URL =
   "https://api2.cursor.sh/automations/webhook/00000000-0000-0000-0000-000000000000";
 
@@ -59,7 +81,7 @@ function goodCtx(overrides = {}) {
     repository: "fad16papa/Cohestra",
     actor: "fad16papa",
     triggeringActor: "fad16papa",
-    sha: "e962c8c3eead953a1f56f2b397b3e9d4fc669041",
+    sha: MAIN_SHA,
     runAttempt: 1,
     inputs: goodInputs(overrides.inputs),
     webhookUrl: WEBHOOK_URL,
@@ -150,6 +172,10 @@ function mockGithub({
   failStatus = null,
   issue = goodIssue(),
   issuesByNumber = null,
+  protectedMainSha = MAIN_SHA,
+  contentsByRef = null,
+  workflow = TRUSTED_WORKFLOW,
+  jobsByRunId = null,
 } = {}) {
   const prs = Array.isArray(pr) ? pr : [pr];
   let prCalls = 0;
@@ -182,11 +208,33 @@ function mockGithub({
     async listWorkflowRuns(sha) {
       return workflowRunsBySha[String(sha).toLowerCase()] || [];
     },
-    async listWorkflowJobs() {
-      return [];
+    async listWorkflowJobs(runId) {
+      if (jobsByRunId) {
+        return jobsByRunId[runId] || jobsByRunId[String(runId)] || [];
+      }
+      return defaultJobs(runId);
     },
     async listPullFiles() {
       return { files, incomplete };
+    },
+    async getProtectedMainSha() {
+      return protectedMainSha;
+    },
+    async getWorkflow() {
+      return workflow;
+    },
+    async getFileAtRef(path, ref) {
+      if (path !== POLICY.trustedActionsWorkflowPath) {
+        return { missing: true };
+      }
+      const key = String(ref || "").toLowerCase();
+      if (contentsByRef && Object.prototype.hasOwnProperty.call(contentsByRef, key)) {
+        return contentsByRef[key];
+      }
+      if (contentsByRef && Object.prototype.hasOwnProperty.call(contentsByRef, ref)) {
+        return contentsByRef[ref];
+      }
+      return { blobSha: TRUSTED_CI_BLOB, bytes: Buffer.from(TRUSTED_CI_BYTES) };
     },
   };
 }
@@ -570,31 +618,18 @@ test("HOLD: required check without pull_requests association", async () => {
   assert.equal(transport.calls.length, 0);
 });
 
-test("HOLD: duplicated trusted workflow IDs are ambiguous", async () => {
+test("HOLD: Actions run workflow_id does not match trusted ci.yml workflow", async () => {
   const transport = createMockTransport();
-  const secondRun = 1002;
-  const first = requiredChecks(SHA);
-  const duplicate = requiredChecks(SHA, { runId: secondRun }).map((item) => ({
-    ...item,
-    completed_at: "2026-10-26T03:00:00Z",
-  }));
   const result = await runDispatch(goodCtx(), {
     github: mockGithub({
-      checksBySha: { [SHA]: [...first, ...duplicate] },
       workflowRunsBySha: {
-        [SHA]: [
-          ...goodWorkflowRuns(SHA),
-          ...goodWorkflowRuns(SHA, {
-            id: secondRun,
-            workflow_id: 43,
-            check_suite_id: 5002,
-          }),
-        ],
+        [SHA]: goodWorkflowRuns(SHA, { workflow_id: 43 }),
       },
     }),
     transport,
   });
-  assert.equal(result.evidence.hold_reason, HOLD.CHECK_AMBIGUOUS);
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_UNTRUSTED_WORKFLOW);
   assert.equal(transport.calls.length, 0);
 });
 
@@ -628,6 +663,183 @@ test("trusted ci.yml pull_request checks still win over a spoofed twin", async (
   });
   assert.equal(result.ok, true);
   assert.equal(transport.calls.length, 1);
+});
+
+test("HOLD: same-path rewritten ci.yml is not trusted CI", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      files: [{ filename: "docs/adcp.md" }],
+      contentsByRef: {
+        [SHA]: { blobSha: SPOOF_CI_BLOB, bytes: Buffer.from(SPOOF_CI_BYTES) },
+        [MAIN_SHA]: { blobSha: TRUSTED_CI_BLOB, bytes: Buffer.from(TRUSTED_CI_BYTES) },
+      },
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_WORKFLOW_DEFINITION);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: ci.yml in PR file list cannot escalate into PASS", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      files: [
+        { filename: ".github/workflows/ci.yml" },
+        { filename: "docs/readme.md" },
+      ],
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_WORKFLOW_DEFINITION);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: renamed ci.yml is an untrusted workflow definition", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      files: [
+        {
+          filename: "docs/moved-ci.yml",
+          previous_filename: ".github/workflows/ci.yml",
+          status: "renamed",
+        },
+      ],
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_WORKFLOW_DEFINITION);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: deleted ci.yml at PR HEAD is unverifiable", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      contentsByRef: {
+        [SHA]: { missing: true },
+        [MAIN_SHA]: { blobSha: TRUSTED_CI_BLOB, bytes: Buffer.from(TRUSTED_CI_BYTES) },
+      },
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_WORKFLOW_DEFINITION);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: empty PR file list still HOLDs on ci.yml byte mismatch", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      files: [],
+      contentsByRef: {
+        [SHA]: { blobSha: SPOOF_CI_BLOB, bytes: Buffer.from(SPOOF_CI_BYTES) },
+        [MAIN_SHA]: { blobSha: TRUSTED_CI_BLOB, bytes: Buffer.from(TRUSTED_CI_BYTES) },
+      },
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_WORKFLOW_DEFINITION);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: protected main SHA does not match dispatch SHA", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      protectedMainSha: OTHER_SHA,
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_WORKFLOW_DEFINITION);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: protected main ref is unverifiable", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      protectedMainSha: null,
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_WORKFLOW_DEFINITION);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: empty workflow_run.pull_requests is not PR evidence", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      workflowRunsBySha: {
+        [SHA]: goodWorkflowRuns(SHA, { pull_requests: [] }),
+      },
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_UNTRUSTED_WORKFLOW);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: GitGuardian success on main is not PR-head evidence", async () => {
+  const transport = createMockTransport();
+  const checks = requiredChecks(SHA).map((item) =>
+    item.app.slug === "gitguardian" ? { ...item, head_branch: "main" } : item,
+  );
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({ checksBySha: { [SHA]: checks } }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_MISSING);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: required job name is missing from the trusted workflow run", async () => {
+  const transport = createMockTransport();
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({
+      jobsByRunId: {
+        [CI_RUN_ID]: [{ id: 1, name: "unrelated job", run_id: CI_RUN_ID }],
+      },
+    }),
+    transport,
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.evidence.hold_reason, HOLD.CHECK_UNTRUSTED_WORKFLOW);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: review contract body Exact target HEAD is required", async () => {
+  const transport = createMockTransport();
+  const body = `review-only planning notes mention ${SHA} in passing\n`;
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({ issue: goodIssue({ body }) }),
+    transport,
+  });
+  assert.equal(result.evidence.hold_reason, HOLD.REVIEW_CONTRACT);
+  assert.equal(transport.calls.length, 0);
+});
+
+test("HOLD: later task_type substitution after review-only", async () => {
+  const transport = createMockTransport();
+  const body = `${goodIssue().body}\n\ntask_type: review-only\ntask_type: implementation\n`;
+  const result = await runDispatch(goodCtx(), {
+    github: mockGithub({ issue: goodIssue({ body }) }),
+    transport,
+  });
+  assert.equal(result.evidence.hold_reason, HOLD.REVIEW_CONTRACT);
+  assert.equal(transport.calls.length, 0);
 });
 
 test("HOLD: review contract issue is not allowlisted", async () => {
@@ -892,12 +1104,12 @@ test("in-process duplicate POST is refused", async () => {
   assert.equal(transport.calls.length, 1);
 });
 
-test("privileged paths escalate but still review-only", async () => {
+test("privileged non-CI paths escalate but still review-only", async () => {
   const transport = createMockTransport();
   const result = await runDispatch(goodCtx(), {
     github: mockGithub({
       files: [
-        { filename: ".github/workflows/ci.yml" },
+        { filename: "tools/adcp-review-dispatch/run.mjs" },
         { filename: "docs/readme.md" },
       ],
     }),
@@ -906,17 +1118,17 @@ test("privileged paths escalate but still review-only", async () => {
   assert.equal(result.ok, true);
   assert.equal(result.payload.security_escalation, true);
   assert.equal(result.payload.task_type, "review-only");
-  assert.ok(result.payload.privileged_paths.includes(".github/workflows/ci.yml"));
+  assert.ok(result.payload.privileged_paths.includes("tools/adcp-review-dispatch/run.mjs"));
 });
 
-test("rename away from a privileged path still escalates", async () => {
+test("rename away from a non-CI privileged path still escalates", async () => {
   const transport = createMockTransport();
   const result = await runDispatch(goodCtx(), {
     github: mockGithub({
       files: [
         {
-          filename: "docs/moved-ci.yml",
-          previous_filename: ".github/workflows/ci.yml",
+          filename: "docs/moved-run.mjs",
+          previous_filename: "tools/adcp-review-dispatch/run.mjs",
           status: "renamed",
         },
       ],
@@ -925,7 +1137,7 @@ test("rename away from a privileged path still escalates", async () => {
   });
   assert.equal(result.ok, true);
   assert.equal(result.payload.security_escalation, true);
-  assert.ok(result.payload.privileged_paths.includes(".github/workflows/ci.yml"));
+  assert.ok(result.payload.privileged_paths.includes("tools/adcp-review-dispatch/run.mjs"));
 });
 
 test("privilegedPaths inspects previous_filename", () => {

@@ -5,7 +5,7 @@ const ID_RE = /^[1-9][0-9]{0,9}$/;
 const REQUEST_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{7,127}$/;
 const BEARER_RE = /^Bearer [A-Za-z0-9._\-+/=]+$/;
 const ACTIONS_RUN_URL_RE = /\/actions\/runs\/(\d+)(?:\/|$)/;
-const TASK_TYPE_RE = /task_type\s*[:=]\s*([A-Za-z0-9_-]+)/i;
+const TASK_TYPE_RE = /task_type\s*[:=]\s*([A-Za-z0-9_-]+)/gi;
 const EXACT_HEAD_RE = /Exact target HEAD:\**\s*`([0-9a-fA-F]{40})`/i;
 const PLANNING_PR_RE = /Planning PR:\**\s*\[#(\d+)\]/i;
 
@@ -36,12 +36,46 @@ export function validateDispatchContext(ctx) {
     return fail(HOLD.WRONG_REPO, ctx.repository || "missing");
   }
   const actor = String(ctx.actor || "");
-  const triggering = String(ctx.triggeringActor || actor);
+  const triggering = String(ctx.triggeringActor || "");
+  if (!triggering) {
+    return fail(HOLD.UNTRUSTED_ACTOR, "triggering_missing");
+  }
   if (
     !POLICY.allowedActors.includes(actor) ||
     !POLICY.allowedActors.includes(triggering)
   ) {
     return fail(HOLD.UNTRUSTED_ACTOR, actor);
+  }
+  if (ctx.apiUrl) {
+    const api = validateGithubApiUrl(ctx.apiUrl);
+    if (!api.ok) {
+      return api;
+    }
+  }
+  return { ok: true };
+}
+
+export function validateGithubApiUrl(raw) {
+  if (typeof raw !== "string" || raw.length === 0) {
+    return fail(HOLD.GITHUB_API, "api_url_missing");
+  }
+  let url;
+  try {
+    url = new URL(raw);
+  } catch {
+    return fail(HOLD.GITHUB_API, "api_url_unparseable");
+  }
+  if (url.protocol !== "https:") {
+    return fail(HOLD.GITHUB_API, "api_url_not_https");
+  }
+  if (url.hostname !== POLICY.trustedGithubApiHost) {
+    return fail(HOLD.GITHUB_API, "api_host");
+  }
+  if (url.username || url.password) {
+    return fail(HOLD.GITHUB_API, "api_userinfo");
+  }
+  if (url.pathname && url.pathname !== "/" && url.pathname !== "") {
+    return fail(HOLD.GITHUB_API, "api_path");
   }
   return { ok: true };
 }
@@ -156,19 +190,21 @@ export function validateReviewContract(issue, inputs) {
     return fail(HOLD.REVIEW_CONTRACT, "empty_body");
   }
   const exactHead = body.match(EXACT_HEAD_RE);
-  if (exactHead && exactHead[1].toLowerCase() !== allowed.expected_sha) {
-    return fail(HOLD.REVIEW_CONTRACT, "stale_body_sha");
+  if (!exactHead) {
+    return fail(HOLD.REVIEW_CONTRACT, "exact_head_absent");
   }
-  if (!body.toLowerCase().includes(allowed.expected_sha)) {
-    return fail(HOLD.REVIEW_CONTRACT, "sha_absent_from_body");
+  if (exactHead[1].toLowerCase() !== allowed.expected_sha) {
+    return fail(HOLD.REVIEW_CONTRACT, "stale_body_sha");
   }
   const planningPr = body.match(PLANNING_PR_RE);
   if (planningPr && Number(planningPr[1]) !== Number(allowed.pull_request)) {
     return fail(HOLD.REVIEW_CONTRACT, "body_pr_mismatch");
   }
-  const taskType = body.match(TASK_TYPE_RE);
-  if (taskType && String(taskType[1]).toLowerCase() !== "review-only") {
-    return fail(HOLD.REVIEW_CONTRACT, "task_substitution");
+  const taskTypes = [...body.matchAll(TASK_TYPE_RE)];
+  for (const taskType of taskTypes) {
+    if (String(taskType[1]).toLowerCase() !== "review-only") {
+      return fail(HOLD.REVIEW_CONTRACT, "task_substitution");
+    }
   }
   if (!/review[ -]only/i.test(body)) {
     return fail(HOLD.REVIEW_CONTRACT, "review_only_absent");
@@ -191,16 +227,13 @@ export function isCheckEligible(check, { expectedSha, prNumber }) {
   if (!numbers.includes(Number(prNumber))) {
     return false;
   }
-  if (
-    String(check.head_branch || "") === "main" &&
-    check.app?.slug === "github-actions"
-  ) {
+  if (String(check.head_branch || "") === "main") {
     return false;
   }
   return true;
 }
 
-export function resolveActionsProvenance(check, workflowRuns) {
+export function resolveActionsProvenance(check, workflowRuns, { trustedWorkflow = null } = {}) {
   const html = String(check.html_url || "");
   const match = html.match(ACTIONS_RUN_URL_RE);
   if (!match) {
@@ -220,18 +253,40 @@ export function resolveActionsProvenance(check, workflowRuns) {
   if (String(run.head_sha || "").toLowerCase() !== String(check.head_sha || "").toLowerCase()) {
     return fail(HOLD.CHECK_UNTRUSTED_WORKFLOW, "run_sha");
   }
-  if (Array.isArray(run.pull_requests) && run.pull_requests.length > 0) {
-    const numbers = run.pull_requests.map((item) => Number(item.number));
-    const checkPrs = (check.pull_requests || []).map((item) => Number(item.number));
-    const overlap = numbers.filter((n) => checkPrs.includes(n));
-    if (overlap.length === 0) {
-      return fail(HOLD.CHECK_UNTRUSTED_WORKFLOW, "run_pr");
+  if (!Array.isArray(run.pull_requests) || run.pull_requests.length === 0) {
+    return fail(HOLD.CHECK_UNTRUSTED_WORKFLOW, "run_pr");
+  }
+  const numbers = run.pull_requests.map((item) => Number(item.number));
+  const checkPrs = (check.pull_requests || []).map((item) => Number(item.number));
+  const overlap = numbers.filter((n) => checkPrs.includes(n));
+  if (overlap.length === 0) {
+    return fail(HOLD.CHECK_UNTRUSTED_WORKFLOW, "run_pr");
+  }
+  if (
+    check.check_suite?.id != null &&
+    run.check_suite_id != null &&
+    Number(check.check_suite.id) !== Number(run.check_suite_id)
+  ) {
+    return fail(HOLD.CHECK_UNTRUSTED_WORKFLOW, "suite");
+  }
+  if (trustedWorkflow) {
+    if (Number(run.workflow_id) !== Number(trustedWorkflow.id)) {
+      return fail(HOLD.CHECK_UNTRUSTED_WORKFLOW, "workflow_id");
+    }
+    if (String(trustedWorkflow.path || "") !== POLICY.trustedActionsWorkflowPath) {
+      return fail(HOLD.CHECK_UNTRUSTED_WORKFLOW, "trusted_workflow_path");
+    }
+    if (String(trustedWorkflow.state || "") !== "active") {
+      return fail(HOLD.CHECK_UNTRUSTED_WORKFLOW, "workflow_inactive");
     }
   }
   return { ok: true, run };
 }
 
-export function validateCheckRuns(checks, { expectedSha, prNumber, workflowRuns = [] }) {
+export function validateCheckRuns(
+  checks,
+  { expectedSha, prNumber, workflowRuns = [], jobsByRunId = {}, trustedWorkflow = null } = {},
+) {
   const ci_evidence = {};
   const list = Array.isArray(checks) ? checks : [];
 
@@ -252,9 +307,26 @@ export function validateCheckRuns(checks, { expectedSha, prNumber, workflowRuns 
         continue;
       }
       if (required.appSlug === "github-actions") {
-        const provenance = resolveActionsProvenance(check, workflowRuns);
+        const provenance = resolveActionsProvenance(check, workflowRuns, {
+          trustedWorkflow,
+        });
         if (!provenance.ok) {
           untrusted.push({ check, reason: provenance.reason, detail: provenance.detail });
+          continue;
+        }
+        const jobs =
+          jobsByRunId[provenance.run.id] ||
+          jobsByRunId[String(provenance.run.id)] ||
+          [];
+        if (
+          !Array.isArray(jobs) ||
+          !jobs.some((job) => String(job.name || "").trim() === required.name)
+        ) {
+          untrusted.push({
+            check,
+            reason: HOLD.CHECK_UNTRUSTED_WORKFLOW,
+            detail: "job_not_on_run",
+          });
           continue;
         }
         trusted.push({ check, run: provenance.run });
@@ -326,6 +398,59 @@ export function validateCheckRuns(checks, { expectedSha, prNumber, workflowRuns 
   }
 
   return { ok: true, ci_evidence };
+}
+
+export function normalizeRepoPath(name) {
+  return String(name || "").replace(/\\/g, "/").replace(/^\/+/, "");
+}
+
+export function ciWorkflowTouched(files) {
+  const trusted = POLICY.trustedActionsWorkflowPath.toLowerCase();
+  for (const file of files || []) {
+    for (const name of [file.filename, file.previous_filename, file.path]) {
+      if (name && normalizeRepoPath(name).toLowerCase() === trusted) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+export function validateTrustedCiDefinition({
+  files = [],
+  filesIncomplete = false,
+  dispatchSha = null,
+  protectedMainSha = null,
+  headFile = null,
+  mainFile = null,
+}) {
+  if (filesIncomplete) {
+    return fail(HOLD.FILES_INCOMPLETE, "truncated");
+  }
+  if (ciWorkflowTouched(files)) {
+    return fail(HOLD.CHECK_WORKFLOW_DEFINITION, "ci_yml_in_pr_files");
+  }
+  if (!SHA_RE.test(String(dispatchSha || "")) || !SHA_RE.test(String(protectedMainSha || ""))) {
+    return fail(HOLD.CHECK_WORKFLOW_DEFINITION, "main_sha_unverified");
+  }
+  if (String(dispatchSha).toLowerCase() !== String(protectedMainSha).toLowerCase()) {
+    return fail(HOLD.CHECK_WORKFLOW_DEFINITION, "main_baseline_race");
+  }
+  if (!headFile || headFile.missing || !headFile.blobSha || !headFile.bytes) {
+    return fail(HOLD.CHECK_WORKFLOW_DEFINITION, "head_ci_missing");
+  }
+  if (!mainFile || mainFile.missing || !mainFile.blobSha || !mainFile.bytes) {
+    return fail(HOLD.CHECK_WORKFLOW_DEFINITION, "main_ci_missing");
+  }
+  if (String(headFile.blobSha) !== String(mainFile.blobSha)) {
+    return fail(HOLD.CHECK_WORKFLOW_DEFINITION, "ci_blob_mismatch");
+  }
+  const headBytes = Buffer.from(headFile.bytes);
+  const mainBytes = Buffer.from(mainFile.bytes);
+  if (headBytes.length === 0 || mainBytes.length === 0 || Buffer.compare(headBytes, mainBytes) !== 0) {
+    return fail(HOLD.CHECK_WORKFLOW_DEFINITION, "ci_bytes_mismatch");
+  }
+  return { ok: true };
 }
 
 export function validateWebhookUrl(raw) {

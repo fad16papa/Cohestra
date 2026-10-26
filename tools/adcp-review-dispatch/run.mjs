@@ -16,7 +16,7 @@ function contextFromEnv() {
     ref: process.env.GITHUB_REF,
     repository: process.env.GITHUB_REPOSITORY,
     actor: process.env.GITHUB_ACTOR,
-    triggeringActor: process.env.GITHUB_TRIGGERING_ACTOR || process.env.GITHUB_ACTOR,
+    triggeringActor: process.env.GITHUB_TRIGGERING_ACTOR,
     sha: process.env.GITHUB_SHA,
     runAttempt: Number(process.env.GITHUB_RUN_ATTEMPT || "1"),
     token: process.env.GITHUB_TOKEN,

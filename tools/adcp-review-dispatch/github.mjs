@@ -1,7 +1,9 @@
-import { HOLD } from "./policy.mjs";
+import { HOLD, POLICY } from "./policy.mjs";
+import { validateGithubApiUrl } from "./validate.mjs";
 
 export const MAX_GITHUB_PAGES = 20;
 export const MAX_PULL_FILES = 3000;
+const SHA_RE = /^[0-9a-fA-F]{40}$/;
 
 async function githubRequest(fetchFn, { apiUrl, token, path }) {
   const res = await fetchFn(`${apiUrl}${path}`, {
@@ -83,6 +85,12 @@ export function createGithubClient({
   if (typeof fetchFn !== "function") {
     throw new Error("fetch_unavailable");
   }
+  const apiCheck = validateGithubApiUrl(apiUrl);
+  if (!apiCheck.ok) {
+    const err = new Error(apiCheck.detail || "untrusted_api_url");
+    err.reason = HOLD.GITHUB_API;
+    throw err;
+  }
   const [owner, repo] = String(repository).split("/");
 
   async function paginate(path, listKey) {
@@ -152,6 +160,57 @@ export function createGithubClient({
         `/repos/${owner}/${repo}/pulls/${number}/files?per_page=100`,
       );
       return { files, incomplete: files.length >= MAX_PULL_FILES };
+    },
+    async getProtectedMainSha() {
+      const page = await githubRequest(fetchFn, {
+        apiUrl,
+        token,
+        path: `/repos/${owner}/${repo}/git/ref/${POLICY.protectedMainRef}`,
+      });
+      const sha = page.json?.object?.sha;
+      return sha ? String(sha).toLowerCase() : null;
+    },
+    async getWorkflow(workflowPath) {
+      const page = await githubRequest(fetchFn, {
+        apiUrl,
+        token,
+        path: `/repos/${owner}/${repo}/actions/workflows/${encodeURIComponent(workflowPath)}`,
+      });
+      return page.json;
+    },
+    async getFileAtRef(path, ref) {
+      if (path !== POLICY.trustedActionsWorkflowPath) {
+        const err = new Error("untrusted_content_path");
+        err.reason = HOLD.GITHUB_API;
+        throw err;
+      }
+      if (!SHA_RE.test(String(ref || ""))) {
+        const err = new Error("untrusted_content_ref");
+        err.reason = HOLD.GITHUB_API;
+        throw err;
+      }
+      const page = await githubRequest(fetchFn, {
+        apiUrl,
+        token,
+        path: `/repos/${owner}/${repo}/contents/${encodeURI(path)}?ref=${encodeURIComponent(ref)}`,
+      });
+      if (page.status === 404 || !page.json) {
+        return { missing: true };
+      }
+      const json = page.json;
+      if (json.type !== "file" || json.encoding !== "base64" || !json.content) {
+        const err = new Error("contents_unusable");
+        err.reason = HOLD.CHECK_WORKFLOW_DEFINITION;
+        err.detail = "contents_unusable";
+        throw err;
+      }
+      const bytes = Buffer.from(String(json.content).replace(/\s+/g, ""), "base64");
+      return {
+        blobSha: String(json.sha || ""),
+        bytes,
+        path: json.path || path,
+        size: json.size,
+      };
     },
   };
 }

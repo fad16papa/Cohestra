@@ -10,6 +10,7 @@ import {
   validateInputs,
   validatePullRequest,
   validateReviewContract,
+  validateTrustedCiDefinition,
   validateWebhookAuth,
   validateWebhookUrl,
 } from "./validate.mjs";
@@ -72,7 +73,7 @@ export async function livePost(url, { headers, body, timeoutMs = 10000, fetchImp
   return { status: res.status, body: parsed, redirected: res.redirected === true };
 }
 
-async function loadPrWorld(github, inputs) {
+async function loadPrWorld(github, inputs, { dispatchSha = null } = {}) {
   let pr;
   try {
     pr = await github.getPullRequest(inputs.pr_number);
@@ -88,7 +89,14 @@ async function loadPrWorld(github, inputs) {
     return prCheck;
   }
 
-  if (typeof github.getIssue !== "function" || typeof github.listWorkflowRuns !== "function") {
+  if (
+    typeof github.getIssue !== "function" ||
+    typeof github.listWorkflowRuns !== "function" ||
+    typeof github.listWorkflowJobs !== "function" ||
+    typeof github.getProtectedMainSha !== "function" ||
+    typeof github.getFileAtRef !== "function" ||
+    typeof github.getWorkflow !== "function"
+  ) {
     return { ok: false, reason: HOLD.GITHUB_API, detail: "client" };
   }
 
@@ -107,6 +115,20 @@ async function loadPrWorld(github, inputs) {
     return contract;
   }
 
+  let trustedWorkflow;
+  try {
+    trustedWorkflow = await github.getWorkflow(POLICY.trustedActionsWorkflowPath);
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err.reason || HOLD.CHECK_WORKFLOW_DEFINITION,
+      detail: String(err.status || err.message || "workflow"),
+    };
+  }
+  if (!trustedWorkflow || !trustedWorkflow.id) {
+    return { ok: false, reason: HOLD.CHECK_WORKFLOW_DEFINITION, detail: "workflow_unverified" };
+  }
+
   let checks = [];
   let workflowRuns = [];
   try {
@@ -122,10 +144,33 @@ async function loadPrWorld(github, inputs) {
     };
   }
 
+  const jobsByRunId = {};
+  try {
+    const trustedRunIds = [
+      ...new Set(
+        workflowRuns
+          .filter((run) => String(run.path || "") === POLICY.trustedActionsWorkflowPath)
+          .map((run) => run.id),
+      ),
+    ];
+    for (const runId of trustedRunIds) {
+      const jobs = await github.listWorkflowJobs(runId);
+      jobsByRunId[runId] = Array.isArray(jobs) ? jobs : [];
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err.reason || HOLD.GITHUB_API,
+      detail: String(err.status || err.message || "jobs"),
+    };
+  }
+
   const ci = validateCheckRuns(checks, {
     expectedSha: prCheck.headSha,
     prNumber: inputs.pr_number,
     workflowRuns,
+    jobsByRunId,
+    trustedWorkflow,
   });
   if (!ci.ok) {
     return ci;
@@ -143,6 +188,45 @@ async function loadPrWorld(github, inputs) {
   }
   if (!filesResult || filesResult.incomplete) {
     return { ok: false, reason: HOLD.FILES_INCOMPLETE, detail: "truncated" };
+  }
+
+  let protectedMainSha;
+  try {
+    protectedMainSha = await github.getProtectedMainSha();
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err.reason || HOLD.CHECK_WORKFLOW_DEFINITION,
+      detail: String(err.status || err.message || "main_ref"),
+    };
+  }
+
+  let headFile;
+  let mainFile;
+  try {
+    headFile = await github.getFileAtRef(POLICY.trustedActionsWorkflowPath, prCheck.headSha);
+    mainFile = await github.getFileAtRef(
+      POLICY.trustedActionsWorkflowPath,
+      String(protectedMainSha || dispatchSha || ""),
+    );
+  } catch (err) {
+    return {
+      ok: false,
+      reason: err.reason || HOLD.CHECK_WORKFLOW_DEFINITION,
+      detail: String(err.status || err.message || "ci_blob"),
+    };
+  }
+
+  const definition = validateTrustedCiDefinition({
+    files: filesResult.files || [],
+    filesIncomplete: Boolean(filesResult.incomplete),
+    dispatchSha,
+    protectedMainSha,
+    headFile,
+    mainFile,
+  });
+  if (!definition.ok) {
+    return definition;
   }
 
   const privileged = privilegedPaths(filesResult.files || []);
@@ -198,7 +282,7 @@ export async function runPreflight(ctx, { github } = {}) {
     };
   }
 
-  const world = await loadPrWorld(github, inputCheck.value);
+  const world = await loadPrWorld(github, inputCheck.value, { dispatchSha: ctx.sha });
   if (!world.ok) {
     return { ok: false, evidence: evidenceFromHold(world, inputCheck.value) };
   }
