@@ -291,6 +291,9 @@ jobs:
       - name: Production OIDC inspection contract
         run: bash deploy/validate-inspect-production-oidc-workflow.sh
 
+      - name: ADCP review dispatcher contract
+        run: bash tools/adcp-review-dispatch/validate-workflow.sh
+
   smoke-docker:
     name: Docker stack smoke
     runs-on: ubuntu-latest

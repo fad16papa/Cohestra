@@ -1,0 +1,154 @@
+# ADCP review-only Cursor webhook dispatcher
+#
+# NO MERGE / NO UAT CUTOVER / NO LIVE WEBHOOK FROM THIS PR.
+# workflow_dispatch on a feature branch is not a live install. GitHub only
+# reliably exposes this workflow after an owner-approved default-branch
+# installation. Merging to main would currently trigger Deploy UAT via
+# .github/workflows/deploy.yml. That cutover is NOT authorized here.
+#
+# HTTP 2xx is DISPATCH_ACCEPTED, never REVIEW_PASS.
+# EXACTLY_ONCE=UNSUPPORTED: do not rerun; use a unique request_id.
+
+name: ADCP review dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number in fad16papa/Cohestra
+        required: true
+        type: string
+      expected_sha:
+        description: Exact 40-character PR head SHA
+        required: true
+        type: string
+      review_contract_issue:
+        description: Review contract issue number
+        required: true
+        type: string
+      request_id:
+        description: Owner-chosen idempotency token (manual one-run safeguard)
+        required: true
+        type: string
+
+concurrency:
+  group: adcp-review-dispatch
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  preflight:
+    name: Preflight (no secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+      actions: read
+      issues: read
+    steps:
+      - name: Refuse if not a trusted main dispatch
+        env:
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          set +x
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ]]; then
+            echo "HOLD: untrusted_event"
+            exit 1
+          fi
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "HOLD: ref_not_main"
+            exit 1
+          fi
+          if [[ "${GITHUB_REPOSITORY}" != "fad16papa/Cohestra" ]]; then
+            echo "HOLD: wrong_repository"
+            exit 1
+          fi
+          if [[ "${GITHUB_ACTOR}" != "fad16papa" ]]; then
+            echo "HOLD: untrusted_actor"
+            exit 1
+          fi
+          if [[ "${GITHUB_TRIGGERING_ACTOR}" != "fad16papa" ]]; then
+            echo "HOLD: untrusted_actor"
+            exit 1
+          fi
+
+      - name: Checkout trusted dispatch SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Preflight review target
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          ADCP_PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          ADCP_EXPECTED_SHA: ${{ github.event.inputs.expected_sha }}
+          ADCP_REVIEW_CONTRACT_ISSUE: ${{ github.event.inputs.review_contract_issue }}
+          ADCP_REQUEST_ID: ${{ github.event.inputs.request_id }}
+          ADCP_EVIDENCE_DIR: artifacts
+        run: |
+          set +x
+          set -euo pipefail
+          node tools/adcp-review-dispatch/run.mjs preflight
+
+  dispatch:
+    name: Revalidate and dispatch
+    needs: preflight
+    if: needs.preflight.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: adcp
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: read
+      actions: read
+      issues: read
+    steps:
+      - name: Checkout trusted dispatch SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Revalidate and POST once
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_RUN_ATTEMPT: ${{ github.run_attempt }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          ADCP_PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          ADCP_EXPECTED_SHA: ${{ github.event.inputs.expected_sha }}
+          ADCP_REVIEW_CONTRACT_ISSUE: ${{ github.event.inputs.review_contract_issue }}
+          ADCP_REQUEST_ID: ${{ github.event.inputs.request_id }}
+          ADCP_CURSOR_WEBHOOK_URL: ${{ secrets.ADCP_CURSOR_WEBHOOK_URL }}
+          ADCP_CURSOR_WEBHOOK_AUTH: ${{ secrets.ADCP_CURSOR_WEBHOOK_AUTH }}
+          ADCP_ALLOW_LIVE_DISPATCH: "1"
+          ADCP_EVIDENCE_DIR: artifacts
+        run: |
+          set +x
+          set -euo pipefail
+          node tools/adcp-review-dispatch/run.mjs dispatch
