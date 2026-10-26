@@ -34,7 +34,8 @@ Planning-only package. No application code, GitHub settings, secrets, or Epic 46
 | [15-d17-verification-options-and-tests.md](./15-d17-verification-options-and-tests.md) | Historical D17 strict every-inference feasibility research (partly superseded) |
 | [16-owner-model-routing-policy.md](./16-owner-model-routing-policy.md) | **Binding owner model policy:** Grok 4.6 for engineering, Composer 2.5 for low-risk simple bugs with Grok review; helper-inference attestation no longer a standalone blocker |
 | [17-r1-remediation-contracts-and-owner-gates.md](./17-r1-remediation-contracts-and-owner-gates.md) | **R1 candidate corrections:** protected path fixtures, Composer restriction draft, M-3/M-4/M-5 architecture proposals and post-D18-B2 status, NOT Grok-reviewed or adopted |
-| [18-d8-autonomous-controller-reconciliation.md](./18-d8-autonomous-controller-reconciliation.md) | **2026-10-26 D8 full-autonomy decision packet:** durable no-toggle/no-paste GitHub controller, Grok/Composer roles, P5 lanes, user-facing acceptance, Pro+ credential constraints, UAT impact, test matrix and fresh Grok review contract. PROPOSED / OWNER_GATE |
+| [18-d8-autonomous-controller-reconciliation.md](./18-d8-autonomous-controller-reconciliation.md) | **2026-10-26 D8 full-autonomy decision packet:** durable no-toggle/no-paste GitHub controller, Grok/Composer roles, P5 lanes, Pro+ credential risks and owner gates. PROPOSED / OWNER_GATE |
+| [19-uat-release-branch-and-production-quality-gates.md](./19-uat-release-branch-and-production-quality-gates.md) | **Owner-selected release direction:** one repo, protected main and release/uat, all tests and security checks for both, Production extra security and measurable clean/lean runtime. Design pending independent review; no branch/workflow changes authorized |
 
 Baseline for this branch: `main` `e962c8c3eead953a1f56f2b397b3e9d4fc669041`.
 
