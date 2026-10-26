@@ -2,7 +2,7 @@
 title: ADCP owner decision register
 status: pending-owner-architecture-approval
 created: 2026-10-25
-updated: 2026-10-25
+updated: 2026-10-26
 related: 10-architecture-amendment-proposal.md
 ---
 
@@ -159,3 +159,16 @@ Detailed eligibility/security criteria and evidence: `16-owner-model-routing-pol
 
 **Source-of-truth packet:** [bridge security activation packet](https://github.com/fad16papa/Cohestra/blob/cursor/adcp-bridge-contract-mock-20261025/tools/adcp-bridge/OWNER-SECURITY-ACTIVATION-REVIEW.md), final decision and tracking [Issue #514](https://github.com/fad16papa/Cohestra/issues/514). Approval in this register is **not** proof of GitHub settings application. Treat new planning HEAD as unreviewed until a fresh Grok 4.6 AR/ECH/IR/CAT-SEC check after remediation.
 
+
+
+## 2026-10-26 Full-autonomy D8 reconciliation (PLANNING ONLY)
+
+**Owner intent:** The Product Owner rejected repeated Cursor Active/Inactive toggles, copy-pasting of new static agent prompts, manual review-result transfer and creating a new review automation per issue. The required target is a **durable ADCP controller** that accepts a previously approved story, dynamically dispatches Grok 4.6 engineering, runs tests and independent Grok BMAD/CAT-SEC reviews, fixes findings within the approved scope for at most three cycles, and escalates only real design/privilege/budget decisions. This is a requirement, **NOT acceptance of any specific security or API architecture**.
+
+**Proposal for decision:** [18-d8-autonomous-controller-reconciliation.md](18-d8-autonomous-controller-reconciliation.md) and [GitHub Issue #517](https://github.com/fad16papa/Cohestra/issues/517). Suggested D8 subgates A–G cover: topology (GitHub-native + Cursor Cloud), full-P5 no-manual-intervention target, M-2/M-4/M-6 risk enforcement, replay-safe sole-owner attestation, binding D7/D17 model rules, separately authorized D5 credential/UAT merge effects, and exact-current-HEAD independent Grok review. **All remain PROPOSED / OWNER_GATE.** No D8 adoption inferred from "ok proceed" to *architecture reconciliation*.
+
+**New empirical evidence:** Cursor selected-Grok 4.6 review [PR #513](https://github.com/fad16papa/Cohestra/pull/513#pullrequestreview-5646572151) at `cc0962b33e6a472c02145f8fa8a388bcde1beadd` automatically published to GitHub, proving a one-off report path, **not** a durable controller. The actual review **FAILED** with 2 BLOCKER + 2 MAJOR findings: sensitive PascalCase file classification, untrusted all-false impact, missing adversarial test fixtures, missing M-2/M-6 registry. Current offline mock #513 remains DRAFT, NO-MERGE.
+
+**Credential/account issue:** Owner's Cursor dashboard shows Pro+ and user-scoped Admin/non-expiring keys, with Enterprise service-account entitlement not shown. Do not silently substitute a personal key for the earlier dedicated service-account direction; **D5 remains a separate owner-risk gate**. Owner's main branch protection is verified active, `adcp` sole-owner Environment is owner-attested. Neither removes the `main` CI→UAT deployment side effect or provides a safe unattended P5 lane.
+
+**Execution still denied:** No new Cursor agent run, code implementation, API key creation, GitHub workflow or environment edit, merge, UAT or Production change. Next deliverable is independent selected-Grok 4.6 planning-security/architecture review on the exact current #507 SHA, followed by a concise D8 owner decision ballot. Grok review is not yet run on this proposal; do NOT mark REVIEW_PASS or ADOPTED.
