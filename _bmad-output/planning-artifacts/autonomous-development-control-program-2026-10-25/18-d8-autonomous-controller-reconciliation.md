@@ -119,6 +119,14 @@ Never remove the existing `adcp` required reviewer to claim unattended execution
 
 **Credential and cost gate:** exact provider key capabilities, repository confinement, GitHub App permission matrix, secret lifecycle, cost estimate/ceiling, plan's disabled on-demand spending and incident revocation must be independently verified and **separately accepted by the owner**. A service account requires an eligibility/provider proof; otherwise decision HOLD.
 
+## 6A. Owner-selected UAT release branch and Production clean/lean gate (2026-10-26)
+
+The owner resolved the prior repository-vs-branch ambiguity: **one Cohestra repository with protected main and protected release/uat**. Main remains the engineering integration and Production provenance source; UAT must use only an explicitly approved, exact-main-SHA promotion to release/uat. Main CI success **must not cause UAT deployment after the cutover**. Both paths must pass all required tests and security gates, with additional security testing and measurable clean and lean Production runtime requirements. **This direction is selected, not live.**
+
+See [19-uat-release-branch-and-production-quality-gates.md](19-uat-release-branch-and-production-quality-gates.md) and [release safety contract #519](https://github.com/fad16papa/Cohestra/issues/519) for branch protection, provenance, UAT CI/manual dispatch safeguards, existing workflow/test changes, and Production SBOM, dependency/container scanning, host checks, runtime-only images, least privilege and artifact budget controls.
+
+Until the migration's workflow and host contracts are safely installed, a successful main CI **still triggers the old UAT deployment workflow**. Its first cutover merge needs an explicit owner UAT-impact gate. This owner direction **does not** authorize creating release/uat, changing permissions or deploying.
+
 ## 7. Owner decisions requested to turn this proposal into an adoptable D8 ADR
 
 | Decision subgate (all PENDING) | Recommended candidate | Owner must explicitly decide |
@@ -130,6 +138,7 @@ Never remove the existing `adcp` required reviewer to claim unattended execution
 | **D8-E engineering model/review** | Already approved D7/D17 policy plus independent Grok per new HEAD and max three fix loops | Reaffirm integration; no model-policy waiver |
 | **D8-F credential and deploy treatment** | Defer real key choice to D5; require separate specific approval of any main merge and its automatic UAT impact | Accept planning constraints, **not credential/merge approval** |
 | **D8-G deliverable** | Revised spine, PRD, governance, story backlog and executable negative-test contract with **fresh Grok architecture review** of exact HEAD | Allow Grok-reviewed planning before final architecture adoption |
+| **D8-H release branches and Production quality** | **Owner-selected direction:** protected main + protected release/uat, one repository, all tests and security on both; stronger Production security, provenance and measurable clean/lean artifact; automatic main-to-UAT deployment eliminated through guarded cutover | Approve actual branch/promotion authority, CI/deploy security checks, migration/UAT side effect and measured Production budgets **separately before implementation** |
 
 **This entire table is an owner decision REQUEST. No answer has yet been supplied by the owner.**
 
