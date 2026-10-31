@@ -6,7 +6,7 @@
 **ADCP:** not restored  
 **Production:** untouched  
 **Live activation:** not performed  
-**Independent review:** Grok 4.6 High Fast BMAD + CAT-SEC PASS on `55035dda` (BLOCKER=0 MAJOR=0). In-scope MINORs fixed on the follow-up HEAD.
+**Independent review:** Grok 4.6 High Fast BMAD + CAT-SEC PASS on `0e17a92f` (BLOCKER=0 MAJOR=0, 1 MINOR on grep fail-open). Follow-up HEAD closes that MINOR and requires GitGuardian on the exact deploy SHA.
 
 ## TDD loop
 

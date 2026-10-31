@@ -47,4 +47,11 @@ out="$(cd "$TMP" && COHESTRA_ROOT="$TMP" SCAN_SHA="$CLEAN" bash "$SCAN")" || { e
 echo "$out" | grep -q 'RESULT=PASS' || fail "clean SHA must ignore uncommitted worktree dirt"
 pass "scan is bound to the exact SHA tree"
 
+if out="$(cd "$TMP" && COHESTRA_ROOT="$TMP" SCAN_SHA=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa bash "$SCAN" 2>&1)"; then
+  echo "$out"
+  fail "unknown SCAN_SHA must not PASS"
+fi
+echo "$out" | grep -qE 'RESULT=(HOLD|REFUSE)' || { echo "$out"; fail "unknown SHA missing HOLD/REFUSE"; }
+pass "broken/unknown SCAN_SHA fails closed"
+
 echo "exact-sha-secret-scan contract OK"
