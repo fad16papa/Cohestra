@@ -185,6 +185,16 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
+  exact-sha-scan:
+    name: Exact-SHA security scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Scan the exact checked-out SHA
+        run: bash deploy/exact-sha-secret-scan.sh
+
   uat-isolation:
     name: UAT isolation contract
     runs-on: ubuntu-latest
@@ -192,11 +202,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Exact-SHA secret scan contract
+        run: bash deploy/exact-sha-secret-scan.test.sh
+
       - name: Validate isolated UAT compose
         run: bash deploy/validate-uat-isolation.sh
 
       - name: Validate UAT deploy workflow contract
         run: bash deploy/validate-deploy-uat-workflow.sh
+
+      - name: UAT predeploy gate contract
+        run: bash deploy/validate-uat-predeploy-gate.test.sh
+
+      - name: UAT gate activation contract
+        run: bash deploy/validate-uat-gate-activation.test.sh
 
       - name: Fail-closed UAT secret contract
         run: bash deploy/fail-closed-uat-secrets.test.sh

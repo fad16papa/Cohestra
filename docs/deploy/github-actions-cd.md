@@ -1,6 +1,6 @@
 # GitHub Actions CI/CD — deploy UAT to the DigitalOcean droplet
 
-Automatic **UAT** deployment runs **after CI passes on `main`**, or manually via **Actions → Deploy UAT → Run workflow**.
+Automatic **UAT** deployment is proposed only after CI and GitGuardian succeed on the exact `main` SHA. A **predeploy** eligibility gate (`deploy/validate-uat-predeploy-gate.sh`) must mark the SHA eligible before SSH. Manual **Actions → Deploy UAT → Run workflow** uses the same gate and cannot bypass required checks. The repository variable `UAT_DEPLOY_GATE_ACTIVE` must be the exact string `true` or the gate HOLDs (first-merge suppressor). See [uat-gated-promotion.md](./uat-gated-promotion.md). Do not activate that variable from an implementation PR.
 
 This is **not** production cutover. Production remains owner-authorized and NO-GO until a separate live gate.
 
@@ -10,8 +10,11 @@ Cursor / Cloud Agent does **not** need droplet SSH. GitHub Actions is the execut
 
 ```
 push / merge to main
-    → CI workflow (build + test)
-    → Deploy UAT (Environment `uat`, concurrency `deploy-uat`)
+    → CI workflow (build + test + Exact-SHA security scan) + GitGuardian Security Checks
+    → Deploy UAT predeploy-gate (no Environment, no UAT secrets)
+    → HOLD unless UAT_DEPLOY_GATE_ACTIVE=true and every required check is SUCCESS on the exact deploy SHA
+      (GitGuardian on the candidate itself; ${candidate}^2 is additional two-parent provenance only)
+    → Deploy UAT (Environment `uat`, concurrency `deploy-uat`) revalidates the gate, then SSH
     → fail-closed secret names
     → SSH with a dedicated Actions deploy key
     → DEPLOY_SHA=<accepted CI SHA> via appleboy envs (never an unpinned branch tip)
@@ -26,7 +29,7 @@ push / merge to main
 | Workflow | File | Trigger |
 |----------|------|---------|
 | CI | `.github/workflows/ci.yml` | Push/PR to `main` |
-| Deploy UAT | `.github/workflows/deploy.yml` | CI success on `main`, or manual |
+| Deploy UAT | `.github/workflows/deploy.yml` | CI completed on `main`, or manual; SSH only after predeploy gate |
 | Deploy Production | `.github/workflows/deploy-production.yml` | `workflow_dispatch` only, explicit 40-hex SHA |
 
 Application secrets (SendGrid, JWT, Postgres, Paddle sandbox, recaptcha) stay on the **droplet** in `.env`. GitHub Environment `uat` stores only deploy access and later UAT automation credentials. See `_bmad-output/planning-artifacts/epic-45-uat-secret-bootstrap-matrix.md` for names.
@@ -77,17 +80,17 @@ ssh-keygen -t ed25519 -C "github-actions-uat-deploy" -f ~/.ssh/cohestra-uat-gha 
 ## Routine deploy (no owner SSH)
 
 1. Merge to **`main`**.
-2. Wait for **CI** green.
-3. **Deploy UAT** starts automatically.
+2. Wait for **CI** and **GitGuardian** SUCCESS on that exact SHA.
+3. **Deploy UAT** starts automatically, evaluates the predeploy gate, and HOLDs unless `UAT_DEPLOY_GATE_ACTIVE=true` and every required check is SUCCESS.
 4. Download `uat-acceptance-summary` (`acceptance-summary.json`) plus the detailed deploy and Playwright artifacts. Missing required sections is FAIL, never a fake PASS.
 
-`workflow_run` pins `TARGET_SHA=github.event.workflow_run.head_sha` and passes it as `DEPLOY_SHA` through appleboy `envs`. The droplet must reset to that exact 40-character SHA after proving it is an ancestor of `origin/main`. If main has advanced to SHA B after CI accepted SHA A, UAT still deploys A or fails closed. It must never silently deploy B.
+`workflow_run` pins `TARGET_SHA=github.event.workflow_run.head_sha` and passes it as `DEPLOY_SHA` through appleboy `envs`. The predeploy gate HOLDs unless that SHA is the current `origin/main` tip and every required check is SUCCESS. The droplet then resets to that exact 40-character SHA after proving it is still the `origin/main` tip. A superseded SHA is not deployed. It must never silently retarget to a newer tip.
 
 Actions never deploy an unpinned branch tip. Empty `DEPLOY_SHA` is refused on the GitHub Actions path. The droplet helper may still reset to `origin/$DEPLOY_BRANCH` only for an explicit manual operator run that does not set `DEPLOY_SHA`.
 
 The SSH step emits non-secret `EXPECTED_SHA` / `DEPLOYED_SHA` and fails if they differ.
 
-Third-party actions in `deploy.yml` are pinned to reviewed commit SHAs (`actions/checkout`, `actions/upload-artifact`, `actions/download-artifact`, `appleboy/ssh-action`, `actions/setup-node`). Permissions stay `contents: read`. Concurrency stays `deploy-uat` and must never share a group with production.
+Third-party actions in `deploy.yml` are pinned to reviewed commit SHAs (`actions/checkout`, `actions/upload-artifact`, `actions/download-artifact`, `appleboy/ssh-action`, `actions/setup-node`). Permissions stay `contents: read`, `actions: read`, and `checks: read`. Concurrency stays `deploy-uat` and must never share a group with production. The predeploy-gate job has no Environment and must not read `DROPLET_*` secrets.
 
 ---
 
