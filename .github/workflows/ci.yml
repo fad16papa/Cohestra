@@ -198,6 +198,12 @@ jobs:
       - name: Validate UAT deploy workflow contract
         run: bash deploy/validate-deploy-uat-workflow.sh
 
+      - name: UAT predeploy gate contract
+        run: bash deploy/validate-uat-predeploy-gate.test.sh
+
+      - name: UAT gate activation contract
+        run: bash deploy/validate-uat-gate-activation.test.sh
+
       - name: Fail-closed UAT secret contract
         run: bash deploy/fail-closed-uat-secrets.test.sh
 

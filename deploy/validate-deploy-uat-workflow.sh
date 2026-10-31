@@ -243,6 +243,49 @@ else
   pass "UAT workflow has no Production overlay or Environment production"
 fi
 
+if grep -q 'name: Pre-UAT eligibility gate' "$WF" \
+  && grep -q 'validate-uat-predeploy-gate.sh' "$WF"; then
+  pass "pre-UAT eligibility gate is invoked before SSH"
+else
+  fail "workflow must run the pre-UAT eligibility gate"
+fi
+
+if grep -q 'needs.predeploy-gate.outputs.eligible' "$WF"; then
+  pass "SSH job is gated on predeploy eligibility"
+else
+  fail "deploy job must require predeploy-gate eligible=true"
+fi
+
+if grep -q "github.event_name == 'workflow_dispatch' ||" "$WF"; then
+  fail "workflow_dispatch must not OR-bypass the predeploy gate"
+else
+  pass "workflow_dispatch is not an OR-bypass of required checks"
+fi
+
+if grep -q 'actions: read' "$WF" && grep -q 'checks: read' "$WF"; then
+  pass "workflow can read Actions and check-run conclusions"
+else
+  fail "workflow must request actions: read and checks: read for the gate"
+fi
+
+if grep -q 'UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}' "$WF"; then
+  pass "first-merge suppressor reads vars.UAT_DEPLOY_GATE_ACTIVE"
+else
+  fail "workflow must read UAT_DEPLOY_GATE_ACTIVE from vars"
+fi
+
+if grep -q 'Re-run UAT predeploy gate before SSH' "$WF"; then
+  pass "gate is revalidated immediately before SSH"
+else
+  fail "deploy job must re-run the predeploy gate before SSH"
+fi
+
+if grep -qiE 'adcp|autonomous delivery control plane' "$WF"; then
+  fail "UAT workflow must not restore ADCP"
+else
+  pass "ADCP is absent from Deploy UAT"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1

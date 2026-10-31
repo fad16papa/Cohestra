@@ -16,17 +16,19 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
+  checks: read
 
 jobs:
-  deploy:
-    name: Deploy accepted SHA to UAT
+  predeploy-gate:
+    name: Pre-UAT eligibility gate
     runs-on: ubuntu-latest
-    environment: uat
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+    outputs:
+      eligible: ${{ steps.gate.outputs.eligible }}
+      validated_sha: ${{ steps.gate.outputs.validated_sha }}
     env:
       TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+      UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
     steps:
       - name: Refuse unpinned TARGET_SHA
         env:
@@ -46,6 +48,91 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Evaluate UAT predeploy gate
+        id: gate
+        env:
+          CANDIDATE_SHA: ${{ env.TARGET_SHA }}
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ORIGIN_MAIN_REF: origin/main
+          UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+        run: |
+          set -euo pipefail
+          git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
+          git rev-parse --verify origin/main >/dev/null
+          bash deploy/validate-uat-predeploy-gate.sh
+
+      - name: Remove secret-like predeploy evidence
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -f artifacts/uat-predeploy-gate.json ]] && grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN|Bearer |password' artifacts/uat-predeploy-gate.json; then
+            rm -f artifacts/uat-predeploy-gate.json
+            echo "REFUSE: removed secret-like artifacts/uat-predeploy-gate.json"
+            exit 1
+          fi
+
+      - name: Upload predeploy gate evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uat-predeploy-gate-evidence
+          path: artifacts/uat-predeploy-gate.json
+          if-no-files-found: warn
+
+  deploy:
+    name: Deploy accepted SHA to UAT
+    needs: predeploy-gate
+    if: ${{ needs.predeploy-gate.result == 'success' && needs.predeploy-gate.outputs.eligible == 'true' }}
+    runs-on: ubuntu-latest
+    environment: uat
+    env:
+      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+      VALIDATED_SHA: ${{ needs.predeploy-gate.outputs.validated_sha }}
+      UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+    steps:
+      - name: Refuse unpinned TARGET_SHA
+        env:
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+            echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
+            exit 1
+          fi
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
+            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
+            exit 1
+          fi
+          if [[ "${TARGET_SHA,,}" != "${VALIDATED_SHA,,}" ]]; then
+            echo "REFUSE: TARGET_SHA does not equal validated_sha"
+            exit 1
+          fi
+
+      - name: Checkout accepted SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Re-run UAT predeploy gate before SSH
+        env:
+          CANDIDATE_SHA: ${{ env.TARGET_SHA }}
+          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ORIGIN_MAIN_REF: origin/main
+          UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+        run: |
+          set -euo pipefail
+          git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
+          git rev-parse --verify origin/main >/dev/null
+          bash deploy/validate-uat-predeploy-gate.sh
 
       - name: Fail closed if UAT secrets are missing
         env:
