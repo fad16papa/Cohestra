@@ -45,8 +45,35 @@ write_empty_deploy_runs() {
 JSON
 }
 
-write_empty_deploy_runs
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+write_gg() {
+  local sha="$1"
+  local conclusion="${2:-success}"
+  cat >"$PROVENANCE_FIX/checks_${sha}.json" <<JSON
+{"total_count":1,"check_runs":[{"id":199,"name":"GitGuardian Security Checks","app":{"slug":"gitguardian"},"head_sha":"${sha}","status":"completed","conclusion":"${conclusion}","completed_at":"2026-10-22T00:00:01Z"}]}
+JSON
+}
+
+add_exact_sha_job() {
+  python3 - "$PROVENANCE_FIX/jobs_11.json" <<'PY'
+import json, sys
+path = sys.argv[1]
+data = json.load(open(path))
+names = [job.get("name") for job in data.get("jobs", [])]
+if "Exact-SHA security scan" not in names:
+    data.setdefault("jobs", []).append({"name": "Exact-SHA security scan", "conclusion": "success"})
+    data["total_count"] = len(data["jobs"])
+    json.dump(data, open(path, "w"))
+PY
+}
+
+restore_green() {
+  write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+  write_empty_deploy_runs
+  add_exact_sha_job
+  write_gg "$PROVENANCE_MERGE" success
+}
+
+restore_green
 export WORKFLOW_RUN_HEAD_SHA="$PROVENANCE_MERGE"
 
 run_case() {
@@ -129,7 +156,7 @@ expect_block "$PROVENANCE_MERGE" "older queued run for a superseded SHA is block
 git -C "$REMOTE_DIR" reset -q --hard "$PROVENANCE_MERGE"
 git -C "$PROVENANCE_LOCAL" fetch -q origin main
 
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 write_empty_deploy_runs
 
 python3 - "$PROVENANCE_FIX/checks_${PROVENANCE_HEAD}.json" <<'PY'
@@ -140,7 +167,7 @@ d["check_runs"][0]["conclusion"]="neutral"
 json.dump(d, open(p,"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "GitGuardian neutral is blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/checks_${PROVENANCE_HEAD}.json" <<'PY'
 import json,sys
@@ -150,14 +177,14 @@ d["check_runs"][0]["conclusion"]="skipped"
 json.dump(d, open(p,"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "GitGuardian skipped is blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/checks_${PROVENANCE_HEAD}.json" <<'PY'
 import json,sys
 json.dump({"total_count":0,"check_runs":[]}, open(sys.argv[1],"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "GitGuardian absent is blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 for conclusion in failure cancelled timed_out action_required; do
   python3 - "$PROVENANCE_FIX/checks_${PROVENANCE_HEAD}.json" "$conclusion" <<'PY'
@@ -168,7 +195,7 @@ d["check_runs"][0]["conclusion"]=c
 json.dump(d, open(p,"w"))
 PY
   expect_block "$PROVENANCE_MERGE" "GitGuardian ${conclusion} is blocked"
-  write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+  restore_green
 done
 
 python3 - "$PROVENANCE_FIX/checks_${PROVENANCE_HEAD}.json" <<'PY'
@@ -182,7 +209,7 @@ d["check_runs"].append({
 json.dump(d, open(p,"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "GitGuardian pending/queued is blocked even if older SUCCESS exists"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/checks_${PROVENANCE_HEAD}.json" <<'PY'
 import json,sys
@@ -192,7 +219,7 @@ d["check_runs"][0]["app"]={"slug":"not-gitguardian"}
 json.dump(d, open(p,"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "wrong GitGuardian app.slug is blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/checks_${PROVENANCE_HEAD}.json" "$PROVENANCE_HEAD" <<'PY'
 import json,sys
@@ -205,7 +232,7 @@ json.dump({"total_count":2,"check_runs":[
 ]}, open(p,"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "malicious duplicate GitGuardian conclusions are blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/jobs_11.json" <<'PY'
 import json,sys
@@ -214,17 +241,17 @@ d["jobs"][0]["conclusion"]="skipped"
 json.dump(d, open(sys.argv[1],"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "required CI job skipped is blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/jobs_11.json" <<'PY'
 import json,sys
 d=json.load(open(sys.argv[1]))
-d["jobs"]=d["jobs"][:-1]
-d["total_count"]=4
+d["jobs"]=[job for job in d["jobs"] if job.get("name") != "Docker stack smoke"]
+d["total_count"]=len(d["jobs"])
 json.dump(d, open(sys.argv[1],"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "required CI job absent is blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/jobs_11.json" <<'PY'
 import json,sys
@@ -234,7 +261,7 @@ d["total_count"]=len(d["jobs"])
 json.dump(d, open(sys.argv[1],"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "duplicate required CI job with failure is blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/runs.json" <<'PY'
 import json,sys
@@ -243,12 +270,12 @@ d["workflow_runs"][0]["conclusion"]="failure"
 json.dump(d, open(sys.argv[1],"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "CI workflow failure is blocked even if GitGuardian is green"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 touch "$PROVENANCE_FIX/error"
 expect_block "$PROVENANCE_MERGE" "GitHub API unreachable/error is blocked"
 rm -f "$PROVENANCE_FIX/error"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 python3 - "$PROVENANCE_FIX/runs.json" <<'PY'
 import json,sys
@@ -257,7 +284,7 @@ d["total_count"]=50
 json.dump(d, open(sys.argv[1],"w"))
 PY
 expect_block "$PROVENANCE_MERGE" "truncated GitHub pagination is blocked"
-write_pass_fixtures "$PROVENANCE_FIX" "$PROVENANCE_MERGE" "$PROVENANCE_HEAD" "$PROVENANCE_PARENT"
+restore_green
 
 cat >"$PROVENANCE_FIX/deploy_runs.json" <<JSON
 {"total_count":1,"workflow_runs":[{"id":77,"event":"workflow_run","head_sha":"${PROVENANCE_MERGE}","head_branch":"main","status":"completed","conclusion":"success","created_at":"2026-10-22T00:00:00Z"}]}
@@ -292,6 +319,7 @@ SINGLE="$(git -C "$REMOTE_DIR" rev-parse HEAD)"
 git -C "$PROVENANCE_LOCAL" fetch -q origin main
 write_layer_a "$PROVENANCE_FIX" "$SINGLE"
 write_empty_deploy_runs
+add_exact_sha_job
 cat >"$PROVENANCE_FIX/checks_${SINGLE}.json" <<JSON
 {"total_count":1,"check_runs":[{"id":199,"name":"GitGuardian Security Checks","app":{"slug":"gitguardian"},"head_sha":"${SINGLE}","status":"completed","conclusion":"success","completed_at":"2026-10-22T01:00:01Z"}]}
 JSON
@@ -307,5 +335,60 @@ d["check_runs"][0]["conclusion"]="neutral"
 json.dump(d, open(sys.argv[1],"w"))
 PY
 expect_block "$SINGLE" "single-parent GitGuardian neutral is blocked"
+
+# Exact deploy-SHA scan is not satisfied by PR-head GitGuardian alone.
+git -C "$REMOTE_DIR" reset -q --hard "$PROVENANCE_MERGE"
+git -C "$PROVENANCE_LOCAL" fetch -q origin main
+export WORKFLOW_RUN_HEAD_SHA="$PROVENANCE_MERGE"
+restore_green
+rm -f "$PROVENANCE_FIX/checks_${PROVENANCE_MERGE}.json"
+expect_block "$PROVENANCE_MERGE" "five CI jobs + PR-head GitGuardian SUCCESS without candidate_sha scan is blocked"
+
+restore_green
+write_gg "$PROVENANCE_MERGE" neutral
+expect_block "$PROVENANCE_MERGE" "candidate_sha GitGuardian neutral is blocked even if PR-head SUCCESS"
+
+restore_green
+write_gg "$PROVENANCE_MERGE" failure
+expect_block "$PROVENANCE_MERGE" "candidate_sha GitGuardian failure is blocked even if PR-head SUCCESS"
+
+restore_green
+python3 - "$PROVENANCE_FIX/jobs_11.json" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
+data["jobs"] = [job for job in data["jobs"] if job.get("name") != "Exact-SHA security scan"]
+data["total_count"] = len(data["jobs"])
+json.dump(data, open(sys.argv[1], "w"))
+PY
+expect_block "$PROVENANCE_MERGE" "Exact-SHA security scan job missing is blocked"
+
+restore_green
+python3 - "$PROVENANCE_FIX/jobs_11.json" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
+for job in data["jobs"]:
+    if job.get("name") == "Exact-SHA security scan":
+        job["conclusion"] = "skipped"
+json.dump(data, open(sys.argv[1], "w"))
+PY
+expect_block "$PROVENANCE_MERGE" "Exact-SHA security scan job skipped is blocked"
+
+# Merge tree differs from ^2; PR-head GG is not a scan of the deployed merge.
+git -C "$REMOTE_DIR" checkout -q main
+git -C "$REMOTE_DIR" reset -q --hard "$PROVENANCE_MERGE"
+echo merge-resolution >"$REMOTE_DIR/merge-resolution"
+git -C "$REMOTE_DIR" add merge-resolution
+git -C "$REMOTE_DIR" commit -q --amend --no-edit
+AMENDED="$(git -C "$REMOTE_DIR" rev-parse HEAD)"
+git -C "$PROVENANCE_LOCAL" fetch -q origin main
+[[ "$AMENDED" != "$PROVENANCE_MERGE" ]] || fail "amended merge SHA should change"
+HEAD2="$(git -C "$PROVENANCE_LOCAL" rev-parse "${AMENDED}^2")"
+write_layer_a "$PROVENANCE_FIX" "$AMENDED"
+add_exact_sha_job
+write_empty_deploy_runs
+write_gg "$HEAD2" success
+rm -f "$PROVENANCE_FIX/checks_${AMENDED}.json"
+export WORKFLOW_RUN_HEAD_SHA="$AMENDED"
+expect_block "$AMENDED" "modified merge tree with only PR-head GitGuardian is blocked"
 
 echo "validate-uat-predeploy-gate contract OK"

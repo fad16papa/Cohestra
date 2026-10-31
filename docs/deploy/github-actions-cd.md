@@ -10,9 +10,10 @@ Cursor / Cloud Agent does **not** need droplet SSH. GitHub Actions is the execut
 
 ```
 push / merge to main
-    → CI workflow (build + test) + GitGuardian Security Checks
+    → CI workflow (build + test + Exact-SHA security scan) + GitGuardian Security Checks
     → Deploy UAT predeploy-gate (no Environment, no UAT secrets)
-    → HOLD unless UAT_DEPLOY_GATE_ACTIVE=true and every required check is SUCCESS on the exact SHA
+    → HOLD unless UAT_DEPLOY_GATE_ACTIVE=true and every required check is SUCCESS on the exact deploy SHA
+      (GitGuardian on the candidate itself; ${candidate}^2 is additional two-parent provenance only)
     → Deploy UAT (Environment `uat`, concurrency `deploy-uat`) revalidates the gate, then SSH
     → fail-closed secret names
     → SSH with a dedicated Actions deploy key

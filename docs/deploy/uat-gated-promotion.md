@@ -7,13 +7,15 @@ live gate from this pull request. **Do not deploy.** **Do not touch Production.*
 ## Binding contract
 
 UAT SSH happens only when every required check, including GitGuardian Security
-Checks, is `conclusion=success` on the exact candidate SHA (the candidate
-itself for a single-parent commit; `${candidate}^2` for a two-parent merge,
-which is the reviewed PR head GitGuardian actually scanned):
+Checks, is `conclusion=success` on the **exact candidate SHA that SSH deploys**.
+PR-head GitGuardian on `${candidate}^2` is additional two-parent provenance.
+It is not a scan of a different merge commit.
 
 1. Development TDD loop produces a new candidate SHA after every code fix.
-2. Candidate verification reruns the full CI suite and mandatory security scans
-   on that SHA (five Actions jobs + GitGuardian).
+2. Candidate verification reruns the full CI suite, the Exact-SHA security scan
+   job, and GitGuardian on that SHA (five Actions jobs + Exact-SHA scan +
+   GitGuardian on `candidate_sha`; two-parent merges also require GitGuardian
+   SUCCESS on `${candidate}^2`).
 3. Pre-UAT eligibility: `failure`, `cancelled`, `timed_out`, `neutral`,
    `skipped`, `action_required`, `pending`, missing, stale, wrong branch, wrong
    app, or ambiguous duplicates → `HOLD`, zero SSH.
@@ -60,10 +62,14 @@ Do not execute these steps from this PR, a cloud agent, or a CI job.
 6. **Observe one HOLD** artifact (`uat-predeploy-gate-evidence`) on the next
    `main` CI completion or a non-bypass `workflow_dispatch`. The artifact must
    record `RESULT=HOLD` and name `UAT_DEPLOY_GATE_ACTIVE`. Zero SSH.
-7. Only after a written owner approval, set the **repository** variable
+7. Confirm **GitGuardian on the exact main SHA** produces a `gitguardian`
+   check-run `conclusion=success` on the merged `main` commit itself, not only
+   on `${sha}^2`. Also confirm the `Exact-SHA security scan` Actions job
+   SUCCESS on that commit. Do not activate if either is missing.
+8. Only after a written owner approval, set the **repository** variable
    `UAT_DEPLOY_GATE_ACTIVE=true`. Environment `uat` alone is not sufficient:
    the predeploy job has no Environment and must not receive UAT secrets.
-8. Subsequent `main` CI completions may SSH only when every required check on
+9. Subsequent `main` CI completions may SSH only when every required check on
    that exact SHA is SUCCESS.
 
 Rollback: unset or delete `UAT_DEPLOY_GATE_ACTIVE` (immediate HOLD) and/or

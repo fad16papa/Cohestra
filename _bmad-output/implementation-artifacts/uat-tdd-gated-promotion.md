@@ -25,9 +25,11 @@
 - `Next.js build`
 - `UAT isolation contract`
 - `Docker stack smoke`
-- `GitGuardian Security Checks` (`app.slug=gitguardian`, `filter=all`,
-  `conclusion=success` only). Two-parent merges evaluate `${sha}^2`;
-  single-parent commits evaluate the SHA itself.
+- `Exact-SHA security scan` (Actions job on the exact checkout)
+- `GitGuardian Security Checks` on the **exact candidate SHA**
+  (`app.slug=gitguardian`, `filter=all`, `conclusion=success` only).
+  Two-parent merges **also** require GitGuardian SUCCESS on `${sha}^2`.
+  PR-head SUCCESS alone is HOLD.
 
 `neutral`, `skipped`, missing, pending, wrong app, or conflicting duplicates
 are HOLD.

@@ -80,6 +80,27 @@ def gitguardian_required(repo: str, reviewed_sha: str) -> None:
         hold(f"GitGuardian conclusion is {conclusion or 'empty'}")
 
 
+EXACT_SHA_SCAN_JOB = "Exact-SHA security scan"
+
+
+def require_exact_sha_scan_job(repo: str, ci_run_id: Any) -> None:
+    jobs = prod.paginate_list(
+        f"/repos/{repo}/actions/runs/{ci_run_id}/jobs",
+        "jobs",
+        "ci jobs",
+    )
+    found = False
+    for job in jobs:
+        obj = prod.require_dict(job, "ci job")
+        if obj.get("name") != EXACT_SHA_SCAN_JOB:
+            continue
+        if obj.get("conclusion") != "success":
+            hold(f"required CI job not success ({EXACT_SHA_SCAN_JOB})")
+        found = True
+    if not found:
+        hold("Exact-SHA security scan job missing")
+
+
 def refuse_duplicate_deploy(repo: str, candidate_sha: str, current_run_id: str) -> None:
     runs = prod.paginate_list(
         f"/repos/{repo}/actions/workflows/deploy.yml/runs?head_sha={candidate_sha}",
@@ -110,14 +131,21 @@ def main() -> None:
     if len(candidate_sha) != 40 or len(reviewed_sha) != 40:
         hold("UAT predeploy SHA is malformed")
     try:
-        prod.layer_a(repo, candidate_sha)
+        info = prod.layer_a(repo, candidate_sha)
     except SystemExit:
         raise
     except Exception:
         hold("Layer A CI verification failed closed")
-    gitguardian_required(repo, reviewed_sha)
+    require_exact_sha_scan_job(repo, info["ci_run_id"])
+    gitguardian_required(repo, candidate_sha)
+    if reviewed_sha != candidate_sha:
+        gitguardian_required(repo, reviewed_sha)
     refuse_duplicate_deploy(repo, candidate_sha, os.environ.get("GITHUB_RUN_ID", ""))
     print("LAYER_A=PASS")
+    print("EXACT_SHA_SCAN=PASS")
+    print("GITGUARDIAN_CANDIDATE=PASS")
+    if reviewed_sha != candidate_sha:
+        print("GITGUARDIAN_REVIEWED=PASS")
     print("GITGUARDIAN=PASS")
 
 

@@ -21,11 +21,27 @@ fail() { echo "FAIL: $1"; FAIL=$((FAIL + 1)); }
 
 echo "== UAT gate activation / first-merge contract =="
 
+CI="$ROOT_DIR/.github/workflows/ci.yml"
+PROD_PY="$ROOT_DIR/deploy/lib/production-github-provenance.py"
+
 if grep -q 'name: Pre-UAT eligibility gate' "$WF" \
   && grep -q 'validate-uat-predeploy-gate.sh' "$WF"; then
   pass "Deploy UAT has a predeploy eligibility gate"
 else
   fail "deploy.yml must run deploy/validate-uat-predeploy-gate.sh in a predeploy-gate job"
+fi
+
+if grep -q 'name: Exact-SHA security scan' "$CI" \
+  && grep -q 'exact-sha-secret-scan.sh' "$CI"; then
+  pass "CI runs an Exact-SHA security scan on the checked-out SHA"
+else
+  fail "ci.yml must run deploy/exact-sha-secret-scan.sh as Exact-SHA security scan"
+fi
+
+if grep -q 'Exact-SHA security scan' "$PROD_PY"; then
+  fail "Production Layer A must not gain the UAT Exact-SHA job requirement"
+else
+  pass "Production Layer A required jobs are unchanged"
 fi
 
 if grep -q 'UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}' "$WF"; then
@@ -148,6 +164,7 @@ order = [
     "Merge",
     "Re-enable",
     "Observe one HOLD",
+    "GitGuardian on the exact main SHA",
     "UAT_DEPLOY_GATE_ACTIVE=true",
 ]
 positions = []

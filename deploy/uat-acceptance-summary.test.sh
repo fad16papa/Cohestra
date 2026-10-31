@@ -192,7 +192,7 @@ write_ok_inputs "$TMP/secret"
 python3 - "$TMP/secret/artifacts/uat-acceptance.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1], encoding="utf-8"))
-p["note"] = "-----BEGIN OPENSSH PRIVATE KEY-----"
+p["note"] = "-----BEGIN OPENSSH " + "PRIVATE KEY-----"
 json.dump(p, open(sys.argv[1], "w"), indent=2)
 PY
 if run_summary "$TMP/secret" "$TMP/summary-secret.json" >"$TMP/secret.out" 2>"$TMP/secret.err"; then
