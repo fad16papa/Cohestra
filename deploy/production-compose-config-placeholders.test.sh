@@ -17,11 +17,11 @@ TMP="$(mktemp -d)"
 trap 'rm -f "$out"; rm -rf "$TMP"' EXIT
 
 required_now="$(production_compose_required_var_names "$COMPOSE")"
-for name in POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail; do
+for name in POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail SelfServeSignup__RegistrationClosed SelfServeSignup__Recaptcha__Enabled; do
   grep -qxF "$name" <<<"$required_now" || fail "compose must require $name via :?"
 done
-[[ "$(grep -c . <<<"$required_now")" -eq 6 ]] || fail "expected exactly six ${VAR:?} names"
-pass "compose currently requires the six mandatory interpolation names"
+[[ "$(grep -c . <<<"$required_now")" -eq 8 ]] || fail "expected exactly eight ${VAR:?} names"
+pass "compose currently requires the eight mandatory interpolation names"
 
 if production_compose_assert_placeholder_contract "$COMPOSE" >"$out" 2>&1; then
   :
@@ -57,7 +57,7 @@ if [[ " $* " == *" up "* ]]; then
 fi
 if [[ "${1:-}" == "compose" ]] && [[ " $* " == *" config "* ]]; then
   missing=0
-  for name in POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail; do
+  for name in POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail SelfServeSignup__RegistrationClosed SelfServeSignup__Recaptcha__Enabled; do
     if [[ -z "${!name:-}" ]]; then
       echo "required variable ${name} is missing a value" >&2
       missing=1
@@ -74,7 +74,7 @@ exit 1
 EOF
 chmod +x "$TMP/mock-docker/docker"
 
-unset POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail || true
+unset POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail SelfServeSignup__RegistrationClosed SelfServeSignup__Recaptcha__Enabled || true
 [[ ! -f "$ROOT_DIR/.env" ]] || fail "test must not run against a repo .env"
 
 set +e
@@ -95,7 +95,7 @@ fi
 [[ ! -f "$TMP/.env" ]] || fail "placeholders must not write .env into the fixture dir"
 pass "config without .env applies process-only placeholders and does not persist them"
 
-unset POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail || true
+unset POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail SelfServeSignup__RegistrationClosed SelfServeSignup__Recaptcha__Enabled || true
 : >"$TMP/docker-invocations.log"
 set +e
 PATH="$TMP/mock-docker:$PATH" \

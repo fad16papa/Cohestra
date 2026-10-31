@@ -6,7 +6,9 @@ public static partial class PlatformHealthDescriptionSanitizer
 {
     public const int MaxLength = 200;
 
-    public static string? Sanitize(string? description)
+    public static string? Sanitize(string? description) => Sanitize(description, MaxLength);
+
+    public static string? Sanitize(string? description, int maxLength)
     {
         if (string.IsNullOrWhiteSpace(description))
         {
@@ -22,9 +24,9 @@ public static partial class PlatformHealthDescriptionSanitizer
         text = EmailAddress().Replace(text, "[redacted]");
         text = StackFrame().Replace(text, string.Empty);
         text = Regex.Replace(text, @"[ \t]+\n", "\n").Trim();
-        if (text.Length > MaxLength)
+        if (maxLength > 0 && text.Length > maxLength)
         {
-            text = text[..MaxLength];
+            text = text[..maxLength];
         }
 
         return text;

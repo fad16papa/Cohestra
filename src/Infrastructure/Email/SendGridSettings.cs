@@ -64,6 +64,51 @@ internal static class SendGridSettingsValidator
         }
     }
 
+    internal static void ValidateForDedicatedProduction(SendGridSettings settings)
+    {
+        ValidateForProduction(settings);
+
+        if (Auth.SecretPlaceholders.LooksLikePlaceholder(settings.ApiKey)
+            || string.Equals(settings.ApiKey?.Trim(), "crm", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "SendGrid:ApiKey appears to be a development placeholder. Use an independent Production key.");
+        }
+
+        if (Auth.SecretPlaceholders.LooksLikePlaceholder(settings.FromEmail))
+        {
+            throw new InvalidOperationException(
+                "SendGrid:FromEmail appears to be a development placeholder.");
+        }
+
+        RejectUatSender(settings.FromEmail, "SendGrid:FromEmail");
+        RejectUatSender(settings.RegistrationFromEmail, "SendGrid:RegistrationFromEmail");
+    }
+
+    private static void RejectUatSender(string? email, string displayName)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return;
+        }
+
+        var at = email.LastIndexOf('@');
+        if (at <= 0 || at >= email.Length - 1)
+        {
+            return;
+        }
+
+        var host = email[(at + 1)..].Trim();
+        if (host.Equals("uat.cohestra.app", StringComparison.OrdinalIgnoreCase)
+            || host.StartsWith("uat.", StringComparison.OrdinalIgnoreCase)
+            || host.Contains(".uat.", StringComparison.OrdinalIgnoreCase)
+            || host.EndsWith(".local", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                $"{displayName} must not use a UAT or .local sender on the dedicated Production plane.");
+        }
+    }
+
     private static void ValidateForCi(SendGridSettings settings)
     {
         if (string.IsNullOrWhiteSpace(settings.ApiKey))

@@ -9,10 +9,7 @@ public sealed class NullEmailSender(ILogger<NullEmailSender> logger) : IEmailSen
         EmailMessage message,
         CancellationToken cancellationToken = default)
     {
-        logger.LogInformation(
-            "Email send skipped (SendGrid not configured). To={ToEmail} Subject={Subject}",
-            message.ToEmail,
-            message.Subject);
+        logger.LogInformation("Email send skipped (SendGrid not configured).");
 
         return Task.FromResult(new EmailSendResult(
             false,

@@ -61,3 +61,40 @@ UAT Redis has no password in compose. Production Redis **must** require a passwo
 ## CSP / headers
 
 nginx owns Production headers (AD-14). Story 46.9 verifies live Paddle `cdn.paddle.com` / `buy.paddle.com` / `api.paddle.com` are allowed and sandbox hosts are not required.
+
+## 46.9 evidence matrix
+
+Recorded against main baseline `e962c8c3eead953a1f56f2b397b3e9d4fc669041` plus this story's in-repo hardening. Live Production URL probes were **not** performed (SSH and live Production probes are prohibited). Missing live evidence is **PENDING**, never PASS.
+
+| Area | Verdict | Evidence | Owner gate |
+| --- | --- | --- | --- |
+| Tenant isolation | PASS (in-repo) | EF filters `CohestraDbContext`; SM-1 in `.github/workflows/ci.yml`; new negatives in `TenantIsolationApiTests`; allowlist `deploy/tenant-filter-bypass-allowlist.txt` | None |
+| X-Tenant-Id trust | PASS (in-repo) | `TenantResolutionMiddleware` ignores header; integration `Admin_XTenantIdHeader_CannotWidenAccessToForeignActivity` | None |
+| JWT↔Host impersonation | PASS (in-repo) | Middleware unit + `Admin_JwtTenantA_OnForeignHost_Returns403_TenantMismatch` | None |
+| Platform Admin isolation | PASS (in-repo) | `PlatformAdminOnly`; TenantAdmin 403 including `/platform/reports/support` | Apex login host PENDING 46.13 |
+| IgnoreTenantFilters | PASS (in-repo) | Documented allowlist + CI contract; no new undocumented bypass | New sites need 46.9-style review |
+| JWT / refresh / handoff | PASS (in-repo) | `ProductionSecurityValidator` placeholder + min length; Redis stores fail-closed 503 in Production | Host `JWT_SIGNING_KEY` PENDING 46.4 |
+| CORS | PASS (validator) | Rejects localhost/loopback in non-Dev; compose binds `PUBLIC_BASE_URL` | Apex origin value PENDING 46.4 / 46.13 |
+| CSP / headers | PASS (in-repo) / PENDING (live URL) | Shared nginx allows live Paddle; `deploy/nginx/production-live-csp.snippet` omits sandbox; `verify-security-headers.sh` on `https://cohestra.app` not run | 46.13 TLS + owner URL |
+| Rate limiting | PASS (in-repo) | Redis fail-closed 503 unchanged | Production Redis password value PENDING 46.4 |
+| reCAPTCHA bypass | PASS (in-repo) | Verifier never honors bypass in Production; validator rejects bypass + Google test keys; apex+open signup requires enabled | Live keys / compose enable PENDING 46.4 |
+| Redis auth | PASS (compose + validator) | `docker-compose.production.yml` `--requirepass`; validator requires password except UAT public host | Host password PENDING 46.4 |
+| DB / Redis ports | PASS (compose) | `validate-production-compose.sh` — no 5432/6379 publish | Droplet firewall live PENDING 46.2 owner |
+| Paddle live/sandbox | PASS (guard) | `PaddleCredentialGuard` + compose locked sandbox / `AllowLive=false` | Live cutover PENDING 46.10 |
+| Secret inventory | PASS (names) | `docs/deploy/production-secret-inventory.md`; example names-only | Values stay off git (46.4) |
+| SHA provenance | PASS (in-repo 46.3) | `workflow_dispatch` + Layer A/B + two-parent merge; direct-to-main REFUSE | Live Environment reviewers PENDING Settings (do not mutate) |
+| GitGuardian PR HEAD | PASS (in-repo 46.3) | Evaluated on `${deploy_sha}^2`; missing/pending = REFUSE | GitHub App install PENDING owner |
+| Direct-to-main | PASS (deploy refuse) | Provenance chain | `main` Settings PENDING owner — 46.9 does not change branch protection |
+| UAT isolation | PASS (in-repo) | `deploy.yml` remains `uat` / `deploy-uat` | None |
+| PII / logging | PENDING | Owned by 46.6 (OTel/redaction, SendGrid email logs) | 46.6 |
+| Backup access | PENDING | Owned by 46.5 | 46.5 |
+| SSH / live headers / DNS / TLS | PENDING | No SSH or Production URL probe in 46.9 | 46.2 / 46.13 owner |
+
+### Cross-story dependencies (not edited here)
+
+- **46.4** owns host `.env`, enabling Production reCAPTCHA keys, `PUBLIC_BASE_URL`, Redis/JWT/Postgres values, and compose runtime wiring.
+- **46.6** owns instrumentation and log redaction.
+- **46.3** already owns deploy provenance; 46.9 re-reviewed and did not mutate GitHub Environment or branch settings.
+- **46.10** owns live Paddle credential cutover and adopting `production-live-csp.snippet` on the live nginx config.
+
+PRODUCTION=NO-GO.
