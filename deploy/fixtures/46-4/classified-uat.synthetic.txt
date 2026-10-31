@@ -1,0 +1,8 @@
+# Synthetic classified UAT inventory — names and 4-character suffixes only.
+# Not live secrets. Do not replace with real suffixes in git.
+JWT_SIGNING_KEY	ua01
+POSTGRES_PASSWORD	ua02
+SendGrid__ApiKey	ua03
+Paddle__ApiKey	ua04
+Paddle__WebhookSecret	ua05
+Paddle__ClientToken	ua06

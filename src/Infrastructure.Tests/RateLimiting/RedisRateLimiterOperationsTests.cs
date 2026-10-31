@@ -1,3 +1,4 @@
+using Cohestra.Application.Auth;
 using Cohestra.Application.RateLimiting;
 using Cohestra.Api.Infrastructure;
 using Cohestra.Infrastructure.RateLimiting;
@@ -61,6 +62,35 @@ public sealed class GlobalExceptionHandlerRateLimiterTests
         using var reader = new StreamReader(context.Response.Body);
         var body = await reader.ReadToEndAsync();
         Assert.Contains(RateLimitErrorCodes.Unavailable, body);
+    }
+
+    [Fact]
+    public async Task TryHandleAsync_maps_auth_session_store_unavailable_to_503()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/api/v1/auth/refresh";
+        context.Request.Method = HttpMethods.Post;
+        context.Response.Body = new MemoryStream();
+        var hostEnvironment = new TestHostEnvironment();
+        context.RequestServices = new ServiceCollection()
+            .AddSingleton<IHostEnvironment>(hostEnvironment)
+            .BuildServiceProvider();
+
+        var handler = new GlobalExceptionHandler(
+            NullLogger<GlobalExceptionHandler>.Instance,
+            hostEnvironment);
+        var exception = new AuthSessionStoreUnavailableException(
+            "refresh-token",
+            new RedisException("Simulated outage"));
+
+        var handled = await handler.TryHandleAsync(context, exception, CancellationToken.None);
+
+        Assert.True(handled);
+        Assert.Equal(StatusCodes.Status503ServiceUnavailable, context.Response.StatusCode);
+        context.Response.Body.Seek(0, SeekOrigin.Begin);
+        using var reader = new StreamReader(context.Response.Body);
+        var body = await reader.ReadToEndAsync();
+        Assert.Contains(AuthErrorCodes.SessionStoreUnavailable, body);
     }
 
     private sealed class TestHostEnvironment : IHostEnvironment
