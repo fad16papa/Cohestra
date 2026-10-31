@@ -263,6 +263,10 @@ cat >"$PROVENANCE_FIX/deploy_runs.json" <<JSON
 {"total_count":1,"workflow_runs":[{"id":77,"event":"workflow_run","head_sha":"${PROVENANCE_MERGE}","head_branch":"main","status":"completed","conclusion":"success","created_at":"2026-10-22T00:00:00Z"}]}
 JSON
 expect_block "$PROVENANCE_MERGE" "duplicate successful UAT deploy of the same SHA is blocked"
+cat >"$PROVENANCE_FIX/deploy_runs.json" <<JSON
+{"total_count":1,"workflow_runs":[{"id":76,"event":"workflow_run","head_sha":"${PROVENANCE_HEAD}","head_branch":"main","status":"completed","conclusion":"success","created_at":"2026-10-22T00:00:00Z"}]}
+JSON
+expect_pass "deploy run whose head_sha is not the candidate is not a duplicate"
 write_empty_deploy_runs
 
 cat >"$PROVENANCE_FIX/deploy_runs.json" <<JSON

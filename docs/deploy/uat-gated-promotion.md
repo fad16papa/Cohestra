@@ -7,7 +7,9 @@ live gate from this pull request. **Do not deploy.** **Do not touch Production.*
 ## Binding contract
 
 UAT SSH happens only when every required check, including GitGuardian Security
-Checks, is `conclusion=success` on the exact candidate SHA:
+Checks, is `conclusion=success` on the exact candidate SHA (the candidate
+itself for a single-parent commit; `${candidate}^2` for a two-parent merge,
+which is the reviewed PR head GitGuardian actually scanned):
 
 1. Development TDD loop produces a new candidate SHA after every code fix.
 2. Candidate verification reruns the full CI suite and mandatory security scans

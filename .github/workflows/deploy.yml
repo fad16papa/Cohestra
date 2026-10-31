@@ -64,7 +64,7 @@ jobs:
           set -euo pipefail
           git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
           git rev-parse --verify origin/main >/dev/null
-          bash deploy/validate-uat-predeploy-gate.sh
+          env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
 
       - name: Remove secret-like predeploy evidence
         if: always()
@@ -132,7 +132,7 @@ jobs:
           set -euo pipefail
           git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
           git rev-parse --verify origin/main >/dev/null
-          bash deploy/validate-uat-predeploy-gate.sh
+          env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
 
       - name: Fail closed if UAT secrets are missing
         env:
@@ -192,6 +192,12 @@ jobs:
             fi
             if ! git merge-base --is-ancestor "$DEPLOY_SHA" "origin/$DEPLOY_BRANCH"; then
               echo "REFUSE: DEPLOY_SHA is not on origin/${DEPLOY_BRANCH}"
+              exit 1
+            fi
+            TIP_SHA="$(git rev-parse --verify "origin/$DEPLOY_BRANCH")"
+            TIP_SHA="${TIP_SHA,,}"
+            if [[ "$DEPLOY_SHA" != "$TIP_SHA" ]]; then
+              echo "REFUSE: DEPLOY_SHA is not the current origin/${DEPLOY_BRANCH} tip"
               exit 1
             fi
             git reset --hard "$DEPLOY_SHA"

@@ -92,6 +92,8 @@ def refuse_duplicate_deploy(repo: str, candidate_sha: str, current_run_id: str) 
         run_id = str(obj.get("id") or "").strip()
         if current and run_id == current:
             continue
+        if prod._norm_sha(obj.get("head_sha")) != candidate_sha:
+            continue
         status = obj.get("status")
         if status in ("queued", "in_progress", "pending", "waiting", "requested"):
             hold("duplicate in-progress UAT deploy")

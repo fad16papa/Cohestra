@@ -87,6 +87,12 @@ else
   fail "deploy job must re-run validate-uat-predeploy-gate.sh before SSH"
 fi
 
+if grep -q 'env -u COHESTRA_GH_API_MOCK' "$WF"; then
+  pass "live jobs unset COHESTRA_GH_API_MOCK"
+else
+  fail "live gate steps must env -u COHESTRA_GH_API_MOCK"
+fi
+
 if grep -q 'public-uat-smoke.sh' "$WF" \
   && grep -q 'test:e2e:uat' "$WF" \
   && grep -q 'uat-acceptance-summary.sh' "$WF"; then

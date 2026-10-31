@@ -83,7 +83,7 @@ ssh-keygen -t ed25519 -C "github-actions-uat-deploy" -f ~/.ssh/cohestra-uat-gha 
 3. **Deploy UAT** starts automatically, evaluates the predeploy gate, and HOLDs unless `UAT_DEPLOY_GATE_ACTIVE=true` and every required check is SUCCESS.
 4. Download `uat-acceptance-summary` (`acceptance-summary.json`) plus the detailed deploy and Playwright artifacts. Missing required sections is FAIL, never a fake PASS.
 
-`workflow_run` pins `TARGET_SHA=github.event.workflow_run.head_sha` and passes it as `DEPLOY_SHA` through appleboy `envs`. The droplet must reset to that exact 40-character SHA after proving it is an ancestor of `origin/main`. If main has advanced to SHA B after CI accepted SHA A, UAT still deploys A or fails closed. It must never silently deploy B.
+`workflow_run` pins `TARGET_SHA=github.event.workflow_run.head_sha` and passes it as `DEPLOY_SHA` through appleboy `envs`. The predeploy gate HOLDs unless that SHA is the current `origin/main` tip and every required check is SUCCESS. The droplet then resets to that exact 40-character SHA after proving it is still the `origin/main` tip. A superseded SHA is not deployed. It must never silently retarget to a newer tip.
 
 Actions never deploy an unpinned branch tip. Empty `DEPLOY_SHA` is refused on the GitHub Actions path. The droplet helper may still reset to `origin/$DEPLOY_BRANCH` only for an explicit manual operator run that does not set `DEPLOY_SHA`.
 

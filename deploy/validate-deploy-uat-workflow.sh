@@ -286,6 +286,18 @@ else
   pass "ADCP is absent from Deploy UAT"
 fi
 
+if grep -q 'env -u COHESTRA_GH_API_MOCK' "$WF"; then
+  pass "live gate unsets COHESTRA_GH_API_MOCK"
+else
+  fail "live Deploy UAT must env -u COHESTRA_GH_API_MOCK before the gate"
+fi
+
+if grep -q 'DEPLOY_SHA is not the current origin/${DEPLOY_BRANCH} tip' "$WF"; then
+  pass "SSH refuses a SHA that is no longer the origin tip"
+else
+  fail "SSH must refuse DEPLOY_SHA that is not the current origin tip"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1
