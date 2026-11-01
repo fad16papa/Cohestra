@@ -280,6 +280,14 @@ else
   fail "deploy job must re-run the predeploy gate before SSH"
 fi
 
+if grep -q 'fetch-origin-main.sh' "$WF" \
+  && grep -q 'UAT_DEPLOY_GATE_ACTIVE:-}" != "true"' "$WF" \
+  && ! grep -qiE 'AUTHORIZATION:[[:space:]]*bearer' "$WF"; then
+  pass "disabled gate evaluates HOLD before authenticated origin/main fetch"
+else
+  fail "predeploy must HOLD without the broken Bearer git fetch"
+fi
+
 if grep -qiE 'adcp|autonomous delivery control plane' "$WF"; then
   fail "UAT workflow must not restore ADCP"
 else

@@ -125,6 +125,8 @@ if "uat-delivery-status.test.sh" not in txt:
     raise SystemExit("CI must run delivery-status contract")
 if "uat-final-outcome.test.sh" not in txt:
     raise SystemExit("CI must run final-outcome contract")
+if "fetch-origin-main.test.sh" not in txt:
+    raise SystemExit("CI must run origin/main fetch and HOLD-first contract")
 iso = txt.split("  uat-isolation:\n", 1)[1]
 if "bash deploy/commission-uat-hold.sh" not in iso:
     raise SystemExit("CI must persist commissioning by invoking commission-uat-hold.sh")

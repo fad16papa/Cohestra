@@ -32,7 +32,12 @@ Exact-SHA pattern scan remains required defense-in-depth.
    failure is `DEPLOYED_REJECTED`/`HOLD`, not “no deploy occurred.”
 
 The suppressor `vars.UAT_DEPLOY_GATE_ACTIVE` must equal the exact string `true`
-or the gate HOLDs. Unset, `false`, `TRUE`, and `1` are HOLD.
+or the gate HOLDs. Unset, `false`, `TRUE`, and `1` are HOLD. When the
+suppressor is not exact `true`, Deploy UAT runs the real validator and
+persists HOLD evidence **before** any authenticated `origin/main` fetch.
+Enabled-path provenance uses URL-scoped Basic `x-access-token` auth
+(`deploy/fetch-origin-main.sh`) with `persist-credentials: false`. The
+unscoped Bearer extraheader used on run 41289603719 is forbidden.
 
 ## Automatic commissioning vs live HOLD
 
