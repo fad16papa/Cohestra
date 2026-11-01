@@ -243,6 +243,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Exact-SHA secret scan contract
         run: bash deploy/exact-sha-secret-scan.test.sh
@@ -271,8 +273,19 @@ jobs:
       - name: UAT final outcome contract
         run: bash deploy/uat-final-outcome.test.sh
 
-      - name: UAT origin/main fetch and HOLD-first contract
+      - name: UAT origin/main fetch helper contract
         run: bash deploy/fetch-origin-main.test.sh
+
+      - name: UAT origin/release/uat fetch contract
+        run: bash deploy/fetch-origin-uat.test.sh
+
+      - name: PR-D AD-23 protected-push contract
+        run: |
+          set -euo pipefail
+          bash deploy/validate-prd-ad23.test.sh
+          bash deploy/validate-ad25-sync-procedure.sh
+          bash deploy/validate-ad25-sync-fixture.test.sh
+          bash deploy/write-uat-deploy-provenance.test.sh
 
       - name: Inline suppression and merge-token contracts
         run: |

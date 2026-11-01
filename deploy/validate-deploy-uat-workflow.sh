@@ -62,9 +62,9 @@ else
 fi
 
 if grep -q 'workflow_run.head_sha' "$WF"; then
-  pass "workflow_run uses head_sha"
+  fail "PR-D must not pin TARGET_SHA from workflow_run.head_sha"
 else
-  fail "workflow_run must pin github.event.workflow_run.head_sha"
+  pass "TARGET_SHA is not derived from workflow_run.head_sha"
 fi
 
 if grep -q 'secrets.DROPLET_DEPLOY_PATH' "$WF" && grep -A2 'script:' "$WF" | grep -q 'secrets.DROPLET_DEPLOY_PATH'; then
@@ -109,10 +109,10 @@ else
   fail "workflow must upload uat-acceptance.json and uat-public-smoke.json"
 fi
 
-if grep -q 'TARGET_SHA:' "$WF" && grep -q 'workflow_run.head_sha' "$WF"; then
-  pass "TARGET_SHA is derived for workflow_run"
+if grep -q 'TARGET_SHA: ${{ github.sha }}' "$WF"; then
+  pass "TARGET_SHA is github.sha on the protected-push path"
 else
-  fail "workflow must define TARGET_SHA from workflow_run.head_sha"
+  fail "workflow must define TARGET_SHA from github.sha"
 fi
 
 if grep -q 'TARGET_SHA must be a full 40-character hexadecimal Git SHA' "$WF"; then
@@ -121,16 +121,16 @@ else
   fail "workflow must fail closed if TARGET_SHA is not a 40-character SHA"
 fi
 
-if grep -qE 'workflow_run\.head_sha \|\| github\.sha' "$WF"; then
-  fail "workflow_run TARGET_SHA must not fall back to github.sha"
+if grep -q 'workflow_run:' "$WF"; then
+  fail "N25 leftover workflow_run listener"
 else
-  pass "workflow_run TARGET_SHA does not fall back to github.sha"
+  pass "N25 no workflow_run listener"
 fi
 
 if grep -q 'TARGET_SHA must equal workflow_run.head_sha' "$WF"; then
-  pass "workflow_run TARGET_SHA is bound to head_sha"
+  fail "PR-D must not bind TARGET_SHA to workflow_run.head_sha"
 else
-  fail "workflow_run must refuse TARGET_SHA that is not head_sha"
+  pass "workflow_run.head_sha binding is gone"
 fi
 
 if grep -q 'EXPECTED_SHA' "$WF" && grep -q 'EXPECTED_SHA != DEPLOYED_SHA' "$WF"; then
@@ -296,8 +296,8 @@ checkout = pre.find("Checkout accepted SHA")
 if inline < 0 or checkout < 0 or inline > checkout:
     raise SystemExit("inline suppressor must precede TARGET_SHA checkout")
 block = pre[inline:checkout]
-if 'UAT_MAIN_DEPLOY_SUPPRESSED:-}" == "true"' not in block:
-    raise SystemExit("inline step must HOLD when suppressed is exact true")
+if 'UAT_MAIN_DEPLOY_SUPPRESSED:-}" != "true"' not in block:
+    raise SystemExit("inline step must HOLD when suppressed is not exact true")
 if "actions/checkout" in block:
     raise SystemExit("inline suppressor must not checkout the candidate")
 PY
@@ -309,22 +309,20 @@ fi
 
 if python3 - "$WF" <<'PY'
 from pathlib import Path
-import sys
+import re, sys
 text = Path(sys.argv[1]).read_text()
 on = text.split("jobs:", 1)[0]
-if "workflow_run:" not in on:
-    raise SystemExit("PR-C must keep workflow_run")
-if "branches:\n      - release/uat" in on or "branches: [release/uat]" in on:
-    raise SystemExit("PR-C must not retarget workflow_run to release/uat")
-if on.count("- main") < 1:
-    raise SystemExit("workflow_run.branches must still include main")
-if "\n  push:" in on:
-    raise SystemExit("PR-C must not add push trigger to Deploy UAT")
+if "workflow_run:" in on:
+    raise SystemExit("N25 leftover workflow_run")
+if "\n  push:" not in on or "release/uat" not in on:
+    raise SystemExit("AD-23 requires push to release/uat")
+if re.search(r"branches:\n\s+- main", on):
+    raise SystemExit("Deploy UAT must not listen on main")
 PY
 then
-  pass "PR-C keeps workflow_run.branches on main only"
+  pass "PR-D Deploy UAT is push to release/uat only"
 else
-  fail "PR-C must not change workflow_run.branches away from main"
+  fail "PR-D must use AD-23 push release/uat and delete workflow_run"
 fi
 
 if grep -q 'Re-run UAT predeploy gate before SSH' "$WF"; then
@@ -333,10 +331,10 @@ else
   fail "deploy job must re-run the predeploy gate before SSH"
 fi
 
-if grep -q 'fetch-origin-main.sh' "$WF" \
+if grep -q 'fetch-origin-uat.sh' "$WF" \
   && grep -q 'UAT_DEPLOY_GATE_ACTIVE:-}" != "true"' "$WF" \
   && ! grep -qiE 'AUTHORIZATION:[[:space:]]*bearer' "$WF"; then
-  pass "disabled gate evaluates HOLD before authenticated origin/main fetch"
+  pass "disabled gate evaluates HOLD before authenticated origin/release/uat fetch"
 else
   fail "predeploy must HOLD without the broken Bearer git fetch"
 fi

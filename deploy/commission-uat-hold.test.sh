@@ -110,10 +110,13 @@ if "environment:" in pre:
     raise SystemExit("predeploy-gate must not use an Environment")
 if "DROPLET_" in pre:
     raise SystemExit("predeploy-gate must not read DROPLET secrets")
-if "workflow_run:" not in text:
-    raise SystemExit("automatic path must remain workflow_run on CI")
+if "workflow_run:" in text:
+    raise SystemExit("N25 leftover workflow_run")
+on = text.split("jobs:", 1)[0]
+if "push:" not in on or "release/uat" not in on:
+    raise SystemExit("automatic path must be push to release/uat")
 PY
-pass "deploy.yml SSH path is gated and automatic via workflow_run"
+pass "deploy.yml SSH path is gated and automatic via push to release/uat"
 
 python3 - "$CI" <<'PY'
 from pathlib import Path
@@ -126,7 +129,13 @@ if "uat-delivery-status.test.sh" not in txt:
 if "uat-final-outcome.test.sh" not in txt:
     raise SystemExit("CI must run final-outcome contract")
 if "fetch-origin-main.test.sh" not in txt:
-    raise SystemExit("CI must run origin/main fetch and HOLD-first contract")
+    raise SystemExit("CI must keep origin/main fetch helper contract")
+if "fetch-origin-uat.test.sh" not in txt:
+    raise SystemExit("CI must run origin/release/uat fetch contract")
+if "validate-prd-ad23.test.sh" not in txt:
+    raise SystemExit("CI must run PR-D AD-23 contract")
+if "validate-ad25-sync-fixture.test.sh" not in txt:
+    raise SystemExit("CI must run the AD-25 two-branch fixture")
 iso = txt.split("  uat-isolation:\n", 1)[1]
 if "bash deploy/commission-uat-hold.sh" not in iso:
     raise SystemExit("CI must persist commissioning by invoking commission-uat-hold.sh")

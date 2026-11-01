@@ -9,15 +9,13 @@ https://docs.github.com/en/actions/using-workflows/triggering-a-workflow
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
-PR_D_EXCLUSIVE = {
-    ".github/workflows/deploy.yml",
-    "deploy/validate-uat-predeploy-gate.sh",
-    "deploy/validate-deploy-uat-workflow.sh",
-    "deploy/commission-uat-hold.sh",
-    "deploy/fetch-origin-main.sh",
-    "deploy/lib/uat-predeploy-gate.py",
-}
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "deploy" / "lib"))
+from ad25_sync_allowlist import load_allowlist  # noqa: E402
+
+PR_D_EXCLUSIVE = set(load_allowlist(ROOT))
 
 
 def push_starts_deploy(token_class: str) -> bool:
@@ -49,6 +47,15 @@ def main() -> None:
         "N34 FF live main tip forbidden",
         not sync_allowed(PR_D_EXCLUSIVE | {"src/Api/Program.cs"}),
     )
+    check("seven-path subset is incomplete", not sync_allowed({
+        ".github/workflows/deploy.yml",
+        "deploy/validate-uat-predeploy-gate.sh",
+        "deploy/validate-deploy-uat-workflow.sh",
+        "deploy/commission-uat-hold.sh",
+        "deploy/fetch-origin-uat.sh",
+        "deploy/write-uat-deploy-provenance.sh",
+        "deploy/lib/uat-predeploy-gate.py",
+    }))
 
     if failures:
         print("SIMULATE_MERGE_TOKEN=FAIL")
@@ -58,6 +65,7 @@ def main() -> None:
     print("SIMULATE_MERGE_TOKEN=PASS")
     print("N35 GITHUB_TOKEN push does not create Deploy UAT")
     print("N34/N38 exclusive-tree only; live main FF refused")
+    print("SEVEN_PATH_SUBSET=REFUSED")
     print("LIVE_APP_PUSH=UNVERIFIED")
 
 

@@ -45,8 +45,10 @@ if "environment:" in pre:
     raise SystemExit("predeploy-gate must not use an Environment")
 if "DROPLET_" in pre:
     raise SystemExit("predeploy-gate must not read DROPLET secrets")
-if "workflow_run:" not in wf:
-    raise SystemExit("automatic UAT path missing workflow_run")
+if "workflow_run:" in wf:
+    raise SystemExit("N25 leftover workflow_run")
+if "push:" not in wf or "release/uat" not in wf.split("jobs:", 1)[0]:
+    raise SystemExit("automatic UAT path must be push to release/uat")
 if "github.event_name == 'workflow_dispatch' ||" in wf:
     raise SystemExit("workflow_dispatch OR-bypass is forbidden")
 if not re.search(r"^on:\n  workflow_dispatch:\n", prod, re.M) and "workflow_dispatch:" not in prod:
@@ -64,10 +66,10 @@ cd "$PROVENANCE_LOCAL"
 export COHESTRA_GH_API_MOCK="$ROOT_DIR/deploy/lib/uat-gh-api-mock.sh"
 export COHESTRA_PROVENANCE_FIXTURE="$PROVENANCE_FIX"
 export GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-fad16papa/Cohestra}"
-export ORIGIN_MAIN_REF="origin/main"
+export ORIGIN_UAT_REF="origin/release/uat"
 export COHESTRA_ROOT="$ROOT_DIR"
-export GITHUB_EVENT_NAME=workflow_run
-export WORKFLOW_RUN_HEAD_SHA="$PROVENANCE_MERGE"
+export GITHUB_EVENT_NAME=push
+export GITHUB_REF=refs/heads/release/uat
 export UAT_GATE_EVIDENCE_DIR="$EVIDENCE_DIR"
 export UAT_DEPLOY_GATE_ACTIVE=false
 export CANDIDATE_SHA="$PROVENANCE_MERGE"
@@ -126,7 +128,7 @@ payload = {
         "deploy job if requires needs.predeploy-gate.outputs.eligible == 'true'",
         "commissioning path never loads droplet secrets or the SSH action",
     ],
-    "automatic_path": "workflow_run(CI completed on main) then predeploy-gate; dispatch is optional and uses the same gate",
+    "automatic_path": "push to release/uat then AD-17 needs then predeploy-gate; dispatch is optional and uses the same gate",
 }
 with open(path, "w", encoding="utf-8") as fh:
     json.dump(payload, fh, indent=2)
