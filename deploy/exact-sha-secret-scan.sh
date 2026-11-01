@@ -21,12 +21,12 @@ if ! git -C "$ROOT_DIR" rev-parse --verify "$SCAN_SHA^{commit}" >/dev/null 2>&1;
   exit 1
 fi
 
-# High-confidence leaked-credential markers only. Do not print matching lines
+# High-confidence credential markers including binary blobs. Do not print matching lines
 # (they may contain secret material). Count hits and fail closed.
 PATTERN='-----BEGIN (OPENSSH |RSA |EC |DSA |ENCRYPTED )?PRIVATE KEY-----|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}'
 
 set +e
-grep_out="$(git -C "$ROOT_DIR" grep -I -E -c -e "$PATTERN" "$SCAN_SHA" -- . 2>/dev/null)"
+grep_out="$(git -C "$ROOT_DIR" grep -a -E -c -e "$PATTERN" "$SCAN_SHA" -- . 2>/dev/null)"
 grep_rc=$?
 set -e
 if [[ "$grep_rc" -ge 2 ]]; then

@@ -189,11 +189,19 @@ jobs:
     name: Exact-SHA security scan
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout exact candidate SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
       - name: Scan the exact checked-out SHA
-        run: bash deploy/exact-sha-secret-scan.sh
+        env:
+          SCAN_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SCAN_SHA"
+          bash deploy/exact-sha-secret-scan.sh
 
   uat-isolation:
     name: UAT isolation contract
