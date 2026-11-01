@@ -165,6 +165,29 @@ assert "GITGUARDIAN_API_KEY=" not in blob
 PY
 pass "complete success is DEPLOYED_ACCEPTED"
 
+# Live Deploy UAT downloads Playwright to the checkout root, not artifacts/.
+mkdir -p "$TMP/live/artifacts" "$TMP/live/web/test-results"
+write_predeploy "$TMP/live/artifacts" PASS "ok"
+write_dispatch "$TMP/live/artifacts"
+write_acceptance "$TMP/live/artifacts" pass
+write_smoke "$TMP/live/artifacts" pass
+write_lifecycle "$TMP/live/artifacts" pass
+cat >"$TMP/live/web/test-results/uat-playwright.json" <<JSON
+{"stats":{"expected":8,"skipped":2,"unexpected":0,"flaky":0}}
+JSON
+out="$(
+  cd "$TMP/live" &&
+  UAT_FINAL_OUTCOME_DIR="$TMP/live/artifacts" TARGET_SHA="$SHA" bash "$OUTCOME"
+)" || { echo "$out"; fail "live download layout must find Playwright at web/test-results"; }
+python3 - "$TMP/live/artifacts/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
+assert p["browser"] == "pass", p
+assert p["uat_deployed"] is True
+PY
+pass "live Playwright path at cwd/web/test-results is aggregated"
+
 python3 - "$WF" <<'PY'
 from pathlib import Path
 import re, sys

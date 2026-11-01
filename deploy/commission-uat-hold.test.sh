@@ -27,6 +27,14 @@ echo "$out" | grep -q 'eligible=false' || { echo "$out"; fail "commissioning mus
 echo "$out" | grep -q 'EVIDENCE_CLASS=CI_CONTRACT' || { echo "$out"; fail "commissioning must label CI_CONTRACT"; }
 echo "$out" | grep -q 'LIVE_DEPLOY_UAT_HOLD=false' || { echo "$out"; fail "must not claim a live Deploy UAT HOLD"; }
 echo "$out" | grep -q 'SSH_POSSIBLE=false' || { echo "$out"; fail "commissioning must prove SSH is impossible"; }
+# CI persist uses a relative artifacts/ci-contract path from the runner cwd.
+# The commissioning script later cds into a temp fixture; a relative evidence
+# dir must be resolved before that cd or the upload path is empty.
+out="$(cd "$TMP" && UAT_GATE_EVIDENCE_DIR="relative-evidence" UAT_DEPLOY_GATE_ACTIVE=false bash "$COMMISSION")" || true
+[[ -f "$TMP/relative-evidence/uat-hold-commissioning.json" ]] || { echo "$out"; fail "relative evidence dir must survive commissioning cd"; }
+[[ ! -d "$TMP/relative-evidence/.git" ]] || fail "evidence dir must not be the fixture worktree"
+pass "relative UAT_GATE_EVIDENCE_DIR stays outside the fixture worktree"
+
 pass "false suppressor HOLDs and cannot SSH"
 
 EVIDENCE="$TMP/evidence/uat-hold-commissioning.json"

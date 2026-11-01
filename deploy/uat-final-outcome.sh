@@ -150,6 +150,9 @@ browser = load(
     extra=[
         evidence_dir / "web" / "test-results" / "uat-playwright.json",
         evidence_dir / "test-results" / "uat-playwright.json",
+        Path.cwd() / "web" / "test-results" / "uat-playwright.json",
+        Path.cwd() / "test-results" / "uat-playwright.json",
+        Path.cwd() / "artifacts" / "uat-playwright.json",
     ],
 )
 lifecycle = load("19-5-lifecycle.json")

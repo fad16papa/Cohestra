@@ -13,6 +13,7 @@ WF="$ROOT_DIR/.github/workflows/deploy.yml"
 PROD="$ROOT_DIR/.github/workflows/deploy-production.yml"
 EVIDENCE_DIR="${UAT_GATE_EVIDENCE_DIR:-$ROOT_DIR/artifacts}"
 mkdir -p "$EVIDENCE_DIR"
+EVIDENCE_DIR="$(cd "$EVIDENCE_DIR" && pwd)"
 
 if [[ ! -f "$WF" ]]; then
   echo "RESULT=REFUSE"

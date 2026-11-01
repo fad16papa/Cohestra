@@ -13,9 +13,12 @@
   proves the SSH job `if` cannot run unless `eligible == true`.
 - Evidence class is `CI_CONTRACT`. It is not a live Deploy UAT HOLD run.
 - CI uploads durable `uat-ci-contract-commissioning` after redaction.
+  Commissioning absolutizes `UAT_GATE_EVIDENCE_DIR` before entering the
+  fixture worktree so a relative `artifacts/ci-contract` path survives.
 - Predeploy status is phase-specific (`NOT_STARTED` / `HELD`). Final
   `uat-final-outcome.json` aggregates SSH, SHA, host, smoke, browser,
-  and lifecycle. Post-deploy failure is `DEPLOYED_REJECTED`.
+  and lifecycle, including Playwright at `web/test-results/` after
+  download-artifact. Post-deploy failure is `DEPLOYED_REJECTED`.
 - Continuous path remains: merge → main CI → scans SUCCESS → predeploy
   gate → automatic `workflow_run` UAT → smoke/browser. Recurring dispatch
   is not required after the owner sets `UAT_DEPLOY_GATE_ACTIVE=true`.
