@@ -71,11 +71,13 @@ JSON
   {
     "id": 101,
     "user": {"login": "bmad-reviewer", "type": "User"},
+    "author_association": "MEMBER",
     "body": $(python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' <<<"$(review_body BMAD "$HEAD_SHA")")
   },
   {
     "id": 102,
     "user": {"login": "catsec-reviewer", "type": "User"},
+    "author_association": "MEMBER",
     "body": $(python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' <<<"$(review_body CAT-SEC "$HEAD_SHA")")
   }
 ]
@@ -105,6 +107,9 @@ JSON
   cat >"$fix/checks_${HEAD_SHA}.json" <<JSON
 {"total_count":1,"check_runs":[{"id":77,"name":"GitGuardian Security Checks","app":{"slug":"gitguardian"},"head_sha":"${HEAD_SHA}","status":"completed","conclusion":"success","completed_at":"2026-11-01T00:00:01Z","html_url":"https://example.invalid/gg"}]}
 JSON
+  cat >"$fix/pulls_${HEAD_SHA}.json" <<JSON
+[{"number":${number},"state":"open","merged":false,"base":{"ref":"main"},"head":{"sha":"${HEAD_SHA}"}}]
+JSON
 }
 
 write_main_green() {
@@ -128,7 +133,7 @@ JSON
 ]}
 JSON
   cat >"$fix/pulls_${MAIN_SHA}.json" <<JSON
-[{"number":8888,"merged":true,"base":{"ref":"main"},"merge_commit_sha":"${MAIN_SHA}","head":{"sha":"${REVIEW_SHA}"}}]
+[{"number":8888,"state":"closed","merged":true,"base":{"ref":"main"},"merge_commit_sha":"${MAIN_SHA}","head":{"sha":"${REVIEW_SHA}"}}]
 JSON
   cat >"$fix/pr_8888.json" <<JSON
 {
@@ -149,11 +154,13 @@ JSON
   {
     "id": 201,
     "user": {"login": "bmad-reviewer", "type": "User"},
+    "author_association": "MEMBER",
     "body": $(python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' <<<"$(review_body BMAD "$REVIEW_SHA")")
   },
   {
     "id": 202,
     "user": {"login": "catsec-reviewer", "type": "User"},
+    "author_association": "MEMBER",
     "body": $(python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))' <<<"$(review_body CAT-SEC "$REVIEW_SHA")")
   }
 ]
@@ -175,6 +182,15 @@ JSON
 JSON
   cat >"$fix/deploy_runs.json" <<JSON
 {"total_count":1,"workflow_runs":[{"id":41293585950,"head_sha":"${MAIN_SHA}","status":"completed","conclusion":"failure","html_url":"https://example.invalid/deploy/hold"}]}
+JSON
+  cat >"$fix/run_41293585950.json" <<JSON
+{"id":41293585950,"event":"workflow_dispatch","head_sha":"${MAIN_SHA}","head_branch":"main","status":"completed","conclusion":"failure","html_url":"https://example.invalid/deploy/hold"}
+JSON
+  cat >"$fix/jobs_41293585950.json" <<JSON
+{"total_count":2,"jobs":[
+  {"name":"Pre-UAT eligibility gate","conclusion":"failure","status":"completed","head_sha":"${MAIN_SHA}"},
+  {"name":"Deploy accepted SHA to UAT","conclusion":"skipped","status":"completed","head_sha":"${MAIN_SHA}"}
+]}
 JSON
 }
 
@@ -696,5 +712,77 @@ if text.count("require-uat-readiness-predeploy.sh") < 2:
 print("deploy HOLD-first + pre-SSH readiness ok")
 PY
 pass "Deploy UAT keeps HOLD-first and revalidates readiness before SSH"
+
+write_pr_green "$FIX" 9999
+python3 - "$FIX/jobs_22.json" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
+for job in data["jobs"]:
+    if job["name"] == "Exact-SHA security scan":
+        job["conclusion"] = "skipped"
+json.dump(data, open(sys.argv[1], "w"))
+PY
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "HOLD"
+pass "skipped required PR check is HOLD, not READY"
+
+write_pr_green "$FIX" 9999
+python3 - "$FIX/pr_9999.json" <<'PY'
+import json, sys
+pr = json.load(open(sys.argv[1]))
+pr["mergeable"] = None
+pr["mergeable_state"] = "unknown"
+json.dump(pr, open(sys.argv[1], "w"))
+PY
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "HOLD"
+pass "ambiguous mergeability fail-closes to HOLD"
+
+write_pr_green "$FIX" 9999
+python3 - "$FIX/issue_comments_9999.json" <<'PY'
+import json, sys
+comments = json.load(open(sys.argv[1]))
+for row in comments:
+    row["author_association"] = "NONE"
+json.dump(comments, open(sys.argv[1], "w"))
+PY
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "HOLD"
+pass "public untrusted commenter cannot mint authentic reviews"
+
+write_pr_green "$FIX" 9999
+python3 - "$FIX/issue_comments_9999.json" <<'PY'
+import json, sys
+comments = json.load(open(sys.argv[1]))
+comments[1]["user"]["login"] = comments[0]["user"]["login"]
+json.dump(comments, open(sys.argv[1], "w"))
+PY
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "HOLD"
+pass "one identity cannot satisfy both BMAD and CAT-SEC"
+
+write_pr_green "$FIX" 9999
+run_eval "$FIX" --mode main --sha "$HEAD_SHA" >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "READY_FOR_OWNER_MERGE_DECISION"
+python3 - "$FIX/out/uat-readiness.json" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+assert r["mode"] == "pr"
+assert r["pr_number"] == 9999
+PY
+pass "workflow_run/main-mode SHA of an open UAT PR re-evaluates that PR"
+
+write_main_green "$MAINFIX"
+python3 - "$MAINFIX/jobs_41293585950.json" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
+for job in data["jobs"]:
+    if job["name"] == "Deploy accepted SHA to UAT":
+        job["conclusion"] = "cancelled"
+json.dump(data, open(sys.argv[1], "w"))
+PY
+run_eval "$MAINFIX" --mode main --sha "$MAIN_SHA" >/dev/null
+expect_state "$MAINFIX/out/uat-readiness.json" "UAT_ACTIVATION_HOLD"
+pass "cancelled Deploy UAT is not live disabled-gate HOLD proof"
 
 echo "evaluate-uat-readiness contract OK"

@@ -71,9 +71,13 @@ UAT_PATH_EXACT = (
 SECRET_RE = re.compile(
     r"(BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN|Bearer\s+[A-Za-z0-9._\-=]+|"
     r"(password|secret|token|api[_-]?key)\s*[:=]\s*\S+|"
-    r"ghp_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+)",
+    r"ghp_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+|ghs_[A-Za-z0-9]+|gho_[A-Za-z0-9]+|ghu_[A-Za-z0-9]+)",
     re.MULTILINE | re.IGNORECASE,
 )
+SUPPORTED_ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
+CLEAN_MERGE_STATES = {"clean", "has_hooks"}
+PREDEPLOY_JOB = "Pre-UAT eligibility gate"
+DEPLOY_JOB = "Deploy accepted SHA to UAT"
 
 
 def _load_production() -> Any:
@@ -434,6 +438,9 @@ def authentic_review(
         return False, "reviewer is the PR author"
     if kind.lower() == "bot" or login.endswith("[bot]"):
         return False, "unsupported reviewer identity"
+    association = str(row.get("author_association") or "").strip().upper()
+    if association not in SUPPORTED_ASSOCIATIONS:
+        return False, "unsupported reviewer identity"
     try:
         blocker = int(payload.get("blocker"))
         major = int(payload.get("major"))
@@ -499,6 +506,12 @@ def collect_reviews(
             }
             continue
         found[key] = record
+    bmad_id = str((found.get("bmad") or {}).get("identity") or "")
+    cat_id = str((found.get("cat_sec") or {}).get("identity") or "")
+    if bmad_id and cat_id and bmad_id.lower() == cat_id.lower():
+        risks.append("BMAD and CAT-SEC must be distinct independent identities")
+        found["bmad"] = {"present": True, "authentic": False, "verdict": "NOT_INDEPENDENT"}
+        found["cat_sec"] = {"present": True, "authentic": False, "verdict": "NOT_INDEPENDENT"}
     reviews = {
         "bmad": found.get("bmad")
         or {"present": False, "authentic": False, "verdict": "MISSING"},
@@ -764,7 +777,7 @@ def evaluate_pr(repo: str, pr_number: int, requested_head: str = "", requested_b
         row
         for row in required
         if row.get("result")
-        not in {"SUCCESS", "PENDING", "MISSING", "SKIPPED", "NOT_REQUIRED_ON_PR", "SKIPPED_OK_ON_PR"}
+        not in {"SUCCESS", "PENDING", "MISSING", "NOT_REQUIRED_ON_PR", "SKIPPED_OK_ON_PR"}
     ]
     if gg.get("result") not in {"SUCCESS", "PENDING", "MISSING"}:
         report["material_blocker"] = True
@@ -793,8 +806,8 @@ def evaluate_pr(repo: str, pr_number: int, requested_head: str = "", requested_b
         hold(report, "REVIEW_EVIDENCE_MISSING")
         report["owner_choices"] = owner_choices_for(report["state"])
         return finish(report, fingerprints)
-    if report.get("mergeable") is False or report.get("merge_state_status") in {"dirty", "blocked", "draft"}:
-        hold(report, "GitHub mergeability is not clean")
+    if report.get("mergeable") is not True or report.get("merge_state_status") not in CLEAN_MERGE_STATES:
+        hold(report, "GitHub mergeability is missing, ambiguous, or not clean")
         report["owner_choices"] = owner_choices_for(report["state"])
         return finish(report, fingerprints)
 
@@ -821,10 +834,16 @@ def live_disabled_gate_hold(repo: str, sha: str) -> dict[str, Any]:
             continue
         if obj.get("status") != "completed":
             continue
-        # Live disabled-gate HOLD is a completed Deploy UAT run that did not succeed
-        # (eligible=false / SSH skipped). CI_CONTRACT artifacts are not live proof.
-        conclusion = str(obj.get("conclusion") or "")
-        if conclusion in {"success", "skipped"}:
+        try:
+            _run, jobs = jobs_for_run(repo, obj.get("id"))
+        except SystemExit:
+            continue
+        pre = next((job for job in jobs if job.get("name") == PREDEPLOY_JOB), None)
+        deploy = next((job for job in jobs if job.get("name") == DEPLOY_JOB), None)
+        if not pre or str(pre.get("conclusion") or "") != "failure":
+            continue
+        deploy_conclusion = str((deploy or {}).get("conclusion") or "")
+        if deploy_conclusion and deploy_conclusion != "skipped":
             continue
         result.update(
             {
@@ -836,6 +855,32 @@ def live_disabled_gate_hold(repo: str, sha: str) -> dict[str, Any]:
         )
         return result
     return result
+
+
+def find_open_pr_for_sha(repo: str, sha: str) -> int | None:
+    if not is_full_sha(sha):
+        return None
+    rows = paginate(f"/repos/{repo}/commits/{sha}/pulls", None, "commit pulls")
+    found: list[int] = []
+    for raw in rows:
+        obj = prod.require_dict(raw, "associated PR")
+        base = obj.get("base") if isinstance(obj.get("base"), dict) else {}
+        if base.get("ref") != "main":
+            continue
+        if obj.get("merged") is True or str(obj.get("state") or "") == "closed":
+            continue
+        head = obj.get("head") if isinstance(obj.get("head"), dict) else {}
+        if is_full_sha(head.get("sha")) and norm_sha(head.get("sha")) != sha:
+            continue
+        number = obj.get("number")
+        if isinstance(number, int):
+            found.append(number)
+    unique = sorted(set(found))
+    if len(unique) > 1:
+        raise RuntimeError("ambiguous open PRs for SHA")
+    if unique:
+        return unique[0]
+    return None
 
 
 def live_acceptance(repo: str, sha: str) -> dict[str, Any]:
@@ -1023,18 +1068,27 @@ def evaluate_reconcile(repo: str) -> dict[str, Any]:
                 for row in paginate(f"/repos/{repo}/pulls/{number}/files", None, "pr files")
             ]
         except SystemExit:
+            failed = base_report(mode="pr", pr_number=number)
+            hold(failed, "GitHub API failed closed while listing PR files", material=True)
+            reports.append(finish(failed))
             continue
         if not is_uat_candidate(pr, files):
             continue
         reports.append(evaluate_pr(repo, number))
     summary = base_report(mode="reconcile", state="HOLD")
     summary["reports"] = reports
-    if any(row.get("state") == "READY_FOR_OWNER_MERGE_DECISION" for row in reports):
+    notifier = next((row for row in reports if row.get("should_notify")), None)
+    if notifier:
+        summary["pr_number"] = notifier.get("pr_number")
+        summary["head_sha"] = notifier.get("head_sha")
+        summary["base_sha"] = notifier.get("base_sha")
+        summary["state"] = notifier.get("state") or "HOLD"
+        summary["material_blocker"] = bool(notifier.get("material_blocker"))
+        summary["hold_reason"] = notifier.get("hold_reason") or ""
+    elif any(row.get("state") == "READY_FOR_OWNER_MERGE_DECISION" for row in reports):
         summary["state"] = "READY_FOR_OWNER_MERGE_DECISION"
-        summary["should_notify"] = any(row.get("should_notify") for row in reports)
     elif reports:
         summary["state"] = reports[0].get("state") or "HOLD"
-        summary["should_notify"] = any(row.get("should_notify") for row in reports)
     else:
         summary["state"] = "NOT_UAT_CANDIDATE"
         summary["hold_reason"] = "no open UAT candidate PRs"
@@ -1047,10 +1101,14 @@ def evaluate(mode: str, **kwargs: Any) -> dict[str, Any]:
     try:
         if mode == "pr":
             return evaluate_pr(repo, int(kwargs["pr_number"]), kwargs.get("head_sha") or "", kwargs.get("base_sha") or "")
-        if mode == "main":
-            return evaluate_main(repo, str(kwargs.get("sha") or ""))
-        if mode == "predeploy":
-            return evaluate_predeploy(repo, str(kwargs.get("sha") or ""))
+        if mode in {"main", "predeploy"}:
+            sha = str(kwargs.get("sha") or "")
+            open_pr = find_open_pr_for_sha(repo, sha)
+            if open_pr is not None:
+                return evaluate_pr(repo, open_pr, sha, kwargs.get("base_sha") or "")
+            if mode == "main":
+                return evaluate_main(repo, sha)
+            return evaluate_predeploy(repo, sha)
         if mode == "reconcile":
             return evaluate_reconcile(repo)
         report = base_report(mode=mode)

@@ -2,7 +2,7 @@ name: UAT Readiness
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled, edited]
     branches:
       - main
   pull_request_review:
@@ -31,7 +31,7 @@ on:
       - main
 
 concurrency:
-  group: uat-readiness-${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.head_sha || github.event.check_suite.head_sha || github.sha }}
+  group: uat-readiness-${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha || github.event.check_suite.head_sha || github.sha }}
   cancel-in-progress: true
 
 permissions:
@@ -58,7 +58,7 @@ jobs:
       checks: read
       pull-requests: read
     steps:
-      - name: Checkout trusted workflow SHA
+      - name: Checkout event SHA with persist-credentials false
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.sha }}
@@ -83,7 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           UAT_READINESS_OUT_DIR: artifacts
-          UAT_READINESS_PR: ${{ github.event.pull_request.number || github.event.issue.number || inputs.pr_number }}
+          UAT_READINESS_PR: ${{ github.event.pull_request.number || github.event.issue.number || github.event.workflow_run.pull_requests[0].number || github.event.check_suite.pull_requests[0].number || inputs.pr_number }}
           UAT_READINESS_SHA: ${{ inputs.sha || github.event.workflow_run.head_sha || github.event.check_suite.head_sha || github.sha }}
           UAT_READINESS_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
           UAT_READINESS_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
@@ -120,7 +120,7 @@ jobs:
   notify:
     name: Notify Product Owner on decision or material blocker
     needs: evaluate
-    if: needs.evaluate.outputs.should_notify == 'true' && needs.evaluate.outputs.pr_number != ''
+    if: needs.evaluate.outputs.should_notify == 'true' && needs.evaluate.outputs.pr_number != '' && github.event_name != 'pull_request' && github.event_name != 'pull_request_review'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -145,7 +145,7 @@ jobs:
           if notice.get("should_notify") is not True:
               raise SystemExit(0)
           body = notice.get("body") or ""
-          if not body or "BEGIN" in body or "Bearer " in body or "ghp_" in body:
+          if not body or "BEGIN " in body or "Bearer " in body or "ghp_" in body or "ghs_" in body or "github_pat_" in body:
               raise SystemExit("REFUSE: notice body missing or secret-like")
           if notice.get("owner_authorization_claimed") is True:
               raise SystemExit("REFUSE: notice claims authorization")

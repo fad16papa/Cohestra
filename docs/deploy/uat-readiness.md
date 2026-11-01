@@ -49,7 +49,9 @@ READY requires the exact immutable PR HEAD and base SHAs, current required
 PR checks, native GitGuardian SUCCESS, and authentic independent BMAD +
 CAT-SEC reviews bound to that HEAD (`BLOCKER=0`, `MAJOR=0`).
 
-Authentic reviews are issue/review comments containing:
+Authentic reviews are issue/review comments from **distinct**
+`OWNER`/`MEMBER`/`COLLABORATOR` identities (not the PR author, not bots)
+containing:
 
 ```html
 <!-- cohestra-independent-review v1 -->
