@@ -5,6 +5,8 @@
 **Repository:** fad16papa/Cohestra  
 **Decision:** NOT READY for UAT activation. Architecture Draft only. No privileged operations performed.
 
+> **2026-11-02 amendment (Issue #538):** The Product Owner accepted Option B (`release/uat` + unattended UAT CD) as the *target* architecture, not as live cutover. Findings in this audit are historical and unchanged. FAIL/UNVERIFIED rows are not converted to PASS. See `architecture-option-b-release-uat-2026-11-02/`.
+
 ## Revalidated references
 
 | Reference | Claimed | Revalidated 2026-11-01 23:30 SGT | Verdict |

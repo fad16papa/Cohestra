@@ -7,7 +7,7 @@ paradigm: fail-closed gated pipeline
 scope: Secure fully automated UAT continuous delivery after mandatory post-merge validation. Production remains owner-controlled. No live activation in this run.
 status: draft
 created: 2026-11-01
-updated: 2026-11-01
+updated: 2026-11-02
 binds:
   - issue-534
   - issue-536
@@ -31,9 +31,12 @@ sources:
 companions:
   - CAT-SEC-THREAT-MODEL.md
   - ../../implementation-artifacts/uat-automation-readiness-audit.md
+  - ../architecture-option-b-release-uat-2026-11-02/ADR-OPTION-B.md
 ---
 
 # Architecture Spine — Cohestra UAT Automation Readiness
+
+Issue #538 accepted Option B as the target topology. This spine remains the 2026-11-01 audit contract. AD-1 stays live until cutover. Do not treat this file as the post-cutover deploy source. The Option B spine is `architecture-option-b-release-uat-2026-11-02/ARCHITECTURE-SPINE.md`.
 
 ## Design Paradigm
 
