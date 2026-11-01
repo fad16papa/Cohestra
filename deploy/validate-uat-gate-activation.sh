@@ -39,10 +39,13 @@ else
 fi
 
 if grep -q 'commission-uat-hold.test.sh' "$CI" \
-  && grep -q 'uat-delivery-status.test.sh' "$CI"; then
-  pass "CI commissions HOLD evidence and structured delivery status"
+  && grep -q 'uat-delivery-status.test.sh' "$CI" \
+  && grep -q 'uat-final-outcome.test.sh' "$CI" \
+  && grep -q 'uat-ci-contract-commissioning' "$CI" \
+  && grep -q 'bash deploy/commission-uat-hold.sh' "$CI"; then
+  pass "CI commissions HOLD evidence, persists CI_CONTRACT, and checks final outcome"
 else
-  fail "ci.yml must run commission-uat-hold and uat-delivery-status contracts"
+  fail "ci.yml must persist CI_CONTRACT commissioning and run outcome contracts"
 fi
 
 if grep -q 'name: GitGuardian exact-SHA API scan' "$CI" \

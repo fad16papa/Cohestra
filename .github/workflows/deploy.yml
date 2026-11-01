@@ -534,3 +534,81 @@ jobs:
           name: uat-acceptance-summary
           path: artifacts/acceptance-summary.json
           if-no-files-found: warn
+
+  delivery-outcome:
+    name: UAT final delivery outcome
+    if: always()
+    needs:
+      - predeploy-gate
+      - deploy
+      - browser
+      - lifecycle
+      - evidence
+    runs-on: ubuntu-latest
+    env:
+      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout accepted SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ env.TARGET_SHA }}
+          persist-credentials: false
+
+      - name: Download predeploy evidence
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uat-predeploy-gate-evidence
+          path: artifacts
+
+      - name: Download deploy evidence
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uat-deploy-evidence
+          path: artifacts
+
+      - name: Download Playwright evidence
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uat-playwright-evidence
+          path: .
+
+      - name: Download lifecycle evidence
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uat-19-5-lifecycle-evidence
+          path: artifacts
+
+      - name: Download acceptance summary
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: uat-acceptance-summary
+          path: artifacts
+
+      - name: Aggregate final UAT delivery outcome
+        env:
+          UAT_FINAL_OUTCOME_DIR: artifacts
+          TARGET_SHA: ${{ env.TARGET_SHA }}
+        run: bash deploy/uat-final-outcome.sh
+
+      - name: Remove secret-like final outcome
+        if: always()
+        run: |
+          set -euo pipefail
+          if [[ -f artifacts/uat-final-outcome.json ]] && grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN|Bearer |password' artifacts/uat-final-outcome.json; then
+            rm -f artifacts/uat-final-outcome.json
+            echo "REFUSE: removed secret-like artifacts/uat-final-outcome.json"
+            exit 1
+          fi
+
+      - name: Upload final UAT delivery outcome
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uat-final-outcome
+          path: artifacts/uat-final-outcome.json
+          if-no-files-found: error

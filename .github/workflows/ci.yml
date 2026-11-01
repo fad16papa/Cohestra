@@ -265,6 +265,40 @@ jobs:
       - name: UAT delivery status contract
         run: bash deploy/uat-delivery-status.test.sh
 
+      - name: UAT final outcome contract
+        run: bash deploy/uat-final-outcome.test.sh
+
+      - name: Persist CI_CONTRACT commissioning evidence
+        env:
+          UAT_GATE_EVIDENCE_DIR: artifacts/ci-contract
+        run: |
+          set -euo pipefail
+          bash deploy/commission-uat-hold.sh
+          test -f artifacts/ci-contract/uat-hold-commissioning.json
+          python3 - artifacts/ci-contract/uat-hold-commissioning.json <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+if p.get("evidence_class") != "CI_CONTRACT":
+    raise SystemExit("commissioning artifact must be CI_CONTRACT")
+if p.get("live_deploy_uat_hold") is not False:
+    raise SystemExit("LIVE_DEPLOY_UAT_HOLD must remain false")
+PY
+          for ev in artifacts/ci-contract/*.json; do
+            if grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN|Bearer |password' "$ev"; then
+              rm -f "$ev"
+              echo "REFUSE: removed secret-like ${ev}"
+              exit 1
+            fi
+          done
+
+      - name: Upload CI_CONTRACT commissioning artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uat-ci-contract-commissioning
+          path: artifacts/ci-contract/
+          if-no-files-found: error
+
       - name: Fail-closed UAT secret contract
         run: bash deploy/fail-closed-uat-secrets.test.sh
 

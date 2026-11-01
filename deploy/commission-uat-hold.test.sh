@@ -115,10 +115,21 @@ if "commission-uat-hold.test.sh" not in txt:
     raise SystemExit("CI must run HOLD commissioning contract")
 if "uat-delivery-status.test.sh" not in txt:
     raise SystemExit("CI must run delivery-status contract")
-if "deploy-production.yml" in txt and "workflow_dispatch" not in Path("docs/deploy/github-actions-cd.md").read_text():
-    pass
+if "uat-final-outcome.test.sh" not in txt:
+    raise SystemExit("CI must run final-outcome contract")
+iso = txt.split("  uat-isolation:\n", 1)[1]
+if "bash deploy/commission-uat-hold.sh" not in iso:
+    raise SystemExit("CI must persist commissioning by invoking commission-uat-hold.sh")
+if "uat-ci-contract-commissioning" not in iso:
+    raise SystemExit("CI must upload a separately named CI_CONTRACT artifact")
+if "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02" not in iso:
+    raise SystemExit("CI commissioning upload must pin upload-artifact")
+if "if-no-files-found: error" not in iso:
+    raise SystemExit("CI_CONTRACT upload must fail closed if the artifact is missing")
+if "LIVE_DEPLOY_UAT_HOLD" in iso and "LIVE_DEPLOY_UAT_HOLD=true" in iso:
+    raise SystemExit("CI must not label commissioning as a live HOLD")
 PY
-pass "CI runs commissioning and delivery-status contracts"
+pass "CI persists and uploads a CI_CONTRACT commissioning artifact"
 
 if grep -q 'UAT_DEPLOY_GATE_ACTIVE: true' "$CI" || grep -q 'UAT_DEPLOY_GATE_ACTIVE=true' "$COMMISSION"; then
   fail "commissioning/CI must not set the live gate to true"

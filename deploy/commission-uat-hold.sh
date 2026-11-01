@@ -105,12 +105,13 @@ UAT_DEPLOYED=false \
 UAT_DELIVERY_STATUS_DIR="$EVIDENCE_DIR" \
 bash "$ROOT_DIR/deploy/uat-delivery-status.sh" >/dev/null
 
-python3 - "$EVIDENCE_DIR/uat-hold-commissioning.json" "$PROVENANCE_MERGE" "$gate_out" <<'PY'
+python3 - "$EVIDENCE_DIR/uat-hold-commissioning.json" "$PROVENANCE_MERGE" "${GITHUB_SHA:-}" <<'PY'
 import json, sys
-path, sha, out = sys.argv[1], sys.argv[2], sys.argv[3]
+path, sha, ci_sha = sys.argv[1], sys.argv[2], sys.argv[3]
 payload = {
     "evidence_class": "CI_CONTRACT",
     "live_deploy_uat_hold": False,
+    "ci_sha": ci_sha.lower() if ci_sha else "",
     "configured_suppressor": "false",
     "gate_result": "HOLD",
     "eligible": False,

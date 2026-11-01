@@ -31,7 +31,11 @@ p = json.load(open(sys.argv[1]))
 assert p["candidate_sha"] == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 assert p["security_gate"] == "HOLD"
 assert p["failed_stage"] == "predeploy-gate"
+assert p["phase"] == "predeploy"
+assert p["deployment_phase"] == "NOT_STARTED"
+assert p["uat_deployment_outcome"] == "HELD"
 assert p["uat_deployed"] is False
+assert p["ssh_executed"] is False
 assert "UAT_DEPLOY_GATE_ACTIVE" in p["diagnostics"]
 link = p["run_links"].get("actions_run") or ""
 assert "41275916994" in link
@@ -56,9 +60,13 @@ import json, sys
 p = json.load(open(sys.argv[1]))
 assert p["security_gate"] == "PASS"
 assert p["failed_stage"] == "none"
-assert p["uat_deployed"] is False
+assert p["phase"] == "predeploy"
+assert p["deployment_phase"] == "NOT_STARTED"
+assert p["uat_deployment_outcome"] == "NOT_STARTED"
+assert p["uat_deployed"] is None
+assert p["ssh_executed"] is False
 PY
-pass "PASS status does not claim a UAT deploy occurred"
+pass "predeploy PASS records NOT_STARTED and does not claim a final deploy outcome"
 
 if grep -qiE 'adcp|autonomous delivery control plane' "$STATUS"; then
   fail "delivery status must not restore ADCP"
