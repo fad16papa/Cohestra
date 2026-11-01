@@ -23,7 +23,7 @@ PR #537 audit of `main` @ `22ffe635` and Deploy UAT #451 is unchanged: the suppr
 
 | Before (live on main) | After owner-authorized cutover |
 | --- | --- |
-| Deploy UAT `workflow_run` CI on `main` | `workflow_run` CI on `release/uat` only |
+| Deploy UAT `workflow_run` CI on `main` | `push` to `release/uat` + in-run AD-17 `needs` (AD-23). Exclusive alt: App `workflow_dispatch --ref release/uat` (AD-24). No `workflow_run` / `repository_dispatch` / `workflow_call` |
 | Tip-pin `origin/main` | Tip-pin `origin/release/uat` |
 | Feature PRs target `main` for UAT | Feature PRs target `release/uat` |
 | Owner merges every UAT feature | Restricted auto-merge of eligible manifests only |

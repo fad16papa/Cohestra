@@ -30,7 +30,7 @@ Queued Deploy UAT on main Environment uat (if eligible)   UAT_DEPLOY_GATE_ACTIVE
 
 **Vector:** `deploy.yml` listens to both `main` and `release/uat`, or the owner sets `UAT_DEPLOY_GATE_ACTIVE=true` before `main` is suppressed. A queued `workflow_run` from `main` CI then becomes eligible.
 **Severity:** BLOCKER if cutover is unordered.
-**Mitigation:** SSH requires the AD-14 conjunction (gate true AND suppressed true AND source `release/uat` AND tip-pin AND post-merge). Evaluated inline on the default-branch workflow before candidate scripts. N14–N16. Gate stays false until drain evidence exists.
+**Mitigation:** After PR-D, Deploy UAT has no `workflow_run` (N25). SSH requires the AD-14 conjunction. Residual `workflow_run` is a PR-D FAIL, not a licensed residual. N14–N16, N25.
 
 ### T13 — Unprotected `release/uat` as a secret well
 
@@ -42,7 +42,7 @@ Queued Deploy UAT on main Environment uat (if eligible)   UAT_DEPLOY_GATE_ACTIVE
 
 **Vector:** Feature PR edits `deploy.yml` to skip the gate. If Actions used the PR copy with Environment secrets, SSH would bypass AD-2.
 **Severity:** BLOCKER if executed.
-**Mitigation:** AD-20. `workflow_run` uses the default-branch workflow. No `pull_request_target`. Contract test: PR CI must not contain `secrets.DROPLET_`.
+**Mitigation:** AD-20. After PR-D, Deploy UAT YAML is the protected `release/uat` tip; AD-16 forbids auto-merge of `.github/workflows/**`. Do not keep a leftover `workflow_run` “for YAML safety” (N25). No `pull_request_target`. Contract test: PR CI must not contain `secrets.DROPLET_`.
 
 ### T15 — Correction controller self-merge
 
@@ -54,13 +54,25 @@ Queued Deploy UAT on main Environment uat (if eligible)   UAT_DEPLOY_GATE_ACTIVE
 
 **Vector:** Manifest lists `deploy/**` or an agent rewrites the manifest in the PR.
 **Severity:** MAJOR.
-**Mitigation:** AD-16. Manifest is owner-approved and stored outside the PR head (repository variable, gist-less: a signed issue comment by OWNER on a control issue, or a file on `main` only). PR-head `TASK.md` is evidence, not the authorization copy. Path check uses the merge-tree, not the author list.
+**Mitigation:** AD-16. Manifest is the owner-merged file on `main` at `deploy/uat-task-manifests/<task_id>.json`. PR-head `TASK.md` is evidence, not the authorization copy. Path check uses the merge-tree, not the author list.
 
 ### T17 — Stale `workflow_run` replay
 
 **Vector:** After retarget, GitHub delivers a delayed `workflow_run` for an old `main` CI run.
-**Severity:** MAJOR.
-**Mitigation:** Predeploy refuses `workflow_run.head_branch == main` when suppressed. Candidate must equal `origin/release/uat` tip after cutover.
+**Severity:** MAJOR if `workflow_run` remains.
+**Mitigation:** PR-D deletes the `workflow_run` trigger from `main` and `release/uat`. A leftover listener is N25 contract FAIL of PR-D, not a licensed residual.
+
+### T21 — Environment identity mismatch
+
+**Vector:** `workflow_run` Deploy UAT with Environment `uat` restricted to `release/uat`. Documented `GITHUB_REF` is the default branch. Checkout and `head_branch` do not change it.
+**Severity:** BLOCKER for the c6ec3370 trigger design.
+**Mitigation:** AD-22/AD-23. Simulator `SIMULATE=PASS`. Live canary UNVERIFIED.
+
+### T22 — Post-merge completion race
+
+**Vector:** CI `workflow_run` starts Deploy UAT while AD-17 jobs are still pending. Predeploy HOLDs. No later event retries. A green `release/uat` never deploys.
+**Severity:** BLOCKER for a CI-triggered listener.
+**Mitigation:** AD-23 same-run `needs` (`predeploy` waits for every AD-17 job). Exclusive AD-24 still re-runs those jobs in Deploy UAT (`needs`); the App is only the automatic start, after every named AD-17 job `conclusion==success` (not workflow `conclusion`, not Actions `success()`). UI / PAT dispatch is not a skip-tests path.
 
 ### T18 — Artifact substitution / wrong tree
 
@@ -78,7 +90,7 @@ Queued Deploy UAT on main Environment uat (if eligible)   UAT_DEPLOY_GATE_ACTIVE
 
 **Vector:** `release/uat` workflow reuses `PROD_DROPLET_*` or Production environment.
 **Severity:** BLOCKER if implemented.
-**Mitigation:** Isolation contract already forbids `PROD_*` in `deploy.yml`. Keep it. Production actor permissions must not broaden.
+**Mitigation:** Isolation contract already forbids `PROD_*` in `deploy.yml`. Keep it. Production actor permissions must not broaden. AD-24 App may dispatch only `deploy.yml` (N33).
 
 ## Parent residuals still open
 
@@ -88,10 +100,19 @@ T1 Environment `uat` unrestricted, T3 no review Apps, T5 no post-merge gate, T7 
 
 | ID | Case | Expected |
 | --- | --- | --- |
-| N14 | Gate true, `UAT_MAIN_DEPLOY_SUPPRESSED` false, trigger `main` | HOLD `CUTOVER_INCOMPLETE_MAIN_SOURCE`; no SSH |
-| N15 | `UAT_MAIN_DEPLOY_SUPPRESSED` true, delayed `main` workflow_run | HOLD `UAT_MAIN_DEPLOY_SUPPRESSED is true` |
+| N14 | Gate true, `UAT_MAIN_DEPLOY_SUPPRESSED` false, `github.ref==refs/heads/main` | HOLD `CUTOVER_INCOMPLETE_MAIN_SOURCE`; no SSH |
+| N15 | PHASE_SUPPRESS only: delayed `main` `workflow_run` while suppressed | HOLD `UAT_MAIN_DEPLOY_SUPPRESSED is true`. After PR-D this event must not exist (N25). |
 | N16 | Queued Deploy UAT during drain | Completes `eligible=false`; no SSH |
-| N17 | Candidate is `main` tip after cutover | HOLD |
+| N17 | `github.ref==refs/heads/main` after cutover | HOLD `CUTOVER_INCOMPLETE_MAIN_SOURCE` (ref, not SHA) |
+| N25 | `workflow_run` listener after PR-D on `main` or `release/uat` | Contract FAIL of PR-D |
+| N26 | Required job SKIPPED in the deploy run | SSH skipped |
+| N27 | CI completes; post-merge still pending (old design) | Must not start SSH; AD-23 same-run `needs` avoids stuck HOLD |
+| N28 | `workflow_call` on Deploy UAT after PR-D | Contract FAIL (caller `GITHUB_REF` can match Environment `uat`) |
+| N29 | AD-23 and AD-24 both implemented | Contract FAIL |
+| N30 | AD-23 `GITHUB_EVENT_NAME=push` after PR-D | Eligible event (must not HOLD wrong-trigger) |
+| N31 | AD-24 App dispatch after workflow `conclusion==success` with a SKIPPED required job | Must not dispatch; if Deploy UAT is still started, in-run SKIPPED skips SSH |
+| N32 | AD-24 human / PAT `workflow_dispatch --ref release/uat` with no prior post-merge | In-run AD-17 `needs` still run; SSH only after those jobs SUCCESS + AD-14 |
+| N33 | AD-24 App dispatches `deploy-production.yml` | Denied by App contract; Production Environment still require-main + reviewer |
 | N18 | PR-modified deploy.yml in pull_request | No `DROPLET_*`; no `environment: uat` |
 | N19 | #536 token merge attempt | Denied |
 | N20 | Auto-merge of `.github/workflows/**` | Denied |
@@ -100,8 +121,8 @@ T1 Environment `uat` unrestricted, T3 no review Apps, T5 no post-merge gate, T7 
 | N23 | `release/uat` → `main` automation | No PR opened |
 | N24 | Production dispatch from `release/uat` | REFUSE |
 
-N1 (gate false) remains VERIFIED by run #451. N14–N24 are `NOT_RUN` until Draft PR-G.
+N1 (gate false) remains VERIFIED by run #451. N14–N33 are `NOT_RUN` until Draft PR-G.
 
 ## Verdict
 
-**Architecture is acceptable as a target** after the AD-14 conjunction, inline default-branch HOLDs, event-ref (not SHA) refusal, and AD-15/AD-16/AD-20 splits. **Not authorized to cut over.** Creating an unprotected `release/uat` or enabling the gate in PHASE_MAIN_LISTEN is a BLOCKER.
+**Architecture is acceptable as a target** after AD-22/AD-23 close the Environment-ref conflict and the post-merge race. **Not authorized to cut over.** `workflow_run` + Environment `uat`=`release/uat` is a documented deny. Live canary UNVERIFIED.
