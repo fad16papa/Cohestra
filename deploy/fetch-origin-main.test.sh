@@ -21,12 +21,14 @@ if grep -qiE 'adcp|autonomous delivery control plane' "$FETCH"; then
 fi
 pass "fetch helper does not restore ADCP"
 
-grep -q 'http.https://github.com/.extraheader' "$FETCH" \
-  || fail "fetch must use URL-scoped http.https://github.com/.extraheader"
+grep -q 'http.${HEADER_SCOPE}.extraheader' "$FETCH" \
+  || fail "fetch must use URL-scoped http.<origin>/.extraheader"
 grep -q 'AUTHORIZATION: basic' "$FETCH" \
   || fail "fetch must use Basic x-access-token auth"
 grep -q 'x-access-token' "$FETCH" \
   || fail "fetch must mint x-access-token Basic material"
+grep -q 'urlsplit' "$FETCH" \
+  || fail "fetch must derive extraheader scope from the origin URL"
 if grep -qiE 'AUTHORIZATION:[[:space:]]*bearer' "$FETCH" "$WF"; then
   fail "Bearer extraheader is the live 41289603719 failure mode"
 fi
@@ -53,29 +55,164 @@ fi
 echo "$out" | grep -q 'RESULT=REFUSE' || { echo "$out"; fail "unset token RESULT=REFUSE"; }
 pass "unset GITHUB_TOKEN refuses closed"
 
-# Token must never appear in stdout/stderr even on a local fetch.
+# Missing token must still write both refusal evidence files.
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-git init -q --bare "$TMP/remote.git"
-git init -q "$TMP/local"
-git -C "$TMP/local" checkout -q -b main
-echo provenance >"$TMP/local/readme"
-git -C "$TMP/local" add readme
-git -C "$TMP/local" -c user.email=t@t -c user.name=t commit -q -m init
-git -C "$TMP/local" remote add origin "$TMP/remote.git"
-git -C "$TMP/local" push -q origin main
-git -C "$TMP/local" fetch -q origin main:refs/remotes/origin/main
+export UAT_GATE_EVIDENCE_DIR="$TMP/missing-token-evidence"
+export CANDIDATE_SHA="74958f1ad4695ea8358b57ed6dc4b0be8f3ba9de"
+if out="$(unset GITHUB_TOKEN; bash "$FETCH" 2>&1)"; then
+  echo "$out"
+  fail "unset token must refuse"
+fi
+[[ -f "$UAT_GATE_EVIDENCE_DIR/uat-predeploy-gate.json" ]] \
+  || fail "fetch refuse must write uat-predeploy-gate.json"
+[[ -f "$UAT_GATE_EVIDENCE_DIR/uat-delivery-status.json" ]] \
+  || fail "fetch refuse must write uat-delivery-status.json"
+python3 - "$UAT_GATE_EVIDENCE_DIR/uat-predeploy-gate.json" \
+  "$UAT_GATE_EVIDENCE_DIR/uat-delivery-status.json" <<'PY'
+import json, sys
+gate, status = json.load(open(sys.argv[1])), json.load(open(sys.argv[2]))
+assert gate["result"] == "REFUSE", gate
+blob = json.dumps(gate) + json.dumps(status)
+assert "ghp_" not in blob and "github_pat_" not in blob
+assert "DROPLET_" not in blob
+assert status["eligibility"] == "REFUSE", status
+assert status["uat_deployment_outcome"] == "REFUSED", status
+assert status["ssh_executed"] is False
+assert status["uat_deployed"] is False
+assert status["deployment_phase"] == "NOT_STARTED"
+PY
+pass "missing token writes REFUSE evidence without invoking eligibility"
 
-TOKEN="ghs_LIVEFAILREGRESSION_DO_NOT_PRINT_9f3a"
+# Deterministic local HTTP Git Basic-auth fixture. No live GitHub.
+HTTP_TOKEN="local-http-git-token-not-github"
+python3 - "$TMP" "$HTTP_TOKEN" <<'PY' &
+import base64, http.server, os, subprocess, sys
+from pathlib import Path
+from urllib.parse import urlparse
+
+root, token = Path(sys.argv[1]), sys.argv[2]
+bare = root / "http-origin.git"
+work = root / "seed"
+subprocess.check_call(["git", "init", "-q", "--bare", str(bare)])
+subprocess.check_call(["git", "init", "-q", str(work)])
+subprocess.check_call(["git", "-C", str(work), "checkout", "-q", "-b", "main"])
+(work / "readme").write_text("http-git\n", encoding="utf-8")
+subprocess.check_call(["git", "-C", str(work), "add", "readme"])
+subprocess.check_call(
+    ["git", "-C", str(work), "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-q", "-m", "seed"]
+)
+subprocess.check_call(["git", "-C", str(work), "remote", "add", "origin", str(bare)])
+subprocess.check_call(["git", "-C", str(work), "push", "-q", "origin", "main"])
+expected = "Basic " + base64.b64encode(f"x-access-token:{token}".encode()).decode()
+seen = root / "http-auth-seen.txt"
+
+class Handler(http.server.BaseHTTPRequestHandler):
+    def log_message(self, fmt, *args):
+        return
+
+    def do_GET(self):
+        self._git()
+
+    def do_POST(self):
+        self._git()
+
+    def _git(self):
+        auth = self.headers.get("Authorization", "")
+        seen.write_text(auth or "MISSING", encoding="utf-8")
+        if auth.lower() != expected.lower():
+            self.send_response(401)
+            self.send_header("WWW-Authenticate", 'Basic realm="git"')
+            self.end_headers()
+            return
+        parsed = urlparse(self.path)
+        length = int(self.headers.get("Content-Length", "0") or 0)
+        body = self.rfile.read(length) if length else b""
+        env = os.environ.copy()
+        env.update(
+            {
+                "GIT_PROJECT_ROOT": str(root),
+                "GIT_HTTP_EXPORT_ALL": "1",
+                "PATH_INFO": parsed.path,
+                "QUERY_STRING": parsed.query,
+                "REQUEST_METHOD": self.command,
+                "CONTENT_TYPE": self.headers.get("Content-Type", ""),
+                "CONTENT_LENGTH": str(length),
+            }
+        )
+        proc = subprocess.run(
+            ["git", "http-backend"],
+            input=body,
+            capture_output=True,
+            env=env,
+            check=False,
+        )
+        raw = proc.stdout
+        headers, _, rest = raw.partition(b"\r\n\r\n")
+        if not rest:
+            headers, _, rest = raw.partition(b"\n\n")
+        status = 200
+        out_headers = []
+        for line in headers.splitlines():
+            if not line:
+                continue
+            key, _, value = line.partition(b":")
+            if key.lower() == b"status":
+                status = int(value.strip().split(b" ")[0] or b"200")
+            else:
+                out_headers.append((key.decode(), value.strip().decode()))
+        self.send_response(status)
+        for key, value in out_headers:
+            self.send_header(key, value)
+        self.end_headers()
+        self.wfile.write(rest)
+
+httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+(root / "http-port").write_text(str(httpd.server_address[1]), encoding="utf-8")
+httpd.serve_forever()
+PY
+HTTP_PID=$!
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+  [[ -f "$TMP/http-port" ]] && break
+  sleep 0.1
+done
+[[ -f "$TMP/http-port" ]] || fail "local HTTP git fixture did not start"
+HTTP_PORT="$(cat "$TMP/http-port")"
+cleanup() { kill "$HTTP_PID" >/dev/null 2>&1 || true; rm -rf "$TMP"; }
+trap cleanup EXIT
+
+git init -q "$TMP/http-client"
+git -C "$TMP/http-client" checkout -q -b main
+git -C "$TMP/http-client" remote add origin "http://127.0.0.1:${HTTP_PORT}/http-origin.git"
+
+export UAT_GATE_EVIDENCE_DIR="$TMP/http-wrong-evidence"
+if out="$(
+  cd "$TMP/http-client" &&
+  GITHUB_TOKEN="wrong-token" GIT_TERMINAL_PROMPT=0 ORIGIN_MAIN_REF=origin/main bash "$FETCH" 2>&1
+)"; then
+  echo "$out"
+  fail "wrong HTTP Basic token must refuse"
+fi
+echo "$out" | grep -q 'RESULT=REFUSE' || { echo "$out"; fail "wrong HTTP token RESULT=REFUSE"; }
+echo "$out" | grep -q 'wrong-token' && fail "wrong token printed"
+[[ -f "$UAT_GATE_EVIDENCE_DIR/uat-predeploy-gate.json" ]] \
+  || fail "HTTP 401 must write gate evidence"
+[[ -f "$UAT_GATE_EVIDENCE_DIR/uat-delivery-status.json" ]] \
+  || fail "HTTP 401 must write delivery-status evidence"
+pass "wrong HTTP Basic token refuses and writes evidence"
+
+export UAT_GATE_EVIDENCE_DIR="$TMP/http-ok-evidence"
 out="$(
-  cd "$TMP/local" &&
-  GITHUB_TOKEN="$TOKEN" ORIGIN_MAIN_REF=origin/main bash "$FETCH" 2>&1
-)" || { echo "$out"; fail "local file:// origin fetch should succeed"; }
-echo "$out" | grep -q "$TOKEN" && fail "GITHUB_TOKEN printed"
-echo "$out" | grep -qi 'ghs_LIVEFAILREGRESSION' && fail "token fragment printed"
-git -C "$TMP/local" rev-parse --verify origin/main >/dev/null \
-  || fail "origin/main missing after successful fetch"
-pass "valid token + reachable origin/main fetches without printing secrets"
+  cd "$TMP/http-client" &&
+  GITHUB_TOKEN="$HTTP_TOKEN" GIT_TERMINAL_PROMPT=0 ORIGIN_MAIN_REF=origin/main bash "$FETCH" 2>&1
+)" || { echo "$out"; fail "correct HTTP Basic token must fetch"; }
+echo "$out" | grep -q "$HTTP_TOKEN" && fail "HTTP token printed"
+seen_auth="$(cat "$TMP/http-auth-seen.txt")"
+echo "$seen_auth" | grep -qiE '^basic ' || { echo "auth=$seen_auth"; fail "HTTP fixture did not receive Basic auth"; }
+echo "$seen_auth" | grep -qi bearer && fail "HTTP fixture received Bearer"
+git -C "$TMP/http-client" rev-parse --verify origin/main >/dev/null \
+  || fail "HTTP fetch did not update origin/main"
+pass "local HTTP Git fixture requires URL-scoped Basic x-access-token"
 
 # Disabled suppressor HOLDs and writes evidence without origin/main.
 # shellcheck disable=SC1091
@@ -185,7 +322,14 @@ for label, block in (("predeploy evaluate", pre[eval_idx:]), ("SSH revalidate", 
         raise SystemExit(f"{label} must run real validator before fetch when gate is disabled")
 
 # Durable HOLD upload must fail closed if files are missing.
+require = pre[pre.find("Require both predeploy evidence files"):pre.find("Upload predeploy gate evidence")]
+if "if: always()" not in require:
+    raise SystemExit("both-files check must run if: always()")
+if "require-uat-predeploy-evidence.sh" not in require:
+    raise SystemExit("both-files check must use require-uat-predeploy-evidence.sh")
 upload = pre[pre.find("Upload predeploy gate evidence"):]
+if "if: always()" not in upload:
+    raise SystemExit("predeploy upload must remain if: always()")
 if "uat-predeploy-gate-evidence" not in upload:
     raise SystemExit("predeploy upload name missing")
 if "uat-predeploy-gate.json" not in upload or "uat-delivery-status.json" not in upload:
@@ -194,7 +338,25 @@ if "if-no-files-found: error" not in upload:
     raise SystemExit("missing HOLD evidence must fail closed")
 if "if-no-files-found: warn" in upload:
     raise SystemExit("predeploy evidence upload must not warn-and-continue")
+# Require step must appear before upload so a single missing file fails explicitly.
+if pre.find("Require both predeploy evidence files") > pre.find("Upload predeploy gate evidence"):
+    raise SystemExit("both-files check must run before upload")
+# Fetch failure must not fall through to enabled-path eligibility.
+enabled = pre[pre.find("fetch-origin-main.sh"):]
+if enabled.find("fetch-origin-main.sh") > enabled.find("validate-uat-predeploy-gate.sh"):
+    raise SystemExit("enabled path must not evaluate eligibility when fetch failed")
 PY
 pass "workflow HOLDs before fetch, keeps SSH eligibility, and fail-closes missing evidence"
+
+REQUIRE="$ROOT_DIR/deploy/require-uat-predeploy-evidence.sh"
+[[ -f "$REQUIRE" ]] || fail "require-uat-predeploy-evidence.sh missing"
+mkdir -p "$TMP/partial"
+echo '{"result":"HOLD"}' >"$TMP/partial/uat-predeploy-gate.json"
+if out="$(UAT_GATE_EVIDENCE_DIR="$TMP/partial" bash "$REQUIRE" 2>&1)"; then
+  echo "$out"
+  fail "single missing evidence file must fail"
+fi
+echo "$out" | grep -q 'uat-delivery-status.json' || { echo "$out"; fail "must name the missing file"; }
+pass "single missing predeploy evidence file fails closed"
 
 echo "fetch-origin-main contract OK"

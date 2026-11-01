@@ -31,6 +31,8 @@
   an unscoped Bearer `git fetch` prompted for a username. Disabled
   suppressor now writes real HOLD evidence first. Enabled path uses
   `deploy/fetch-origin-main.sh` (URL-scoped Basic x-access-token).
+  Fetch/auth refusal writes both predeploy evidence files. Both files are
+  required before upload. A local HTTP Git fixture proves Basic auth.
 - Binding contract: host acceptance, public smoke, and Playwright are
   required. Lifecycle is optional when skip is authorized.
 - Continuous path remains: merge → main CI → scans SUCCESS → predeploy
