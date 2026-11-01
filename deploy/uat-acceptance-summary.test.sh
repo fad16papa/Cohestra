@@ -65,7 +65,38 @@ JSON
 JSON
   cat >"$dir/web/test-results/uat-playwright.json" <<JSON
 {
-  "stats": {"expected": 8, "skipped": 2, "unexpected": 0, "flaky": 0}
+  "stats": {"expected": 8, "skipped": 2, "unexpected": 0, "flaky": 0},
+  "suites": [
+    {
+      "title": "e2e-uat",
+      "suites": [
+        {
+          "title": "45.4 authenticated UAT",
+          "specs": [{
+            "title": "dedicated automation login when credentials exist",
+            "file": "authenticated.spec.ts",
+            "tests": [{"results": [{"status": "expected"}]}]
+          }]
+        },
+        {
+          "title": "19.5 operator core flows",
+          "specs": [{
+            "title": "Basic dashboard metrics load",
+            "file": "operator-core-flows.spec.ts",
+            "tests": [{"results": [{"status": "expected"}]}]
+          }]
+        },
+        {
+          "title": "45.5 OTP mailbox",
+          "specs": [{
+            "title": "signup OTP is read from the dedicated mailbox when configured",
+            "file": "authenticated.spec.ts",
+            "tests": [{"results": [{"status": "skipped"}]}]
+          }]
+        }
+      ]
+    }
+  ]
 }
 JSON
 }
@@ -203,5 +234,26 @@ if [[ -f "$TMP/summary-secret.json" ]]; then
   fail "must not write a summary from secret-like input"
 fi
 pass "secret-like evidence is refused and not written"
+
+write_ok_inputs "$TMP/authskip"
+python3 - "$TMP/authskip/web/test-results/uat-playwright.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+for suite in p["suites"][0]["suites"]:
+    if suite["title"] in {"45.4 authenticated UAT", "19.5 operator core flows"}:
+        suite["specs"][0]["tests"][0]["results"][0]["status"] = "skipped"
+json.dump(p, open(sys.argv[1], "w"), indent=2)
+PY
+if run_summary "$TMP/authskip" "$TMP/summary-authskip.json" >"$TMP/authskip.out" 2>"$TMP/authskip.err"; then
+  fail "skipped Basic/Pro coverage must fail the summary"
+fi
+python3 - "$TMP/summary-authskip.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+assert p["result"] == "fail", p
+assert p["browser"]["authenticatedSkipped"] is True, p
+assert p["browser"]["coverage"] == "skipped_required", p
+PY
+pass "skipped mandatory Basic/Pro coverage fails acceptance summary"
 
 echo "uat-acceptance-summary contract OK"

@@ -39,7 +39,72 @@ JSON
 write_browser() {
   mkdir -p "$1/web/test-results"
   cat >"$1/web/test-results/uat-playwright.json" <<JSON
-{"stats":{"expected":8,"skipped":2,"unexpected":${2:-0},"flaky":0}}
+{
+  "stats": {"expected":8,"skipped":2,"unexpected":${2:-0},"flaky":0},
+  "suites": [
+    {
+      "title": "e2e-uat",
+      "suites": [
+        {
+          "title": "45.4 authenticated UAT",
+          "specs": [{
+            "title": "dedicated automation login when credentials exist",
+            "file": "authenticated.spec.ts",
+            "tests": [{"results": [{"status": "expected"}]}]
+          }]
+        },
+        {
+          "title": "19.5 operator core flows",
+          "specs": [{
+            "title": "Basic dashboard metrics load",
+            "file": "operator-core-flows.spec.ts",
+            "tests": [{"results": [{"status": "expected"}]}]
+          }]
+        },
+        {
+          "title": "45.5 OTP mailbox",
+          "specs": [{
+            "title": "signup OTP is read from the dedicated mailbox when configured",
+            "file": "authenticated.spec.ts",
+            "tests": [{"results": [{"status": "skipped"}]}]
+          }]
+        }
+      ]
+    }
+  ]
+}
+JSON
+}
+
+write_browser_auth_skipped() {
+  mkdir -p "$1/web/test-results"
+  cat >"$1/web/test-results/uat-playwright.json" <<JSON
+{
+  "stats": {"expected":6,"skipped":4,"unexpected":0,"flaky":0},
+  "suites": [
+    {
+      "title": "e2e-uat",
+      "suites": [
+        {
+          "title": "45.4 authenticated UAT",
+          "specs": [{
+            "title": "dedicated automation login when credentials exist",
+            "file": "authenticated.spec.ts",
+            "tests": [{"results": [{"status": "skipped"}]}]
+          }]
+        },
+        {
+          "title": "19.5 operator core flows",
+          "specs": [{
+            "title": "Basic dashboard metrics load",
+            "file": "operator-core-flows.spec.ts",
+            "tests": [{"results": [{"status": "skipped"}]}]
+          }]
+        }
+      ]
+    }
+  ]
+}
 JSON
 }
 
@@ -573,16 +638,14 @@ PY
 pass "duplicate conflicting Playwright artifacts HOLD with host-proven deploy"
 
 # Live Deploy UAT downloads Playwright to the checkout root, not artifacts/.
-mkdir -p "$TMP/live/artifacts" "$TMP/live/web/test-results"
+mkdir -p "$TMP/live/artifacts"
 write_predeploy "$TMP/live/artifacts" PASS "ok"
 write_dispatch "$TMP/live/artifacts"
 write_ssh "$TMP/live/artifacts" success
 write_acceptance "$TMP/live/artifacts" pass
 write_smoke "$TMP/live/artifacts" pass
 write_lifecycle "$TMP/live/artifacts" pass
-cat >"$TMP/live/web/test-results/uat-playwright.json" <<JSON
-{"stats":{"expected":8,"skipped":2,"unexpected":0,"flaky":0}}
-JSON
+write_browser "$TMP/live" 0
 out="$(
   cd "$TMP/live" &&
   UAT_FINAL_OUTCOME_DIR="$TMP/live/artifacts" TARGET_SHA="$SHA" bash "$OUTCOME"
@@ -595,6 +658,33 @@ assert p["browser"] == "pass", p
 assert p["uat_deployed"] is True
 PY
 pass "live Playwright path at cwd/web/test-results is aggregated"
+
+mkdir -p "$TMP/auth-skip/artifacts"
+write_proven_host "$TMP/auth-skip/artifacts"
+write_browser_auth_skipped "$TMP/auth-skip/artifacts"
+run_outcome "$TMP/auth-skip/artifacts"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "skipped Basic/Pro must not accept"; }
+python3 - "$TMP/auth-skip/artifacts/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["browser"] in {"skipped_required", "missing_required"}, p
+assert p["result"] == "HOLD", p
+PY
+pass "skipped mandatory Basic/Pro coverage cannot be DEPLOYED_ACCEPTED"
+
+mkdir -p "$TMP/stats-only/artifacts"
+write_proven_host "$TMP/stats-only/artifacts"
+write_browser_raw "$TMP/stats-only/artifacts" '{"stats":{"expected":8,"skipped":2,"unexpected":0,"flaky":0}}'
+run_outcome "$TMP/stats-only/artifacts"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "stats-only Playwright must not accept"; }
+python3 - "$TMP/stats-only/artifacts/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["browser"] == "missing_required", p
+PY
+pass "stats-only Playwright JSON cannot prove authenticated coverage"
 
 python3 - "$WF" <<'PY'
 from pathlib import Path
