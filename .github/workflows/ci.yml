@@ -185,6 +185,55 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
 
+  exact-sha-scan:
+    name: Exact-SHA security scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Scan the exact checked-out SHA
+        env:
+          SCAN_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SCAN_SHA"
+          bash deploy/exact-sha-secret-scan.sh
+
+  gitguardian-exact-sha-api:
+    name: GitGuardian exact-SHA API scan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact candidate SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Install pinned ggshield
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user --disable-pip-version-check 'ggshield==1.56.1'
+
+      - name: Scan the exact main SHA via GitGuardian API
+        env:
+          SCAN_SHA: ${{ github.sha }}
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+          GGSHIELD_BIN: ggshield
+        run: |
+          set -euo pipefail
+          set +x
+          export PATH="${HOME}/.local/bin:${PATH}"
+          test "$(git rev-parse HEAD)" = "$SCAN_SHA"
+          bash deploy/exact-sha-gitguardian-api-scan.sh
+
   uat-isolation:
     name: UAT isolation contract
     runs-on: ubuntu-latest
@@ -192,11 +241,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Exact-SHA secret scan contract
+        run: bash deploy/exact-sha-secret-scan.test.sh
+
+      - name: Exact-SHA GitGuardian API scan contract
+        run: bash deploy/exact-sha-gitguardian-api-scan.test.sh
+
       - name: Validate isolated UAT compose
         run: bash deploy/validate-uat-isolation.sh
 
       - name: Validate UAT deploy workflow contract
         run: bash deploy/validate-deploy-uat-workflow.sh
+
+      - name: UAT predeploy gate contract
+        run: bash deploy/validate-uat-predeploy-gate.test.sh
+
+      - name: UAT gate activation contract
+        run: bash deploy/validate-uat-gate-activation.test.sh
 
       - name: Fail-closed UAT secret contract
         run: bash deploy/fail-closed-uat-secrets.test.sh
