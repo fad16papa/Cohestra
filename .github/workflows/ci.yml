@@ -271,6 +271,7 @@ jobs:
       - name: UAT rollback contract
         run: |
           bash deploy/uat-rollback.test.sh
+          bash deploy/uat-host-mutation-lock.test.sh
           bash deploy/validate-uat-rollback-workflow.sh
 
       - name: UAT origin/main fetch and HOLD-first contract

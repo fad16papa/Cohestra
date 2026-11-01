@@ -24,9 +24,10 @@ Production.
 ## File ownership (exclusive)
 
 `.github/workflows/deploy-uat-rollback.yml`,
-`.github/workflows/ci.yml` (one rollback contract step only),
+`.github/workflows/ci.yml` (rollback contract steps only),
 `deploy/uat-rollback.sh`, `deploy/uat-rollback.test.sh`,
 `deploy/validate-uat-rollback-workflow.sh`,
+`deploy/uat-host-mutation-lock.sh`, `deploy/uat-host-mutation-lock.test.sh`,
 `docs/deploy/uat-rollback.md`,
 `docs/deploy/uat-activation-owner-checklist.md`,
 `_bmad-output/implementation-artifacts/uat-rollback-recovery.md`.

@@ -37,13 +37,20 @@ activation approval. This checklist does not authorize activation.
 
 ## Database backup and monitoring
 
-- [ ] Recent `pg_dump` exists and restore was owner-rehearsed on a copy
+- [ ] Recent `pg_dump` exists (required `backup_attested` before rollback execute)
+- [ ] Restore was owner-rehearsed on a **copy** (not automated; still required
+      before activation)
 - [ ] Migration compatibility reviewed for a previous-SHA rollback
+      (`compat_reviewed` before execute)
+- [ ] Owner accepts `DB_MIGRATION_EFFECT=UNVERIFIED` and
+      `RECOVERY_RESTORE_READY=false` until that rehearsal exists
 - [ ] Emergency stop known: unset `UAT_DEPLOY_GATE_ACTIVE` and/or disable
       **Deploy UAT**
 - [ ] Owner can distinguish intentional HOLD (workflow failure + JSON `HELD`)
       from auth/check/deploy failure
 - [ ] UAT-only alerting/monitoring named (presence, not credentials)
+- [ ] Owner understands Deploy UAT and UAT rollback share host lock
+      `deploy-uat` and will not be cancelled mid-flight
 
 ## Still forbidden here
 

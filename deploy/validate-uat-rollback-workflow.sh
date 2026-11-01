@@ -15,24 +15,31 @@ fail() { echo "FAIL: $1"; exit 1; }
 
 grep -qE '^name:[[:space:]]*UAT rollback' "$WF" || fail "workflow name must be UAT rollback"
 grep -qE '^[[:space:]]*workflow_dispatch:' "$WF" || fail "workflow_dispatch is required"
+grep -q 'dispatch-readiness' "$WF" || fail "push/PR must register a dispatch-readiness job"
 grep -q "github.event_name == 'workflow_dispatch'" "$WF" \
-  || fail "jobs must no-op unless the event is workflow_dispatch"
+  || fail "host-mutating jobs must no-op unless the event is workflow_dispatch"
 
-for key in push pull_request pull_request_target workflow_run workflow_call repository_dispatch schedule release deployment; do
+for key in pull_request_target workflow_run workflow_call repository_dispatch schedule release deployment; do
   if grep -qE "^[[:space:]]*${key}:" "$WF"; then
     fail "forbidden trigger ${key} is present"
   fi
 done
-pass "workflow_dispatch only"
+pass "workflow_dispatch plus push/PR readiness only"
 
 grep -q 'UAT ROLLBACK: AUTHORIZED' "$WF" || fail "owner confirm phrase missing"
 grep -q 'UAT_ROLLBACK_AUTHORIZED' "$WF" || fail "script authorization env missing"
+grep -q 'backup_attested' "$WF" || fail "backup attestation input missing"
+grep -q 'compat_reviewed' "$WF" || fail "compatibility attestation input missing"
 grep -q 'default: false' "$WF" || fail "execute must default false"
 grep -q 'environment: uat' "$WF" || fail "Environment uat required for SSH path"
 grep -q 'persist-credentials: false' "$WF" || fail "persist-credentials: false required"
 grep -q 'fail-closed-uat-secrets.sh' "$WF" || fail "fail-closed UAT secrets required before SSH"
 grep -q 'refs/heads/main' "$WF" || fail "non-main dispatch must be refused"
 grep -q 'github.sha' "$WF" || fail "runner helpers must come from the dispatch SHA"
+grep -q 'fetch-origin-main.sh' "$WF" || fail "validate job must use authenticated fetch-origin-main.sh"
+if grep -q 'git fetch --no-tags origin main' "$WF"; then
+  fail "workflow must not raw-fetch origin/main after persist-credentials: false"
+fi
 if grep -q 'needs.validate.outputs.rollback_sha' "$WF" && grep -A2 'Checkout dispatch SHA' "$WF" | grep -q 'rollback_sha'; then
   fail "execute job must not checkout the rollback SHA for runner helpers"
 fi
@@ -53,15 +60,29 @@ if grep -q "inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED'" "$WF
 else
   fail "SSH must be gated on execute and confirm phrase"
 fi
+grep -q 'inputs.backup_attested' "$WF" || fail "SSH must require backup attestation"
+grep -q 'inputs.compat_reviewed' "$WF" || fail "SSH must require compatibility review"
+grep -q 'refuse-unattested-execute' "$WF" || fail "execute without attestation must fail the workflow"
+grep -q 'uat-host-mutation-lock.sh' "$WF" || fail "execute must take the Actions host mutation lock"
+grep -q 'flock' "$WF" || fail "droplet execute must flock the host mutation lock"
+grep -q '/ready' "$WF" || fail "SSH execute must probe post-rollback /ready"
+grep -q 'POST_ROLLBACK_ACCEPTANCE' "$WF" || fail "SSH execute must emit post-rollback acceptance"
+grep -q 'DB_RESTORE_NOT_ATTEMPTED=true' "$WF" || fail "SSH execute must record DB_RESTORE_NOT_ATTEMPTED"
+grep -q 'DB_MIGRATION_EFFECT=UNVERIFIED' "$WF" || fail "SSH execute must record unverified migration effect"
+if grep -q 'DATABASE_MUTATED=false' "$WF"; then
+  fail "workflow must not claim DATABASE_MUTATED=false"
+fi
+pass "attestation, lock, honest DB, and post-rollback acceptance are required"
 
 if grep -qE 'group:[[:space:]]*deploy-production' "$WF"; then
   fail "must not use deploy-production concurrency"
 fi
-if grep -qE 'group:[[:space:]]*deploy-uat$' "$WF"; then
-  fail "must not share Deploy UAT concurrency"
+if grep -qE 'group:[[:space:]]*deploy-uat-rollback' "$WF"; then
+  fail "independent rollback concurrency permits overlap with Deploy UAT"
 fi
-grep -qE 'group:[[:space:]]*deploy-uat-rollback' "$WF" || fail "concurrency must be deploy-uat-rollback"
-pass "concurrency isolated"
+grep -qE 'group:[[:space:]]*deploy-uat$' "$WF" || fail "concurrency must share deploy-uat"
+grep -q 'cancel-in-progress: false' "$WF" || fail "must not cancel an in-flight Deploy UAT"
+pass "shared UAT host mutation lock"
 
 if grep -q 'UAT_DEPLOY_GATE_ACTIVE' "$WF"; then
   fail "rollback must not change or require UAT_DEPLOY_GATE_ACTIVE"
