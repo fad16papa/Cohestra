@@ -15,9 +15,11 @@ TARGET_SHA="${TARGET_SHA,,}"
 GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-fad16papa/Cohestra}"
 GITHUB_RUN_ID="${GITHUB_RUN_ID:-}"
 
-python3 - "$EVIDENCE_DIR" "$OUT_FILE" "$TARGET_SHA" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" <<'PY'
+python3 - "$EVIDENCE_DIR" "$OUT_FILE" "$TARGET_SHA" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
+  "$ROOT_DIR/deploy/lib/uat-playwright-coverage.py" <<'PY'
 from __future__ import annotations
 
+import importlib.util
 import json
 import re
 import sys
@@ -28,6 +30,12 @@ out_path = Path(sys.argv[2])
 target_sha = (sys.argv[3] or "").strip().lower()
 repo = sys.argv[4]
 run_id = sys.argv[5]
+coverage_path = Path(sys.argv[6])
+spec = importlib.util.spec_from_file_location("uat_playwright_coverage", coverage_path)
+if spec is None or spec.loader is None:
+    raise SystemExit("uat-playwright-coverage helper missing")
+coverage_mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(coverage_mod)
 
 SECRET_MARKERS = (
     "BEGIN OPENSSH PRIVATE KEY",
@@ -158,7 +166,10 @@ def playwright_result(raw: dict | None) -> str:
             return "malformed"
         if expected == 0:
             return "malformed"
-        if unexpected == 0:
+        coverage = coverage_mod.classify(raw)
+        if coverage in {"missing_required", "skipped_required"}:
+            return coverage
+        if unexpected == 0 and coverage == "ok":
             return "pass"
         return "fail"
     except Exception:
@@ -358,7 +369,14 @@ for label, value in (
 ):
     if value == "missing":
         failures.append(f"missing:{label}")
-    elif label == "browser" and value in {"malformed", "unknown", "invalid", "inconsistent"}:
+    elif label == "browser" and value in {
+        "malformed",
+        "unknown",
+        "invalid",
+        "inconsistent",
+        "missing_required",
+        "skipped_required",
+    }:
         failures.append(f"missing:browser={value}")
     elif label == "lifecycle" and value == "skip" and lifecycle_reason not in AUTHORIZED_LIFECYCLE_SKIP:
         failures.append("failed:lifecycle=unauthorized_skip")
