@@ -49,6 +49,12 @@ write_lifecycle() {
 JSON
 }
 
+write_lifecycle_skip() {
+  cat >"$1/19-5-lifecycle.json" <<JSON
+{"result":"skip","reason":"${2:-lifecycle_disabled}","story":"19.5","paddleMutation":"NONE"}
+JSON
+}
+
 write_predeploy() {
   cat >"$1/uat-predeploy-gate.json" <<JSON
 {"result":"${2:-PASS}","reason":"${3:-all required checks SUCCESS on candidate_sha}","candidate_sha":"${SHA}"}
@@ -318,6 +324,8 @@ assert p["host_acceptance"] == "pass"
 assert p["smoke"] == "pass"
 assert p["browser"] == "pass"
 assert p["lifecycle"] == "pass"
+assert "lifecycle=PASS" in p["diagnostics"]
+assert "lifecycle evidence passed" not in p["diagnostics"]
 blob = json.dumps(p)
 assert "DROPLET_" not in blob
 assert "GITGUARDIAN_API_KEY=" not in blob
@@ -331,7 +339,7 @@ write_ssh "$TMP/lifecycle-skip" success
 write_acceptance "$TMP/lifecycle-skip" pass
 write_smoke "$TMP/lifecycle-skip" pass
 write_browser "$TMP/lifecycle-skip" 0
-write_lifecycle "$TMP/lifecycle-skip" skip
+write_lifecycle_skip "$TMP/lifecycle-skip" lifecycle_disabled
 out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-skip" TARGET_SHA="$SHA" bash "$OUTCOME")" \
   || { echo "$out"; fail "opt-in lifecycle skip must not reject a proven deploy"; }
 python3 - "$TMP/lifecycle-skip/uat-final-outcome.json" <<PY
@@ -340,9 +348,98 @@ p = json.load(open(sys.argv[1]))
 assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
 assert p["uat_deployed"] is True
 assert p["lifecycle"] == "skip"
+assert p.get("lifecycle_reason") == "lifecycle_disabled", p
 assert p["deployed_sha"] == "${SHA}"
+diag = p["diagnostics"]
+assert "lifecycle=SKIPPED (lifecycle_disabled)" in diag, p
+assert "lifecycle evidence passed" not in diag
+assert "smoke=PASS" in diag
+assert "browser=PASS" in diag
 PY
-pass "opt-in lifecycle skip with proven host SHA is DEPLOYED_ACCEPTED"
+pass "authorized lifecycle_disabled skip is ACCEPTED with SKIPPED diagnostics"
+
+mkdir -p "$TMP/lifecycle-closed"
+write_predeploy "$TMP/lifecycle-closed" PASS "ok"
+write_dispatch "$TMP/lifecycle-closed"
+write_ssh "$TMP/lifecycle-closed" success
+write_acceptance "$TMP/lifecycle-closed" pass
+write_smoke "$TMP/lifecycle-closed" pass
+write_browser "$TMP/lifecycle-closed" 0
+write_lifecycle_skip "$TMP/lifecycle-closed" story_closed
+out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-closed" TARGET_SHA="$SHA" bash "$OUTCOME")" \
+  || { echo "$out"; fail "story_closed skip must not reject a proven deploy"; }
+python3 - "$TMP/lifecycle-closed/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
+assert p["lifecycle"] == "skip"
+assert p.get("lifecycle_reason") == "story_closed", p
+assert "lifecycle=SKIPPED (story_closed)" in p["diagnostics"]
+PY
+pass "authorized story_closed skip is ACCEPTED with SKIPPED diagnostics"
+
+mkdir -p "$TMP/lifecycle-missing"
+write_predeploy "$TMP/lifecycle-missing" PASS "ok"
+write_dispatch "$TMP/lifecycle-missing"
+write_ssh "$TMP/lifecycle-missing" success
+write_acceptance "$TMP/lifecycle-missing" pass
+write_smoke "$TMP/lifecycle-missing" pass
+write_browser "$TMP/lifecycle-missing" 0
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-missing" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "missing lifecycle artifact must HOLD"
+fi
+python3 - "$TMP/lifecycle-missing/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployed"] is True, p
+assert p["uat_deployment_outcome"] == "INCOMPLETE", p
+assert p["lifecycle"] == "missing", p
+assert p["result"] == "HOLD", p
+PY
+pass "missing lifecycle artifact HOLDs as INCOMPLETE"
+
+mkdir -p "$TMP/lifecycle-bare-skip"
+write_predeploy "$TMP/lifecycle-bare-skip" PASS "ok"
+write_dispatch "$TMP/lifecycle-bare-skip"
+write_ssh "$TMP/lifecycle-bare-skip" success
+write_acceptance "$TMP/lifecycle-bare-skip" pass
+write_smoke "$TMP/lifecycle-bare-skip" pass
+write_browser "$TMP/lifecycle-bare-skip" 0
+write_lifecycle "$TMP/lifecycle-bare-skip" skip
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-bare-skip" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "skip without authorized reason must not ACCEPTED"
+fi
+python3 - "$TMP/lifecycle-bare-skip/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["result"] == "HOLD", p
+assert p["uat_deployed"] is True, p
+PY
+pass "malformed skip without reason HOLDs"
+
+mkdir -p "$TMP/lifecycle-fake-skip"
+write_predeploy "$TMP/lifecycle-fake-skip" PASS "ok"
+write_dispatch "$TMP/lifecycle-fake-skip"
+write_ssh "$TMP/lifecycle-fake-skip" success
+write_acceptance "$TMP/lifecycle-fake-skip" pass
+write_smoke "$TMP/lifecycle-fake-skip" pass
+write_browser "$TMP/lifecycle-fake-skip" 0
+write_lifecycle_skip "$TMP/lifecycle-fake-skip" all_good
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-fake-skip" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "unauthorized skip reason must not ACCEPTED"
+fi
+python3 - "$TMP/lifecycle-fake-skip/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["result"] == "HOLD", p
+assert p["uat_deployed"] is True, p
+PY
+pass "unauthorized skip reason HOLDs"
 
 # Live Deploy UAT downloads Playwright to the checkout root, not artifacts/.
 mkdir -p "$TMP/live/artifacts" "$TMP/live/web/test-results"

@@ -296,6 +296,12 @@ if not host_proven:
         emit(payload, 1)
     refuse("INCOMPLETE", "final outcome has no proven SSH or host evidence", payload)
 
+AUTHORIZED_LIFECYCLE_SKIP = {"lifecycle_disabled", "story_closed"}
+lifecycle_reason = ""
+if isinstance(lifecycle, dict):
+    lifecycle_reason = str(lifecycle.get("reason") or "").strip()
+payload["lifecycle_reason"] = lifecycle_reason
+
 allowed = {
     "host_acceptance": {"pass", "ok", "success"},
     "smoke": {"pass", "ok", "success"},
@@ -311,6 +317,8 @@ for label, value in (
 ):
     if value == "missing":
         failures.append(f"missing:{label}")
+    elif label == "lifecycle" and value == "skip" and lifecycle_reason not in AUTHORIZED_LIFECYCLE_SKIP:
+        failures.append("failed:lifecycle=unauthorized_skip")
     elif value not in allowed[label]:
         failures.append(f"failed:{label}={value}")
 
@@ -327,8 +335,24 @@ if missing:
     payload["result"] = "HOLD"
     emit(payload, 1)
 
+def limb(label: str, value: str, reason: str = "") -> str:
+    if value == "skip":
+        return f"{label}=SKIPPED ({reason})"
+    return f"{label}=PASS"
+
+
 payload["uat_deployment_outcome"] = "DEPLOYED_ACCEPTED"
-payload["diagnostics"] = "Host accepted SHA; smoke, browser, and lifecycle evidence passed"
+payload["diagnostics"] = (
+    "Host accepted SHA; "
+    + "; ".join(
+        [
+            limb("host_acceptance", payload["host_acceptance"]),
+            limb("smoke", payload["smoke"]),
+            limb("browser", payload["browser"]),
+            limb("lifecycle", payload["lifecycle"], lifecycle_reason),
+        ]
+    )
+)
 payload["result"] = "PASS"
 emit(payload, 0)
 PY

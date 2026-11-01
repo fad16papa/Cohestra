@@ -48,7 +48,11 @@ SHA, host acceptance, smoke, Playwright, and lifecycle. Pre-SSH
 `result=dispatched` is attempt/intent only. `uat_deployed=true` requires
 a proven host accepted SHA. Failed or interrupted SSH is
 `ATTEMPTED`/`UNKNOWN` (`uat_deployed=null`). A confirmed deploy plus later
-test failure is `DEPLOYED_REJECTED`, never “no deployment occurred.”
+required-check failure is `DEPLOYED_REJECTED`, never “no deployment occurred.”
+Host acceptance, public smoke, and Playwright must pass. Story 19.5
+lifecycle is opt-in: `result=skip` with `reason=lifecycle_disabled` or
+`story_closed` is `SKIPPED`, not a required pass. Missing or unauthorized
+skip evidence HOLDs.
 
 A live Deploy UAT HOLD still requires one owner-authorized
 `workflow_dispatch` on `main` **or** the next `workflow_run` after Deploy UAT
@@ -148,6 +152,7 @@ failing code; produce a new SHA and retest.
 - `deploy/uat-delivery-status.test.sh` — structured nonsecret predeploy report.
 - `deploy/uat-final-outcome.test.sh` — missing, inconsistent, incomplete,
   pre-SSH dispatch, failed SSH, and failed postdeploy evidence fail closed;
-  only a proven host SHA may set `uat_deployed=true`.
+  only a proven host SHA may set `uat_deployed=true`; authorized lifecycle
+  skip is optional; missing or malformed skip HOLDs.
 - `deploy/record-uat-ssh-execution.test.sh` — post-SSH step conclusion is
   recorded without claiming host mutation.
