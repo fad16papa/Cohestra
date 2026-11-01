@@ -298,6 +298,27 @@ else
   fail "SSH must refuse DEPLOY_SHA that is not the current origin tip"
 fi
 
+if grep -q 'name: UAT final delivery outcome' "$WF" \
+  && grep -q 'uat-final-outcome.sh' "$WF"; then
+  pass "Deploy UAT records a final delivery outcome"
+else
+  fail "deploy.yml must aggregate uat-final-outcome.sh"
+fi
+
+if awk '
+  /record-uat-deploy-dispatch.sh/ && !dispatch { dispatch=NR }
+  /appleboy\/ssh-action/ && !ssh { ssh=NR }
+  /record-uat-ssh-execution.sh/ && !record { record=NR }
+  END { exit(dispatch && ssh && record && dispatch < ssh && ssh < record ? 0 : 1) }
+' "$WF" \
+  && grep -q 'id: ssh-deploy' "$WF" \
+  && grep -q 'steps.ssh-deploy.conclusion' "$WF" \
+  && grep -q 'uat-ssh-execution.json' "$WF"; then
+  pass "pre-SSH dispatch is intent; post-SSH step conclusion is recorded separately"
+else
+  fail "workflow must record SSH-step evidence after SSH and not treat dispatch as execution"
+fi
+
 echo "Passed: ${PASS} | Failed: ${FAIL}"
 if [[ "$FAIL" -gt 0 ]]; then
   exit 1

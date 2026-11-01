@@ -25,12 +25,57 @@ Exact-SHA pattern scan remains required defense-in-depth.
 5. A candidate that is not the current `origin/main` tip is stale and is held.
 6. A successful or in-progress Deploy UAT run for the same SHA is a duplicate
    and is held. A prior failed deploy may be retried.
-7. Post-deploy public smoke, Playwright, lifecycle, and acceptance-summary stay
-   on the existing path. A post-deploy failure is `UAT_REJECTED/HOLD`, not
-   “no deploy occurred.”
+7. Required post-deploy checks are host acceptance, public smoke, and
+   Playwright. Story 19.5 lifecycle is opt-in: an authorized
+   `SKIPPED (lifecycle_disabled|story_closed)` is not a required pass.
+   Missing or unauthorized lifecycle evidence HOLDs. A required-check
+   failure is `DEPLOYED_REJECTED`/`HOLD`, not “no deploy occurred.”
 
 The suppressor `vars.UAT_DEPLOY_GATE_ACTIVE` must equal the exact string `true`
 or the gate HOLDs. Unset, `false`, `TRUE`, and `1` are HOLD.
+
+## Automatic commissioning vs live HOLD
+
+CI on every PR and on `main` runs `deploy/commission-uat-hold.sh` through
+`deploy/commission-uat-hold.test.sh`, then persists and uploads a separately
+named **`uat-ci-contract-commissioning`** artifact. That path executes the
+**real** predeploy gate with `UAT_DEPLOY_GATE_ACTIVE=false`, plus a static
+proof that the Deploy UAT SSH job cannot run unless `eligible == true`.
+Evidence class is **`CI_CONTRACT`**. `LIVE_DEPLOY_UAT_HOLD=false`. Do **not**
+treat this artifact as a successful live Deploy UAT HOLD run.
+
+Predeploy status is phase `predeploy` with `deployment_phase=NOT_STARTED`.
+A later `uat-final-outcome.json` aggregates SSH-step conclusion, deployed
+SHA, host acceptance, smoke, Playwright, and lifecycle. Pre-SSH
+`result=dispatched` is attempt/intent only. `uat_deployed=true` requires
+a proven host accepted SHA. Failed or interrupted SSH is
+`ATTEMPTED`/`UNKNOWN` (`uat_deployed=null`). A confirmed deploy plus later
+required-check failure is `DEPLOYED_REJECTED`, never “no deployment occurred.”
+Host acceptance, public smoke, and Playwright must pass. Playwright
+`stats.expected` / `stats.unexpected` must be present nonnegative integers;
+absent, zero-expected, non-integer, boolean, negative, or unparseable
+stats are `INCOMPLETE`/`HOLD`, never `DEPLOYED_ACCEPTED`. A host-proven
+deploy keeps `uat_deployed=true` when browser evidence is malformed.
+Story 19.5 lifecycle is opt-in: `result=skip` with
+`reason=lifecycle_disabled` or `story_closed` is `SKIPPED`, not a
+required pass. Missing or unauthorized skip evidence HOLDs.
+
+Aggregator process exit is not release eligibility. A pre-SSH `HELD`
+gate may exit 0 so `uat-final-outcome.json` can be uploaded with
+`result=HOLD` / `uat_deployment_outcome=HELD`. SSH stays gated on
+`needs.predeploy-gate.outputs.eligible == 'true'`; the deploy job is
+skipped on HOLD regardless of the aggregator exit code.
+
+A live Deploy UAT HOLD still requires one owner-authorized
+`workflow_dispatch` on `main` **or** the next `workflow_run` after Deploy UAT
+is enabled, while the variable remains `false`. This agent cannot enable,
+disable, or dispatch that workflow (`actions=write` is owner-only).
+
+Structured, nonsecret `uat-delivery-status.json` records the exact SHA,
+failed stage, security-gate result, diagnostics, Actions run link when
+present, and `uat_deployed=false`. Authorized Cursor agents may investigate
+and prepare fixes on a development branch only. They must not autonomously
+merge, change release controls, or retry indefinitely.
 
 ## FIRST-MERGE HAZARD
 
@@ -64,6 +109,7 @@ Do not execute these steps from this PR, a cloud agent, or a CI job.
 6. **Observe one HOLD** artifact (`uat-predeploy-gate-evidence`) on the next
    `main` CI completion or a non-bypass `workflow_dispatch`. The artifact must
    record `RESULT=HOLD` and name `UAT_DEPLOY_GATE_ACTIVE`. Zero SSH.
+   CI `CI_CONTRACT` commissioning is automatic and is not this live run.
 7. Confirm **GitGuardian on the exact main SHA** via the
    `GitGuardian exact-SHA API scan` Actions job SUCCESS on the merged `main`
    commit itself (`event=push`, `head_branch=main`, `head_sha=candidate`).
@@ -113,3 +159,14 @@ failing code; produce a new SHA and retest.
   auth/quota/network, findings, and push-main-only CI job.
 - `deploy/validate-uat-gate-activation.test.sh` — first-merge suppressor and
   ordered activation procedure.
+- `deploy/commission-uat-hold.test.sh` — automatic `CI_CONTRACT` HOLD for
+  `UAT_DEPLOY_GATE_ACTIVE=false` plus YAML proof that SSH cannot run.
+- `deploy/uat-delivery-status.test.sh` — structured nonsecret predeploy report.
+- `deploy/uat-final-outcome.test.sh` — missing, inconsistent, incomplete,
+  pre-SSH dispatch, failed SSH, and failed postdeploy evidence fail closed;
+  only a proven host SHA may set `uat_deployed=true`; authorized lifecycle
+  skip is optional; missing, malformed, or unauthorized skip HOLDs;
+  malformed Playwright stats HOLD as `INCOMPLETE`; pre-SSH `HELD` may
+  exit 0 because eligibility is JSON + `eligible`, not aggregator rc.
+- `deploy/record-uat-ssh-execution.test.sh` — post-SSH step conclusion is
+  recorded without claiming host mutation.
