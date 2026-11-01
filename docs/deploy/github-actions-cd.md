@@ -22,9 +22,12 @@ push / merge to main
     → SSH pins origin to that SHA *before* invoking on-disk remote-deploy.sh
     → deploy/remote-deploy.sh re-asserts the same SHA
     → EXPECTED_SHA == DEPLOYED_SHA or fail closed
-    → uat-deploy-dispatch.json (result=dispatched)
-    → uat-acceptance.json + public smoke + Playwright
+    → uat-deploy-dispatch.json (result=dispatched; attempt/intent only)
+    → uat-ssh-execution.json (Actions SSH step conclusion; not host mutation)
+    → uat-acceptance.json + public smoke + Playwright (required)
+    → 19-5-lifecycle.json (opt-in; authorized skip is SKIPPED, not a required pass)
     → acceptance-summary.json (story, sha, deployment, runtime, browser, security, provider, tests, result)
+    → uat-final-outcome.json (DEPLOYED_ACCEPTED only when required checks pass)
 ```
 
 | Workflow | File | Trigger |

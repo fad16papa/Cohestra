@@ -25,9 +25,11 @@ Exact-SHA pattern scan remains required defense-in-depth.
 5. A candidate that is not the current `origin/main` tip is stale and is held.
 6. A successful or in-progress Deploy UAT run for the same SHA is a duplicate
    and is held. A prior failed deploy may be retried.
-7. Post-deploy public smoke, Playwright, lifecycle, and acceptance-summary stay
-   on the existing path. A post-deploy failure is `UAT_REJECTED/HOLD`, not
-   “no deploy occurred.”
+7. Required post-deploy checks are host acceptance, public smoke, and
+   Playwright. Story 19.5 lifecycle is opt-in: an authorized
+   `SKIPPED (lifecycle_disabled|story_closed)` is not a required pass.
+   Missing or unauthorized lifecycle evidence HOLDs. A required-check
+   failure is `DEPLOYED_REJECTED`/`HOLD`, not “no deploy occurred.”
 
 The suppressor `vars.UAT_DEPLOY_GATE_ACTIVE` must equal the exact string `true`
 or the gate HOLDs. Unset, `false`, `TRUE`, and `1` are HOLD.

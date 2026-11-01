@@ -324,8 +324,10 @@ assert p["host_acceptance"] == "pass"
 assert p["smoke"] == "pass"
 assert p["browser"] == "pass"
 assert p["lifecycle"] == "pass"
+assert p.get("lifecycle_report") == "PASS", p
 assert "lifecycle=PASS" in p["diagnostics"]
 assert "lifecycle evidence passed" not in p["diagnostics"]
+assert "SKIPPED" not in p["diagnostics"]
 blob = json.dumps(p)
 assert "DROPLET_" not in blob
 assert "GITGUARDIAN_API_KEY=" not in blob
@@ -349,9 +351,11 @@ assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
 assert p["uat_deployed"] is True
 assert p["lifecycle"] == "skip"
 assert p.get("lifecycle_reason") == "lifecycle_disabled", p
+assert p.get("lifecycle_report") == "SKIPPED (lifecycle_disabled)", p
 assert p["deployed_sha"] == "${SHA}"
 diag = p["diagnostics"]
 assert "lifecycle=SKIPPED (lifecycle_disabled)" in diag, p
+assert "lifecycle=PASS" not in diag
 assert "lifecycle evidence passed" not in diag
 assert "smoke=PASS" in diag
 assert "browser=PASS" in diag
@@ -374,7 +378,9 @@ p = json.load(open(sys.argv[1]))
 assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
 assert p["lifecycle"] == "skip"
 assert p.get("lifecycle_reason") == "story_closed", p
+assert p.get("lifecycle_report") == "SKIPPED (story_closed)", p
 assert "lifecycle=SKIPPED (story_closed)" in p["diagnostics"]
+assert "lifecycle=PASS" not in p["diagnostics"]
 PY
 pass "authorized story_closed skip is ACCEPTED with SKIPPED diagnostics"
 
@@ -414,9 +420,10 @@ fi
 python3 - "$TMP/lifecycle-bare-skip/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_REJECTED", p
 assert p["result"] == "HOLD", p
 assert p["uat_deployed"] is True, p
+assert "failed:lifecycle=unauthorized_skip" in p["diagnostics"], p
 PY
 pass "malformed skip without reason HOLDs"
 
@@ -435,11 +442,53 @@ fi
 python3 - "$TMP/lifecycle-fake-skip/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_REJECTED", p
 assert p["result"] == "HOLD", p
 assert p["uat_deployed"] is True, p
+assert "failed:lifecycle=unauthorized_skip" in p["diagnostics"], p
 PY
 pass "unauthorized skip reason HOLDs"
+
+mkdir -p "$TMP/smoke-skip"
+write_predeploy "$TMP/smoke-skip" PASS "ok"
+write_dispatch "$TMP/smoke-skip"
+write_ssh "$TMP/smoke-skip" success
+write_acceptance "$TMP/smoke-skip" pass
+write_smoke "$TMP/smoke-skip" skip
+write_browser "$TMP/smoke-skip" 0
+write_lifecycle "$TMP/smoke-skip" pass
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/smoke-skip" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "mandatory smoke skip must not ACCEPTED"
+fi
+python3 - "$TMP/smoke-skip/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["result"] == "HOLD", p
+assert p["smoke"] == "skip", p
+PY
+pass "mandatory smoke skip cannot be DEPLOYED_ACCEPTED"
+
+mkdir -p "$TMP/browser-missing-ok-rest"
+write_predeploy "$TMP/browser-missing-ok-rest" PASS "ok"
+write_dispatch "$TMP/browser-missing-ok-rest"
+write_ssh "$TMP/browser-missing-ok-rest" success
+write_acceptance "$TMP/browser-missing-ok-rest" pass
+write_smoke "$TMP/browser-missing-ok-rest" pass
+write_lifecycle "$TMP/browser-missing-ok-rest" pass
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/browser-missing-ok-rest" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "missing Playwright must not ACCEPTED"
+fi
+python3 - "$TMP/browser-missing-ok-rest/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["result"] == "HOLD", p
+assert p["browser"] == "missing", p
+PY
+pass "missing mandatory Playwright cannot be DEPLOYED_ACCEPTED"
 
 # Live Deploy UAT downloads Playwright to the checkout root, not artifacts/.
 mkdir -p "$TMP/live/artifacts" "$TMP/live/web/test-results"

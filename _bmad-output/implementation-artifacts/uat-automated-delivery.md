@@ -23,6 +23,8 @@
   from `web/test-results/` after download-artifact. Story 19.5 lifecycle
   is opt-in: authorized `skip` (`lifecycle_disabled` / `story_closed`) is
   `SKIPPED`, not a required pass. Missing or unauthorized skip HOLDs.
+- Binding contract: host acceptance, public smoke, and Playwright are
+  required. Lifecycle is optional when skip is authorized.
 - Continuous path remains: merge → main CI → scans SUCCESS → predeploy
   gate → automatic `workflow_run` UAT → smoke/browser. Recurring dispatch
   is not required after the owner sets `UAT_DEPLOY_GATE_ACTIVE=true`.

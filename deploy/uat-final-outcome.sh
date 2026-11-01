@@ -341,6 +341,9 @@ def limb(label: str, value: str, reason: str = "") -> str:
     return f"{label}=PASS"
 
 
+payload["lifecycle_report"] = (
+    f"SKIPPED ({lifecycle_reason})" if payload["lifecycle"] == "skip" else "PASS"
+)
 payload["uat_deployment_outcome"] = "DEPLOYED_ACCEPTED"
 payload["diagnostics"] = (
     "Host accepted SHA; "
