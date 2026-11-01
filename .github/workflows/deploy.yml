@@ -62,9 +62,12 @@ jobs:
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
         run: |
           set -euo pipefail
-          git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
-          git rev-parse --verify origin/main >/dev/null
-          env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+          if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
+            env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+          else
+            bash deploy/fetch-origin-main.sh
+            env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+          fi
 
       - name: Remove secret-like predeploy evidence
         if: always()
@@ -86,7 +89,7 @@ jobs:
           path: |
             artifacts/uat-predeploy-gate.json
             artifacts/uat-delivery-status.json
-          if-no-files-found: warn
+          if-no-files-found: error
 
   deploy:
     name: Deploy accepted SHA to UAT
@@ -134,9 +137,12 @@ jobs:
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
         run: |
           set -euo pipefail
-          git -c http.extraheader="AUTHORIZATION: bearer ${GITHUB_TOKEN}" fetch --no-tags origin main:refs/remotes/origin/main
-          git rev-parse --verify origin/main >/dev/null
-          env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+          if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
+            env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+          else
+            bash deploy/fetch-origin-main.sh
+            env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+          fi
 
       - name: Fail closed if UAT secrets are missing
         env:
