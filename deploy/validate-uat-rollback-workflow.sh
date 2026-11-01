@@ -37,7 +37,12 @@ fi
 if grep -A20 'Rollback previous SHA over SSH' "$WF" | grep -q 'bash deploy/uat-rollback.sh'; then
   fail "droplet SSH must be inline; old trees do not have uat-rollback.sh"
 fi
-grep -q 'bash deploy/uat-compose.sh up -d --build' "$WF" || fail "host rebuild must use uat-compose, not remote-deploy"
+grep -q 'bash deploy/uat-compose.sh build api' "$WF" || fail "host rebuild must build api first"
+grep -q 'bash deploy/uat-compose.sh build web' "$WF" || fail "host rebuild must build web second"
+grep -q 'bash deploy/uat-compose.sh up -d --no-build' "$WF" || fail "host rebuild must up --no-build after sequential builds"
+if grep -q 'up -d --build' "$WF"; then
+  fail "parallel up -d --build OOMs the UAT droplet"
+fi
 if grep -q 'remote-deploy.sh' "$WF"; then
   fail "workflow must not call remote-deploy.sh"
 fi

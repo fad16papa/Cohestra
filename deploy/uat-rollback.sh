@@ -75,7 +75,9 @@ DEPLOY_SHA="$ROLLBACK_SHA" reset_accepted_sha || refuse "host tree reset failed"
 if [[ "${COHESTRA_UAT_COMPOSE_STUB:-}" == "true" ]]; then
   echo "COMPOSE=stubbed"
 elif [[ -x "$ROOT_DIR/deploy/uat-compose.sh" || -f "$ROOT_DIR/deploy/uat-compose.sh" ]]; then
-  bash "$ROOT_DIR/deploy/uat-compose.sh" up -d --build
+  bash "$ROOT_DIR/deploy/uat-compose.sh" build api
+  bash "$ROOT_DIR/deploy/uat-compose.sh" build web
+  bash "$ROOT_DIR/deploy/uat-compose.sh" up -d --no-build
 else
   refuse "isolated UAT compose helper is missing on this SHA"
 fi

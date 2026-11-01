@@ -141,5 +141,7 @@ jobs:
               echo "REFUSE: isolated UAT compose helper is missing on this SHA"
               exit 1
             fi
-            bash deploy/uat-compose.sh up -d --build
+            bash deploy/uat-compose.sh build api
+            bash deploy/uat-compose.sh build web
+            bash deploy/uat-compose.sh up -d --no-build
             echo "DATABASE_MUTATED=false"

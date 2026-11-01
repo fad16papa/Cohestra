@@ -26,8 +26,10 @@ authorizes a live recovery.
 ## Host release rollback
 
 On execute, the droplet fetches `origin/main`, refuses the current tip,
-resets to `ROLLBACK_SHA`, and rebuilds the isolated UAT compose stack
-(`deploy/remote-deploy.sh`). `DATABASE_MUTATED=false`.
+resets to `ROLLBACK_SHA`, and rebuilds with sequential
+`deploy/uat-compose.sh` (`build api`, `build web`, `up -d --no-build`).
+Do not call `deploy/remote-deploy.sh` for rollback; older copies reset to
+the current tip. `DATABASE_MUTATED=false`.
 
 EF migrations apply on API startup. If the previous SHA's schema is not
 compatible with the current database, host rollback alone is insufficient.
