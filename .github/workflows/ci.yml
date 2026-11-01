@@ -271,6 +271,28 @@ jobs:
       - name: UAT origin/main fetch and HOLD-first contract
         run: bash deploy/fetch-origin-main.test.sh
 
+      - name: UAT readiness contract
+        run: bash deploy/evaluate-uat-readiness.test.sh
+
+      - name: UAT readiness workflow contract
+        run: bash deploy/validate-uat-readiness-workflow.sh
+
+      - name: Evaluate UAT readiness (CI_CONTRACT)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          UAT_READINESS_OUT_DIR: artifacts/ci-contract
+          UAT_READINESS_PR: ${{ github.event.pull_request.number }}
+          UAT_READINESS_SHA: ${{ github.sha }}
+          UAT_READINESS_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          UAT_READINESS_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+        run: |
+          set -euo pipefail
+          env -u COHESTRA_GH_API_MOCK bash deploy/evaluate-uat-readiness.sh
+          test -f artifacts/ci-contract/uat-readiness.json
+          python3 -c 'import json; p=json.load(open("artifacts/ci-contract/uat-readiness.json")); assert p.get("owner_authorization_claimed") is False; assert p.get("provenance",{}).get("adcp") is False'
+
       - name: UAT SSH step evidence contract
         run: bash deploy/record-uat-ssh-execution.test.sh
 
