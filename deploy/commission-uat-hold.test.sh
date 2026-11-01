@@ -134,6 +134,8 @@ if "fetch-origin-uat.test.sh" not in txt:
     raise SystemExit("CI must run origin/release/uat fetch contract")
 if "validate-prd-ad23.test.sh" not in txt:
     raise SystemExit("CI must run PR-D AD-23 contract")
+if "validate-ad25-sync-fixture.test.sh" not in txt:
+    raise SystemExit("CI must run the AD-25 two-branch fixture")
 iso = txt.split("  uat-isolation:\n", 1)[1]
 if "bash deploy/commission-uat-hold.sh" not in iso:
     raise SystemExit("CI must persist commissioning by invoking commission-uat-hold.sh")

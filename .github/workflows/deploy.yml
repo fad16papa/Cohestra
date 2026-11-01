@@ -298,6 +298,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
           persist-credentials: false
       - name: PR-D AD-23 contract
         run: bash deploy/validate-prd-ad23.test.sh
@@ -307,6 +308,8 @@ jobs:
         run: bash deploy/validate-inline-suppression.test.sh
       - name: AD-25 sync procedure
         run: bash deploy/validate-ad25-sync-procedure.sh
+      - name: AD-25 two-branch sync fixture
+        run: bash deploy/validate-ad25-sync-fixture.test.sh
       - name: Production isolation
         run: bash deploy/validate-deploy-production-workflow.sh
 

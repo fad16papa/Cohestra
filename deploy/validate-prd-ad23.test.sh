@@ -140,6 +140,10 @@ if "DEPLOY_BRANCH:-release/uat" not in wf and 'DEPLOY_BRANCH:-release/uat' not i
 
 print("ad23-yaml-ok")
 PY
+grep -q 'validate-ad25-sync-fixture.test.sh' "$WF" \
+  || fail "postmerge-isolation must run the AD-25 two-branch fixture"
+grep -q 'validate-ad25-sync-fixture.test.sh' "$CI" \
+  || fail "CI isolation must run the AD-25 two-branch fixture"
 pass "AD-23 YAML: push release/uat, no workflow_run, AD-17 needs, polarity flipped"
 
 # Script-level negatives with a tiny fixture

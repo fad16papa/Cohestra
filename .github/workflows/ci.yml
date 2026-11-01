@@ -243,6 +243,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Exact-SHA secret scan contract
         run: bash deploy/exact-sha-secret-scan.test.sh
@@ -282,6 +284,7 @@ jobs:
           set -euo pipefail
           bash deploy/validate-prd-ad23.test.sh
           bash deploy/validate-ad25-sync-procedure.sh
+          bash deploy/validate-ad25-sync-fixture.test.sh
           bash deploy/write-uat-deploy-provenance.test.sh
 
       - name: Inline suppression and merge-token contracts
