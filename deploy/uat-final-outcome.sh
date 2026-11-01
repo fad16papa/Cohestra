@@ -146,12 +146,12 @@ def base_payload() -> dict:
         "deployment_phase": "UNKNOWN",
         "ssh_attempted": False,
         "ssh_step_conclusion": "missing",
-        "ssh_executed": False,
+        "ssh_executed": None,
         "host_acceptance": "missing",
         "smoke": "missing",
         "browser": "missing",
         "lifecycle": "missing",
-        "uat_deployed": False,
+        "uat_deployed": None,
         "uat_deployment_outcome": "MISSING_EVIDENCE",
         "diagnostics": "",
         "run_links": run_links,
@@ -223,7 +223,10 @@ if isinstance(summary, dict):
 
 ssh_conclusion = str((ssh_step or {}).get("conclusion") or "missing").strip().lower()
 payload["ssh_step_conclusion"] = ssh_conclusion if ssh_step else "missing"
-payload["ssh_attempted"] = bool(dispatch_attempted or ssh_step)
+# A skipped SSH step is not an attempt. Dispatch remains intent/attempt.
+payload["ssh_attempted"] = bool(
+    dispatch_attempted or ssh_conclusion in {"success", "failure", "cancelled"}
+)
 
 host_sha = ""
 sha_match = False

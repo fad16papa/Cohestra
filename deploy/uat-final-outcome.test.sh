@@ -102,6 +102,13 @@ if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/inconsistent" TARGET_SHA="$SHA" bash "$OUT
   fail "inconsistent SHA must fail closed"
 fi
 echo "$out" | grep -qiE 'INCONSISTENT|sha' || { echo "$out"; fail "inconsistent SHA reason"; }
+python3 - "$TMP/inconsistent/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] == "INCONSISTENT", p
+assert p["uat_deployed"] is None, p
+assert p["ssh_executed"] is None, p
+PY
 pass "inconsistent SHA fails closed"
 
 mkdir -p "$TMP/dispatch-only"
@@ -161,6 +168,23 @@ assert p["ssh_executed"] is not True, p
 assert p["uat_deployment_outcome"] in ("ATTEMPTED", "UNKNOWN"), p
 PY
 pass "mid-SSH remote failure stays UNKNOWN/ATTEMPTED"
+
+mkdir -p "$TMP/ssh-skipped"
+write_predeploy "$TMP/ssh-skipped" PASS "ok"
+write_ssh "$TMP/ssh-skipped" skipped
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/ssh-skipped" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "skipped SSH step must not invent an attempt"
+fi
+python3 - "$TMP/ssh-skipped/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["ssh_attempted"] is False, p
+assert p["ssh_executed"] is not True, p
+assert p["uat_deployed"] is not True, p
+assert p["uat_deployment_outcome"] != "ATTEMPTED", p
+PY
+pass "skipped SSH step is not an SSH attempt"
 
 mkdir -p "$TMP/ssh-success-no-host"
 write_predeploy "$TMP/ssh-success-no-host" PASS "ok"
@@ -314,6 +338,7 @@ block = rest if not m else rest[: m.start() + 1]
 required = (
     "name: UAT final delivery outcome",
     "if: always()",
+    "Refuse unpinned TARGET_SHA",
     "uat-final-outcome.sh",
     "uat-final-outcome",
     "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
