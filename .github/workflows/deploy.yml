@@ -60,6 +60,10 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           ORIGIN_MAIN_REF: origin/main
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_READINESS_BMAD_APP_SLUG: ${{ vars.UAT_READINESS_BMAD_APP_SLUG }}
+          UAT_READINESS_CATSEC_APP_SLUG: ${{ vars.UAT_READINESS_CATSEC_APP_SLUG }}
+          UAT_READINESS_BMAD_APP_ID: ${{ vars.UAT_READINESS_BMAD_APP_ID }}
+          UAT_READINESS_CATSEC_APP_ID: ${{ vars.UAT_READINESS_CATSEC_APP_ID }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
@@ -152,6 +156,10 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           ORIGIN_MAIN_REF: origin/main
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_READINESS_BMAD_APP_SLUG: ${{ vars.UAT_READINESS_BMAD_APP_SLUG }}
+          UAT_READINESS_CATSEC_APP_SLUG: ${{ vars.UAT_READINESS_CATSEC_APP_SLUG }}
+          UAT_READINESS_BMAD_APP_ID: ${{ vars.UAT_READINESS_BMAD_APP_ID }}
+          UAT_READINESS_CATSEC_APP_ID: ${{ vars.UAT_READINESS_CATSEC_APP_ID }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
@@ -178,6 +186,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_READINESS_BMAD_APP_SLUG: ${{ vars.UAT_READINESS_BMAD_APP_SLUG }}
+          UAT_READINESS_CATSEC_APP_SLUG: ${{ vars.UAT_READINESS_CATSEC_APP_SLUG }}
+          UAT_READINESS_BMAD_APP_ID: ${{ vars.UAT_READINESS_BMAD_APP_ID }}
+          UAT_READINESS_CATSEC_APP_ID: ${{ vars.UAT_READINESS_CATSEC_APP_ID }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then

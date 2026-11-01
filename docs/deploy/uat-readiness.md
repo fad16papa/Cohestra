@@ -24,7 +24,8 @@ The workflow runs on:
 - `pull_request` opened / synchronize / reopened / ready_for_review / labeled
 - `pull_request_review` and PR `issue_comment` changes
 - `workflow_run` completion of **CI** (not itself)
-- `check_suite` completion for GitGuardian / GitHub Actions
+- `check_suite` completion for GitGuardian, GitHub Actions, and the
+  allowlisted BMAD/CAT-SEC review apps
 - `push` to protected `main`
 - hourly `schedule` reconciliation
 - read-only diagnostic `workflow_dispatch`

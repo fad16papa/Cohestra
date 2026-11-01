@@ -50,6 +50,8 @@ if "contents: write" in wf.split("notify:")[0]:
     raise SystemExit("evaluate job must not request contents: write")
 if "evaluate-uat-readiness.sh" not in wf:
     raise SystemExit("workflow must invoke the shared evaluator")
+if "UAT_READINESS_BMAD_APP_SLUG" not in wf or "UAT_READINESS_CATSEC_APP_ID" not in wf:
+    raise SystemExit("evaluate job must map owner-pinned review app vars")
 if "evaluate-uat-readiness.sh" not in deploy or "require-uat-readiness-predeploy.sh" not in deploy:
     raise SystemExit("Deploy UAT must integrate readiness")
 if "evaluate-uat-readiness.test.sh" not in ci or "validate-uat-readiness-workflow.sh" not in ci:

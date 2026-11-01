@@ -88,6 +88,10 @@ jobs:
           UAT_READINESS_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
           UAT_READINESS_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_READINESS_BMAD_APP_SLUG: ${{ vars.UAT_READINESS_BMAD_APP_SLUG }}
+          UAT_READINESS_CATSEC_APP_SLUG: ${{ vars.UAT_READINESS_CATSEC_APP_SLUG }}
+          UAT_READINESS_BMAD_APP_ID: ${{ vars.UAT_READINESS_BMAD_APP_ID }}
+          UAT_READINESS_CATSEC_APP_ID: ${{ vars.UAT_READINESS_CATSEC_APP_ID }}
         run: |
           set -euo pipefail
           env -u COHESTRA_GH_API_MOCK bash deploy/evaluate-uat-readiness.sh

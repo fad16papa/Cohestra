@@ -1,7 +1,7 @@
 # Recommendation: machine-verifiable BMAD/CAT-SEC evidence
 
 Date: 2026-11-01 (Asia/Singapore)
-HEAD at recommendation: to be recorded on commit
+HEAD at recommendation: `ead27b8149df24928faed650cb386733438164e0` plus follow-up env wiring
 
 ## Decision
 
