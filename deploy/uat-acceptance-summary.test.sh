@@ -80,11 +80,18 @@ JSON
         },
         {
           "title": "19.5 operator core flows",
-          "specs": [{
-            "title": "Basic dashboard metrics load",
-            "file": "operator-core-flows.spec.ts",
-            "tests": [{"results": [{"status": "expected"}]}]
-          }]
+          "specs": [
+            {
+              "title": "Basic dashboard metrics load",
+              "file": "operator-core-flows.spec.ts",
+              "tests": [{"results": [{"status": "expected"}]}]
+            },
+            {
+              "title": "Pro website studio and public branding",
+              "file": "operator-core-flows.spec.ts",
+              "tests": [{"results": [{"status": "expected"}]}]
+            }
+          ]
         },
         {
           "title": "45.5 OTP mailbox",

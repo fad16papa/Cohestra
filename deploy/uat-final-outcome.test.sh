@@ -55,11 +55,18 @@ write_browser() {
         },
         {
           "title": "19.5 operator core flows",
-          "specs": [{
-            "title": "Basic dashboard metrics load",
-            "file": "operator-core-flows.spec.ts",
-            "tests": [{"results": [{"status": "expected"}]}]
-          }]
+          "specs": [
+            {
+              "title": "Basic dashboard metrics load",
+              "file": "operator-core-flows.spec.ts",
+              "tests": [{"results": [{"status": "expected"}]}]
+            },
+            {
+              "title": "Pro website studio and public branding",
+              "file": "operator-core-flows.spec.ts",
+              "tests": [{"results": [{"status": "expected"}]}]
+            }
+          ]
         },
         {
           "title": "45.5 OTP mailbox",
@@ -95,11 +102,18 @@ write_browser_auth_skipped() {
         },
         {
           "title": "19.5 operator core flows",
-          "specs": [{
-            "title": "Basic dashboard metrics load",
-            "file": "operator-core-flows.spec.ts",
-            "tests": [{"results": [{"status": "skipped"}]}]
-          }]
+          "specs": [
+            {
+              "title": "Basic dashboard metrics load",
+              "file": "operator-core-flows.spec.ts",
+              "tests": [{"results": [{"status": "skipped"}]}]
+            },
+            {
+              "title": "Pro website studio and public branding",
+              "file": "operator-core-flows.spec.ts",
+              "tests": [{"results": [{"status": "skipped"}]}]
+            }
+          ]
         }
       ]
     }
@@ -685,6 +699,49 @@ assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
 assert p["browser"] == "missing_required", p
 PY
 pass "stats-only Playwright JSON cannot prove authenticated coverage"
+
+python3 - "$ROOT_DIR/deploy/lib/uat-playwright-coverage.py" <<'PY'
+import importlib.util, json, sys
+from pathlib import Path
+spec = importlib.util.spec_from_file_location("cov", sys.argv[1])
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+def load(label, raw):
+    got = mod.classify(raw)
+    assert got == label, (got, json.dumps(raw)[:200])
+
+base = {
+  "suites": [{
+    "title": "e2e-uat",
+    "suites": [
+      {"title": "45.4 authenticated UAT", "specs": [{"title": "dedicated automation login when credentials exist", "file": "authenticated.spec.ts", "tests": [{"results": [{"status": "expected"}]}]}]},
+      {"title": "19.5 operator core flows", "specs": [
+        {"title": "Basic dashboard metrics load", "file": "operator-core-flows.spec.ts", "tests": [{"results": [{"status": "expected"}]}]},
+        {"title": "Pro website studio and public branding", "file": "operator-core-flows.spec.ts", "tests": [{"results": [{"status": "expected"}]}]}
+      ]}
+    ]
+  }]
+}
+load("ok", base)
+pro_skip = json.loads(json.dumps(base))
+pro_skip["suites"][0]["suites"][1]["specs"][1]["tests"][0]["results"][0]["status"] = "skipped"
+load("skipped_required", pro_skip)
+basic_skip = json.loads(json.dumps(base))
+basic_skip["suites"][0]["suites"][1]["specs"][0]["tests"][0]["results"][0]["status"] = "skipped"
+load("skipped_required", basic_skip)
+empty = json.loads(json.dumps(base))
+empty["suites"][0]["suites"][1]["specs"][1]["tests"] = []
+load("missing_required", empty)
+interrupted = json.loads(json.dumps(base))
+interrupted["suites"][0]["suites"][1]["specs"][1]["tests"][0]["results"][0]["status"] = "interrupted"
+load("missing_required", interrupted)
+retry = json.loads(json.dumps(base))
+retry["suites"][0]["suites"][1]["specs"][1]["tests"][0]["results"] = [{"status": "failed"}, {"status": "passed"}]
+load("ok", retry)
+print("classifier cases ok")
+PY
+pass "skipped Basic-only, Pro-only, empty, interrupted, and retry-pass are classified"
 
 python3 - "$WF" <<'PY'
 from pathlib import Path
