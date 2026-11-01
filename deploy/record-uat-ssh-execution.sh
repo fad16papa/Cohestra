@@ -34,7 +34,7 @@ payload = {
     "sha": sha_n,
     "proof": "github_actions_step_conclusion",
     "host_mutation": "unknown",
-    "ssh_attempted": True,
+    "ssh_attempted": conclusion_n in {"success", "failure", "cancelled"},
     "diagnostics": (
         "SSH Actions step conclusion only. "
         "This is not proof the host accepted a SHA or that UAT changed."

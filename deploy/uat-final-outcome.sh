@@ -308,14 +308,15 @@ for label, value in (
     elif value not in {"pass", "ok", "success"}:
         failures.append(f"failed:{label}={value}")
 
-if any(item.startswith("missing:") for item in failures):
-    payload["uat_deployment_outcome"] = "INCOMPLETE"
+failed = [item for item in failures if item.startswith("failed:")]
+missing = [item for item in failures if item.startswith("missing:")]
+if failed:
+    payload["uat_deployment_outcome"] = "DEPLOYED_REJECTED"
     payload["diagnostics"] = ";".join(failures)
     payload["result"] = "HOLD"
     emit(payload, 1)
-
-if failures:
-    payload["uat_deployment_outcome"] = "DEPLOYED_REJECTED"
+if missing:
+    payload["uat_deployment_outcome"] = "INCOMPLETE"
     payload["diagnostics"] = ";".join(failures)
     payload["result"] = "HOLD"
     emit(payload, 1)

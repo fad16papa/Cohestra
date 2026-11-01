@@ -253,6 +253,29 @@ assert "no deployment occurred" not in text
 PY
 pass "confirmed SHA plus later browser/lifecycle failure is DEPLOYED_REJECTED"
 
+mkdir -p "$TMP/smoke-fail-skipped-browser"
+write_predeploy "$TMP/smoke-fail-skipped-browser" PASS "ok"
+write_dispatch "$TMP/smoke-fail-skipped-browser"
+write_ssh "$TMP/smoke-fail-skipped-browser" success
+write_acceptance "$TMP/smoke-fail-skipped-browser" pass
+write_smoke "$TMP/smoke-fail-skipped-browser" fail
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/smoke-fail-skipped-browser" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "host-proven smoke fail with skipped browser must not PASS"
+fi
+python3 - "$TMP/smoke-fail-skipped-browser/uat-final-outcome.json" <<PY
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployed"] is True, p
+assert p["deployed_sha"] == "${SHA}", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_REJECTED", p
+assert p["browser"] == "missing", p
+assert p["lifecycle"] == "missing", p
+text = json.dumps(p).lower()
+assert "no deployment occurred" not in text
+PY
+pass "host-proven smoke fail with skipped browser/lifecycle is DEPLOYED_REJECTED"
+
 mkdir -p "$TMP/duplicate/artifacts"
 write_predeploy "$TMP/duplicate" PASS "ok"
 write_dispatch "$TMP/duplicate"

@@ -83,6 +83,22 @@ else
 fi
 pass "missing step conclusion is unknown"
 
+out="$(
+  UAT_SSH_EVIDENCE_DIR="$TMP/skipped" \
+  TARGET_SHA="$SHA" \
+  SSH_STEP_CONCLUSION=skipped \
+  SSH_STEP_OUTCOME=skipped \
+  bash "$RECORDER"
+)" || { echo "$out"; fail "skipped conclusion must record"; }
+python3 - "$TMP/skipped/uat-ssh-execution.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["conclusion"] == "skipped", p
+assert p["ssh_attempted"] is False, p
+assert p["host_mutation"] == "unknown", p
+PY
+pass "skipped SSH step does not claim an attempt"
+
 python3 - "$WF" <<'PY'
 from pathlib import Path
 import sys
