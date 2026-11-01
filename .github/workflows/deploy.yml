@@ -29,7 +29,71 @@ jobs:
     env:
       TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
       UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+      UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}
     steps:
+      - name: Trusted inline suppressors before candidate checkout
+        id: inline-suppress
+        env:
+          CANDIDATE_SHA: ${{ env.TARGET_SHA }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          hold_inline() {
+            local reason="$1"
+            python3 - "$reason" "${CANDIDATE_SHA:-}" "${UAT_DEPLOY_GATE_ACTIVE:-}" "${UAT_MAIN_DEPLOY_SUPPRESSED:-}" "${GITHUB_EVENT_NAME:-}" <<'PY'
+          import json, sys
+          reason, candidate, gate, suppressed, event = sys.argv[1:6]
+          gate_path = "artifacts/uat-predeploy-gate.json"
+          status_path = "artifacts/uat-delivery-status.json"
+          payload = {
+              "result": "HOLD",
+              "reason": reason,
+              "candidate_sha": candidate.lower() if candidate else "",
+              "origin_main_sha": "",
+              "event_name": event,
+              "gate_active": gate == "true",
+              "main_deploy_suppressed": suppressed == "true",
+              "suppressor": "inline-default-branch-yaml",
+          }
+          with open(gate_path, "w", encoding="utf-8") as fh:
+              json.dump(payload, fh, indent=2)
+              fh.write("\n")
+          status = {
+              "phase": "predeploy",
+              "candidate_sha": candidate.lower() if candidate and len(candidate) == 40 else candidate,
+              "failed_stage": "predeploy-gate",
+              "failed_test": reason,
+              "security_gate": "HOLD",
+              "eligibility": "HOLD",
+              "deployment_phase": "NOT_STARTED",
+              "uat_deployment_outcome": "HELD",
+              "ssh_executed": False,
+              "uat_deployed": False,
+              "diagnostics": reason,
+              "run_links": {},
+              "agent_policy": (
+                  "Investigate and prepare fixes on a development branch only. "
+                  "Do not autonomously merge, change release controls, or retry indefinitely."
+              ),
+          }
+          with open(status_path, "w", encoding="utf-8") as fh:
+              json.dump(status, fh, indent=2)
+              fh.write("\n")
+          PY
+            if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+              echo "eligible=false" >>"$GITHUB_OUTPUT"
+            fi
+            echo "RESULT=HOLD"
+            echo "HOLD_REASON=${reason}"
+            exit 1
+          }
+          if [[ "${UAT_MAIN_DEPLOY_SUPPRESSED:-}" == "true" ]]; then
+            hold_inline "UAT_MAIN_DEPLOY_SUPPRESSED is true"
+          fi
+          if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
+            hold_inline "UAT_DEPLOY_GATE_ACTIVE is not true"
+          fi
+
       - name: Refuse unpinned TARGET_SHA
         env:
           WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -60,6 +124,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           ORIGIN_MAIN_REF: origin/main
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
@@ -85,7 +150,14 @@ jobs:
         if: always()
         env:
           UAT_GATE_EVIDENCE_DIR: artifacts
-        run: bash deploy/require-uat-predeploy-evidence.sh
+        run: |
+          set -euo pipefail
+          if [[ -f deploy/require-uat-predeploy-evidence.sh ]]; then
+            bash deploy/require-uat-predeploy-evidence.sh
+          else
+            test -f artifacts/uat-predeploy-gate.json
+            test -f artifacts/uat-delivery-status.json
+          fi
 
       - name: Upload predeploy gate evidence
         if: always()
@@ -107,7 +179,22 @@ jobs:
       TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
       VALIDATED_SHA: ${{ needs.predeploy-gate.outputs.validated_sha }}
       UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+      UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}
     steps:
+      - name: Trusted inline suppressors before candidate checkout
+        run: |
+          set -euo pipefail
+          if [[ "${UAT_MAIN_DEPLOY_SUPPRESSED:-}" == "true" ]]; then
+            echo "RESULT=HOLD"
+            echo "HOLD_REASON=UAT_MAIN_DEPLOY_SUPPRESSED is true"
+            exit 1
+          fi
+          if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
+            echo "RESULT=HOLD"
+            echo "HOLD_REASON=UAT_DEPLOY_GATE_ACTIVE is not true"
+            exit 1
+          fi
+
       - name: Refuse unpinned TARGET_SHA
         env:
           WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -141,6 +228,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           ORIGIN_MAIN_REF: origin/main
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then

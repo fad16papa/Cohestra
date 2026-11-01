@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - main
+      - release/uat
   pull_request:
     branches:
       - main
+      - release/uat
+  merge_group:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -205,7 +208,7 @@ jobs:
 
   gitguardian-exact-sha-api:
     name: GitGuardian exact-SHA API scan
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release/uat')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -270,6 +273,12 @@ jobs:
 
       - name: UAT origin/main fetch and HOLD-first contract
         run: bash deploy/fetch-origin-main.test.sh
+
+      - name: Inline suppression and merge-token contracts
+        run: |
+          set -euo pipefail
+          bash deploy/validate-inline-suppression.test.sh
+          python3 deploy/simulate-merge-token-trigger.py
 
       - name: UAT SSH step evidence contract
         run: bash deploy/record-uat-ssh-execution.test.sh

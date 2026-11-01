@@ -130,6 +130,7 @@ required = (
     "name: GitGuardian exact-SHA API scan",
     "github.event_name == 'push'",
     "github.ref == 'refs/heads/main'",
+    "github.ref == 'refs/heads/release/uat'",
     "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
     "persist-credentials: false",
     "SCAN_SHA: ${{ github.sha }}",
@@ -156,7 +157,7 @@ other = txt.replace(before + rest[: m.start()] if m else before + rest, "", 1)
 if "GITGUARDIAN_API_KEY" in other:
     raise SystemExit("GITGUARDIAN_API_KEY must not appear outside the push-main API scan job")
 PY
-pass "CI API scan job is push-main only, pinned, and has no UAT secrets"
+pass "CI API scan job is push main or release/uat only, pinned, and has no UAT secrets"
 
 python3 - "$ROOT_DIR/.github/workflows/ci.yml" <<'PY'
 from pathlib import Path

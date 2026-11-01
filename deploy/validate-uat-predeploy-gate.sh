@@ -66,6 +66,10 @@ if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
   hold "UAT_DEPLOY_GATE_ACTIVE is not true"
 fi
 
+if [[ "${UAT_MAIN_DEPLOY_SUPPRESSED:-}" == "true" ]]; then
+  hold "UAT_MAIN_DEPLOY_SUPPRESSED is true"
+fi
+
 if [[ ! "$CANDIDATE_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
   refuse "candidate_sha must be exactly 40 hexadecimal characters"
 fi

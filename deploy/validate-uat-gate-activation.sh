@@ -52,10 +52,11 @@ fi
 if grep -q 'name: GitGuardian exact-SHA API scan' "$CI" \
   && grep -q 'exact-sha-gitguardian-api-scan.sh' "$CI" \
   && grep -q "github.event_name == 'push'" "$CI" \
-  && grep -q "github.ref == 'refs/heads/main'" "$CI"; then
-  pass "CI runs GitGuardian exact-SHA API scan on push main only"
+  && grep -q "github.ref == 'refs/heads/main'" "$CI" \
+  && grep -q "github.ref == 'refs/heads/release/uat'" "$CI"; then
+  pass "CI runs GitGuardian exact-SHA API scan on push to main or release/uat"
 else
-  fail "ci.yml must run deploy/exact-sha-gitguardian-api-scan.sh on push main only"
+  fail "ci.yml must run deploy/exact-sha-gitguardian-api-scan.sh on push to main or release/uat"
 fi
 
 if python3 - "$CI" <<'PY'
@@ -78,7 +79,7 @@ if "pull_request" in block and ("event_name == 'pull_request'" in block or "pull
     raise SystemExit("API scan must not run on pull_request")
 PY
 then
-  pass "GITGUARDIAN_API_KEY is confined to the push-main API scan job"
+  pass "GITGUARDIAN_API_KEY is confined to the push protected-line API scan job"
 else
   fail "GITGUARDIAN_API_KEY must not appear on PR or other CI jobs"
 fi

@@ -160,6 +160,8 @@ UAT_DEPLOY_GATE_ACTIVE=TRUE expect_block "$PROVENANCE_MERGE" "UAT_DEPLOY_GATE_AC
 UAT_DEPLOY_GATE_ACTIVE=1 expect_block "$PROVENANCE_MERGE" "UAT_DEPLOY_GATE_ACTIVE=1 is HOLD"
 UAT_DEPLOY_GATE_ACTIVE=true
 
+UAT_MAIN_DEPLOY_SUPPRESSED=true expect_block "$PROVENANCE_MERGE" "UAT_MAIN_DEPLOY_SUPPRESSED=true is HOLD"
+
 # Stale / older queued run: origin/main moved past the candidate.
 REMOTE="$(git -C "$PROVENANCE_LOCAL" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
 # Advance the fixture remote and refetch so origin/main is newer than the merge.

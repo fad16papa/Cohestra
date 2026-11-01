@@ -274,6 +274,59 @@ else
   fail "workflow must read UAT_DEPLOY_GATE_ACTIVE from vars"
 fi
 
+if grep -q 'UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}' "$WF"; then
+  pass "cutover suppressor reads vars.UAT_MAIN_DEPLOY_SUPPRESSED"
+else
+  fail "workflow must read UAT_MAIN_DEPLOY_SUPPRESSED from vars"
+fi
+
+if python3 - "$WF" <<'PY'
+from pathlib import Path
+import sys
+text = Path(sys.argv[1]).read_text()
+start = text.find("  predeploy-gate:")
+if start < 0:
+    raise SystemExit("predeploy-gate missing")
+import re
+rest = text[start:]
+m = re.search(r"\n  [A-Za-z0-9_-]+:", rest[1:])
+pre = rest if not m else rest[: m.start() + 1]
+inline = pre.find("Trusted inline suppressors before candidate checkout")
+checkout = pre.find("Checkout accepted SHA")
+if inline < 0 or checkout < 0 or inline > checkout:
+    raise SystemExit("inline suppressor must precede TARGET_SHA checkout")
+block = pre[inline:checkout]
+if 'UAT_MAIN_DEPLOY_SUPPRESSED:-}" == "true"' not in block:
+    raise SystemExit("inline step must HOLD when suppressed is exact true")
+if "actions/checkout" in block:
+    raise SystemExit("inline suppressor must not checkout the candidate")
+PY
+then
+  pass "inline suppressor runs before candidate checkout"
+else
+  fail "deploy.yml must HOLD UAT_MAIN_DEPLOY_SUPPRESSED before TARGET_SHA checkout"
+fi
+
+if python3 - "$WF" <<'PY'
+from pathlib import Path
+import sys
+text = Path(sys.argv[1]).read_text()
+on = text.split("jobs:", 1)[0]
+if "workflow_run:" not in on:
+    raise SystemExit("PR-C must keep workflow_run")
+if "branches:\n      - release/uat" in on or "branches: [release/uat]" in on:
+    raise SystemExit("PR-C must not retarget workflow_run to release/uat")
+if on.count("- main") < 1:
+    raise SystemExit("workflow_run.branches must still include main")
+if "\n  push:" in on:
+    raise SystemExit("PR-C must not add push trigger to Deploy UAT")
+PY
+then
+  pass "PR-C keeps workflow_run.branches on main only"
+else
+  fail "PR-C must not change workflow_run.branches away from main"
+fi
+
 if grep -q 'Re-run UAT predeploy gate before SSH' "$WF"; then
   pass "gate is revalidated immediately before SSH"
 else
