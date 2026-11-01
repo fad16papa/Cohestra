@@ -15,7 +15,8 @@ PR_D_EXCLUSIVE = {
     "deploy/validate-uat-predeploy-gate.sh",
     "deploy/validate-deploy-uat-workflow.sh",
     "deploy/commission-uat-hold.sh",
-    "deploy/fetch-origin-main.sh",
+    "deploy/fetch-origin-uat.sh",
+    "deploy/write-uat-deploy-provenance.sh",
     "deploy/lib/uat-predeploy-gate.py",
 }
 

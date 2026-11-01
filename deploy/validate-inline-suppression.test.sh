@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# AD-27: trusted inline suppressor precedes candidate checkout.
-# N36 / N37. No live SSH. No GitHub settings changes.
+# PR-D: trusted inline AD-14 conjuncts precede candidate checkout.
+# No live SSH. No GitHub settings changes.
 
 set -euo pipefail
 
@@ -30,50 +30,31 @@ if inline < 0 or checkout < 0 or inline > checkout:
     raise SystemExit("predeploy inline suppressor must precede Checkout accepted SHA")
 if "actions/checkout" in pre[inline:checkout]:
     raise SystemExit("inline suppressor must not checkout TARGET_SHA")
-if 'UAT_MAIN_DEPLOY_SUPPRESSED:-}" == "true"' not in pre[inline:checkout]:
-    raise SystemExit("inline step must test exact true suppression")
+if 'UAT_MAIN_DEPLOY_SUPPRESSED:-}" != "true"' not in pre[inline:checkout]:
+    raise SystemExit("inline step must require exact true suppression")
 if 'UAT_DEPLOY_GATE_ACTIVE:-}" != "true"' not in pre[inline:checkout]:
     raise SystemExit("inline step must keep gate-false HOLD")
+if "CUTOVER_INCOMPLETE_MAIN_SOURCE" not in pre[inline:checkout]:
+    raise SystemExit("inline step must HOLD wrong ref")
 if "environment:" in pre:
     raise SystemExit("predeploy must not use environment: uat")
 if "DROPLET_" in pre:
     raise SystemExit("predeploy must not read DROPLET secrets")
 
 on = wf.split("jobs:", 1)[0]
-if "workflow_run:" not in on:
-    raise SystemExit("PR-C must keep workflow_run")
-if "release/uat" in on:
-    raise SystemExit("PR-C must not add release/uat to Deploy UAT triggers")
-if "\n  push:" in on:
-    raise SystemExit("PR-C must not add push to Deploy UAT")
-if re.search(r"branches:\n\s+- main", on) is None:
-    raise SystemExit("workflow_run.branches must remain main")
+if "workflow_run:" in on:
+    raise SystemExit("N25 leftover workflow_run")
+if "release/uat" not in on or "\n  push:" not in on:
+    raise SystemExit("PR-D must push to release/uat")
+if re.search(r"branches:\n\s+- main", on):
+    raise SystemExit("Deploy UAT must not listen on main")
 if "adcp" in wf.lower() or "autonomous delivery control plane" in wf.lower():
     raise SystemExit("ADCP must stay retired")
 
-# CI expansion
-if "release/uat" not in ci:
-    raise SystemExit("ci.yml must include release/uat")
-if "merge_group:" not in ci:
-    raise SystemExit("ci.yml must include merge_group")
 if "environment: uat" in ci or "secrets.DROPLET_" in ci:
     raise SystemExit("ci.yml must not gain Environment uat or DROPLET secrets")
 print("inline-suppression-contract-ok")
 PY
-pass "inline suppressor precedes candidate checkout; workflow_run stays on main"
-
-python3 - "$WF" <<'PY' || fail "candidate-omitted suppressor still HOLDs in YAML"
-from pathlib import Path
-import sys
-text = Path(sys.argv[1]).read_text()
-# N36: even if validate-uat-predeploy-gate.sh were absent from a candidate tree,
-# the default-branch YAML still contains the suppressor.
-if "Trusted inline suppressors before candidate checkout" not in text:
-    raise SystemExit("missing trusted inline step")
-if "validate-uat-predeploy-gate.sh" not in text:
-    raise SystemExit("defense-in-depth script still invoked after checkout")
-print("n36-yaml-ok")
-PY
-pass "N36: inline YAML is the first suppressor"
+pass "inline AD-14 conjuncts precede candidate checkout; workflow_run is gone"
 
 echo "validate-inline-suppression contract OK"

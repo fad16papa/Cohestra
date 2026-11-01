@@ -1,13 +1,9 @@
 name: Deploy UAT
 
 on:
-  workflow_run:
-    workflows:
-      - CI
-    types:
-      - completed
+  push:
     branches:
-      - main
+      - release/uat
   workflow_dispatch:
 
 concurrency:
@@ -20,14 +16,386 @@ permissions:
   checks: read
 
 jobs:
+  postmerge-dotnet:
+    name: UAT post-merge — .NET build and test
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore
+        run: dotnet restore Cohestra.sln
+      - name: Build
+        run: dotnet build Cohestra.sln --no-restore -c Release
+      - name: Test
+        run: dotnet test Cohestra.sln --no-build -c Release --filter "Category!=Integration" --verbosity normal
+
+  postmerge-integration:
+    name: UAT post-merge — API integration tests
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=cohestra_test;Username=crm;Password=crm
+      ConnectionStrings__Redis: localhost:6379
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cohestra_test
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: crm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crm -d cohestra_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore
+        run: dotnet restore Cohestra.sln
+      - name: Build
+        run: dotnet build Cohestra.sln --no-restore -c Release
+      - name: Integration tests
+        run: dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release --filter "Category=Integration" --verbosity normal
+
+  postmerge-nextjs:
+    name: UAT post-merge — Next.js build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  postmerge-frontend:
+    name: UAT post-merge — Frontend unit tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm test
+
+  postmerge-authz:
+    name: UAT post-merge — AuthN AuthZ regression
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=cohestra_test;Username=crm;Password=crm
+      ConnectionStrings__Redis: localhost:6379
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cohestra_test
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: crm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crm -d cohestra_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore
+        run: dotnet restore Cohestra.sln
+      - name: Build
+        run: dotnet build Cohestra.sln --no-restore -c Release
+      - name: AuthN AuthZ unit gate
+        run: |
+          set -euo pipefail
+          LIST_FILE=$(mktemp)
+          dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --no-build -c Release \
+            --list-tests --filter "FullyQualifiedName~Auth|Category=TenantIsolation" | tee "$LIST_FILE"
+          if grep -q 'No test matches the given testcase filter' "$LIST_FILE"; then
+            echo "AuthN/AuthZ gate failed: zero unit tests matched."
+            exit 1
+          fi
+          dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --no-build -c Release \
+            --filter "FullyQualifiedName~Auth|Category=TenantIsolation" --verbosity normal
+      - name: AuthN AuthZ API gate
+        run: |
+          set -euo pipefail
+          LIST_FILE=$(mktemp)
+          dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release \
+            --list-tests --filter "FullyQualifiedName~Auth|Category=TenantIsolation" | tee "$LIST_FILE"
+          if grep -q 'No test matches the given testcase filter' "$LIST_FILE"; then
+            echo "AuthN/AuthZ API gate failed: zero tests matched."
+            exit 1
+          fi
+          dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release \
+            --filter "FullyQualifiedName~Auth|Category=TenantIsolation" --verbosity normal
+
+  postmerge-billing:
+    name: UAT post-merge — Billing entitlement regression
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=cohestra_test;Username=crm;Password=crm
+      ConnectionStrings__Redis: localhost:6379
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: cohestra_test
+          POSTGRES_USER: crm
+          POSTGRES_PASSWORD: crm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U crm -d cohestra_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Restore
+        run: dotnet restore Cohestra.sln
+      - name: Build
+        run: dotnet build Cohestra.sln --no-restore -c Release
+      - name: Billing unit gate
+        run: |
+          set -euo pipefail
+          LIST_FILE=$(mktemp)
+          dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --no-build -c Release \
+            --list-tests --filter "FullyQualifiedName~Billing|FullyQualifiedName~Entitlement" | tee "$LIST_FILE"
+          if grep -q 'No test matches the given testcase filter' "$LIST_FILE"; then
+            echo "Billing gate failed: zero unit tests matched."
+            exit 1
+          fi
+          dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --no-build -c Release \
+            --filter "FullyQualifiedName~Billing|FullyQualifiedName~Entitlement" --verbosity normal
+      - name: Entitlement API gate
+        run: |
+          set -euo pipefail
+          LIST_FILE=$(mktemp)
+          dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release \
+            --list-tests --filter "FullyQualifiedName~Entitlement|FullyQualifiedName~Billing" | tee "$LIST_FILE"
+          if grep -q 'No test matches the given testcase filter' "$LIST_FILE"; then
+            echo "Billing API gate failed: zero tests matched."
+            exit 1
+          fi
+          dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release \
+            --filter "FullyQualifiedName~Entitlement|FullyQualifiedName~Billing" --verbosity normal
+
+  postmerge-docker:
+    name: UAT post-merge — Docker stack smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Run Docker smoke
+        run: bash deploy/ci-docker-smoke.sh
+
+  postmerge-isolation:
+    name: UAT post-merge — UAT isolation contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: PR-D AD-23 contract
+        run: bash deploy/validate-prd-ad23.test.sh
+      - name: Deploy workflow contract
+        run: bash deploy/validate-deploy-uat-workflow.sh
+      - name: Inline suppression polarity
+        run: bash deploy/validate-inline-suppression.test.sh
+      - name: AD-25 sync procedure
+        run: bash deploy/validate-ad25-sync-procedure.sh
+      - name: Production isolation
+        run: bash deploy/validate-deploy-production-workflow.sh
+
+  postmerge-exact-sha:
+    name: UAT post-merge — Exact-SHA security scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Scan the exact checked-out SHA
+        env:
+          SCAN_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$SCAN_SHA"
+          bash deploy/exact-sha-secret-scan.sh
+
+  postmerge-gg-api:
+    name: UAT post-merge — GitGuardian exact-SHA API scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout exact candidate SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install pinned ggshield
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user --disable-pip-version-check 'ggshield==1.56.1'
+      - name: Scan the exact SHA via GitGuardian API
+        env:
+          SCAN_SHA: ${{ github.sha }}
+          GITGUARDIAN_API_KEY: ${{ secrets.GITGUARDIAN_API_KEY }}
+          GGSHIELD_BIN: ggshield
+        run: |
+          set -euo pipefail
+          set +x
+          export PATH="${HOME}/.local/bin:${PATH}"
+          test "$(git rev-parse HEAD)" = "$SCAN_SHA"
+          bash deploy/exact-sha-gitguardian-api-scan.sh
+
+  postmerge-provenance:
+    name: UAT post-merge — Deploy artifact provenance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact candidate SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Write provenance evidence
+        env:
+          SCAN_SHA: ${{ github.sha }}
+          UAT_PROVENANCE_DIR: artifacts
+        run: bash deploy/write-uat-deploy-provenance.sh
+      - name: Upload provenance
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: uat-deploy-provenance
+          path: artifacts/uat-deploy-provenance.json
+          if-no-files-found: error
+
   predeploy-gate:
     name: Pre-UAT eligibility gate
+    needs:
+      - postmerge-dotnet
+      - postmerge-integration
+      - postmerge-nextjs
+      - postmerge-frontend
+      - postmerge-authz
+      - postmerge-billing
+      - postmerge-docker
+      - postmerge-isolation
+      - postmerge-exact-sha
+      - postmerge-gg-api
+      - postmerge-provenance
     runs-on: ubuntu-latest
     outputs:
       eligible: ${{ steps.gate.outputs.eligible }}
       validated_sha: ${{ steps.gate.outputs.validated_sha }}
     env:
-      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+      TARGET_SHA: ${{ github.sha }}
       UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
       UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}
     steps:
@@ -87,24 +455,21 @@ jobs:
             echo "HOLD_REASON=${reason}"
             exit 1
           }
-          if [[ "${UAT_MAIN_DEPLOY_SUPPRESSED:-}" == "true" ]]; then
-            hold_inline "UAT_MAIN_DEPLOY_SUPPRESSED is true"
-          fi
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
             hold_inline "UAT_DEPLOY_GATE_ACTIVE is not true"
           fi
+          if [[ "${GITHUB_REF:-}" != "refs/heads/release/uat" ]]; then
+            hold_inline "CUTOVER_INCOMPLETE_MAIN_SOURCE"
+          fi
+          if [[ "${UAT_MAIN_DEPLOY_SUPPRESSED:-}" != "true" ]]; then
+            hold_inline "UAT_MAIN_DEPLOY_SUPPRESSED is not true"
+          fi
 
       - name: Refuse unpinned TARGET_SHA
-        env:
-          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
             echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
-            exit 1
-          fi
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
-            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
             exit 1
           fi
 
@@ -119,19 +484,18 @@ jobs:
         id: gate
         env:
           CANDIDATE_SHA: ${{ env.TARGET_SHA }}
-          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          ORIGIN_MAIN_REF: origin/main
+          ORIGIN_UAT_REF: origin/release/uat
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
           UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
-            env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+            UAT_AD17_IN_RUN=true env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
           else
-            bash deploy/fetch-origin-main.sh
-            env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+            bash deploy/fetch-origin-uat.sh
+            UAT_AD17_IN_RUN=true env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
           fi
 
       - name: Remove secret-like predeploy evidence
@@ -176,7 +540,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: uat
     env:
-      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+      TARGET_SHA: ${{ github.sha }}
       VALIDATED_SHA: ${{ needs.predeploy-gate.outputs.validated_sha }}
       UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
       UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}
@@ -184,28 +548,27 @@ jobs:
       - name: Trusted inline suppressors before candidate checkout
         run: |
           set -euo pipefail
-          if [[ "${UAT_MAIN_DEPLOY_SUPPRESSED:-}" == "true" ]]; then
-            echo "RESULT=HOLD"
-            echo "HOLD_REASON=UAT_MAIN_DEPLOY_SUPPRESSED is true"
-            exit 1
-          fi
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
             echo "RESULT=HOLD"
             echo "HOLD_REASON=UAT_DEPLOY_GATE_ACTIVE is not true"
             exit 1
           fi
+          if [[ "${GITHUB_REF:-}" != "refs/heads/release/uat" ]]; then
+            echo "RESULT=HOLD"
+            echo "HOLD_REASON=CUTOVER_INCOMPLETE_MAIN_SOURCE"
+            exit 1
+          fi
+          if [[ "${UAT_MAIN_DEPLOY_SUPPRESSED:-}" != "true" ]]; then
+            echo "RESULT=HOLD"
+            echo "HOLD_REASON=UAT_MAIN_DEPLOY_SUPPRESSED is not true"
+            exit 1
+          fi
 
       - name: Refuse unpinned TARGET_SHA
-        env:
-          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
             echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
-            exit 1
-          fi
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
-            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
             exit 1
           fi
           if [[ "${TARGET_SHA,,}" != "${VALIDATED_SHA,,}" ]]; then
@@ -223,19 +586,18 @@ jobs:
       - name: Re-run UAT predeploy gate before SSH
         env:
           CANDIDATE_SHA: ${{ env.TARGET_SHA }}
-          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          ORIGIN_MAIN_REF: origin/main
+          ORIGIN_UAT_REF: origin/release/uat
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
           UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
-            env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+            UAT_AD17_IN_RUN=true env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
           else
-            bash deploy/fetch-origin-main.sh
-            env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+            bash deploy/fetch-origin-uat.sh
+            UAT_AD17_IN_RUN=true env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
           fi
 
       - name: Fail closed if UAT secrets are missing
@@ -255,13 +617,14 @@ jobs:
         env:
           DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
           DEPLOY_SHA: ${{ env.TARGET_SHA }}
+          DEPLOY_BRANCH: release/uat
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           port: 22
           command_timeout: 60m
-          envs: DROPLET_DEPLOY_PATH,DEPLOY_SHA
+          envs: DROPLET_DEPLOY_PATH,DEPLOY_SHA,DEPLOY_BRANCH
           script: |
             set -euo pipefail
             if [[ ! "${DEPLOY_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
@@ -269,7 +632,7 @@ jobs:
               exit 1
             fi
             DEPLOY_SHA="${DEPLOY_SHA,,}"
-            DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+            DEPLOY_BRANCH="${DEPLOY_BRANCH:-release/uat}"
             DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-}"
             if [[ -z "$DEPLOY_PATH" ]]; then
               DEPLOY_PATH="/home/deploy/cohestra"
@@ -383,19 +746,13 @@ jobs:
     runs-on: ubuntu-latest
     environment: uat
     env:
-      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+      TARGET_SHA: ${{ github.sha }}
     steps:
       - name: Refuse unpinned TARGET_SHA
-        env:
-          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
             echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
-            exit 1
-          fi
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
-            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
             exit 1
           fi
 
@@ -461,19 +818,13 @@ jobs:
     runs-on: ubuntu-latest
     environment: uat
     env:
-      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+      TARGET_SHA: ${{ github.sha }}
     steps:
       - name: Refuse unpinned TARGET_SHA
-        env:
-          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
             echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
-            exit 1
-          fi
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
-            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
             exit 1
           fi
 
@@ -586,19 +937,13 @@ jobs:
     runs-on: ubuntu-latest
     environment: uat
     env:
-      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+      TARGET_SHA: ${{ github.sha }}
     steps:
       - name: Refuse unpinned TARGET_SHA
-        env:
-          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
             echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
-            exit 1
-          fi
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
-            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
             exit 1
           fi
 
@@ -656,19 +1001,13 @@ jobs:
       - evidence
     runs-on: ubuntu-latest
     env:
-      TARGET_SHA: ${{ github.event_name == 'workflow_dispatch' && github.sha || github.event.workflow_run.head_sha }}
+      TARGET_SHA: ${{ github.sha }}
     steps:
       - name: Refuse unpinned TARGET_SHA
-        env:
-          WORKFLOW_RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
           if [[ ! "${TARGET_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
             echo "REFUSE: TARGET_SHA must be a full 40-character hexadecimal Git SHA"
-            exit 1
-          fi
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_run" && "${TARGET_SHA}" != "${WORKFLOW_RUN_HEAD_SHA}" ]]; then
-            echo "REFUSE: TARGET_SHA must equal workflow_run.head_sha"
             exit 1
           fi
 

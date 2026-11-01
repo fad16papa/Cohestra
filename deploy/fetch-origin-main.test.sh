@@ -293,8 +293,8 @@ pre = job("predeploy-gate")
 deploy = job("deploy")
 if "persist-credentials: false" not in pre or "persist-credentials: false" not in deploy:
     raise SystemExit("persist-credentials: false must remain")
-if "fetch-origin-main.sh" not in pre or "fetch-origin-main.sh" not in deploy:
-    raise SystemExit("enabled path must call fetch-origin-main.sh")
+if "fetch-origin-uat.sh" not in pre or "fetch-origin-uat.sh" not in deploy:
+    raise SystemExit("enabled path must call fetch-origin-uat.sh")
 if "validate-uat-predeploy-gate.sh" not in pre:
     raise SystemExit("real validator must run on predeploy")
 if "environment:" in pre:
@@ -307,14 +307,14 @@ if "needs.predeploy-gate.outputs.eligible == 'true'" not in deploy and \
 if "github.event_name == 'workflow_dispatch' ||" in text:
     raise SystemExit("workflow_dispatch OR-bypass is forbidden")
 
-# Disabled path must invoke the real validator before fetch-origin-main.sh
+# Disabled path must invoke the real validator before fetch-origin-uat.sh
 eval_idx = pre.find("Evaluate UAT predeploy gate")
 rerun_idx = deploy.find("Re-run UAT predeploy gate before SSH")
 for label, block in (("predeploy evaluate", pre[eval_idx:]), ("SSH revalidate", deploy[rerun_idx:])):
     if "UAT_DEPLOY_GATE_ACTIVE:-}" not in block or '!= "true"' not in block:
         raise SystemExit(f"{label} must HOLD-first when gate is not exact true")
     gate_at = block.find("validate-uat-predeploy-gate.sh")
-    fetch_at = block.find("fetch-origin-main.sh")
+    fetch_at = block.find("fetch-origin-uat.sh")
     if gate_at < 0 or fetch_at < 0:
         raise SystemExit(f"{label} must contain both validator and fetch helper")
     # In the disabled branch the validator appears first.
@@ -342,8 +342,8 @@ if "if-no-files-found: warn" in upload:
 if pre.find("Require both predeploy evidence files") > pre.find("Upload predeploy gate evidence"):
     raise SystemExit("both-files check must run before upload")
 # Fetch failure must not fall through to enabled-path eligibility.
-enabled = pre[pre.find("fetch-origin-main.sh"):]
-if enabled.find("fetch-origin-main.sh") > enabled.find("validate-uat-predeploy-gate.sh"):
+enabled = pre[pre.find("fetch-origin-uat.sh"):]
+if enabled.find("fetch-origin-uat.sh") > enabled.find("validate-uat-predeploy-gate.sh"):
     raise SystemExit("enabled path must not evaluate eligibility when fetch failed")
 PY
 pass "workflow HOLDs before fetch, keeps SSH eligibility, and fail-closes missing evidence"
