@@ -1,0 +1,99 @@
+name: UAT rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_sha:
+        description: Previous 40-character hexadecimal SHA that is an ancestor of origin/main
+        required: true
+        type: string
+      confirm:
+        description: "Type exactly: UAT ROLLBACK: AUTHORIZED"
+        required: true
+        type: string
+      execute:
+        description: Mutate the UAT host (default dry-run)
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: deploy-uat-rollback
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
+
+jobs:
+  validate:
+    name: Validate UAT rollback request
+    runs-on: ubuntu-latest
+    outputs:
+      rollback_sha: ${{ steps.gate.outputs.rollback_sha }}
+    steps:
+      - name: Checkout main history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Dry-run previous-SHA recovery
+        id: gate
+        env:
+          ROLLBACK_SHA: ${{ inputs.rollback_sha }}
+          UAT_ROLLBACK_AUTHORIZED: true
+          UAT_ROLLBACK_CONFIRM: ${{ inputs.confirm }}
+          UAT_ROLLBACK_EXECUTE: "false"
+          ORIGIN_MAIN_REF: origin/main
+        run: |
+          set -euo pipefail
+          bash deploy/uat-rollback.sh
+          echo "rollback_sha=${ROLLBACK_SHA,,}" >>"$GITHUB_OUTPUT"
+
+  rollback:
+    name: Execute UAT host rollback
+    needs: validate
+    if: ${{ inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED' }}
+    runs-on: ubuntu-latest
+    environment: uat
+    steps:
+      - name: Checkout validated SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ needs.validate.outputs.rollback_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fail closed if UAT secrets are missing
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+        run: bash deploy/fail-closed-uat-secrets.sh
+
+      - name: Rollback previous SHA over SSH
+        uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
+        env:
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+          ROLLBACK_SHA: ${{ needs.validate.outputs.rollback_sha }}
+          UAT_ROLLBACK_CONFIRM: ${{ inputs.confirm }}
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: 22
+          command_timeout: 60m
+          envs: DROPLET_DEPLOY_PATH,ROLLBACK_SHA,UAT_ROLLBACK_CONFIRM
+          script: |
+            set -euo pipefail
+            DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-/home/deploy/cohestra}"
+            cd "$DEPLOY_PATH"
+            export GIT_TERMINAL_PROMPT=0
+            git fetch origin main
+            UAT_ROLLBACK_AUTHORIZED=true \
+              UAT_ROLLBACK_EXECUTE=true \
+              ORIGIN_MAIN_REF=origin/main \
+              bash deploy/uat-rollback.sh
