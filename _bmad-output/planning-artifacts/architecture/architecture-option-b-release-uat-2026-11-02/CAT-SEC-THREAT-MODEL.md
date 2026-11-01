@@ -22,6 +22,7 @@ PR-modified workflows     merge_group snapshot            origin/main
 #536 Cursor workspace     cohestra-uat-merge token        Environment production
 Forged review comments    post-merge jobs (no secrets)    vars (owner)
 Queued Deploy UAT on main Environment uat (if eligible)   UAT_DEPLOY_GATE_ACTIVE
+GITHUB_TOKEN merge push   candidate-tree validator          UAT_MAIN_DEPLOY_SUPPRESSED
 ```
 
 ## Option B threats
@@ -92,6 +93,24 @@ Queued Deploy UAT on main Environment uat (if eligible)   UAT_DEPLOY_GATE_ACTIVE
 **Severity:** BLOCKER if implemented.
 **Mitigation:** Isolation contract already forbids `PROD_*` in `deploy.yml`. Keep it. Production actor permissions must not broaden. AD-24 App may dispatch only `deploy.yml` (N33).
 
+### T23 — Fast-forward of live `main` into protected `release/uat`
+
+**Vector:** After PR-D, an admin FF or force-push of `origin/main` onto `release/uat` copies unintended Production-RC commits and bypasses required checks.
+**Severity:** MAJOR if used as the cutover procedure.
+**Mitigation:** AD-25. Owner PR targeting `release/uat`. Exclusive-path tree match. No admin bypass. N34.
+
+### T24 — `GITHUB_TOKEN` merge suppresses Deploy UAT
+
+**Vector:** `uat-merge.yml` merges with `secrets.GITHUB_TOKEN`. Documented: that `push` does not create a workflow run. Green merge, no AD-23, silent stuck HOLD.
+**Severity:** BLOCKER if the merge App uses `GITHUB_TOKEN`.
+**Mitigation:** AD-26. Installation access token only. N35. Live App→push UNVERIFIED.
+
+### T25 — Candidate-tree validator skips suppression
+
+**Vector:** PR-C only adds `UAT_MAIN_DEPLOY_SUPPRESSED` to `validate-uat-predeploy-gate.sh`. Deploy UAT checks out `TARGET_SHA` first. An old or hostile SHA omits the check; `eligible` can become true while the owner believes `main` is suppressed.
+**Severity:** BLOCKER if the first suppressor is candidate-controlled.
+**Mitigation:** AD-27. Inline check in default-branch `deploy.yml` before `TARGET_SHA` checkout. N36. `workflow_run.branches` stays `[main]` (N37).
+
 ## Parent residuals still open
 
 T1 Environment `uat` unrestricted, T3 no review Apps, T5 no post-merge gate, T7 HOLD artifact errors, T10 #536 absent. Option B does not mark them PASS.
@@ -120,9 +139,14 @@ T1 Environment `uat` unrestricted, T3 no review Apps, T5 no post-merge gate, T7 
 | N22 | Post-merge job skipped | HOLD |
 | N23 | `release/uat` → `main` automation | No PR opened |
 | N24 | Production dispatch from `release/uat` | REFUSE |
+| N34 | FF / force-push of live `main` tip into `release/uat` | Contract FAIL; exclusive-tree mismatch REFUSE |
+| N35 | Merge into `release/uat` with `GITHUB_TOKEN` | No Deploy UAT `push` run |
+| N36 | Candidate SHA validator omits suppression; inline YAML present | HOLD `UAT_MAIN_DEPLOY_SUPPRESSED is true`; no SSH |
+| N37 | PR-C changes `workflow_run.branches` away from `[main]` | Contract FAIL |
+| N38 | AD-25 sync PR includes unintended `main` paths | REFUSE |
 
-N1 (gate false) remains VERIFIED by run #451. N14–N33 are `NOT_RUN` until Draft PR-G.
+N1 (gate false) remains VERIFIED by run #451. N14–N38 are `NOT_RUN` until Draft PR-C/G. PR-C must ship N35–N37 simulations.
 
 ## Verdict
 
-**Architecture is acceptable as a target** after AD-22/AD-23 close the Environment-ref conflict and the post-merge race. **Not authorized to cut over.** `workflow_run` + Environment `uat`=`release/uat` is a documented deny. Live canary UNVERIFIED.
+**Architecture is acceptable as a target** after AD-22/AD-23 plus AD-25/AD-26/AD-27 close sync, merge-token, and inline-suppression holes. **Not authorized to cut over.** `workflow_run` + Environment `uat`=`release/uat` is a documented deny. Live App→`push` and Environment canary remain UNVERIFIED.

@@ -4,7 +4,7 @@
 **Date:** 2026-11-02, Asia/Singapore  
 **Base evidence:** PR #537 audit of `main` `22ffe635` and Deploy UAT #451.
 
-Do not merge existing PRs. Do not set `UAT_DEPLOY_GATE_ACTIVE=true`. Do not create an unprotected deploy path. Do not change live protections or secrets from this agent. Do not start PR-C or PR-D until this architecture is independently accepted (BLOCKER=0, MAJOR=0).
+Do not merge existing PRs. Do not set `UAT_DEPLOY_GATE_ACTIVE=true`. Do not create an unprotected deploy path. Do not change live protections or secrets from this agent. Do not start PR-D until AD-25/AD-26/AD-27 are independently accepted (BLOCKER=0, MAJOR=0). PR-C may be drafted after that gate as a separate unmerged implementation PR.
 
 ## Dependency graph
 
@@ -12,8 +12,9 @@ Do not merge existing PRs. Do not set `UAT_DEPLOY_GATE_ACTIVE=true`. Do not crea
 flowchart TD
   A[PR-A this amendment: ADR + spine + CAT-SEC]
   B[PR-B review foundation: keep 535 consumer]
-  C[PR-C CI for release/uat + merge_group + suppressors in tests]
+  C[PR-C CI expansion + inline suppression]
   D[PR-D push release/uat plus in-run needs]
+  D25[AD-25 owner sync PR into release/uat]
   E[PR-E merge controller + manifest]
   F[PR-F HOLD artifacts + acceptance + rollback bind]
   G[PR-G negative security fixtures]
@@ -23,7 +24,9 @@ flowchart TD
   A --> C
   A --> G
   C --> D
-  D --> F
+  D --> D25
+  D25 --> F
+  D25 --> H
   B --> E
   S536 --> E
   E --> H
@@ -57,10 +60,10 @@ PR-C may start in parallel with PR-B. PR-E must not start until AD-15/AD-16 revi
 
 | | |
 | --- | --- |
-| Purpose | Add `release/uat` and `merge_group` to `ci.yml`. Add `UAT_MAIN_DEPLOY_SUPPRESSED` HOLD path in predeploy **without** retargeting `workflow_run.branches` yet. GG API scan on push to `release/uat`. |
-| Exclusive | `ci.yml` (triggers + GG `if`), `deploy/validate-uat-predeploy-gate.sh`, `deploy/lib/uat-predeploy-gate.py`, `deploy/validate-deploy-uat-workflow.sh`, tests |
-| Must not | Change `workflow_run.branches` away from `main`. Must not set gate true. Must not add `environment: uat` to CI. Must not start until PR-A architecture is independently accepted (BLOCKER=0, MAJOR=0). |
-| Hazard control | `main` still triggers Deploy UAT; gate stays false so SSH cannot run. Suppression var is implemented but owner-unset, so behavior matches #451 until owner sets it. |
+| Purpose | Add `release/uat` and `merge_group` to `ci.yml`. GG API scan on push to `main` or `release/uat`. Add AD-27 **inline** `UAT_MAIN_DEPLOY_SUPPRESSED` / gate HOLD in default-branch `deploy.yml` **before** `TARGET_SHA` checkout. Defense-in-depth in `validate-uat-predeploy-gate.sh`. Do **not** retarget `workflow_run.branches`. |
+| Exclusive | `ci.yml` (triggers + GG `if`), **bounded** `deploy.yml` (inline suppressor steps only), `deploy/validate-uat-predeploy-gate.sh`, `deploy/lib/uat-predeploy-gate.py`, `deploy/validate-deploy-uat-workflow.sh`, `deploy/validate-inline-suppression.test.sh`, `deploy/simulate-merge-token-trigger.py`, tests |
+| Must not | Change `workflow_run.branches` away from `[main]`. Must not set gate true. Must not add `environment: uat` to CI. Must not implement PR-D (`push` to `release/uat`, AD-17 jobs). Must not merge. |
+| Hazard control | `main` still triggers Deploy UAT; inline gate-false HOLD remains first-class. Suppression var is implemented but owner-unset, so behavior matches #451 until owner sets it. |
 
 ### PR-D — protected-push Deploy UAT + in-run post-merge (second code wave)
 
@@ -70,7 +73,7 @@ PR-C may start in parallel with PR-B. PR-E must not start until AD-15/AD-16 revi
 | Exclusive | `deploy.yml`, predeploy/fetch scripts, provenance writer, `validate-deploy-uat-workflow.sh`, `commission-uat-hold.sh`, `validate-uat-predeploy-gate.sh` |
 | Must not | Keep `workflow_run`, `repository_dispatch`, or `workflow_call`. Must not start SSH from `ci.yml`. Must not merge before drain. Must not implement AD-23 and AD-24 together. Must not require `workflow_run` in `commission-uat-hold`. Must not HOLD `push` as a wrong trigger. Must not treat leftover `workflow_run` as an Environment-deny fallback. |
 | Why | Documented `workflow_run` `GITHUB_REF` is `main`, so Environment `uat`=`release/uat` would deny the job. Documented `workflow_call` inherits the caller ref and would match. Same-run `needs` also ends the CI-first completion race. |
-| Gate | Owner sets Environment policy + suppression and drains (AD-21) before merge. PR-D lands on `main` (removes the default-branch `workflow_run` listener; `workflow_dispatch` requires the file on default) and is fast-forwarded to `release/uat`. Do not start PR-D until this architecture is independently accepted. |
+| Gate | Owner sets Environment policy + suppression and drains (AD-21) before merge. PR-D lands on `main`. `release/uat` is updated only by AD-25 (owner sync PR, exclusive-tree match). Do not start PR-D in this wave. |
 
 ### PR-E — scoped automatic merge
 
@@ -78,8 +81,8 @@ PR-C may start in parallel with PR-B. PR-E must not start until AD-15/AD-16 revi
 | --- | --- |
 | Purpose | `cohestra-uat-merge` consumer + manifest path check. No UAT secrets. |
 | Exclusive | new `uat-merge.yml`, `deploy/lib/uat-merge.py`, tests |
-| Must not | `contents: write` on `main`. No Environment `uat`. No #536 files. No auto-merge of `.github/**` or `deploy/**`. |
-| Depends on | Owner App install. Branch protection required checks. #536 must not share the App. |
+| Must not | `contents: write` on `main`. No Environment `uat`. No #536 files. No auto-merge of `.github/**` or `deploy/**`. Must not merge with `GITHUB_TOKEN` (AD-26). |
+| Depends on | Owner App install with installation token. Branch protection required checks. #536 must not share the App. |
 
 ### PR-F — HOLD artifacts, acceptance, rollback bind
 
@@ -93,7 +96,7 @@ PR-C may start in parallel with PR-B. PR-E must not start until AD-15/AD-16 revi
 
 | | |
 | --- | --- |
-| Purpose | N1–N33 mocked. Including leftover `workflow_run` (N25), `workflow_call` (N28), skipped required job (N26), CI-first race (N27), AD-23 XOR AD-24 (N29), `push` eligible (N30), AD-24 skip-matrix (N31), AD-24 UI dispatch still runs tests (N32), AD-24 App cannot dispatch Production (N33). |
+| Purpose | N1–N38 mocked. PR-C ships N35–N37. Including leftover `workflow_run` (N25), FF/`main` tip sync (N34), `GITHUB_TOKEN` merge (N35), candidate-tree skip (N36), PR-C trigger drift (N37), unintended sync paths (N38). |
 | Exclusive | `deploy/*.test.sh` fixtures, `ci.yml` isolation contract additions |
 | Must not | Live Deploy UAT dispatch. Live SSH. |
 
@@ -138,9 +141,10 @@ Run #451 proved that HOLD path. The hazard is **not** today's false gate. The ha
 4. Owner sets Environment `uat` branch policy to `release/uat` only and `can_admins_bypass=false`.
 5. Owner sets `UAT_MAIN_DEPLOY_SUPPRESSED=true`.
 6. Owner lists Deploy UAT runs with status `queued|in_progress|waiting|requested` and waits until each is `completed` with artifacts `eligible=false` / `ssh_executed=false`.
-7. Merge PR-D to `main` (delete `workflow_run`, add `push` to `release/uat`, in-run AD-17 `needs`, evaluator accepts `push`) and fast-forward `release/uat`.
-8. Confirm a `main` push does **not** start Deploy UAT. A leftover `workflow_run` on either copy is a contract FAIL of PR-D (N25).
-9. Only then, after PR-G negatives and owner attestation, the owner may set `UAT_DEPLOY_GATE_ACTIVE=true`.
+7. Merge PR-D to `main` (delete `workflow_run`, add `push` to `release/uat`, in-run AD-17 `needs`, evaluator accepts `push`).
+8. AD-25: owner opens a control-plane PR into `release/uat` whose exclusive-path tree matches PR-D-on-`main`. No FF of the live `main` tip. Human OWNER merge only (not AD-15 auto-merge).
+9. Confirm a `main` push does **not** start Deploy UAT. A leftover `workflow_run` on either copy is a contract FAIL of PR-D (N25).
+10. Only then, after PR-G negatives and owner attestation, the owner may set `UAT_DEPLOY_GATE_ACTIVE=true`.
 
 Do not cancel in-flight Deploy UAT jobs to “speed” the drain (`cancel-in-progress: false` is load-bearing). Wait for HOLD.
 
@@ -158,12 +162,15 @@ Print as names only. This agent must not execute the checked GitHub admin steps.
 - [ ] Apps `cohestra-bmad`, `cohestra-cat-sec` installed (merge App later for PR-E)
 - [ ] `UAT_MAIN_DEPLOY_SUPPRESSED=true`
 - [ ] Zero in-flight Deploy UAT runs; last runs `ssh_executed=false`
-- [ ] PR-D merged to `main` and fast-forwarded or merged into `release/uat`
+- [ ] PR-D merged to `main`
+- [ ] AD-25 owner sync PR into `release/uat` (exclusive-tree match; no FF of live `main` tip)
+- [ ] Merge App uses installation token, not `GITHUB_TOKEN` (AD-26)
 - [ ] `main` CI completion does not start Deploy UAT
 - [ ] No Deploy UAT `workflow_run` / `repository_dispatch` / `workflow_call` trigger remains on `main` or `release/uat`
 - [ ] Post-merge required jobs cannot skip; `predeploy` `needs` them
 - [ ] Evaluator accepts `GITHUB_EVENT_NAME=push`; `commission-uat-hold` does not require `workflow_run`
-- [ ] PR-G negatives N1–N33 `SIMULATED_PASS`
+- [ ] PR-C inline suppressor sits before `TARGET_SHA` checkout (AD-27)
+- [ ] PR-G negatives N1–N38 `SIMULATED_PASS`
 - [ ] Owner sets `UAT_DEPLOY_GATE_ACTIVE=true`
 - [ ] First live deploy recorded as `LIVE_UAT_DEPLOY_VERIFIED` or HOLD with honest artifacts
 - [ ] Production still dispatch-only; no `release/uat` → `main` automation

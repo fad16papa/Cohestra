@@ -29,10 +29,13 @@ PR #537 audit of `main` @ `22ffe635` and Deploy UAT #451 is unchanged: the suppr
 | Owner merges every UAT feature | Restricted auto-merge of eligible manifests only |
 | Environment `uat` unrestricted | Environment `uat` allows `release/uat` only |
 | `main` push can start Deploy UAT | `main` push must not start Deploy UAT |
+| Assumed FF of `main` into `release/uat` | AD-25 owner sync PR; exclusive-tree match; no force-push |
+| Merge with `GITHUB_TOKEN` | AD-26 App installation token so `push` starts AD-23 |
 
 ## What Option B does not change
 
 - `UAT_DEPLOY_GATE_ACTIVE` stays `false` until the owner cutover step H.
+- PR-C keeps `workflow_run.branches: [main]` and adds AD-27 inline `UAT_MAIN_DEPLOY_SUPPRESSED` before candidate checkout.
 - Production: `workflow_dispatch` from `main`, `PROD_DROPLET_*`, Environment `production`, two-parent provenance, `PRODUCTION CUTOVER: AUTHORIZED`.
 - PR #535 is the readiness consumer. Issue #536 is the bounded correction controller and must not merge.
 - PR #505, retired ADCP, and Production NO-GO.
