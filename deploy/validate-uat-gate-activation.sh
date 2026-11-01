@@ -38,6 +38,13 @@ else
   fail "ci.yml must run deploy/exact-sha-secret-scan.sh as Exact-SHA security scan"
 fi
 
+if grep -q 'commission-uat-hold.test.sh' "$CI" \
+  && grep -q 'uat-delivery-status.test.sh' "$CI"; then
+  pass "CI commissions HOLD evidence and structured delivery status"
+else
+  fail "ci.yml must run commission-uat-hold and uat-delivery-status contracts"
+fi
+
 if grep -q 'name: GitGuardian exact-SHA API scan' "$CI" \
   && grep -q 'exact-sha-gitguardian-api-scan.sh' "$CI" \
   && grep -q "github.event_name == 'push'" "$CI" \
@@ -182,7 +189,9 @@ for needle in \
   "Do not deploy" \
   "Do not touch Production" \
   "GitGuardian exact-SHA API scan" \
-  "GITGUARDIAN_API_KEY"
+  "GITGUARDIAN_API_KEY" \
+  "CI_CONTRACT" \
+  "LIVE_DEPLOY_UAT_HOLD"
 do
   if grep -q "$needle" "$DOC"; then
     pass "activation doc names: $needle"

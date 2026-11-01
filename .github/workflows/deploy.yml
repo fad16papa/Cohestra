@@ -70,18 +70,22 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          if [[ -f artifacts/uat-predeploy-gate.json ]] && grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN|Bearer |password' artifacts/uat-predeploy-gate.json; then
-            rm -f artifacts/uat-predeploy-gate.json
-            echo "REFUSE: removed secret-like artifacts/uat-predeploy-gate.json"
-            exit 1
-          fi
+          for ev in artifacts/uat-predeploy-gate.json artifacts/uat-delivery-status.json; do
+            if [[ -f "$ev" ]] && grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN|Bearer |password' "$ev"; then
+              rm -f "$ev"
+              echo "REFUSE: removed secret-like ${ev}"
+              exit 1
+            fi
+          done
 
       - name: Upload predeploy gate evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: uat-predeploy-gate-evidence
-          path: artifacts/uat-predeploy-gate.json
+          path: |
+            artifacts/uat-predeploy-gate.json
+            artifacts/uat-delivery-status.json
           if-no-files-found: warn
 
   deploy:

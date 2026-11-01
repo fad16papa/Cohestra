@@ -32,6 +32,26 @@ Exact-SHA pattern scan remains required defense-in-depth.
 The suppressor `vars.UAT_DEPLOY_GATE_ACTIVE` must equal the exact string `true`
 or the gate HOLDs. Unset, `false`, `TRUE`, and `1` are HOLD.
 
+## Automatic commissioning vs live HOLD
+
+CI on every PR and on `main` runs `deploy/commission-uat-hold.sh` through
+`deploy/commission-uat-hold.test.sh`. That path executes the **real**
+predeploy gate with `UAT_DEPLOY_GATE_ACTIVE=false`, plus a static proof that
+the Deploy UAT SSH job cannot run unless `eligible == true`. Evidence class
+is **`CI_CONTRACT`**. `LIVE_DEPLOY_UAT_HOLD=false`. Do **not** treat this
+artifact as a successful live Deploy UAT HOLD run.
+
+A live Deploy UAT HOLD still requires one owner-authorized
+`workflow_dispatch` on `main` **or** the next `workflow_run` after Deploy UAT
+is enabled, while the variable remains `false`. This agent cannot enable,
+disable, or dispatch that workflow (`actions=write` is owner-only).
+
+Structured, nonsecret `uat-delivery-status.json` records the exact SHA,
+failed stage, security-gate result, diagnostics, Actions run link when
+present, and `uat_deployed=false`. Authorized Cursor agents may investigate
+and prepare fixes on a development branch only. They must not autonomously
+merge, change release controls, or retry indefinitely.
+
 ## FIRST-MERGE HAZARD
 
 Current `main` still has the legacy Deploy UAT workflow: it triggers on
@@ -64,6 +84,7 @@ Do not execute these steps from this PR, a cloud agent, or a CI job.
 6. **Observe one HOLD** artifact (`uat-predeploy-gate-evidence`) on the next
    `main` CI completion or a non-bypass `workflow_dispatch`. The artifact must
    record `RESULT=HOLD` and name `UAT_DEPLOY_GATE_ACTIVE`. Zero SSH.
+   CI `CI_CONTRACT` commissioning is automatic and is not this live run.
 7. Confirm **GitGuardian on the exact main SHA** via the
    `GitGuardian exact-SHA API scan` Actions job SUCCESS on the merged `main`
    commit itself (`event=push`, `head_branch=main`, `head_sha=candidate`).
@@ -113,3 +134,6 @@ failing code; produce a new SHA and retest.
   auth/quota/network, findings, and push-main-only CI job.
 - `deploy/validate-uat-gate-activation.test.sh` — first-merge suppressor and
   ordered activation procedure.
+- `deploy/commission-uat-hold.test.sh` — automatic `CI_CONTRACT` HOLD for
+  `UAT_DEPLOY_GATE_ACTIVE=false` plus YAML proof that SSH cannot run.
+- `deploy/uat-delivery-status.test.sh` — structured nonsecret failure report.

@@ -56,6 +56,11 @@ with open(path, "w", encoding="utf-8") as fh:
     json.dump(payload, fh, indent=2)
     fh.write("\n")
 PY
+  GATE_RESULT="$result" GATE_REASON="$reason" \
+    CANDIDATE_SHA="${CANDIDATE_SHA:-}" \
+    UAT_DEPLOYED=false \
+    UAT_DELIVERY_STATUS_DIR="$EVIDENCE_DIR" \
+    bash "$ROOT_DIR/deploy/uat-delivery-status.sh" >/dev/null
 }
 
 if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then

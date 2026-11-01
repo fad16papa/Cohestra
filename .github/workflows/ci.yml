@@ -259,6 +259,12 @@ jobs:
       - name: UAT gate activation contract
         run: bash deploy/validate-uat-gate-activation.test.sh
 
+      - name: UAT HOLD commissioning contract
+        run: bash deploy/commission-uat-hold.test.sh
+
+      - name: UAT delivery status contract
+        run: bash deploy/uat-delivery-status.test.sh
+
       - name: Fail-closed UAT secret contract
         run: bash deploy/fail-closed-uat-secrets.test.sh
 

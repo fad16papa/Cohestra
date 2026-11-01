@@ -46,4 +46,13 @@ echo "$out" | grep -q 'UAT_DEPLOY_GATE_ACTIVE' || { echo "$out"; fail "HOLD must
 echo "$out" | grep -q 'RESULT=PASS' && { echo "$out"; fail "inactive gate must not PASS"; }
 pass "first merge with unset UAT_DEPLOY_GATE_ACTIVE HOLDs before SSH"
 
+export UAT_GATE_EVIDENCE_DIR="$TMP/commission"
+out="$(UAT_DEPLOY_GATE_ACTIVE=false bash "$ROOT_DIR/deploy/commission-uat-hold.sh")" \
+  || true
+echo "$out" | grep -q 'RESULT=HOLD' || { echo "$out"; fail "false suppressor commissioning must HOLD"; }
+echo "$out" | grep -q 'EVIDENCE_CLASS=CI_CONTRACT' || fail "commissioning must be CI_CONTRACT"
+echo "$out" | grep -q 'LIVE_DEPLOY_UAT_HOLD=false' || fail "must not claim live HOLD"
+echo "$out" | grep -q 'SSH_POSSIBLE=false' || fail "commissioning must prove SSH impossible"
+pass "configured false suppressor is commissioned as CI_CONTRACT HOLD"
+
 echo "validate-uat-gate-activation runtime OK"
