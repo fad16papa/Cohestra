@@ -275,14 +275,7 @@ jobs:
           set -euo pipefail
           bash deploy/commission-uat-hold.sh
           test -f artifacts/ci-contract/uat-hold-commissioning.json
-          python3 - artifacts/ci-contract/uat-hold-commissioning.json <<'PY'
-import json, sys
-p = json.load(open(sys.argv[1]))
-if p.get("evidence_class") != "CI_CONTRACT":
-    raise SystemExit("commissioning artifact must be CI_CONTRACT")
-if p.get("live_deploy_uat_hold") is not False:
-    raise SystemExit("LIVE_DEPLOY_UAT_HOLD must remain false")
-PY
+          python3 -c 'import json; p=json.load(open("artifacts/ci-contract/uat-hold-commissioning.json")); assert p.get("evidence_class")=="CI_CONTRACT"; assert p.get("live_deploy_uat_hold") is False'
           for ev in artifacts/ci-contract/*.json; do
             if grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN|Bearer |password' "$ev"; then
               rm -f "$ev"
