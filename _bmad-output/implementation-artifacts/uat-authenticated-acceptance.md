@@ -2,9 +2,11 @@
 
 ## Goal
 
-`DEPLOYED_ACCEPTED` requires mandatory Basic and Pro Playwright tests to have
-**run** (not skipped) with valid stats. OTP and Story 19.5 lifecycle remain
-explicitly optional under their existing authorized-skip rules.
+`DEPLOYED_ACCEPTED` requires each individually listed Basic and Pro Playwright
+scenario to have a **final** pass after retries. A sibling test in the same
+group passing is not enough. OTP and Story 19.5 lifecycle remain explicitly
+optional under their existing authorized-skip rules. The desktop-only Pro
+mutating walk may skip on non-desktop projects.
 
 ## In scope
 

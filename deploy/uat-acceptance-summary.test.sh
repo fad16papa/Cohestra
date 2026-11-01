@@ -63,49 +63,53 @@ JSON
   "failures": []
 }
 JSON
-  cat >"$dir/web/test-results/uat-playwright.json" <<JSON
-{
-  "stats": {"expected": 8, "skipped": 2, "unexpected": 0, "flaky": 0},
-  "suites": [
-    {
-      "title": "e2e-uat",
-      "suites": [
-        {
-          "title": "45.4 authenticated UAT",
-          "specs": [{
-            "title": "dedicated automation login when credentials exist",
-            "file": "authenticated.spec.ts",
-            "tests": [{"results": [{"status": "expected"}]}]
-          }]
-        },
-        {
-          "title": "19.5 operator core flows",
-          "specs": [
-            {
-              "title": "Basic dashboard metrics load",
-              "file": "operator-core-flows.spec.ts",
-              "tests": [{"results": [{"status": "expected"}]}]
-            },
-            {
-              "title": "Pro website studio and public branding",
-              "file": "operator-core-flows.spec.ts",
-              "tests": [{"results": [{"status": "expected"}]}]
-            }
-          ]
-        },
-        {
-          "title": "45.5 OTP mailbox",
-          "specs": [{
-            "title": "signup OTP is read from the dedicated mailbox when configured",
-            "file": "authenticated.spec.ts",
-            "tests": [{"results": [{"status": "skipped"}]}]
-          }]
-        }
-      ]
-    }
-  ]
+  python3 - "$dir/web/test-results/uat-playwright.json" <<'PY'
+import json, sys
+required = [
+    ("dedicated automation login when credentials exist", "authenticated.spec.ts"),
+    ("Basic dashboard metrics load", "operator-core-flows.spec.ts"),
+    ("Basic activities room loads", "operator-core-flows.spec.ts"),
+    ("Basic website is Core-locked and public stub home loads", "operator-core-flows.spec.ts"),
+    ("Basic campaigns room is Pro-locked", "operator-core-flows.spec.ts"),
+    ("Pro dashboard metrics load", "operator-core-flows.spec.ts"),
+    ("Pro analytics room loads", "operator-core-flows.spec.ts"),
+    ("Pro website studio and public branding load", "operator-core-flows.spec.ts"),
+    ("Pro campaigns room loads without sending a blast", "operator-core-flows.spec.ts"),
+]
+payload = {
+  "stats": {"expected": 10, "skipped": 2, "unexpected": 0, "flaky": 0},
+  "suites": [{
+    "title": "e2e-uat",
+    "suites": [
+      {
+        "title": "45.4 authenticated UAT",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "expected", "results": [{"status": "expected"}]}],
+        } for title, file_name in required if file_name == "authenticated.spec.ts"],
+      },
+      {
+        "title": "19.5 operator core flows",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "expected", "results": [{"status": "expected"}]}],
+        } for title, file_name in required if file_name == "operator-core-flows.spec.ts"],
+      },
+      {
+        "title": "45.5 OTP mailbox",
+        "specs": [{
+          "title": "signup OTP is read from the dedicated mailbox when configured",
+          "file": "authenticated.spec.ts",
+          "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
+        }],
+      },
+    ],
+  }],
 }
-JSON
+json.dump(payload, open(sys.argv[1], "w"))
+PY
 }
 
 run_summary() {
@@ -137,7 +141,7 @@ assert p["sha"] == sha
 assert p["deployment"]["shaMatch"] is True
 assert p["deployment"]["apiGitSha"] == sha
 assert p["runtime"]["publicSmoke"] == "pass"
-assert p["browser"]["expected"] == 8
+assert p["browser"]["expected"] == 10
 assert p["browser"]["skipped"] == 2
 assert p["browser"]["unexpected"] == 0
 assert p["security"]["bypassTokensAbsent"] is True
@@ -248,7 +252,9 @@ import json, sys
 p = json.load(open(sys.argv[1], encoding="utf-8"))
 for suite in p["suites"][0]["suites"]:
     if suite["title"] in {"45.4 authenticated UAT", "19.5 operator core flows"}:
-        suite["specs"][0]["tests"][0]["results"][0]["status"] = "skipped"
+        for spec in suite["specs"]:
+            spec["tests"][0]["status"] = "skipped"
+            spec["tests"][0]["results"] = [{"status": "skipped"}]
 json.dump(p, open(sys.argv[1], "w"), indent=2)
 PY
 if run_summary "$TMP/authskip" "$TMP/summary-authskip.json" >"$TMP/authskip.out" 2>"$TMP/authskip.err"; then
@@ -262,5 +268,27 @@ assert p["browser"]["authenticatedSkipped"] is True, p
 assert p["browser"]["coverage"] == "skipped_required", p
 PY
 pass "skipped mandatory Basic/Pro coverage fails acceptance summary"
+
+write_ok_inputs "$TMP/partial"
+python3 - "$TMP/partial/web/test-results/uat-playwright.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+for spec in p["suites"][0]["suites"][1]["specs"]:
+    if spec["title"] == "Pro campaigns room loads without sending a blast":
+        spec["tests"][0]["status"] = "skipped"
+        spec["tests"][0]["results"] = [{"status": "skipped"}]
+json.dump(p, open(sys.argv[1], "w"), indent=2)
+PY
+if run_summary "$TMP/partial" "$TMP/summary-partial.json" >"$TMP/partial.out" 2>"$TMP/partial.err"; then
+  fail "partial Pro skip must fail the summary"
+fi
+python3 - "$TMP/summary-partial.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+assert p["result"] == "fail", p
+assert p["browser"]["coverage"] == "skipped_required", p
+assert p["browser"]["authenticatedSkipped"] is True, p
+PY
+pass "one required Pro pass plus another required Pro skip fails acceptance summary"
 
 echo "uat-acceptance-summary contract OK"

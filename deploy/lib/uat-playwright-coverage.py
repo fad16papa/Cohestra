@@ -4,14 +4,27 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
-REQUIRED_BUCKETS = (
-    "basic_login",
-    "core_basic",
-    "core_pro",
+# Individually required. A bucket-level "any spec passed" is not enough.
+REQUIRED_SCENARIOS = (
+    "dedicated automation login when credentials exist",
+    "Basic dashboard metrics load",
+    "Basic activities room loads",
+    "Basic website is Core-locked and public stub home loads",
+    "Basic campaigns room is Pro-locked",
+    "Pro dashboard metrics load",
+    "Pro analytics room loads",
+    "Pro website studio and public branding load",
+    "Pro campaigns room loads without sending a blast",
 )
+
+# Desktop-only mutating walk may skip on non-desktop projects.
+AUTHORIZED_SKIP_SCENARIOS = (
+    "Pro create, publish, share, register, dedup, CSV, and campaign test-send",
+)
+
 OPTIONAL_SUITES = ("45.5 OTP mailbox",)
-PASSED = {"expected", "passed"}
-FAILED = {"failed", "timedout", "timedOut", "unexpected"}
+PASSED = {"expected", "passed", "flaky"}
+FAILED = {"failed", "timedout", "timedout", "timedOut", "unexpected"}
 
 
 def _iter_specs(node: dict[str, Any], stack: tuple[str, ...] = ()) -> Iterable[tuple[tuple[str, ...], dict[str, Any]]]:
@@ -25,44 +38,44 @@ def _iter_specs(node: dict[str, Any], stack: tuple[str, ...] = ()) -> Iterable[t
             yield from _iter_specs(child, next_stack)
 
 
-def _statuses(spec: dict[str, Any]) -> list[str]:
-    statuses: list[str] = []
-    for test in spec.get("tests") or []:
-        if not isinstance(test, dict):
-            continue
-        if test.get("status"):
-            statuses.append(str(test.get("status")))
-        for result in test.get("results") or []:
-            if isinstance(result, dict) and result.get("status"):
-                statuses.append(str(result.get("status")))
-    return [status.lower() for status in statuses]
-
-
-def _bucket(stack: tuple[str, ...], spec: dict[str, Any]) -> str | None:
+def _is_optional(stack: tuple[str, ...], spec: dict[str, Any]) -> bool:
     joined = " / ".join(stack + (str(spec.get("title") or ""),))
-    file_name = str(spec.get("file") or "")
     title = str(spec.get("title") or "")
-    if any(name in joined for name in OPTIONAL_SUITES) or "OTP mailbox" in title:
-        return "optional"
-    if "operator-core-flows.spec.ts" in file_name or "19.5 operator core flows" in joined:
-        if title.startswith("Pro ") or " Pro " in f" {title}":
-            return "core_pro"
-        if title.startswith("Basic ") or " Basic " in f" {title}":
-            return "core_basic"
-        return None
-    if "authenticated.spec.ts" in file_name or "45.4 authenticated UAT" in joined:
-        return "basic_login"
-    return None
+    return any(name in joined for name in OPTIONAL_SUITES) or "OTP mailbox" in title
 
 
-def _spec_outcome(statuses: list[str]) -> str:
-    if any(status in PASSED for status in statuses):
-        return "ok"
-    if any(status in FAILED for status in statuses):
+def _test_final_status(test: dict[str, Any]) -> str:
+    """Use Playwright's final test.status, else the last retry result only."""
+    overall = str(test.get("status") or "").strip().lower()
+    results = [
+        str(result.get("status") or "").strip().lower()
+        for result in (test.get("results") or [])
+        if isinstance(result, dict) and result.get("status")
+    ]
+    last = results[-1] if results else ""
+    return overall or last
+
+
+def _spec_outcome(spec: dict[str, Any]) -> str:
+    finals = [
+        _test_final_status(test)
+        for test in (spec.get("tests") or [])
+        if isinstance(test, dict)
+    ]
+    finals = [status for status in finals if status]
+    if not finals:
+        return "missing"
+    if any(status in FAILED for status in finals):
         return "fail"
-    if any(status == "skipped" for status in statuses):
+    if all(status in PASSED for status in finals):
+        return "ok"
+    if any(status == "skipped" for status in finals):
         return "skipped"
     return "missing"
+
+
+def _norm_title(title: str) -> str:
+    return " ".join(title.strip().split())
 
 
 def classify(raw: dict[str, Any] | None) -> str:
@@ -72,25 +85,36 @@ def classify(raw: dict[str, Any] | None) -> str:
     suites = raw.get("suites")
     if not isinstance(suites, list) or not suites:
         return "missing_required"
-    found: dict[str, list[str]] = {name: [] for name in REQUIRED_BUCKETS}
+    found: dict[str, str] = {}
     for suite in suites:
         if not isinstance(suite, dict):
             continue
         for stack, spec in _iter_specs(suite):
-            key = _bucket(stack, spec)
-            if key in found:
-                found[key].append(_spec_outcome(_statuses(spec)))
-    for name in REQUIRED_BUCKETS:
-        outcomes = found[name]
-        if not outcomes:
+            title = _norm_title(str(spec.get("title") or ""))
+            if not title or _is_optional(stack, spec):
+                continue
+            if title in AUTHORIZED_SKIP_SCENARIOS:
+                continue
+            outcome = _spec_outcome(spec)
+            previous = found.get(title)
+            if previous == "fail" or outcome == "fail":
+                found[title] = "fail"
+            elif previous == "ok" or outcome == "ok":
+                found[title] = "ok"
+            elif previous == "skipped" or outcome == "skipped":
+                found[title] = "skipped"
+            else:
+                found[title] = outcome
+    for required in REQUIRED_SCENARIOS:
+        outcome = found.get(required)
+        if outcome is None:
             return "missing_required"
-        if any(item == "ok" for item in outcomes):
-            continue
-        if any(item == "fail" for item in outcomes):
+        if outcome == "fail":
             return "fail"
-        if any(item == "skipped" for item in outcomes):
+        if outcome == "skipped":
             return "skipped_required"
-        return "missing_required"
+        if outcome != "ok":
+            return "missing_required"
     return "ok"
 
 
