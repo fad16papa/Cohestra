@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Aggregate final UAT delivery outcome from trustworthy evidence files.
-# Post-deploy failure is DEPLOYED_REJECTED, never "no deployment occurred".
+# Dispatch is attempt/intent only. Host SHA proof is required for uat_deployed=true.
+# Confirmed deploy plus later test failure is DEPLOYED_REJECTED.
 # Never prints tokens or secrets. Does not SSH.
 
 set -euo pipefail
@@ -42,10 +43,19 @@ def refuse(code: str, diagnostics: str, payload: dict, exit_code: int = 1) -> No
     payload["uat_deployment_outcome"] = code
     payload["diagnostics"] = diagnostics
     payload["result"] = "REFUSE" if code in {"INCONSISTENT", "MISSING_EVIDENCE"} else "HOLD"
+    emit(payload, exit_code)
+
+
+def emit(payload: dict, exit_code: int) -> None:
     out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print(f"RESULT={payload['result']}")
-    print(f"UAT_DEPLOYMENT_OUTCOME={code}")
-    print(f"DIAGNOSTICS={diagnostics}")
+    deployed = payload.get("uat_deployed")
+    executed = payload.get("ssh_executed")
+    print(f"RESULT={payload.get('result')}")
+    print(f"UAT_DEPLOYMENT_OUTCOME={payload.get('uat_deployment_outcome')}")
+    print(f"DIAGNOSTICS={payload.get('diagnostics')}")
+    print("UAT_DEPLOYED=" + ("true" if deployed is True else "false" if deployed is False else "unknown"))
+    print("SSH_EXECUTED=" + ("true" if executed is True else "false" if executed is False else "unknown"))
+    print("SSH_ATTEMPTED=" + ("true" if payload.get("ssh_attempted") else "false"))
     raise SystemExit(exit_code)
 
 
@@ -60,9 +70,15 @@ def load(name: str, extra: list[Path] | None = None) -> dict | None:
             Path.cwd() / "artifacts" / name,
         ]
     )
+    seen: list[Path] = []
+    objects: list[dict] = []
     for path in candidates:
         if not path.is_file():
             continue
+        resolved = path.resolve()
+        if resolved in seen:
+            continue
+        seen.append(resolved)
         text = path.read_text(encoding="utf-8")
         for needle in SECRET_MARKERS:
             if needle in text:
@@ -73,8 +89,12 @@ def load(name: str, extra: list[Path] | None = None) -> dict | None:
             refuse("INCOMPLETE", f"{path.name} is not JSON", base_payload())
         if not isinstance(obj, dict):
             refuse("INCOMPLETE", f"{path.name} is not an object", base_payload())
-        return obj
-    return None
+        objects.append(obj)
+    if not objects:
+        return None
+    if len({json.dumps(item, sort_keys=True) for item in objects}) > 1:
+        refuse("INCONSISTENT", f"duplicate {name} artifacts disagree", base_payload())
+    return objects[0]
 
 
 def norm_sha(value: object) -> str:
@@ -124,6 +144,8 @@ def base_payload() -> dict:
         "deployed_sha": "",
         "eligibility": "UNKNOWN",
         "deployment_phase": "UNKNOWN",
+        "ssh_attempted": False,
+        "ssh_step_conclusion": "missing",
         "ssh_executed": False,
         "host_acceptance": "missing",
         "smoke": "missing",
@@ -140,9 +162,18 @@ def base_payload() -> dict:
     }
 
 
+def json_bool(value: object) -> bool | None:
+    if value is True:
+        return True
+    if value is False:
+        return False
+    return None
+
+
 pre = load("uat-predeploy-gate.json")
 status = load("uat-delivery-status.json")
 dispatch = load("uat-deploy-dispatch.json")
+ssh_step = load("uat-ssh-execution.json")
 acceptance = load("uat-acceptance.json")
 smoke = load("uat-public-smoke.json")
 browser = load(
@@ -159,7 +190,7 @@ lifecycle = load("19-5-lifecycle.json")
 summary = load("acceptance-summary.json")
 
 payload = base_payload()
-if not any((pre, status, dispatch, acceptance, smoke, browser, lifecycle, summary)):
+if not any((pre, status, dispatch, ssh_step, acceptance, smoke, browser, lifecycle, summary)):
     refuse("MISSING_EVIDENCE", "no trustworthy UAT evidence files were present", payload)
 
 eligibility = str((pre or {}).get("result") or (status or {}).get("eligibility") or "UNKNOWN").upper()
@@ -172,6 +203,7 @@ for value in (
     (pre or {}).get("candidate_sha"),
     (status or {}).get("candidate_sha"),
     (dispatch or {}).get("sha"),
+    (ssh_step or {}).get("sha"),
     (acceptance or {}).get("sha"),
     ((acceptance or {}).get("runtime") or {}).get("apiGitSha") if isinstance((acceptance or {}).get("runtime"), dict) else "",
 ):
@@ -183,44 +215,83 @@ if shas and len(set(shas)) > 1:
 if shas:
     payload["candidate_sha"] = shas[0]
 
-ssh = False
-if isinstance(dispatch, dict) and str(dispatch.get("result") or "").lower() == "dispatched":
-    ssh = True
-if isinstance(acceptance, dict):
-    dep = acceptance.get("deployment") if isinstance(acceptance.get("deployment"), dict) else {}
-    if dep.get("shaMatch") is True:
-        ssh = True
+dispatch_attempted = isinstance(dispatch, dict) and str(dispatch.get("result") or "").lower() == "dispatched"
 if isinstance(summary, dict):
     dep = summary.get("deployment") if isinstance(summary.get("deployment"), dict) else {}
     if str(dep.get("dispatchResult") or "").lower() == "dispatched":
-        ssh = True
+        dispatch_attempted = True
 
-payload["ssh_executed"] = ssh
+ssh_conclusion = str((ssh_step or {}).get("conclusion") or "missing").strip().lower()
+payload["ssh_step_conclusion"] = ssh_conclusion if ssh_step else "missing"
+payload["ssh_attempted"] = bool(dispatch_attempted or ssh_step)
+
+host_sha = ""
+sha_match = False
+if isinstance(acceptance, dict):
+    dep = acceptance.get("deployment") if isinstance(acceptance.get("deployment"), dict) else {}
+    sha_match = dep.get("shaMatch") is True
+    host_sha = norm_sha(acceptance.get("sha")) or norm_sha(
+        ((acceptance.get("runtime") or {}).get("apiGitSha")) if isinstance(acceptance.get("runtime"), dict) else ""
+    )
+if isinstance(summary, dict) and not sha_match:
+    dep = summary.get("deployment") if isinstance(summary.get("deployment"), dict) else {}
+    sha_match = json_bool(dep.get("shaMatch")) is True
+    host_sha = host_sha or norm_sha(summary.get("sha")) or norm_sha(dep.get("apiGitSha") or dep.get("acceptanceSha"))
+
+host_proven = bool(sha_match and host_sha and (not payload["candidate_sha"] or host_sha == payload["candidate_sha"]))
+
+# Dispatch is intent only. Do not invent ssh_executed or uat_deployed from it.
+if host_proven:
+    ssh_executed: bool | None = True
+    uat_deployed: bool | None = True
+    deployed_sha = host_sha
+    phase = "EXECUTED"
+elif ssh_conclusion == "success":
+    ssh_executed = True
+    uat_deployed = None
+    deployed_sha = ""
+    phase = "ATTEMPTED"
+elif payload["ssh_attempted"]:
+    ssh_executed = None
+    uat_deployed = None
+    deployed_sha = ""
+    phase = "ATTEMPTED"
+else:
+    ssh_executed = False
+    uat_deployed = False
+    deployed_sha = ""
+    phase = "NOT_STARTED"
+
+payload["ssh_executed"] = ssh_executed
+payload["uat_deployed"] = uat_deployed
+payload["deployed_sha"] = deployed_sha
+payload["deployment_phase"] = phase
 payload["host_acceptance"] = section_result(acceptance, "result")
 payload["smoke"] = section_result(smoke, "result")
 payload["browser"] = playwright_result(browser)
 payload["lifecycle"] = section_result(lifecycle, "result")
-if ssh:
-    payload["deployed_sha"] = payload["candidate_sha"]
-    payload["uat_deployed"] = True
-    payload["deployment_phase"] = "EXECUTED"
-else:
-    payload["uat_deployed"] = False
-    payload["deployment_phase"] = "NOT_STARTED"
 
-if not ssh and eligibility in {"HOLD", "REFUSE"}:
+if not payload["ssh_attempted"] and eligibility in {"HOLD", "REFUSE"}:
     payload["uat_deployment_outcome"] = "HELD" if eligibility == "HOLD" else "REFUSED"
     payload["diagnostics"] = str((pre or {}).get("reason") or (status or {}).get("diagnostics") or "predeploy gate held")
     payload["result"] = "HOLD"
-    out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print("RESULT=HOLD")
-    print(f"UAT_DEPLOYMENT_OUTCOME={payload['uat_deployment_outcome']}")
-    print("UAT_DEPLOYED=false")
-    print("SSH_EXECUTED=false")
-    raise SystemExit(0)
+    emit(payload, 0)
 
-if not ssh:
-    refuse("INCOMPLETE", "final outcome has no SSH/dispatch evidence", payload)
+if not host_proven:
+    if ssh_conclusion == "success":
+        payload["uat_deployment_outcome"] = "INCOMPLETE"
+        payload["diagnostics"] = "SSH step succeeded; host accepted SHA is missing"
+        payload["result"] = "HOLD"
+        emit(payload, 1)
+    if payload["ssh_attempted"]:
+        payload["uat_deployment_outcome"] = "ATTEMPTED"
+        payload["diagnostics"] = (
+            "deploy dispatch or SSH step recorded without proven host SHA; "
+            "host mutation is unknown"
+        )
+        payload["result"] = "HOLD"
+        emit(payload, 1)
+    refuse("INCOMPLETE", "final outcome has no proven SSH or host evidence", payload)
 
 failures = []
 for label, value in (
@@ -238,30 +309,16 @@ if any(item.startswith("missing:") for item in failures):
     payload["uat_deployment_outcome"] = "INCOMPLETE"
     payload["diagnostics"] = ";".join(failures)
     payload["result"] = "HOLD"
-    out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print("RESULT=HOLD")
-    print("UAT_DEPLOYMENT_OUTCOME=INCOMPLETE")
-    print("UAT_DEPLOYED=true")
-    print("SSH_EXECUTED=true")
-    raise SystemExit(1)
+    emit(payload, 1)
 
 if failures:
     payload["uat_deployment_outcome"] = "DEPLOYED_REJECTED"
     payload["diagnostics"] = ";".join(failures)
     payload["result"] = "HOLD"
-    out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    print("RESULT=HOLD")
-    print("UAT_DEPLOYMENT_OUTCOME=DEPLOYED_REJECTED")
-    print("UAT_DEPLOYED=true")
-    print("SSH_EXECUTED=true")
-    raise SystemExit(1)
+    emit(payload, 1)
 
 payload["uat_deployment_outcome"] = "DEPLOYED_ACCEPTED"
-payload["diagnostics"] = "SSH executed; host, smoke, browser, and lifecycle evidence passed"
+payload["diagnostics"] = "Host accepted SHA; smoke, browser, and lifecycle evidence passed"
 payload["result"] = "PASS"
-out_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-print("RESULT=PASS")
-print("UAT_DEPLOYMENT_OUTCOME=DEPLOYED_ACCEPTED")
-print("UAT_DEPLOYED=true")
-print("SSH_EXECUTED=true")
+emit(payload, 0)
 PY

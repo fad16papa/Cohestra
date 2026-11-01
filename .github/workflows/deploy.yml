@@ -150,6 +150,7 @@ jobs:
         run: bash deploy/record-uat-deploy-dispatch.sh
 
       - name: Deploy over SSH
+        id: ssh-deploy
         uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
         env:
           DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
@@ -221,6 +222,14 @@ jobs:
               exit 1
             fi
 
+      - name: Record SSH step evidence
+        if: always()
+        env:
+          TARGET_SHA: ${{ env.TARGET_SHA }}
+          SSH_STEP_CONCLUSION: ${{ steps.ssh-deploy.conclusion }}
+          SSH_STEP_OUTCOME: ${{ steps.ssh-deploy.outcome }}
+        run: bash deploy/record-uat-ssh-execution.sh
+
       - name: Fetch host acceptance JSON
         env:
           DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
@@ -245,7 +254,7 @@ jobs:
         run: |
           set -euo pipefail
           removed=0
-          for f in artifacts/uat-acceptance.json artifacts/uat-public-smoke.json artifacts/uat-deploy-dispatch.json; do
+          for f in artifacts/uat-acceptance.json artifacts/uat-public-smoke.json artifacts/uat-deploy-dispatch.json artifacts/uat-ssh-execution.json; do
             if [[ -f "$f" ]] && grep -qE 'BEGIN (OPENSSH |RSA )?PRIVATE KEY|-----BEGIN' "$f"; then
               rm -f "$f"
               echo "REFUSE: removed secret-like $f"
@@ -263,6 +272,7 @@ jobs:
           name: uat-deploy-evidence
           path: |
             artifacts/uat-deploy-dispatch.json
+            artifacts/uat-ssh-execution.json
             artifacts/uat-acceptance.json
             artifacts/uat-public-smoke.json
           if-no-files-found: warn

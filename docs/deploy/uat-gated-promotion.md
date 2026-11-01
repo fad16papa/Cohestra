@@ -43,9 +43,12 @@ Evidence class is **`CI_CONTRACT`**. `LIVE_DEPLOY_UAT_HOLD=false`. Do **not**
 treat this artifact as a successful live Deploy UAT HOLD run.
 
 Predeploy status is phase `predeploy` with `deployment_phase=NOT_STARTED`.
-A later `uat-final-outcome.json` aggregates SSH, deployed SHA, host
-acceptance, smoke, Playwright, and lifecycle. A post-deploy failure is
-`DEPLOYED_REJECTED`, never “no deployment occurred.”
+A later `uat-final-outcome.json` aggregates SSH-step conclusion, deployed
+SHA, host acceptance, smoke, Playwright, and lifecycle. Pre-SSH
+`result=dispatched` is attempt/intent only. `uat_deployed=true` requires
+a proven host accepted SHA. Failed or interrupted SSH is
+`ATTEMPTED`/`UNKNOWN` (`uat_deployed=null`). A confirmed deploy plus later
+test failure is `DEPLOYED_REJECTED`, never “no deployment occurred.”
 
 A live Deploy UAT HOLD still requires one owner-authorized
 `workflow_dispatch` on `main` **or** the next `workflow_run` after Deploy UAT
@@ -143,5 +146,8 @@ failing code; produce a new SHA and retest.
 - `deploy/commission-uat-hold.test.sh` — automatic `CI_CONTRACT` HOLD for
   `UAT_DEPLOY_GATE_ACTIVE=false` plus YAML proof that SSH cannot run.
 - `deploy/uat-delivery-status.test.sh` — structured nonsecret predeploy report.
-- `deploy/uat-final-outcome.test.sh` — missing, inconsistent, incomplete, and
-  failed postdeploy evidence fail closed; rejected deploys stay `uat_deployed=true`.
+- `deploy/uat-final-outcome.test.sh` — missing, inconsistent, incomplete,
+  pre-SSH dispatch, failed SSH, and failed postdeploy evidence fail closed;
+  only a proven host SHA may set `uat_deployed=true`.
+- `deploy/record-uat-ssh-execution.test.sh` — post-SSH step conclusion is
+  recorded without claiming host mutation.

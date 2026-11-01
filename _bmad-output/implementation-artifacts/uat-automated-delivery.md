@@ -16,9 +16,11 @@
   Commissioning absolutizes `UAT_GATE_EVIDENCE_DIR` before entering the
   fixture worktree so a relative `artifacts/ci-contract` path survives.
 - Predeploy status is phase-specific (`NOT_STARTED` / `HELD`). Final
-  `uat-final-outcome.json` aggregates SSH, SHA, host, smoke, browser,
-  and lifecycle, including Playwright at `web/test-results/` after
-  download-artifact. Post-deploy failure is `DEPLOYED_REJECTED`.
+  `uat-final-outcome.json` treats pre-SSH `dispatched` as attempt only.
+  `uat_deployed=true` requires a proven host accepted SHA. Interrupted
+  SSH is `ATTEMPTED` (`uat_deployed=null`). Confirmed deploy plus later
+  browser/lifecycle failure is `DEPLOYED_REJECTED`. Playwright is read
+  from `web/test-results/` after download-artifact.
 - Continuous path remains: merge → main CI → scans SUCCESS → predeploy
   gate → automatic `workflow_run` UAT → smoke/browser. Recurring dispatch
   is not required after the owner sets `UAT_DEPLOY_GATE_ACTIVE=true`.

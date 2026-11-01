@@ -55,6 +55,12 @@ write_predeploy() {
 JSON
 }
 
+write_ssh() {
+  cat >"$1/uat-ssh-execution.json" <<JSON
+{"result":"recorded","conclusion":"${2:-success}","sha":"${SHA}","proof":"github_actions_step_conclusion","host_mutation":"unknown","ssh_attempted":true}
+JSON
+}
+
 if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/empty" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
   echo "$out"
   fail "missing evidence must not PASS"
@@ -98,26 +104,86 @@ fi
 echo "$out" | grep -qiE 'INCONSISTENT|sha' || { echo "$out"; fail "inconsistent SHA reason"; }
 pass "inconsistent SHA fails closed"
 
-mkdir -p "$TMP/incomplete"
-write_predeploy "$TMP/incomplete" PASS "ok"
-write_dispatch "$TMP/incomplete"
-if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/incomplete" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+mkdir -p "$TMP/dispatch-only"
+write_predeploy "$TMP/dispatch-only" PASS "ok"
+write_dispatch "$TMP/dispatch-only"
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/dispatch-only" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
   echo "$out"
-  fail "dispatch without acceptance must not claim ACCEPTED"
+  fail "pre-SSH dispatch must not PASS"
 fi
-python3 - "$TMP/incomplete/uat-final-outcome.json" <<'PY'
+python3 - "$TMP/dispatch-only/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployed"] is True, p
-assert p["ssh_executed"] is True, p
-assert p["uat_deployment_outcome"] == "INCOMPLETE", p
-assert p["host_acceptance"] in ("missing", "fail", "unknown"), p
+assert p["ssh_attempted"] is True, p
+assert p["ssh_executed"] is not True, p
+assert p["uat_deployed"] is None, p
+assert p["uat_deployment_outcome"] == "ATTEMPTED", p
+assert p["deployment_phase"] == "ATTEMPTED", p
+assert not p.get("deployed_sha"), p
+text = json.dumps(p).lower()
+assert "no deployment occurred" not in text
 PY
-pass "incomplete postdeploy evidence keeps uat_deployed=true"
+pass "pre-SSH dispatch is ATTEMPTED, not executed or deployed"
+
+mkdir -p "$TMP/ssh-connect-fail"
+write_predeploy "$TMP/ssh-connect-fail" PASS "ok"
+write_dispatch "$TMP/ssh-connect-fail"
+write_ssh "$TMP/ssh-connect-fail" failure
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/ssh-connect-fail" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "failed SSH connection must not PASS"
+fi
+python3 - "$TMP/ssh-connect-fail/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["ssh_attempted"] is True, p
+assert p["ssh_executed"] is not True, p
+assert p["uat_deployed"] is None, p
+assert p["ssh_step_conclusion"] == "failure", p
+assert p["uat_deployment_outcome"] in ("ATTEMPTED", "UNKNOWN"), p
+assert not p.get("deployed_sha"), p
+PY
+pass "SSH connection failure is UNKNOWN/ATTEMPTED, not a boolean deploy"
+
+mkdir -p "$TMP/ssh-midway"
+write_predeploy "$TMP/ssh-midway" PASS "ok"
+write_dispatch "$TMP/ssh-midway"
+write_ssh "$TMP/ssh-midway" failure
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/ssh-midway" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "mid-SSH remote failure must not invent deploy state"
+fi
+python3 - "$TMP/ssh-midway/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployed"] is None, p
+assert p["ssh_executed"] is not True, p
+assert p["uat_deployment_outcome"] in ("ATTEMPTED", "UNKNOWN"), p
+PY
+pass "mid-SSH remote failure stays UNKNOWN/ATTEMPTED"
+
+mkdir -p "$TMP/ssh-success-no-host"
+write_predeploy "$TMP/ssh-success-no-host" PASS "ok"
+write_dispatch "$TMP/ssh-success-no-host"
+write_ssh "$TMP/ssh-success-no-host" success
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/ssh-success-no-host" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "SSH step success without host SHA must not claim ACCEPTED"
+fi
+python3 - "$TMP/ssh-success-no-host/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["ssh_executed"] is True, p
+assert p["uat_deployed"] is None, p
+assert p["uat_deployment_outcome"] == "INCOMPLETE", p
+assert not p.get("deployed_sha"), p
+PY
+pass "SSH success without host acceptance is INCOMPLETE, not deployed"
 
 mkdir -p "$TMP/rejected"
 write_predeploy "$TMP/rejected" PASS "ok"
 write_dispatch "$TMP/rejected"
+write_ssh "$TMP/rejected" success
 write_acceptance "$TMP/rejected" fail
 write_smoke "$TMP/rejected" fail
 write_browser "$TMP/rejected" 2
@@ -139,9 +205,55 @@ assert "no deploy occurred" not in text
 PY
 pass "postdeploy failure is DEPLOYED_REJECTED, not 'no deployment occurred'"
 
+mkdir -p "$TMP/browser-fail"
+write_predeploy "$TMP/browser-fail" PASS "ok"
+write_dispatch "$TMP/browser-fail"
+write_ssh "$TMP/browser-fail" success
+write_acceptance "$TMP/browser-fail" pass
+write_smoke "$TMP/browser-fail" pass
+write_browser "$TMP/browser-fail" 2
+write_lifecycle "$TMP/browser-fail" fail
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/browser-fail" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "confirmed deploy plus browser/lifecycle failure must not PASS"
+fi
+python3 - "$TMP/browser-fail/uat-final-outcome.json" <<PY
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployed"] is True, p
+assert p["ssh_executed"] is True, p
+assert p["deployed_sha"] == "${SHA}", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_REJECTED", p
+text = json.dumps(p).lower()
+assert "no deployment occurred" not in text
+PY
+pass "confirmed SHA plus later browser/lifecycle failure is DEPLOYED_REJECTED"
+
+mkdir -p "$TMP/duplicate/artifacts"
+write_predeploy "$TMP/duplicate" PASS "ok"
+write_dispatch "$TMP/duplicate"
+write_ssh "$TMP/duplicate" success
+write_acceptance "$TMP/duplicate" pass
+write_smoke "$TMP/duplicate" pass
+write_browser "$TMP/duplicate" 0
+write_lifecycle "$TMP/duplicate" pass
+python3 - "$TMP/duplicate/uat-deploy-dispatch.json" "$TMP/duplicate/artifacts/uat-deploy-dispatch.json" <<'PY'
+import json, sys
+src = json.load(open(sys.argv[1]))
+src["sha"] = "cccccccccccccccccccccccccccccccccccccccc"
+json.dump(src, open(sys.argv[2], "w"))
+PY
+if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/duplicate" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
+  echo "$out"
+  fail "duplicate disagreeing artifacts must fail closed"
+fi
+echo "$out" | grep -qiE 'INCONSISTENT|duplicate' || { echo "$out"; fail "duplicate artifact reason"; }
+pass "duplicate disagreeing artifacts fail closed"
+
 mkdir -p "$TMP/accepted"
 write_predeploy "$TMP/accepted" PASS "ok"
 write_dispatch "$TMP/accepted"
+write_ssh "$TMP/accepted" success
 write_acceptance "$TMP/accepted" pass
 write_smoke "$TMP/accepted" pass
 write_browser "$TMP/accepted" 0
@@ -169,6 +281,7 @@ pass "complete success is DEPLOYED_ACCEPTED"
 mkdir -p "$TMP/live/artifacts" "$TMP/live/web/test-results"
 write_predeploy "$TMP/live/artifacts" PASS "ok"
 write_dispatch "$TMP/live/artifacts"
+write_ssh "$TMP/live/artifacts" success
 write_acceptance "$TMP/live/artifacts" pass
 write_smoke "$TMP/live/artifacts" pass
 write_lifecycle "$TMP/live/artifacts" pass
@@ -214,6 +327,11 @@ if "DROPLET_" in block or "PROD_" in block:
     raise SystemExit("final outcome job must not read UAT/Production secrets")
 if "appleboy/ssh-action" in block:
     raise SystemExit("final outcome job must not SSH")
+deploy = text[text.find("  deploy:"):text.find("  browser:")]
+if deploy.find("record-uat-deploy-dispatch.sh") > deploy.find("appleboy/ssh-action"):
+    raise SystemExit("dispatch evidence must remain pre-SSH intent")
+if deploy.find("appleboy/ssh-action") > deploy.find("record-uat-ssh-execution.sh"):
+    raise SystemExit("SSH-step evidence must be recorded after SSH")
 PY
 pass "deploy.yml records a secret-free always() final outcome job"
 

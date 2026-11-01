@@ -41,6 +41,7 @@ fi
 if grep -q 'commission-uat-hold.test.sh' "$CI" \
   && grep -q 'uat-delivery-status.test.sh' "$CI" \
   && grep -q 'uat-final-outcome.test.sh' "$CI" \
+  && grep -q 'record-uat-ssh-execution.test.sh' "$CI" \
   && grep -q 'uat-ci-contract-commissioning' "$CI" \
   && grep -q 'bash deploy/commission-uat-hold.sh' "$CI"; then
   pass "CI commissions HOLD evidence, persists CI_CONTRACT, and checks final outcome"
