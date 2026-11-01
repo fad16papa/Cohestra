@@ -15,6 +15,8 @@ fail() { echo "FAIL: $1"; exit 1; }
 
 grep -qE '^name:[[:space:]]*UAT rollback' "$WF" || fail "workflow name must be UAT rollback"
 grep -qE '^[[:space:]]*workflow_dispatch:' "$WF" || fail "workflow_dispatch is required"
+grep -q "github.event_name == 'workflow_dispatch'" "$WF" \
+  || fail "jobs must no-op unless the event is workflow_dispatch"
 
 for key in push pull_request pull_request_target workflow_run workflow_call repository_dispatch schedule release deployment; do
   if grep -qE "^[[:space:]]*${key}:" "$WF"; then

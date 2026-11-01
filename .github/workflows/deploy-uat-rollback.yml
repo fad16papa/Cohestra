@@ -29,6 +29,7 @@ permissions:
 jobs:
   validate:
     name: Validate UAT rollback request
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     outputs:
       rollback_sha: ${{ steps.gate.outputs.rollback_sha }}
@@ -65,7 +66,7 @@ jobs:
   rollback:
     name: Execute UAT host rollback
     needs: validate
-    if: ${{ inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED' }}
     runs-on: ubuntu-latest
     environment: uat
     steps:
