@@ -97,7 +97,7 @@ GITHUB_TOKEN merge push   candidate-tree validator          UAT_MAIN_DEPLOY_SUPP
 
 **Vector:** After PR-D, an admin FF or force-push of `origin/main` onto `release/uat` copies unintended Production-RC commits and bypasses required checks.
 **Severity:** MAJOR if used as the cutover procedure.
-**Mitigation:** AD-25. Owner PR targeting `release/uat`. Exclusive-path tree match. No admin bypass. N34.
+**Mitigation:** AD-25. Owner PR targeting `release/uat`. Exact-tree match of `deploy/ad25-sync-allowlist.txt` (not a seven-path subset). Required scripts exist; stale PR-C validators refused. Dest tree must independently pass isolation. No admin bypass. N34 / N39.
 
 ### T24 — `GITHUB_TOKEN` merge suppresses Deploy UAT
 
@@ -144,8 +144,9 @@ T1 Environment `uat` unrestricted, T3 no review Apps, T5 no post-merge gate, T7 
 | N36 | Candidate SHA validator omits suppression; inline YAML present | HOLD `UAT_MAIN_DEPLOY_SUPPRESSED is true`; no SSH |
 | N37 | PR-C changes `workflow_run.branches` away from `[main]` | Contract FAIL |
 | N38 | AD-25 sync PR includes unintended `main` paths | REFUSE |
+| N39 | AD-25 sync copies only the seven control-plane paths, omits isolation tests, or retains stale PR-C validators | REFUSE; dest tree must independently pass postmerge-isolation |
 
-N1 (gate false) remains VERIFIED by run #451. N14–N38 are `NOT_RUN` until Draft PR-C/G. PR-C must ship N35–N37 simulations.
+N1 (gate false) remains VERIFIED by run #451. N14–N39 are required. N39 is simulated by the AD-25 two-branch fixture on PR-D. Isolated PR-D-on-`main` green is not dest-tree proof.
 
 ## Verdict
 

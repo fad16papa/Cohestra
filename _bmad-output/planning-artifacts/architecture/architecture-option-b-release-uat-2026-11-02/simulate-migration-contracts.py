@@ -14,13 +14,41 @@ from __future__ import annotations
 
 import sys
 
+# Canonical owner allowlist (must match deploy/ad25-sync-allowlist.txt on PR-D).
 PR_D_EXCLUSIVE = frozenset(
+    {
+        ".github/workflows/ci.yml",
+        ".github/workflows/deploy.yml",
+        "deploy/ad25-sync-allowlist.txt",
+        "deploy/commission-uat-hold.sh",
+        "deploy/commission-uat-hold.test.sh",
+        "deploy/fetch-origin-main.test.sh",
+        "deploy/fetch-origin-uat.sh",
+        "deploy/fetch-origin-uat.test.sh",
+        "deploy/lib/ad25_sync_allowlist.py",
+        "deploy/lib/uat-predeploy-gate.py",
+        "deploy/reproduce-ad25-seven-path-gap.sh",
+        "deploy/simulate-merge-token-trigger.py",
+        "deploy/validate-ad25-sync-fixture.test.sh",
+        "deploy/validate-ad25-sync-procedure.sh",
+        "deploy/validate-deploy-uat-workflow.sh",
+        "deploy/validate-inline-suppression.test.sh",
+        "deploy/validate-prd-ad23.test.sh",
+        "deploy/validate-uat-predeploy-gate.sh",
+        "deploy/validate-uat-predeploy-gate.test.sh",
+        "deploy/write-uat-deploy-provenance.sh",
+        "deploy/write-uat-deploy-provenance.test.sh",
+    }
+)
+
+SEVEN_PATH_SUBSET = frozenset(
     {
         ".github/workflows/deploy.yml",
         "deploy/validate-uat-predeploy-gate.sh",
         "deploy/validate-deploy-uat-workflow.sh",
         "deploy/commission-uat-hold.sh",
-        "deploy/fetch-origin-main.sh",
+        "deploy/fetch-origin-uat.sh",
+        "deploy/write-uat-deploy-provenance.sh",
         "deploy/lib/uat-predeploy-gate.py",
     }
 )
@@ -93,6 +121,11 @@ def main() -> None:
         "sync missing deploy.yml is refused",
         not sync_allowed({p for p in PR_D_EXCLUSIVE if p != ".github/workflows/deploy.yml"}),
     )
+    check("N39 seven-path subset is refused", not sync_allowed(set(SEVEN_PATH_SUBSET)))
+    check(
+        "N39 missing isolation script is refused",
+        not sync_allowed(set(PR_D_EXCLUSIVE) - {"deploy/validate-prd-ad23.test.sh"}),
+    )
     check(
         "FF of live main tip with app commits is forbidden",
         not ff_live_main_tip(True),
@@ -127,6 +160,7 @@ def main() -> None:
         raise SystemExit(1)
     print("SIMULATE_MIGRATION=PASS")
     print("AD-25 exclusive-tree ALLOW; live-main FF DENY; unintended paths REFUSE")
+    print("N39 seven-path subset REFUSE")
     print("AD-26 GITHUB_TOKEN push does not start Deploy UAT; installation/user does")
     print("AD-27 inline HOLD before candidate script; workflow_run.branches=[main]")
     print("LIVE_APP_PUSH=UNVERIFIED")

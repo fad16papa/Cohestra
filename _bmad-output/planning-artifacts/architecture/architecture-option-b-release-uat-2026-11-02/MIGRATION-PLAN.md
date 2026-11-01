@@ -70,7 +70,7 @@ PR-C may start in parallel with PR-B. PR-E must not start until AD-15/AD-16 revi
 | | |
 | --- | --- |
 | Purpose | Remove `workflow_run`. Add closed AD-23 `on:` (`push` to `release/uat` + optional `workflow_dispatch`). Move AD-17 jobs into this workflow. `predeploy` `needs` them; SSH `needs` `predeploy` and uses `environment: uat`. Tip-pin `ORIGIN_UAT_REF`. Evaluator accepts `GITHUB_EVENT_NAME=push`. |
-| Exclusive | `deploy.yml`, predeploy/fetch scripts, provenance writer, `validate-deploy-uat-workflow.sh`, `commission-uat-hold.sh`, `validate-uat-predeploy-gate.sh` |
+| Exclusive | Canonical owner allowlist `deploy/ad25-sync-allowlist.txt` (exact-tree). Includes `ci.yml`, `deploy.yml`, PR-D validators/tests (`validate-prd-ad23.test.sh`, `validate-ad25-sync-procedure.sh`, `validate-ad25-sync-fixture.test.sh`, inline/commission/gate/fetch/provenance), and the self-hosting allowlist helper. Seven-path subset is N39 REFUSE. Not included: `src/`, `web/`, Production workflows, secrets, ADCP. |
 | Must not | Keep `workflow_run`, `repository_dispatch`, or `workflow_call`. Must not start SSH from `ci.yml`. Must not merge before drain. Must not implement AD-23 and AD-24 together. Must not require `workflow_run` in `commission-uat-hold`. Must not HOLD `push` as a wrong trigger. Must not treat leftover `workflow_run` as an Environment-deny fallback. |
 | Why | Documented `workflow_run` `GITHUB_REF` is `main`, so Environment `uat`=`release/uat` would deny the job. Documented `workflow_call` inherits the caller ref and would match. Same-run `needs` also ends the CI-first completion race. |
 | Gate | Owner sets Environment policy + suppression and drains (AD-21) before merge. PR-D lands on `main`. `release/uat` is updated only by AD-25 (owner sync PR, exclusive-tree match). Do not start PR-D in this wave. |
@@ -137,12 +137,12 @@ Run #451 proved that HOLD path. The hazard is **not** today's false gate. The ha
 
 1. Keep `UAT_DEPLOY_GATE_ACTIVE` unset/false.
 2. Merge PR-C (suppression *code* exists; var still unset → same as #451).
-3. Owner creates **protected** `release/uat` from agreed SHA (Q2: `22ffe635` unless `main` moved).
+3. Owner creates **protected** `release/uat` from the immutable PR-C merge SHA `1c57633fa607dec4a31aca8928c4c02adb231822` if missing. Do not create it from post-PR-D `main` (that YAML starts AD-23).
 4. Owner sets Environment `uat` branch policy to `release/uat` only and `can_admins_bypass=false`.
 5. Owner sets `UAT_MAIN_DEPLOY_SUPPRESSED=true`.
 6. Owner lists Deploy UAT runs with status `queued|in_progress|waiting|requested` and waits until each is `completed` with artifacts `eligible=false` / `ssh_executed=false`.
 7. Merge PR-D to `main` (delete `workflow_run`, add `push` to `release/uat`, in-run AD-17 `needs`, evaluator accepts `push`).
-8. AD-25: owner opens a control-plane PR into `release/uat` whose exclusive-path tree matches PR-D-on-`main`. No FF of the live `main` tip. Human OWNER merge only (not AD-15 auto-merge).
+8. AD-25: owner opens a control-plane PR into `release/uat` whose `git ls-tree` for every path in `deploy/ad25-sync-allowlist.txt` equals PR-D-on-`main`. Exact-tree + required scripts exist + stale PR-C validators absent. Seven-path subset is N39 REFUSE. Prove the dest tree independently passes postmerge-isolation and applicable UAT isolation. Isolated PR-D-on-`main` green is not dest-tree proof. No FF of the live `main` tip. Human OWNER merge only (not AD-15 auto-merge).
 9. Confirm a `main` push does **not** start Deploy UAT. A leftover `workflow_run` on either copy is a contract FAIL of PR-D (N25).
 10. Only then, after PR-G negatives and owner attestation, the owner may set `UAT_DEPLOY_GATE_ACTIVE=true`.
 
@@ -163,7 +163,7 @@ Print as names only. This agent must not execute the checked GitHub admin steps.
 - [ ] `UAT_MAIN_DEPLOY_SUPPRESSED=true`
 - [ ] Zero in-flight Deploy UAT runs; last runs `ssh_executed=false`
 - [ ] PR-D merged to `main`
-- [ ] AD-25 owner sync PR into `release/uat` (exclusive-tree match; no FF of live `main` tip)
+- [ ] AD-25 owner sync PR into `release/uat` (`ad25-sync-allowlist.txt` exact-tree; required scripts exist; stale validators absent; dest tree independently passes isolation; no FF of live `main` tip; seven-path N39 REFUSE)
 - [ ] Merge App uses installation token, not `GITHUB_TOKEN` (AD-26)
 - [ ] `main` CI completion does not start Deploy UAT
 - [ ] No Deploy UAT `workflow_run` / `repository_dispatch` / `workflow_call` trigger remains on `main` or `release/uat`

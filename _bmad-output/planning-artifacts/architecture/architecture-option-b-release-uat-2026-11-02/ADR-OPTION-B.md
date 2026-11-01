@@ -29,7 +29,7 @@ PR #537 audit of `main` @ `22ffe635` and Deploy UAT #451 is unchanged: the suppr
 | Owner merges every UAT feature | Restricted auto-merge of eligible manifests only |
 | Environment `uat` unrestricted | Environment `uat` allows `release/uat` only |
 | `main` push can start Deploy UAT | `main` push must not start Deploy UAT |
-| Assumed FF of `main` into `release/uat` | AD-25 owner sync PR; exclusive-tree match; no force-push |
+| Assumed FF of `main` into `release/uat` | AD-25 owner sync PR; `ad25-sync-allowlist.txt` exact-tree; seven-path N39 REFUSE; no force-push |
 | Merge with `GITHUB_TOKEN` | AD-26 App installation token so `push` starts AD-23 |
 
 ## What Option B does not change
