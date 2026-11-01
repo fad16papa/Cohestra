@@ -6,7 +6,7 @@
 **ADCP:** not restored  
 **Production:** untouched  
 **Live activation:** not performed  
-**Independent review:** Grok 4.6 High Fast BMAD + CAT-SEC PASS on `0e17a92f` (BLOCKER=0 MAJOR=0, 1 MINOR on grep fail-open). Follow-up HEAD closes that MINOR and requires GitGuardian on the exact deploy SHA.
+**Independent review:** Prior HEADs: `0e17a92f` / `641ae8b7` / `34e45773`. This revision adds the push-main GitGuardian exact-SHA API scan (owner comment `6553108230`). Fresh BMAD + CAT-SEC is required on the new HEAD.
 
 ## TDD loop
 
@@ -26,10 +26,11 @@
 - `UAT isolation contract`
 - `Docker stack smoke`
 - `Exact-SHA security scan` (Actions job on the exact checkout)
-- `GitGuardian Security Checks` on the **exact candidate SHA**
+- `GitGuardian exact-SHA API scan` (push-to-`main` only, pinned ggshield
+  1.56.1, `GITGUARDIAN_API_KEY` scan-only, exact `commit-range SHA^..SHA`)
+- Native `GitGuardian Security Checks` on `${sha}^2` for two-parent merges
   (`app.slug=gitguardian`, `filter=all`, `conclusion=success` only).
-  Two-parent merges **also** require GitGuardian SUCCESS on `${sha}^2`.
-  PR-head SUCCESS alone is HOLD.
+  PR-head SUCCESS alone is HOLD. Native GG on the merge SHA is not assumed.
 
 `neutral`, `skipped`, missing, pending, wrong app, or conflicting duplicates
 are HOLD.

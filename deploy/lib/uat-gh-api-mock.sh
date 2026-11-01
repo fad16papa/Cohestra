@@ -32,4 +32,13 @@ if [[ "$path" == *"/actions/workflows/deploy.yml/runs" ]]; then
   exit 0
 fi
 
+if [[ "$path" =~ /actions/runs/([0-9]+)$ ]]; then
+  if [[ -f "$FIX/run_${BASH_REMATCH[1]}.json" ]]; then
+    cat "$FIX/run_${BASH_REMATCH[1]}.json"
+    exit 0
+  fi
+  echo "missing fixture run_${BASH_REMATCH[1]}.json" >&2
+  exit 1
+fi
+
 bash "$ROOT_DIR/deploy/lib/production-gh-api-mock.sh" "$METHOD" "$PATH_Q"

@@ -6,16 +6,18 @@ live gate from this pull request. **Do not deploy.** **Do not touch Production.*
 
 ## Binding contract
 
-UAT SSH happens only when every required check, including GitGuardian Security
-Checks, is `conclusion=success` on the **exact candidate SHA that SSH deploys**.
-PR-head GitGuardian on `${candidate}^2` is additional two-parent provenance.
-It is not a scan of a different merge commit.
+UAT SSH happens only when every required check is SUCCESS on the **exact
+candidate SHA that SSH deploys**. Native GitGuardian on `${candidate}^2` is
+additional two-parent provenance. It is not a scan of a different merge commit.
+The GitGuardian proof for the deploy SHA is the push-main
+`GitGuardian exact-SHA API scan` Actions job (ggshield, scan-only key). The
+Exact-SHA pattern scan remains required defense-in-depth.
 
 1. Development TDD loop produces a new candidate SHA after every code fix.
 2. Candidate verification reruns the full CI suite, the Exact-SHA security scan
-   job, and GitGuardian on that SHA (five Actions jobs + Exact-SHA scan +
-   GitGuardian on `candidate_sha`; two-parent merges also require GitGuardian
-   SUCCESS on `${candidate}^2`).
+   job, and the GitGuardian exact-SHA API scan on that SHA (five Actions jobs +
+   Exact-SHA pattern scan + GitGuardian API scan on `candidate_sha`; two-parent
+   merges also require native GitGuardian SUCCESS on `${candidate}^2`).
 3. Pre-UAT eligibility: `failure`, `cancelled`, `timed_out`, `neutral`,
    `skipped`, `action_required`, `pending`, missing, stale, wrong branch, wrong
    app, or ambiguous duplicates → `HOLD`, zero SSH.
@@ -62,10 +64,14 @@ Do not execute these steps from this PR, a cloud agent, or a CI job.
 6. **Observe one HOLD** artifact (`uat-predeploy-gate-evidence`) on the next
    `main` CI completion or a non-bypass `workflow_dispatch`. The artifact must
    record `RESULT=HOLD` and name `UAT_DEPLOY_GATE_ACTIVE`. Zero SSH.
-7. Confirm **GitGuardian on the exact main SHA** produces a `gitguardian`
-   check-run `conclusion=success` on the merged `main` commit itself, not only
-   on `${sha}^2`. Also confirm the `Exact-SHA security scan` Actions job
-   SUCCESS on that commit. Do not activate if either is missing.
+7. Confirm **GitGuardian on the exact main SHA** via the
+   `GitGuardian exact-SHA API scan` Actions job SUCCESS on the merged `main`
+   commit itself (`event=push`, `head_branch=main`, `head_sha=candidate`).
+   Native GitGuardian on `${sha}^2` is not a scan of the merge commit. Also
+   confirm the `Exact-SHA security scan` Actions job SUCCESS on that commit.
+   Confirm repository secret `GITGUARDIAN_API_KEY` is provisioned with
+   **scan-only** scope and is not available to `pull_request` jobs. Do not
+   activate if either exact-SHA scan is missing, skipped, or unverified.
 8. Only after a written owner approval, set the **repository** variable
    `UAT_DEPLOY_GATE_ACTIVE=true`. Environment `uat` alone is not sufficient:
    the predeploy job has no Environment and must not receive UAT secrets.
@@ -76,10 +82,21 @@ Rollback: unset or delete `UAT_DEPLOY_GATE_ACTIVE` (immediate HOLD) and/or
 disable Deploy UAT again. Do not “fix” a failed check by rerunning identical
 failing code; produce a new SHA and retest.
 
+## Owner gates not performed here
+
+- Provision `GITGUARDIAN_API_KEY` (scan-only) as a **repository** secret.
+  Do not put it on Environment `uat` or `production`. Do not put it on
+  pull_request jobs. Live main-push scan behavior is an owner observation
+  after first merge, not an assumption of this PR.
+- Do not assume the GitGuardian native GitHub App publishes a verified
+  success check on a `push` to `main`. Historical `main` merge SHAs have no
+  such check-run.
+
 ## What this PR does not do
 
 - Does not merge itself.
 - Does not set `UAT_DEPLOY_GATE_ACTIVE`.
+- Does not provision or rotate `GITGUARDIAN_API_KEY`.
 - Does not disable or enable live workflows.
 - Does not SSH, deploy, or change UAT host state.
 - Does not modify `.github/workflows/deploy-production.yml` or Production
@@ -90,6 +107,9 @@ failing code; produce a new SHA and retest.
 
 - `deploy/validate-uat-predeploy-gate.test.sh` — positive all-green case and
   negative fixtures for every gate (neutral, skipped, absent, duplicate,
-  wrong SHA, wrong app, stale, dispatch, older queued run, API error).
+  wrong SHA, wrong app, stale, dispatch, older queued run, API error,
+  missing/skipped/failed GitGuardian exact-SHA API scan, wrong event/branch).
+- `deploy/exact-sha-gitguardian-api-scan.test.sh` — missing API key, invalid
+  auth/quota/network, findings, and push-main-only CI job.
 - `deploy/validate-uat-gate-activation.test.sh` — first-merge suppressor and
   ordered activation procedure.

@@ -81,24 +81,49 @@ def gitguardian_required(repo: str, reviewed_sha: str) -> None:
 
 
 EXACT_SHA_SCAN_JOB = "Exact-SHA security scan"
+GG_API_SCAN_JOB = "GitGuardian exact-SHA API scan"
 
 
-def require_exact_sha_scan_job(repo: str, ci_run_id: Any) -> None:
+def require_named_success_job(
+    repo: str, ci_run_id: Any, job_name: str, candidate_sha: str | None = None
+) -> None:
     jobs = prod.paginate_list(
         f"/repos/{repo}/actions/runs/{ci_run_id}/jobs",
         "jobs",
         "ci jobs",
     )
-    found = False
+    matched: list[dict[str, Any]] = []
     for job in jobs:
         obj = prod.require_dict(job, "ci job")
-        if obj.get("name") != EXACT_SHA_SCAN_JOB:
+        if obj.get("name") != job_name:
             continue
+        matched.append(obj)
+    if not matched:
+        hold(f"{job_name} job missing")
+    conclusions = {str(obj.get("conclusion") or "") for obj in matched}
+    if len(conclusions) > 1:
+        hold(f"ambiguous {job_name} duplicate conclusions")
+    for obj in matched:
         if obj.get("conclusion") != "success":
-            hold(f"required CI job not success ({EXACT_SHA_SCAN_JOB})")
-        found = True
-    if not found:
-        hold("Exact-SHA security scan job missing")
+            hold(f"required CI job not success ({job_name})")
+        job_sha = prod._norm_sha(obj.get("head_sha"))
+        if candidate_sha and job_sha and job_sha != candidate_sha:
+            hold(f"{job_name} job head_sha mismatch")
+
+
+def require_exact_sha_scan_job(repo: str, ci_run_id: Any, candidate_sha: str) -> None:
+    require_named_success_job(repo, ci_run_id, EXACT_SHA_SCAN_JOB, candidate_sha)
+
+
+def require_gitguardian_api_scan_job(repo: str, ci_run_id: Any, candidate_sha: str) -> None:
+    run = prod.require_dict(prod.gh_api(f"/repos/{repo}/actions/runs/{ci_run_id}"), "ci run")
+    if run.get("event") != "push":
+        hold("GitGuardian exact-SHA API scan CI event is not push")
+    if run.get("head_branch") != "main":
+        hold("GitGuardian exact-SHA API scan head_branch is not main")
+    if prod._norm_sha(run.get("head_sha")) != candidate_sha:
+        hold("GitGuardian exact-SHA API scan head_sha mismatch")
+    require_named_success_job(repo, ci_run_id, GG_API_SCAN_JOB, candidate_sha)
 
 
 def refuse_duplicate_deploy(repo: str, candidate_sha: str, current_run_id: str) -> None:
@@ -136,14 +161,14 @@ def main() -> None:
         raise
     except Exception:
         hold("Layer A CI verification failed closed")
-    require_exact_sha_scan_job(repo, info["ci_run_id"])
-    gitguardian_required(repo, candidate_sha)
+    require_exact_sha_scan_job(repo, info["ci_run_id"], candidate_sha)
+    require_gitguardian_api_scan_job(repo, info["ci_run_id"], candidate_sha)
     if reviewed_sha != candidate_sha:
         gitguardian_required(repo, reviewed_sha)
     refuse_duplicate_deploy(repo, candidate_sha, os.environ.get("GITHUB_RUN_ID", ""))
     print("LAYER_A=PASS")
     print("EXACT_SHA_SCAN=PASS")
-    print("GITGUARDIAN_CANDIDATE=PASS")
+    print("GITGUARDIAN_API_SCAN=PASS")
     if reviewed_sha != candidate_sha:
         print("GITGUARDIAN_REVIEWED=PASS")
     print("GITGUARDIAN=PASS")

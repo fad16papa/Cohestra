@@ -10,10 +10,11 @@ Cursor / Cloud Agent does **not** need droplet SSH. GitHub Actions is the execut
 
 ```
 push / merge to main
-    → CI workflow (build + test + Exact-SHA security scan) + GitGuardian Security Checks
+    → CI workflow (build + test + Exact-SHA security scan + GitGuardian exact-SHA API scan on push main)
+      + native GitGuardian Security Checks on the PR head
     → Deploy UAT predeploy-gate (no Environment, no UAT secrets)
     → HOLD unless UAT_DEPLOY_GATE_ACTIVE=true and every required check is SUCCESS on the exact deploy SHA
-      (GitGuardian on the candidate itself; ${candidate}^2 is additional two-parent provenance only)
+      (GitGuardian API scan on the candidate itself; ${candidate}^2 native GG is additional two-parent provenance only)
     → Deploy UAT (Environment `uat`, concurrency `deploy-uat`) revalidates the gate, then SSH
     → fail-closed secret names
     → SSH with a dedicated Actions deploy key
@@ -80,7 +81,7 @@ ssh-keygen -t ed25519 -C "github-actions-uat-deploy" -f ~/.ssh/cohestra-uat-gha 
 ## Routine deploy (no owner SSH)
 
 1. Merge to **`main`**.
-2. Wait for **CI** and **GitGuardian** SUCCESS on that exact SHA.
+2. Wait for **CI**, the **GitGuardian exact-SHA API scan**, and (for two-parent merges) native **GitGuardian** SUCCESS on `${sha}^2`. The API scan requires repository secret `GITGUARDIAN_API_KEY` (scan-only; owner-provisioned; never on pull_request jobs).
 3. **Deploy UAT** starts automatically, evaluates the predeploy gate, and HOLDs unless `UAT_DEPLOY_GATE_ACTIVE=true` and every required check is SUCCESS.
 4. Download `uat-acceptance-summary` (`acceptance-summary.json`) plus the detailed deploy and Playwright artifacts. Missing required sections is FAIL, never a fake PASS.
 

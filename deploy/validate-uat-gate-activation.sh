@@ -38,8 +38,43 @@ else
   fail "ci.yml must run deploy/exact-sha-secret-scan.sh as Exact-SHA security scan"
 fi
 
-if grep -q 'Exact-SHA security scan' "$PROD_PY"; then
-  fail "Production Layer A must not gain the UAT Exact-SHA job requirement"
+if grep -q 'name: GitGuardian exact-SHA API scan' "$CI" \
+  && grep -q 'exact-sha-gitguardian-api-scan.sh' "$CI" \
+  && grep -q "github.event_name == 'push'" "$CI" \
+  && grep -q "github.ref == 'refs/heads/main'" "$CI"; then
+  pass "CI runs GitGuardian exact-SHA API scan on push main only"
+else
+  fail "ci.yml must run deploy/exact-sha-gitguardian-api-scan.sh on push main only"
+fi
+
+if python3 - "$CI" <<'PY'
+from pathlib import Path
+import sys
+text = Path(sys.argv[1]).read_text()
+start = text.find("  gitguardian-exact-sha-api:")
+if start < 0:
+    raise SystemExit("API scan job missing")
+import re
+rest = text[start:]
+m = re.search(r"\n  [A-Za-z0-9_-]+:", rest[1:])
+block = rest if not m else rest[: m.start() + 1]
+if "secrets.GITGUARDIAN_API_KEY" not in block:
+    raise SystemExit("API key missing from push-main job")
+other = text[:start] + text[start + len(block):]
+if "GITGUARDIAN_API_KEY" in other:
+    raise SystemExit("API key leaked to another CI job")
+if "pull_request" in block and ("event_name == 'pull_request'" in block or "pull_request ||" in block):
+    raise SystemExit("API scan must not run on pull_request")
+PY
+then
+  pass "GITGUARDIAN_API_KEY is confined to the push-main API scan job"
+else
+  fail "GITGUARDIAN_API_KEY must not appear on PR or other CI jobs"
+fi
+
+if grep -q 'Exact-SHA security scan' "$PROD_PY" \
+  || grep -q 'GitGuardian exact-SHA API scan' "$PROD_PY"; then
+  fail "Production Layer A must not gain the UAT Exact-SHA or GitGuardian API job requirement"
 else
   pass "Production Layer A required jobs are unchanged"
 fi
@@ -145,7 +180,9 @@ for needle in \
   "UAT_DEPLOY_GATE_ACTIVE" \
   "Do not activate" \
   "Do not deploy" \
-  "Do not touch Production"
+  "Do not touch Production" \
+  "GitGuardian exact-SHA API scan" \
+  "GITGUARDIAN_API_KEY"
 do
   if grep -q "$needle" "$DOC"; then
     pass "activation doc names: $needle"

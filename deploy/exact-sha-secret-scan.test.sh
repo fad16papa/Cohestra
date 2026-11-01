@@ -96,6 +96,7 @@ block=txt.split(before,1)[1].split(after,1)[0]
 required=(
     "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
     "ref: " + chr(36) + "{{ github.sha }}",
+    "persist-credentials: false",
     "SCAN_SHA: " + chr(36) + "{{ github.sha }}",
     'test "$(git rev-parse HEAD)" = "$SCAN_SHA"',
     "bash deploy/exact-sha-secret-scan.sh",
