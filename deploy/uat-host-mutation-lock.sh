@@ -40,14 +40,19 @@ for run in runs:
         continue
     path = str(run.get("path") or "")
     status = str(run.get("status") or "").strip().lower()
-    if path in {".github/workflows/deploy.yml", ".github/workflows/deploy-uat-rollback.yml"} and status in {
+    event = str(run.get("event") or "").strip().lower()
+    if status not in {
         "queued",
         "pending",
         "waiting",
         "in_progress",
         "requested",
     }:
-        blocking.append(f"{path}:{status}:{run_id}")
+        continue
+    if path == ".github/workflows/deploy.yml":
+        blocking.append(f"{path}:{event}:{status}:{run_id}")
+    elif path == ".github/workflows/deploy-uat-rollback.yml" and event == "workflow_dispatch":
+        blocking.append(f"{path}:{event}:{status}:{run_id}")
 if blocking:
     print(";".join(blocking))
     raise SystemExit(2)

@@ -13,6 +13,14 @@ fail() { echo "FAIL: $1"; exit 1; }
 
 [[ -f "$WF" ]] || fail "deploy-uat-rollback.yml missing"
 
+python3 - "$WF" <<'PY' || fail "deploy-uat-rollback.yml is not valid YAML"
+from pathlib import Path
+import sys
+import yaml
+yaml.safe_load(Path(sys.argv[1]).read_text())
+PY
+pass "rollback workflow YAML parses"
+
 grep -qE '^name:[[:space:]]*UAT rollback' "$WF" || fail "workflow name must be UAT rollback"
 grep -qE '^[[:space:]]*workflow_dispatch:' "$WF" || fail "workflow_dispatch is required"
 grep -q 'dispatch-readiness' "$WF" || fail "push/PR must register a dispatch-readiness job"
@@ -45,6 +53,18 @@ if grep -q 'needs.validate.outputs.rollback_sha' "$WF" && grep -A2 'Checkout dis
 fi
 if grep -A20 'Rollback previous SHA over SSH' "$WF" | grep -q 'bash deploy/uat-rollback.sh'; then
   fail "droplet SSH must be inline; old trees do not have uat-rollback.sh"
+fi
+if ! python3 - "$WF" <<'PY'
+from pathlib import Path
+import sys
+text = Path(sys.argv[1]).read_text()
+export_at = text.find("export GIT_SHA")
+build_at = text.find("bash deploy/uat-compose.sh build api")
+if export_at < 0 or build_at < 0 or export_at > build_at:
+    raise SystemExit("GIT_SHA must be exported before compose rebuild")
+PY
+then
+  fail "GIT_SHA must be exported before compose rebuild"
 fi
 grep -q 'bash deploy/uat-compose.sh build api' "$WF" || fail "host rebuild must build api first"
 grep -q 'bash deploy/uat-compose.sh build web' "$WF" || fail "host rebuild must build web second"

@@ -54,7 +54,7 @@ pass "in-progress Deploy UAT is refused"
 if out="$(
   GITHUB_REPOSITORY=fad16papa/Cohestra \
   GITHUB_RUN_ID=99 \
-  UAT_HOST_LOCK_RUNS_JSON='{"workflow_runs":[{"id":2,"path":".github/workflows/deploy-uat-rollback.yml","status":"queued"}]}' \
+  UAT_HOST_LOCK_RUNS_JSON='{"workflow_runs":[{"id":2,"path":".github/workflows/deploy-uat-rollback.yml","event":"workflow_dispatch","status":"queued"}]}' \
   bash "$LOCK" actions 2>&1
 )"; then
   echo "$out"
@@ -65,11 +65,20 @@ pass "queued sibling rollback is refused"
 out="$(
   GITHUB_REPOSITORY=fad16papa/Cohestra \
   GITHUB_RUN_ID=7 \
-  UAT_HOST_LOCK_RUNS_JSON='{"workflow_runs":[{"id":7,"path":".github/workflows/deploy-uat-rollback.yml","status":"in_progress"},{"id":8,"path":".github/workflows/deploy.yml","status":"completed"}]}' \
+  UAT_HOST_LOCK_RUNS_JSON='{"workflow_runs":[{"id":7,"path":".github/workflows/deploy-uat-rollback.yml","event":"workflow_dispatch","status":"in_progress"},{"id":8,"path":".github/workflows/deploy.yml","status":"completed"}]}' \
   bash "$LOCK" actions
 )" || { echo "$out"; fail "this run and completed Deploy UAT must be clear"; }
 echo "$out" | grep -q 'HOST_LOCK=clear' || { echo "$out"; fail "clear lock token"; }
 pass "this run is excluded and completed Deploy UAT is not a conflict"
+
+out="$(
+  GITHUB_REPOSITORY=fad16papa/Cohestra \
+  GITHUB_RUN_ID=7 \
+  UAT_HOST_LOCK_RUNS_JSON='{"workflow_runs":[{"id":11,"path":".github/workflows/deploy-uat-rollback.yml","event":"push","status":"in_progress"},{"id":12,"path":".github/workflows/deploy-uat-rollback.yml","event":"pull_request","status":"queued"}]}' \
+  bash "$LOCK" actions
+)" || { echo "$out"; fail "push/PR readiness runs must not hold the host lock"; }
+echo "$out" | grep -q 'HOST_LOCK=clear' || { echo "$out"; fail "push/PR lock token"; }
+pass "push/PR rollback readiness runs are not host mutators"
 
 out="$(
   GITHUB_REPOSITORY=fad16papa/Cohestra \

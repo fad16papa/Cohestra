@@ -100,6 +100,10 @@ fi
 source "$ROOT_DIR/deploy/reset-accepted-sha.sh"
 DEPLOY_SHA="$ROLLBACK_SHA" reset_accepted_sha || refuse "host tree reset failed"
 
+GIT_SHA="$ROLLBACK_SHA"
+export GIT_SHA
+echo "GIT_SHA=${GIT_SHA}"
+
 if [[ "${COHESTRA_UAT_COMPOSE_STUB:-}" == "true" ]]; then
   echo "COMPOSE=stubbed"
 elif [[ -x "$ROOT_DIR/deploy/uat-compose.sh" || -f "$ROOT_DIR/deploy/uat-compose.sh" ]]; then

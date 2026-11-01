@@ -26,9 +26,11 @@ authorizes a live recovery. Agents must not live-dispatch to prove readiness.
 
 ## Host mutation lock
 
-Rollback shares GitHub concurrency group `deploy-uat` with **Deploy UAT**
-(`cancel-in-progress: false`). Independent `deploy-uat-rollback` concurrency
-is forbidden because it allowed both workflows to mutate the same host.
+Host-mutating rollback jobs share GitHub concurrency group `deploy-uat` with
+**Deploy UAT** (`cancel-in-progress: false`). Push/PR `dispatch-readiness`
+does not take that group, so a documentation-only push cannot preempt a
+queued deploy. Independent `deploy-uat-rollback` concurrency is forbidden
+because it allowed both workflows to mutate the same host.
 
 Before SSH, the runner queries in-progress/queued `deploy.yml` and
 `deploy-uat-rollback.yml` runs and **refuses** if another mutator is active.
@@ -81,9 +83,12 @@ Issue #531 rollback/restore readiness blocker.
 Push of a `workflow_dispatch`-only file created Actions run
 [41297290896](https://github.com/fad16papa/Cohestra/actions/runs/41297290896)
 (`event=push`, zero jobs, `conclusion=failure`). GitHub registered the new
-file on push while every job was gated to `workflow_dispatch`. The
-`dispatch-readiness` job now runs on push/PR so registration produces a
-real succeeding job. Host mutation remains `workflow_dispatch` only.
+file on push while every job was gated to `workflow_dispatch`. A later
+HEAD also failed the same way because an unquoted `if:` contained
+`UAT ROLLBACK: AUTHORIZED` (run 41301904638). That expression is now
+quoted and CI parses the YAML. The `dispatch-readiness` job runs on
+push/PR so a valid workflow produces a real succeeding job. Host
+mutation remains `workflow_dispatch` only.
 Workflow id `403445991` is active; this document does not authorize a live
 dispatch.
 

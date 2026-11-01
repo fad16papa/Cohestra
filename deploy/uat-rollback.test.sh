@@ -370,6 +370,8 @@ if "group: deploy-uat-rollback" in text:
     raise SystemExit("independent rollback concurrency is forbidden")
 if "group: deploy-uat" not in text:
     raise SystemExit("workflow must share deploy-uat concurrency")
+if "export GIT_SHA" not in text:
+    raise SystemExit("SSH execute must export GIT_SHA for compose")
 PY
 pass "workflow is dispatch-ready without live dispatch and shares the UAT host lock"
 

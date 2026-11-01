@@ -43,10 +43,6 @@ on:
       - "deploy/uat-host-mutation-lock.sh"
       - "deploy/uat-host-mutation-lock.test.sh"
 
-concurrency:
-  group: deploy-uat
-  cancel-in-progress: false
-
 permissions:
   contents: read
   actions: read
@@ -110,6 +106,9 @@ jobs:
   validate:
     name: Validate UAT rollback request
     if: ${{ github.event_name == 'workflow_dispatch' }}
+    concurrency:
+      group: deploy-uat
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     outputs:
       rollback_sha: ${{ steps.gate.outputs.rollback_sha }}
@@ -147,6 +146,9 @@ jobs:
   refuse-unattested-execute:
     name: Refuse execute without backup and compatibility attestation
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.execute && (!inputs.backup_attested || !inputs.compat_reviewed) }}
+    concurrency:
+      group: deploy-uat
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Fail closed
@@ -160,7 +162,10 @@ jobs:
   rollback:
     name: Execute UAT host rollback
     needs: validate
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED' && inputs.backup_attested && inputs.compat_reviewed }}
+    if: "${{ github.event_name == 'workflow_dispatch' && inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED' && inputs.backup_attested && inputs.compat_reviewed }}"
+    concurrency:
+      group: deploy-uat
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     environment: uat
     steps:
@@ -247,6 +252,9 @@ jobs:
               echo "REFUSE: isolated UAT compose helper is missing on this SHA"
               exit 1
             fi
+            GIT_SHA="${ROLLBACK_SHA}"
+            export GIT_SHA
+            echo "GIT_SHA=${GIT_SHA}"
             bash deploy/uat-compose.sh build api
             bash deploy/uat-compose.sh build web
             bash deploy/uat-compose.sh up -d --no-build
