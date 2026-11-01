@@ -45,7 +45,7 @@ jobs:
     name: Evaluate UAT readiness
     if: >-
       (github.event_name != 'issue_comment' || github.event.issue.pull_request != null) &&
-      (github.event_name != 'check_suite' || github.event.check_suite.app.slug == 'gitguardian' || github.event.check_suite.app.slug == 'github-actions') &&
+      (github.event_name != 'check_suite' || github.event.check_suite.app.slug == 'gitguardian' || github.event.check_suite.app.slug == 'github-actions' || github.event.check_suite.app.slug == 'cohestra-bmad' || github.event.check_suite.app.slug == 'cohestra-cat-sec' || github.event.check_suite.app.slug == vars.UAT_READINESS_BMAD_APP_SLUG || github.event.check_suite.app.slug == vars.UAT_READINESS_CATSEC_APP_SLUG) &&
       (github.event_name != 'workflow_run' || github.event.workflow_run.name == 'CI')
     runs-on: ubuntu-latest
     outputs:

@@ -76,6 +76,18 @@ SECRET_RE = re.compile(
 )
 SUPPORTED_ASSOCIATIONS = {"OWNER", "MEMBER", "COLLABORATOR"}
 CLEAN_MERGE_STATES = {"clean", "has_hooks"}
+FORBIDDEN_REVIEW_APP_SLUGS = {
+    "github-actions",
+    "github",
+    "cursor",
+    "dependabot",
+    "gitguardian",
+    "renovate",
+}
+DEFAULT_REVIEW_APPS = {
+    "BMAD": {"slug": "cohestra-bmad", "check_name": "Cohestra BMAD"},
+    "CAT-SEC": {"slug": "cohestra-cat-sec", "check_name": "Cohestra CAT-SEC"},
+}
 PREDEPLOY_JOB = "Pre-UAT eligibility gate"
 DEPLOY_JOB = "Deploy accepted SHA to UAT"
 
@@ -494,6 +506,7 @@ def collect_reviews(
             "minor": int(payload.get("minor") or 0),
             "nit": int(payload.get("nit") or 0),
             "identity": reviewer_identity(row)[0],
+            "source": "collaborator_comment",
             "comment_id": row.get("id"),
             "head_sha": expected_sha,
         }
@@ -519,6 +532,199 @@ def collect_reviews(
         or {"present": False, "authentic": False, "verdict": "MISSING"},
     }
     return reviews, risks
+
+
+def empty_review_pair() -> dict[str, dict[str, Any]]:
+    return {
+        "bmad": {"present": False, "authentic": False, "verdict": "MISSING"},
+        "cat_sec": {"present": False, "authentic": False, "verdict": "MISSING"},
+    }
+
+
+def review_app_config() -> dict[str, dict[str, str]]:
+    return {
+        "BMAD": {
+            "slug": (os.environ.get("UAT_READINESS_BMAD_APP_SLUG") or DEFAULT_REVIEW_APPS["BMAD"]["slug"])
+            .strip()
+            .lower(),
+            "id": str(os.environ.get("UAT_READINESS_BMAD_APP_ID") or "").strip(),
+            "check_name": os.environ.get("UAT_READINESS_BMAD_CHECK_NAME")
+            or DEFAULT_REVIEW_APPS["BMAD"]["check_name"],
+        },
+        "CAT-SEC": {
+            "slug": (
+                os.environ.get("UAT_READINESS_CATSEC_APP_SLUG") or DEFAULT_REVIEW_APPS["CAT-SEC"]["slug"]
+            )
+            .strip()
+            .lower(),
+            "id": str(os.environ.get("UAT_READINESS_CATSEC_APP_ID") or "").strip(),
+            "check_name": os.environ.get("UAT_READINESS_CATSEC_CHECK_NAME")
+            or DEFAULT_REVIEW_APPS["CAT-SEC"]["check_name"],
+        },
+    }
+
+
+def collect_app_reviews(repo: str, expected_sha: str) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    """Accept only allowlisted GitHub App check-runs bound to the exact SHA."""
+    missing = empty_review_pair()
+    risks: list[str] = []
+    config = review_app_config()
+    if config["BMAD"]["slug"] == config["CAT-SEC"]["slug"]:
+        return missing, ["BMAD and CAT-SEC app slugs are not distinct"]
+    if config["BMAD"]["id"] and config["CAT-SEC"]["id"] and config["BMAD"]["id"] == config["CAT-SEC"]["id"]:
+        return missing, ["BMAD and CAT-SEC app IDs are not distinct"]
+    for role, cfg in config.items():
+        if cfg["slug"] in FORBIDDEN_REVIEW_APP_SLUGS or not cfg["slug"]:
+            return missing, [f"{role} review app slug is forbidden or empty"]
+        if cfg["slug"].endswith("[bot]") or cfg["slug"] == "cursor":
+            return missing, [f"{role} review app slug is unsupported"]
+    try:
+        runs = paginate(
+            f"/repos/{repo}/commits/{expected_sha}/check-runs?filter=all",
+            "check_runs",
+            "review check-runs",
+        )
+    except SystemExit:
+        return missing, ["GitHub API failed closed while listing review check-runs"]
+    found: dict[str, dict[str, Any]] = {}
+    for role, cfg in config.items():
+        key = "bmad" if role == "BMAD" else "cat_sec"
+        matched: list[dict[str, Any]] = []
+        for raw in runs:
+            obj = prod.require_dict(raw, "review check-run")
+            if obj.get("name") != cfg["check_name"]:
+                continue
+            app = obj.get("app") if isinstance(obj.get("app"), dict) else {}
+            slug = str(app.get("slug") or "").strip().lower()
+            app_id = str(app.get("id") or "").strip()
+            if slug != cfg["slug"]:
+                risks.append(f"{role} check name used by untrusted app {slug or 'missing'}")
+                continue
+            if slug in FORBIDDEN_REVIEW_APP_SLUGS:
+                risks.append(f"{role} check was produced by a forbidden app")
+                continue
+            if cfg["id"] and app_id != cfg["id"]:
+                risks.append(f"{role} GitHub App id does not match the owner-pinned id")
+                continue
+            if norm_sha(obj.get("head_sha")) != expected_sha:
+                risks.append(f"{role} review check-run SHA is not the exact HEAD")
+                continue
+            matched.append(obj)
+        if not matched:
+            continue
+        terminal = [obj for obj in matched if obj.get("status") == "completed"]
+        pending = [obj for obj in matched if obj.get("status") in {"queued", "in_progress", "pending"}]
+        if pending and not terminal:
+            risks.append(f"{role} review check-run is pending")
+            continue
+        if not terminal:
+            continue
+        conclusions = {str(obj.get("conclusion") or "") for obj in terminal}
+        if len(conclusions) > 1:
+            found[key] = {"present": True, "authentic": False, "verdict": "AMBIGUOUS"}
+            risks.append(f"ambiguous {role} review check-runs")
+            continue
+        newest = terminal[-1]
+        output = newest.get("output") if isinstance(newest.get("output"), dict) else {}
+        body = "\n".join(
+            str(output.get(field) or "") for field in ("title", "summary", "text")
+        )
+        payload = parse_review_blob(body)
+        if payload is None:
+            risks.append(f"{role} review check-run is missing the signed review marker")
+            continue
+        if str(payload.get("role") or "").strip().upper() != role:
+            risks.append(f"{role} review check-run payload role mismatch")
+            continue
+        if payload.get("independent") is not True:
+            risks.append(f"{role} review check-run is not marked independent")
+            continue
+        if norm_sha(payload.get("head_sha")) != expected_sha:
+            risks.append(f"{role} review check-run payload SHA is not the exact HEAD")
+            continue
+        try:
+            blocker = int(payload.get("blocker"))
+            major = int(payload.get("major"))
+        except (TypeError, ValueError):
+            risks.append(f"{role} review check-run counts are not integers")
+            continue
+        verdict = str(payload.get("verdict") or "").strip().upper()
+        conclusion = str(newest.get("conclusion") or "")
+        if verdict == "PASS" and (blocker > 0 or major > 0):
+            risks.append(f"{role} PASS verdict with BLOCKER/MAJOR")
+            continue
+        if verdict == "PASS" and conclusion != "success":
+            risks.append(f"{role} PASS verdict without success conclusion")
+            continue
+        if verdict not in {"PASS", "FAIL"}:
+            risks.append(f"{role} review check-run verdict is unsupported")
+            continue
+        app = newest.get("app") if isinstance(newest.get("app"), dict) else {}
+        slug = str(app.get("slug") or "").strip().lower()
+        app_id = str(app.get("id") or "").strip()
+        found[key] = {
+            "present": True,
+            "authentic": True,
+            "role": role,
+            "verdict": verdict,
+            "blocker": blocker,
+            "major": major,
+            "minor": int(payload.get("minor") or 0),
+            "nit": int(payload.get("nit") or 0),
+            "identity": f"app:{slug}:{app_id or slug}",
+            "source": "github_app_check_run",
+            "check_id": newest.get("id"),
+            "head_sha": expected_sha,
+        }
+    bmad_id = str((found.get("bmad") or {}).get("identity") or "")
+    cat_id = str((found.get("cat_sec") or {}).get("identity") or "")
+    if bmad_id and cat_id and bmad_id.lower() == cat_id.lower():
+        risks.append("BMAD and CAT-SEC app identities are not distinct")
+        found["bmad"] = {"present": True, "authentic": False, "verdict": "NOT_INDEPENDENT"}
+        found["cat_sec"] = {"present": True, "authentic": False, "verdict": "NOT_INDEPENDENT"}
+    reviews = {
+        "bmad": found.get("bmad") or missing["bmad"],
+        "cat_sec": found.get("cat_sec") or missing["cat_sec"],
+    }
+    return reviews, risks
+
+
+def merge_review_sources(
+    comments: dict[str, dict[str, Any]],
+    apps: dict[str, dict[str, Any]],
+) -> tuple[dict[str, dict[str, Any]], list[str]]:
+    risks: list[str] = []
+    merged: dict[str, dict[str, Any]] = {}
+    for key in ("bmad", "cat_sec"):
+        comment = comments.get(key) or {"present": False, "authentic": False, "verdict": "MISSING"}
+        app = apps.get(key) or {"present": False, "authentic": False, "verdict": "MISSING"}
+        if comment.get("verdict") == "SPOOFED_PR_BODY" and not app.get("authentic"):
+            merged[key] = comment
+            continue
+        if app.get("authentic") and comment.get("authentic"):
+            if app.get("verdict") != comment.get("verdict"):
+                merged[key] = {"present": True, "authentic": False, "verdict": "AMBIGUOUS"}
+                risks.append(f"ambiguous {key} comment vs GitHub App review")
+            else:
+                merged[key] = app
+            continue
+        if app.get("authentic"):
+            merged[key] = app
+            continue
+        if comment.get("authentic"):
+            merged[key] = comment
+            continue
+        if comment.get("verdict") not in {"MISSING", None, ""}:
+            merged[key] = comment
+        else:
+            merged[key] = app
+    bmad_id = str((merged.get("bmad") or {}).get("identity") or "")
+    cat_id = str((merged.get("cat_sec") or {}).get("identity") or "")
+    if bmad_id and cat_id and bmad_id.lower() == cat_id.lower():
+        risks.append("BMAD and CAT-SEC must be distinct independent identities")
+        merged["bmad"] = {"present": True, "authentic": False, "verdict": "NOT_INDEPENDENT"}
+        merged["cat_sec"] = {"present": True, "authentic": False, "verdict": "NOT_INDEPENDENT"}
+    return merged, risks
 
 
 def reviews_pass(reviews: dict[str, dict[str, Any]]) -> bool:
@@ -724,9 +930,13 @@ def evaluate_pr(repo: str, pr_number: int, requested_head: str = "", requested_b
     author = ""
     user = pr.get("user") if isinstance(pr.get("user"), dict) else {}
     author = str(user.get("login") or "")
-    reviews, review_risks = collect_reviews(comments, head_sha, author, str(pr.get("body") or ""))
+    comment_reviews, review_risks = collect_reviews(comments, head_sha, author, str(pr.get("body") or ""))
+    app_reviews, app_risks = collect_app_reviews(repo, head_sha)
+    reviews, merge_risks = merge_review_sources(comment_reviews, app_reviews)
     report["reviews"] = reviews
     report["risks"].extend(review_risks)
+    report["risks"].extend(app_risks)
+    report["risks"].extend(merge_risks)
     if reviews_pass(reviews):
         report["review_evidence"] = "AUTHENTIC"
     elif any("SPOOFED" in str((reviews[key] or {}).get("verdict")) for key in reviews):
@@ -941,11 +1151,15 @@ def evaluate_main(repo: str, sha: str) -> dict[str, Any]:
                 author = ""
                 user = pr.get("user") if isinstance(pr.get("user"), dict) else {}
                 author = str(user.get("login") or "")
-                reviews, review_risks = collect_reviews(
+                comment_reviews, review_risks = collect_reviews(
                     comments, reviewed_sha, author, str(pr.get("body") or "")
                 )
+                app_reviews, app_risks = collect_app_reviews(repo, reviewed_sha)
+                reviews, merge_risks = merge_review_sources(comment_reviews, app_reviews)
                 report["reviews"] = reviews
                 report["risks"].extend(review_risks)
+                report["risks"].extend(app_risks)
+                report["risks"].extend(merge_risks)
                 if reviews_pass(reviews):
                     report["review_evidence"] = "AUTHENTIC"
             except SystemExit:

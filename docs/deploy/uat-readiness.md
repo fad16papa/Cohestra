@@ -49,17 +49,46 @@ READY requires the exact immutable PR HEAD and base SHAs, current required
 PR checks, native GitGuardian SUCCESS, and authentic independent BMAD +
 CAT-SEC reviews bound to that HEAD (`BLOCKER=0`, `MAJOR=0`).
 
-Authentic reviews are issue/review comments from **distinct**
-`OWNER`/`MEMBER`/`COLLABORATOR` identities (not the PR author, not bots)
-containing:
+Authentic reviews come from **one** of these fail-closed channels, and the two
+roles must still be **distinct identities**:
+
+1. Issue/review comments from distinct `OWNER`/`MEMBER`/`COLLABORATOR`
+   humans (not the PR author, not bots).
+2. GitHub App **check-runs** on the exact HEAD from two owner-installed
+   apps (`cohestra-bmad` and `cohestra-cat-sec` by default). Check names
+   are `Cohestra BMAD` and `Cohestra CAT-SEC`. `github-actions`,
+   `cursor`, and other forbidden slugs never count.
+
+Both channels require:
 
 ```html
 <!-- cohestra-independent-review v1 -->
 ```
 
 followed by JSON `{role, head_sha, blocker, major, minor, nit, verdict,
-independent:true}`. PR body assertions, self-reviews, bots, SHA mismatches,
-and PASS-with-BLOCKER are rejected.
+independent:true}`. PR body assertions, self-reviews, bots, one shared
+identity, SHA mismatches, and PASS-with-BLOCKER are rejected.
+
+### Owner-only GitHub App setup (no secret values in this repository)
+
+This PR is the **consumer**. It does not create apps, store private keys,
+or dispatch Cursor agents. The Product Owner, outside this PR:
+
+1. Create two GitHub Apps, e.g. `Cohestra BMAD` and `Cohestra CAT-SEC`.
+   Permissions: **Checks: Read & write**, **Metadata: Read**. No contents
+   write, no administration, no Environments, no Actions write.
+2. Install both on `fad16papa/Cohestra` only.
+3. Optionally pin repository **variables** (not secrets):
+   `UAT_READINESS_BMAD_APP_SLUG`, `UAT_READINESS_CATSEC_APP_SLUG`,
+   `UAT_READINESS_BMAD_APP_ID`, `UAT_READINESS_CATSEC_APP_ID`.
+4. Keep each app private key only in the future Issue #536 review runner
+   or a dedicated Cursor environment. Do not paste key values into issues
+   or this PR.
+5. Until both apps post exact-SHA check-runs, readiness stays
+   `REVIEW_EVIDENCE_MISSING` / `HOLD`. That HOLD is correct.
+
+The producer that asks those apps to post check-runs after independent
+Cursor BMAD and CAT-SEC reviews belongs in Issue #536, not this reporter.
 
 `GitGuardian exact-SHA API scan` is required on push-main and is not required
 when CI skipped it on a pull request.

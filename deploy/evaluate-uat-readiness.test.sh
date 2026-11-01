@@ -112,6 +112,52 @@ JSON
 JSON
 }
 
+write_app_review_checks() {
+  local fix="$1"
+  local bmad_slug="${2:-cohestra-bmad}"
+  local cat_slug="${3:-cohestra-cat-sec}"
+  local bmad_sha="${4:-$HEAD_SHA}"
+  local cat_sha="${5:-$HEAD_SHA}"
+  local bmad_conclusion="${6:-success}"
+  local cat_conclusion="${7:-success}"
+  python3 - "$fix/checks_${HEAD_SHA}.json" "$bmad_slug" "$cat_slug" "$bmad_sha" "$cat_sha" "$bmad_conclusion" "$cat_conclusion" <<'PY'
+import json, sys
+path, bmad_slug, cat_slug, bmad_sha, cat_sha, bmad_conc, cat_conc = sys.argv[1:8]
+try:
+    data = json.load(open(path))
+except FileNotFoundError:
+    data = {"total_count": 0, "check_runs": []}
+runs = [row for row in data.get("check_runs", []) if row.get("name") == "GitGuardian Security Checks"]
+def payload(role, sha, verdict="PASS"):
+    return (
+        "<!-- cohestra-independent-review v1 -->\n"
+        f'{{"role":"{role}","head_sha":"{sha}","blocker":0,"major":0,"minor":0,"nit":0,'
+        f'"verdict":"{verdict}","independent":true}}'
+    )
+runs.append({
+    "id": 501,
+    "name": "Cohestra BMAD",
+    "app": {"slug": bmad_slug, "id": 1001},
+    "head_sha": bmad_sha,
+    "status": "completed",
+    "conclusion": bmad_conc,
+    "output": {"summary": payload("BMAD", bmad_sha)},
+})
+runs.append({
+    "id": 502,
+    "name": "Cohestra CAT-SEC",
+    "app": {"slug": cat_slug, "id": 1002},
+    "head_sha": cat_sha,
+    "status": "completed",
+    "conclusion": cat_conc,
+    "output": {"summary": payload("CAT-SEC", cat_sha)},
+})
+data["check_runs"] = runs
+data["total_count"] = len(runs)
+json.dump(data, open(path, "w"))
+PY
+}
+
 write_main_green() {
   local fix="$1"
   mkdir -p "$fix"
@@ -784,5 +830,89 @@ PY
 run_eval "$MAINFIX" --mode main --sha "$MAIN_SHA" >/dev/null
 expect_state "$MAINFIX/out/uat-readiness.json" "UAT_ACTIVATION_HOLD"
 pass "cancelled Deploy UAT is not live disabled-gate HOLD proof"
+
+write_pr_green "$FIX" 9999
+python3 - "$FIX/issue_comments_9999.json" "$HEAD_SHA" <<'PY'
+import json, sys
+sha = sys.argv[2]
+json.dump([
+  {"id":1,"user":{"login":"cursor[bot]","type":"Bot"},"author_association":"NONE","body":"""<!-- cohestra-independent-review v1 -->
+{"role":"BMAD","head_sha":"%s","blocker":0,"major":0,"minor":0,"nit":0,"verdict":"PASS","independent":true}
+""" % sha},
+  {"id":2,"user":{"login":"cursor[bot]","type":"Bot"},"author_association":"NONE","body":"""<!-- cohestra-independent-review v1 -->
+{"role":"CAT-SEC","head_sha":"%s","blocker":0,"major":0,"minor":0,"nit":0,"verdict":"PASS","independent":true}
+""" % sha},
+], open(sys.argv[1], "w"))
+PY
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "HOLD"
+python3 - "$FIX/out/uat-readiness.json" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+assert r["review_evidence"] == "REVIEW_EVIDENCE_MISSING"
+assert r["ready"] is False
+PY
+pass "cursor[bot] comments cannot mint authentic dual-role reviews"
+
+write_pr_green "$FIX" 9999
+echo '[]' >"$FIX/issue_comments_9999.json"
+write_app_review_checks "$FIX"
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "READY_FOR_OWNER_MERGE_DECISION"
+python3 - "$FIX/out/uat-readiness.json" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+assert r["review_evidence"] == "AUTHENTIC"
+assert r["reviews"]["bmad"]["source"] == "github_app_check_run"
+assert r["reviews"]["cat_sec"]["source"] == "github_app_check_run"
+assert r["reviews"]["bmad"]["identity"] != r["reviews"]["cat_sec"]["identity"]
+PY
+pass "distinct allowlisted GitHub App check-runs satisfy independent reviews"
+
+write_pr_green "$FIX" 9999
+echo '[]' >"$FIX/issue_comments_9999.json"
+write_app_review_checks "$FIX" github-actions github-actions
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "HOLD"
+pass "github-actions spoofed review check names are rejected"
+
+write_pr_green "$FIX" 9999
+echo '[]' >"$FIX/issue_comments_9999.json"
+write_app_review_checks "$FIX" cohestra-bmad cohestra-bmad
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "HOLD"
+pass "one GitHub App cannot satisfy both BMAD and CAT-SEC"
+
+write_pr_green "$FIX" 9999
+echo '[]' >"$FIX/issue_comments_9999.json"
+write_app_review_checks "$FIX" cohestra-bmad cohestra-cat-sec eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee "$HEAD_SHA"
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "HOLD"
+pass "stale GitHub App review SHA is not authentic"
+
+write_pr_green "$FIX" 9999
+python3 - "$FIX/issue_comments_9999.json" <<'PY'
+import json, sys
+comments = json.load(open(sys.argv[1]))
+json.dump([comments[0]], open(sys.argv[1], "w"))
+PY
+write_app_review_checks "$FIX"
+# keep only CAT-SEC app by removing BMAD check after write
+python3 - "$FIX/checks_${HEAD_SHA}.json" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
+data["check_runs"] = [row for row in data["check_runs"] if row.get("name") != "Cohestra BMAD"]
+data["total_count"] = len(data["check_runs"])
+json.dump(data, open(sys.argv[1], "w"))
+PY
+run_eval "$FIX" --mode pr --pr 9999 >/dev/null
+expect_state "$FIX/out/uat-readiness.json" "READY_FOR_OWNER_MERGE_DECISION"
+python3 - "$FIX/out/uat-readiness.json" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+assert r["reviews"]["bmad"]["source"] == "collaborator_comment"
+assert r["reviews"]["cat_sec"]["source"] == "github_app_check_run"
+PY
+pass "human MEMBER BMAD plus distinct CAT-SEC app remains authentic"
 
 echo "evaluate-uat-readiness contract OK"
