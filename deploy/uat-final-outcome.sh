@@ -296,6 +296,12 @@ if not host_proven:
         emit(payload, 1)
     refuse("INCOMPLETE", "final outcome has no proven SSH or host evidence", payload)
 
+allowed = {
+    "host_acceptance": {"pass", "ok", "success"},
+    "smoke": {"pass", "ok", "success"},
+    "browser": {"pass", "ok", "success"},
+    "lifecycle": {"pass", "ok", "success", "skip"},
+}
 failures = []
 for label, value in (
     ("host_acceptance", payload["host_acceptance"]),
@@ -305,7 +311,7 @@ for label, value in (
 ):
     if value == "missing":
         failures.append(f"missing:{label}")
-    elif value not in {"pass", "ok", "success"}:
+    elif value not in allowed[label]:
         failures.append(f"failed:{label}={value}")
 
 failed = [item for item in failures if item.startswith("failed:")]

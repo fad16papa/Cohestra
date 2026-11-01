@@ -324,6 +324,26 @@ assert "GITGUARDIAN_API_KEY=" not in blob
 PY
 pass "complete success is DEPLOYED_ACCEPTED"
 
+mkdir -p "$TMP/lifecycle-skip"
+write_predeploy "$TMP/lifecycle-skip" PASS "ok"
+write_dispatch "$TMP/lifecycle-skip"
+write_ssh "$TMP/lifecycle-skip" success
+write_acceptance "$TMP/lifecycle-skip" pass
+write_smoke "$TMP/lifecycle-skip" pass
+write_browser "$TMP/lifecycle-skip" 0
+write_lifecycle "$TMP/lifecycle-skip" skip
+out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-skip" TARGET_SHA="$SHA" bash "$OUTCOME")" \
+  || { echo "$out"; fail "opt-in lifecycle skip must not reject a proven deploy"; }
+python3 - "$TMP/lifecycle-skip/uat-final-outcome.json" <<PY
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
+assert p["uat_deployed"] is True
+assert p["lifecycle"] == "skip"
+assert p["deployed_sha"] == "${SHA}"
+PY
+pass "opt-in lifecycle skip with proven host SHA is DEPLOYED_ACCEPTED"
+
 # Live Deploy UAT downloads Playwright to the checkout root, not artifacts/.
 mkdir -p "$TMP/live/artifacts" "$TMP/live/web/test-results"
 write_predeploy "$TMP/live/artifacts" PASS "ok"
