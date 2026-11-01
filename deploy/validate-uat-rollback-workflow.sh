@@ -29,8 +29,19 @@ grep -q 'default: false' "$WF" || fail "execute must default false"
 grep -q 'environment: uat' "$WF" || fail "Environment uat required for SSH path"
 grep -q 'persist-credentials: false' "$WF" || fail "persist-credentials: false required"
 grep -q 'fail-closed-uat-secrets.sh' "$WF" || fail "fail-closed UAT secrets required before SSH"
-if grep -qE "inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED'" "$WF" \
-  || grep -q 'inputs.execute == true' "$WF"; then
+grep -q 'refs/heads/main' "$WF" || fail "non-main dispatch must be refused"
+grep -q 'github.sha' "$WF" || fail "runner helpers must come from the dispatch SHA"
+if grep -q 'needs.validate.outputs.rollback_sha' "$WF" && grep -A2 'Checkout dispatch SHA' "$WF" | grep -q 'rollback_sha'; then
+  fail "execute job must not checkout the rollback SHA for runner helpers"
+fi
+if grep -A20 'Rollback previous SHA over SSH' "$WF" | grep -q 'bash deploy/uat-rollback.sh'; then
+  fail "droplet SSH must be inline; old trees do not have uat-rollback.sh"
+fi
+grep -q 'bash deploy/uat-compose.sh up -d --build' "$WF" || fail "host rebuild must use uat-compose, not remote-deploy"
+if grep -q 'remote-deploy.sh' "$WF"; then
+  fail "workflow must not call remote-deploy.sh"
+fi
+if grep -q "inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED'" "$WF"; then
   pass "SSH is gated on execute + confirm"
 else
   fail "SSH must be gated on execute and confirm phrase"

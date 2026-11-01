@@ -33,9 +33,18 @@ jobs:
     outputs:
       rollback_sha: ${{ steps.gate.outputs.rollback_sha }}
     steps:
-      - name: Checkout main history
+      - name: Require refs/heads/main
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "REFUSE: UAT rollback must be dispatched from main"
+            exit 1
+          fi
+
+      - name: Checkout dispatch SHA on main
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -49,6 +58,7 @@ jobs:
           ORIGIN_MAIN_REF: origin/main
         run: |
           set -euo pipefail
+          git fetch --no-tags origin main:refs/remotes/origin/main
           bash deploy/uat-rollback.sh
           echo "rollback_sha=${ROLLBACK_SHA,,}" >>"$GITHUB_OUTPUT"
 
@@ -59,10 +69,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: uat
     steps:
-      - name: Checkout validated SHA
+      - name: Checkout dispatch SHA for runner helpers
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          ref: ${{ needs.validate.outputs.rollback_sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -79,21 +89,57 @@ jobs:
         env:
           DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
           ROLLBACK_SHA: ${{ needs.validate.outputs.rollback_sha }}
-          UAT_ROLLBACK_CONFIRM: ${{ inputs.confirm }}
         with:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
           port: 22
           command_timeout: 60m
-          envs: DROPLET_DEPLOY_PATH,ROLLBACK_SHA,UAT_ROLLBACK_CONFIRM
+          envs: DROPLET_DEPLOY_PATH,ROLLBACK_SHA
           script: |
             set -euo pipefail
+            if [[ ! "${ROLLBACK_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              echo "REFUSE: ROLLBACK_SHA must be a 40-character hexadecimal Git SHA"
+              exit 1
+            fi
+            ROLLBACK_SHA="${ROLLBACK_SHA,,}"
             DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-/home/deploy/cohestra}"
             cd "$DEPLOY_PATH"
             export GIT_TERMINAL_PROMPT=0
-            git fetch origin main
-            UAT_ROLLBACK_AUTHORIZED=true \
-              UAT_ROLLBACK_EXECUTE=true \
-              ORIGIN_MAIN_REF=origin/main \
-              bash deploy/uat-rollback.sh
+            fetch_ok=0
+            for attempt in 1 2 3 4 5 6; do
+              if git fetch origin main; then
+                fetch_ok=1
+                break
+              fi
+              echo "WARN: git fetch origin/main attempt ${attempt} failed"
+              sleep 20
+            done
+            if [[ "$fetch_ok" != 1 ]]; then
+              echo "REFUSE: git fetch origin/main failed after retries"
+              exit 1
+            fi
+            TIP_SHA="$(git rev-parse --verify origin/main)"
+            TIP_SHA="${TIP_SHA,,}"
+            if [[ "$ROLLBACK_SHA" == "$TIP_SHA" ]]; then
+              echo "REFUSE: current origin/main tip must use Deploy UAT, not rollback"
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$ROLLBACK_SHA" origin/main; then
+              echo "REFUSE: ROLLBACK_SHA is not an ancestor of origin/main"
+              exit 1
+            fi
+            git reset --hard "$ROLLBACK_SHA"
+            ACTUAL="$(git rev-parse HEAD)"
+            if [[ "${ACTUAL,,}" != "$ROLLBACK_SHA" ]]; then
+              echo "REFUSE: DEPLOYED_SHA does not match ROLLBACK_SHA"
+              exit 1
+            fi
+            echo "EXPECTED_SHA=${ROLLBACK_SHA}"
+            echo "DEPLOYED_SHA=${ACTUAL,,}"
+            if [[ ! -f deploy/uat-compose.sh ]]; then
+              echo "REFUSE: isolated UAT compose helper is missing on this SHA"
+              exit 1
+            fi
+            bash deploy/uat-compose.sh up -d --build
+            echo "DATABASE_MUTATED=false"

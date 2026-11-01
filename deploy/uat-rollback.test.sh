@@ -86,7 +86,18 @@ pass "current tip is refused"
 
 RANDOM_SHA="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 if run "$RANDOM_SHA" >/dev/null 2>&1; then
-  fail "non-ancestor SHA must refuse"
+  fail "unknown object must refuse"
+fi
+pass "unknown git object is refused"
+
+git -C "$PROVENANCE_LOCAL" checkout -q --orphan rollback-side
+echo orphan >"$PROVENANCE_LOCAL/orphan"
+git -C "$PROVENANCE_LOCAL" add orphan
+git -C "$PROVENANCE_LOCAL" -c user.email=t@t -c user.name=t commit -q -m orphan
+ORPHAN="$(git -C "$PROVENANCE_LOCAL" rev-parse HEAD)"
+git -C "$PROVENANCE_LOCAL" checkout -q main
+if run "$ORPHAN" >/dev/null 2>&1; then
+  fail "non-ancestor commit must refuse"
 fi
 pass "SHA that is not an ancestor of origin/main is refused"
 
@@ -94,7 +105,14 @@ if UAT_ROLLBACK_AUTHORIZED=true UAT_ROLLBACK_CONFIRM='UAT ROLLBACK: AUTHORIZED' 
   ROLLBACK_SHA="$PROVENANCE_PARENT" bash "$SCRIPT" --restore-dump x >/dev/null 2>&1; then
   fail "database restore flag must refuse"
 fi
-pass "database restore is refused"
+if RESTORE_DUMP=x UAT_ROLLBACK_AUTHORIZED=true UAT_ROLLBACK_CONFIRM='UAT ROLLBACK: AUTHORIZED' \
+  ROLLBACK_SHA="$PROVENANCE_PARENT" bash "$SCRIPT" >/dev/null 2>&1; then
+  fail "RESTORE_DUMP env must refuse"
+fi
+if grep -nE 'bash .*remote-deploy\.sh|deploy/remote-deploy\.sh"' "$SCRIPT"; then
+  fail "execute must not call remote-deploy.sh (old copies reset to origin/main)"
+fi
+pass "database restore is refused and remote-deploy is not used"
 
 BEFORE="$(git rev-parse HEAD)"
 out="$(run "$PROVENANCE_PARENT")" || { echo "$out"; fail "authorized dry-run should hold"; }

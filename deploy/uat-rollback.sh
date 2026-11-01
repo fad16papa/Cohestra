@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Dedicated UAT previous-SHA recovery. Dry-run by default.
 # Does not weaken Deploy UAT tip-pin. Does not touch Production or restore DBs.
+# Execute never calls remote-deploy.sh: older copies of that script reset to
+# origin/main and would undo the rollback.
 
 set -euo pipefail
 
@@ -32,7 +34,7 @@ if [[ "${UAT_ROLLBACK_CONFIRM:-}" != "UAT ROLLBACK: AUTHORIZED" ]]; then
   refuse "owner confirm phrase must be exactly UAT ROLLBACK: AUTHORIZED"
 fi
 
-ROLLBACK_SHA="${ROLLBACK_SHA:-${DEPLOY_SHA:-}}"
+ROLLBACK_SHA="${ROLLBACK_SHA:-}"
 if [[ ! "$ROLLBACK_SHA" =~ ^[0-9a-fA-F]{40}$ ]]; then
   refuse "ROLLBACK_SHA must be a full 40-character hexadecimal Git SHA"
 fi
@@ -72,8 +74,10 @@ DEPLOY_SHA="$ROLLBACK_SHA" reset_accepted_sha || refuse "host tree reset failed"
 
 if [[ "${COHESTRA_UAT_COMPOSE_STUB:-}" == "true" ]]; then
   echo "COMPOSE=stubbed"
+elif [[ -x "$ROOT_DIR/deploy/uat-compose.sh" || -f "$ROOT_DIR/deploy/uat-compose.sh" ]]; then
+  bash "$ROOT_DIR/deploy/uat-compose.sh" up -d --build
 else
-  DEPLOY_SHA="$ROLLBACK_SHA" bash "$ROOT_DIR/deploy/remote-deploy.sh"
+  refuse "isolated UAT compose helper is missing on this SHA"
 fi
 
 echo "RESULT=PASS"
