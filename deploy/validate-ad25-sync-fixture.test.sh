@@ -50,14 +50,16 @@ git -C "$TMP/src" checkout -q -B release/uat "$PRC_SHA"
 git -C "$TMP/src" checkout -q -B prd "$PRD_SHA"
 PARENT="$(git -C "$TMP/src" rev-parse release/uat)"
 
-mapfile -t ALLOW < <(python3 - "$ROOT_DIR" <<'PY'
+ALLOW_TXT="$(python3 - "$ROOT_DIR" <<'PY'
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(sys.argv[1]) / "deploy" / "lib"))
 from ad25_sync_allowlist import load_allowlist
 print("\n".join(load_allowlist(Path(sys.argv[1]))))
 PY
-)
+)" || fail "could not load AD-25 allowlist"
+mapfile -t ALLOW <<<"$ALLOW_TXT"
+[[ ${#ALLOW[@]} -gt 0 ]] || fail "allowlist is empty"
 
 git -C "$TMP/src" checkout -q release/uat
 for p in "${ALLOW[@]}"; do

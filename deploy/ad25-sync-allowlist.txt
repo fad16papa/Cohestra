@@ -15,7 +15,7 @@ deploy/commission-uat-hold.test.sh
 deploy/fetch-origin-main.test.sh
 deploy/fetch-origin-uat.sh
 deploy/fetch-origin-uat.test.sh
-deploy/lib/ad25-sync-allowlist.py
+deploy/lib/ad25_sync_allowlist.py
 deploy/lib/uat-predeploy-gate.py
 deploy/reproduce-ad25-seven-path-gap.sh
 deploy/simulate-merge-token-trigger.py

@@ -54,7 +54,7 @@ As the Cohestra owner, I want Deploy UAT to run only from protected `push` event
 - `deploy/write-uat-deploy-provenance.sh`
 - `deploy/write-uat-deploy-provenance.test.sh`
 - `deploy/ad25-sync-allowlist.txt`
-- `deploy/lib/ad25-sync-allowlist.py`
+- `deploy/lib/ad25_sync_allowlist.py`
 - `deploy/reproduce-ad25-seven-path-gap.sh`
 - `deploy/validate-ad25-sync-procedure.sh`
 - `deploy/validate-ad25-sync-fixture.test.sh`
