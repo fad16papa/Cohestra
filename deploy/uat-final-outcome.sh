@@ -59,7 +59,7 @@ def emit(payload: dict, exit_code: int) -> None:
     raise SystemExit(exit_code)
 
 
-def load(name: str, extra: list[Path] | None = None) -> dict | None:
+def collect(name: str, extra: list[Path] | None = None) -> tuple[dict | None, str]:
     candidates = [evidence_dir / name]
     if extra:
         candidates.extend(extra)
@@ -79,22 +79,36 @@ def load(name: str, extra: list[Path] | None = None) -> dict | None:
         if resolved in seen:
             continue
         seen.append(resolved)
-        text = path.read_text(encoding="utf-8")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return None, "not_json"
         for needle in SECRET_MARKERS:
             if needle in text:
                 refuse("REFUSED", f"secret-like material in {path.name}", base_payload())
         try:
             obj = json.loads(text)
         except json.JSONDecodeError:
-            refuse("INCOMPLETE", f"{path.name} is not JSON", base_payload())
+            return None, "not_json"
         if not isinstance(obj, dict):
-            refuse("INCOMPLETE", f"{path.name} is not an object", base_payload())
+            return None, "not_object"
         objects.append(obj)
     if not objects:
-        return None
+        return None, "missing"
     if len({json.dumps(item, sort_keys=True) for item in objects}) > 1:
+        return None, "inconsistent"
+    return objects[0], ""
+
+
+def load(name: str, extra: list[Path] | None = None) -> dict | None:
+    obj, err = collect(name, extra)
+    if err in {"", "missing"}:
+        return obj
+    if err == "inconsistent":
         refuse("INCONSISTENT", f"duplicate {name} artifacts disagree", base_payload())
-    return objects[0]
+    if err == "not_object":
+        refuse("INCOMPLETE", f"{name} is not an object", base_payload())
+    refuse("INCOMPLETE", f"{name} is not JSON", base_payload())
 
 
 def norm_sha(value: object) -> str:
@@ -121,17 +135,34 @@ def section_result(raw: dict | None, *keys: str) -> str:
     return "unknown"
 
 
+def schema_count(value: object) -> int | None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
+    if value < 0:
+        return None
+    return value
+
+
 def playwright_result(raw: dict | None) -> str:
-    if raw is None:
-        return "missing"
-    stats = raw.get("stats") if isinstance(raw.get("stats"), dict) else {}
-    unexpected = int(stats.get("unexpected") or 0)
-    expected = int(stats.get("expected") or 0)
-    if expected > 0 and unexpected == 0:
-        return "pass"
-    if expected == 0 and unexpected == 0 and not stats:
-        return "unknown"
-    return "fail"
+    try:
+        if raw is None:
+            return "missing"
+        stats = raw.get("stats")
+        if not isinstance(stats, dict):
+            return "malformed"
+        if "expected" not in stats or "unexpected" not in stats:
+            return "malformed"
+        expected = schema_count(stats.get("expected"))
+        unexpected = schema_count(stats.get("unexpected"))
+        if expected is None or unexpected is None:
+            return "malformed"
+        if expected == 0:
+            return "malformed"
+        if unexpected == 0:
+            return "pass"
+        return "fail"
+    except Exception:
+        return "malformed"
 
 
 def base_payload() -> dict:
@@ -176,7 +207,7 @@ dispatch = load("uat-deploy-dispatch.json")
 ssh_step = load("uat-ssh-execution.json")
 acceptance = load("uat-acceptance.json")
 smoke = load("uat-public-smoke.json")
-browser = load(
+browser, browser_err = collect(
     "uat-playwright.json",
     extra=[
         evidence_dir / "web" / "test-results" / "uat-playwright.json",
@@ -271,10 +302,20 @@ payload["deployed_sha"] = deployed_sha
 payload["deployment_phase"] = phase
 payload["host_acceptance"] = section_result(acceptance, "result")
 payload["smoke"] = section_result(smoke, "result")
-payload["browser"] = playwright_result(browser)
+if browser_err == "missing":
+    payload["browser"] = "missing"
+elif browser_err == "inconsistent":
+    payload["browser"] = "inconsistent"
+elif browser_err:
+    payload["browser"] = "malformed"
+else:
+    payload["browser"] = playwright_result(browser)
 payload["lifecycle"] = section_result(lifecycle, "result")
 
 if not payload["ssh_attempted"] and eligibility in {"HOLD", "REFUSE"}:
+    # Exit 0 publishes structured HOLD JSON for the always() aggregator.
+    # SSH eligibility is needs.predeploy-gate.outputs.eligible == 'true',
+    # never this process exit code.
     payload["uat_deployment_outcome"] = "HELD" if eligibility == "HOLD" else "REFUSED"
     payload["diagnostics"] = str((pre or {}).get("reason") or (status or {}).get("diagnostics") or "predeploy gate held")
     payload["result"] = "HOLD"
@@ -317,6 +358,8 @@ for label, value in (
 ):
     if value == "missing":
         failures.append(f"missing:{label}")
+    elif label == "browser" and value in {"malformed", "unknown", "invalid", "inconsistent"}:
+        failures.append(f"missing:browser={value}")
     elif label == "lifecycle" and value == "skip" and lifecycle_reason not in AUTHORIZED_LIFECYCLE_SKIP:
         failures.append("failed:lifecycle=unauthorized_skip")
     elif value not in allowed[label]:

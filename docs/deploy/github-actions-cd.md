@@ -27,7 +27,8 @@ push / merge to main
     → uat-acceptance.json + public smoke + Playwright (required)
     → 19-5-lifecycle.json (opt-in; authorized skip is SKIPPED, not a required pass)
     → acceptance-summary.json (story, sha, deployment, runtime, browser, security, provider, tests, result)
-    → uat-final-outcome.json (DEPLOYED_ACCEPTED only when required checks pass)
+    → uat-final-outcome.json (DEPLOYED_ACCEPTED only when required checks pass;
+      pre-SSH HELD may exit 0 — eligibility is eligible==true, not aggregator rc)
 ```
 
 | Workflow | File | Trigger |

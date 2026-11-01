@@ -67,6 +67,26 @@ write_ssh() {
 JSON
 }
 
+write_proven_host() {
+  write_predeploy "$1" PASS "ok"
+  write_dispatch "$1"
+  write_ssh "$1" success
+  write_acceptance "$1" pass
+  write_smoke "$1" pass
+  write_lifecycle "$1" pass
+}
+
+write_browser_raw() {
+  mkdir -p "$1/web/test-results"
+  printf '%s\n' "$2" >"$1/web/test-results/uat-playwright.json"
+}
+
+run_outcome() {
+  local dir="$1"
+  OUTCOME_RC=0
+  OUTCOME_OUT="$(UAT_FINAL_OUTCOME_DIR="$dir" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)" || OUTCOME_RC=$?
+}
+
 if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/empty" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
   echo "$out"
   fail "missing evidence must not PASS"
@@ -76,19 +96,22 @@ pass "missing evidence fails closed"
 
 mkdir -p "$TMP/hold"
 write_predeploy "$TMP/hold" HOLD "UAT_DEPLOY_GATE_ACTIVE is not true"
-out="$(UAT_FINAL_OUTCOME_DIR="$TMP/hold" TARGET_SHA="$SHA" bash "$OUTCOME")" \
-  || { echo "$out"; fail "HOLD-only evidence should classify as HELD"; }
+run_outcome "$TMP/hold"
+[[ "$OUTCOME_RC" -eq 0 ]] || { echo "$OUTCOME_OUT"; fail "pre-SSH HELD may exit 0 for status aggregation"; }
+echo "$OUTCOME_OUT" | grep -q 'RESULT=HOLD' || { echo "$OUTCOME_OUT"; fail "HELD must print RESULT=HOLD"; }
+echo "$OUTCOME_OUT" | grep -q 'UAT_DEPLOYMENT_OUTCOME=HELD' || { echo "$OUTCOME_OUT"; fail "HELD outcome token"; }
 python3 - "$TMP/hold/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
 assert p["phase"] == "final"
 assert p["uat_deployment_outcome"] == "HELD"
+assert p["result"] == "HOLD"
 assert p["eligibility"] == "HOLD"
 assert p["ssh_executed"] is False
 assert p["uat_deployed"] is False
 assert p["deployment_phase"] == "NOT_STARTED"
 PY
-pass "predeploy HOLD finalizes as HELD with no SSH"
+pass "predeploy HOLD finalizes as HELD with exit 0; eligibility is JSON not rc"
 
 mkdir -p "$TMP/inconsistent"
 write_predeploy "$TMP/inconsistent" PASS "ok"
@@ -391,10 +414,8 @@ write_ssh "$TMP/lifecycle-missing" success
 write_acceptance "$TMP/lifecycle-missing" pass
 write_smoke "$TMP/lifecycle-missing" pass
 write_browser "$TMP/lifecycle-missing" 0
-if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-missing" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
-  echo "$out"
-  fail "missing lifecycle artifact must HOLD"
-fi
+run_outcome "$TMP/lifecycle-missing"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "missing lifecycle artifact must exit nonzero"; }
 python3 - "$TMP/lifecycle-missing/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
@@ -413,10 +434,8 @@ write_acceptance "$TMP/lifecycle-bare-skip" pass
 write_smoke "$TMP/lifecycle-bare-skip" pass
 write_browser "$TMP/lifecycle-bare-skip" 0
 write_lifecycle "$TMP/lifecycle-bare-skip" skip
-if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-bare-skip" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
-  echo "$out"
-  fail "skip without authorized reason must not ACCEPTED"
-fi
+run_outcome "$TMP/lifecycle-bare-skip"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "skip without authorized reason must exit nonzero"; }
 python3 - "$TMP/lifecycle-bare-skip/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
@@ -435,10 +454,8 @@ write_acceptance "$TMP/lifecycle-fake-skip" pass
 write_smoke "$TMP/lifecycle-fake-skip" pass
 write_browser "$TMP/lifecycle-fake-skip" 0
 write_lifecycle_skip "$TMP/lifecycle-fake-skip" all_good
-if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-fake-skip" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
-  echo "$out"
-  fail "unauthorized skip reason must not ACCEPTED"
-fi
+run_outcome "$TMP/lifecycle-fake-skip"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "unauthorized skip reason must exit nonzero"; }
 python3 - "$TMP/lifecycle-fake-skip/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
@@ -450,45 +467,110 @@ PY
 pass "unauthorized skip reason HOLDs"
 
 mkdir -p "$TMP/smoke-skip"
-write_predeploy "$TMP/smoke-skip" PASS "ok"
-write_dispatch "$TMP/smoke-skip"
-write_ssh "$TMP/smoke-skip" success
-write_acceptance "$TMP/smoke-skip" pass
+write_proven_host "$TMP/smoke-skip"
 write_smoke "$TMP/smoke-skip" skip
 write_browser "$TMP/smoke-skip" 0
-write_lifecycle "$TMP/smoke-skip" pass
-if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/smoke-skip" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
-  echo "$out"
-  fail "mandatory smoke skip must not ACCEPTED"
-fi
+run_outcome "$TMP/smoke-skip"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "mandatory smoke skip must exit nonzero"; }
 python3 - "$TMP/smoke-skip/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_REJECTED", p
 assert p["result"] == "HOLD", p
 assert p["smoke"] == "skip", p
+assert p["uat_deployed"] is True, p
 PY
-pass "mandatory smoke skip cannot be DEPLOYED_ACCEPTED"
+pass "mandatory smoke skip is DEPLOYED_REJECTED HOLD exit 1"
 
 mkdir -p "$TMP/browser-missing-ok-rest"
-write_predeploy "$TMP/browser-missing-ok-rest" PASS "ok"
-write_dispatch "$TMP/browser-missing-ok-rest"
-write_ssh "$TMP/browser-missing-ok-rest" success
-write_acceptance "$TMP/browser-missing-ok-rest" pass
-write_smoke "$TMP/browser-missing-ok-rest" pass
-write_lifecycle "$TMP/browser-missing-ok-rest" pass
-if out="$(UAT_FINAL_OUTCOME_DIR="$TMP/browser-missing-ok-rest" TARGET_SHA="$SHA" bash "$OUTCOME" 2>&1)"; then
-  echo "$out"
-  fail "missing Playwright must not ACCEPTED"
-fi
+write_proven_host "$TMP/browser-missing-ok-rest"
+run_outcome "$TMP/browser-missing-ok-rest"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "missing Playwright must exit nonzero"; }
 python3 - "$TMP/browser-missing-ok-rest/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] == "INCOMPLETE", p
 assert p["result"] == "HOLD", p
 assert p["browser"] == "missing", p
+assert p["uat_deployed"] is True, p
 PY
-pass "missing mandatory Playwright cannot be DEPLOYED_ACCEPTED"
+pass "missing mandatory Playwright is INCOMPLETE HOLD exit 1"
+
+assert_malformed_browser() {
+  local dir="$1"
+  local label="$2"
+  run_outcome "$dir"
+  [[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "$label must exit nonzero"; }
+  python3 - "$dir/uat-final-outcome.json" "$label" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+label = sys.argv[2]
+assert p["uat_deployment_outcome"] == "INCOMPLETE", (label, p)
+assert p["result"] == "HOLD", (label, p)
+assert p["uat_deployed"] is True, (label, p)
+assert p["browser"] != "pass", (label, p)
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", (label, p)
+PY
+  pass "$label"
+}
+
+mkdir -p "$TMP/pw-stats-absent"
+write_proven_host "$TMP/pw-stats-absent"
+write_browser_raw "$TMP/pw-stats-absent" '{"suites":[]}'
+assert_malformed_browser "$TMP/pw-stats-absent" "Playwright stats absent HOLDs INCOMPLETE"
+
+mkdir -p "$TMP/pw-expected-absent"
+write_proven_host "$TMP/pw-expected-absent"
+write_browser_raw "$TMP/pw-expected-absent" '{"stats":{"unexpected":0,"skipped":0}}'
+assert_malformed_browser "$TMP/pw-expected-absent" "Playwright expected absent HOLDs INCOMPLETE"
+
+mkdir -p "$TMP/pw-expected-zero"
+write_proven_host "$TMP/pw-expected-zero"
+write_browser_raw "$TMP/pw-expected-zero" '{"stats":{"expected":0,"unexpected":0,"skipped":0}}'
+assert_malformed_browser "$TMP/pw-expected-zero" "Playwright expected zero HOLDs INCOMPLETE"
+
+mkdir -p "$TMP/pw-unexpected-absent"
+write_proven_host "$TMP/pw-unexpected-absent"
+write_browser_raw "$TMP/pw-unexpected-absent" '{"stats":{"expected":8,"skipped":0}}'
+assert_malformed_browser "$TMP/pw-unexpected-absent" "Playwright unexpected absent HOLDs INCOMPLETE"
+
+mkdir -p "$TMP/pw-nonnumeric"
+write_proven_host "$TMP/pw-nonnumeric"
+write_browser_raw "$TMP/pw-nonnumeric" '{"stats":{"expected":"eight","unexpected":"none"}}'
+assert_malformed_browser "$TMP/pw-nonnumeric" "Playwright nonnumeric stats HOLD INCOMPLETE"
+
+mkdir -p "$TMP/pw-booleans"
+write_proven_host "$TMP/pw-booleans"
+write_browser_raw "$TMP/pw-booleans" '{"stats":{"expected":true,"unexpected":false}}'
+assert_malformed_browser "$TMP/pw-booleans" "Playwright boolean stats HOLD INCOMPLETE"
+
+mkdir -p "$TMP/pw-negatives"
+write_proven_host "$TMP/pw-negatives"
+write_browser_raw "$TMP/pw-negatives" '{"stats":{"expected":-1,"unexpected":-2}}'
+assert_malformed_browser "$TMP/pw-negatives" "Playwright negative stats HOLD INCOMPLETE"
+
+mkdir -p "$TMP/pw-malformed-json"
+write_proven_host "$TMP/pw-malformed-json"
+write_browser_raw "$TMP/pw-malformed-json" '{stats: not-json'
+assert_malformed_browser "$TMP/pw-malformed-json" "Playwright malformed JSON HOLD INCOMPLETE"
+
+mkdir -p "$TMP/pw-duplicate"
+write_proven_host "$TMP/pw-duplicate"
+write_browser "$TMP/pw-duplicate" 0
+cat >"$TMP/pw-duplicate/uat-playwright.json" <<'JSON'
+{"stats":{"expected":3,"skipped":0,"unexpected":1,"flaky":0}}
+JSON
+run_outcome "$TMP/pw-duplicate"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "conflicting Playwright artifacts must exit nonzero"; }
+python3 - "$TMP/pw-duplicate/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] in {"INCOMPLETE", "INCONSISTENT"}, p
+assert p["result"] == "HOLD", p
+assert p["uat_deployed"] is True, p
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+PY
+pass "duplicate conflicting Playwright artifacts HOLD with host-proven deploy"
 
 # Live Deploy UAT downloads Playwright to the checkout root, not artifacts/.
 mkdir -p "$TMP/live/artifacts" "$TMP/live/web/test-results"
@@ -541,6 +623,11 @@ if "DROPLET_" in block or "PROD_" in block:
     raise SystemExit("final outcome job must not read UAT/Production secrets")
 if "appleboy/ssh-action" in block:
     raise SystemExit("final outcome job must not SSH")
+if "needs.delivery-outcome" in text[text.find("  deploy:"):text.find("  browser:")]:
+    raise SystemExit("SSH job must not depend on delivery-outcome exit code")
+if "needs.predeploy-gate.outputs.eligible == 'true'" not in text and \
+   'needs.predeploy-gate.outputs.eligible == "true"' not in text:
+    raise SystemExit("SSH remains gated on eligible==true, not aggregator rc")
 deploy = text[text.find("  deploy:"):text.find("  browser:")]
 if deploy.find("record-uat-deploy-dispatch.sh") > deploy.find("appleboy/ssh-action"):
     raise SystemExit("dispatch evidence must remain pre-SSH intent")

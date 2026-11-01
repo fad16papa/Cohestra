@@ -23,6 +23,10 @@
   from `web/test-results/` after download-artifact. Story 19.5 lifecycle
   is opt-in: authorized `skip` (`lifecycle_disabled` / `story_closed`) is
   `SKIPPED`, not a required pass. Missing or unauthorized skip HOLDs.
+  Playwright stats must be valid nonnegative integers; malformed or
+  missing browser proof is `INCOMPLETE` and cannot be `DEPLOYED_ACCEPTED`.
+  A pre-SSH `HELD` aggregator may exit 0; SSH eligibility remains
+  `eligible == true`, not the aggregator process exit code.
 - Binding contract: host acceptance, public smoke, and Playwright are
   required. Lifecycle is optional when skip is authorized.
 - Continuous path remains: merge → main CI → scans SUCCESS → predeploy

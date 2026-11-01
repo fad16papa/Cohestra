@@ -51,10 +51,20 @@ SHA, host acceptance, smoke, Playwright, and lifecycle. Pre-SSH
 a proven host accepted SHA. Failed or interrupted SSH is
 `ATTEMPTED`/`UNKNOWN` (`uat_deployed=null`). A confirmed deploy plus later
 required-check failure is `DEPLOYED_REJECTED`, never “no deployment occurred.”
-Host acceptance, public smoke, and Playwright must pass. Story 19.5
-lifecycle is opt-in: `result=skip` with `reason=lifecycle_disabled` or
-`story_closed` is `SKIPPED`, not a required pass. Missing or unauthorized
-skip evidence HOLDs.
+Host acceptance, public smoke, and Playwright must pass. Playwright
+`stats.expected` / `stats.unexpected` must be present nonnegative integers;
+absent, zero-expected, non-integer, boolean, negative, or unparseable
+stats are `INCOMPLETE`/`HOLD`, never `DEPLOYED_ACCEPTED`. A host-proven
+deploy keeps `uat_deployed=true` when browser evidence is malformed.
+Story 19.5 lifecycle is opt-in: `result=skip` with
+`reason=lifecycle_disabled` or `story_closed` is `SKIPPED`, not a
+required pass. Missing or unauthorized skip evidence HOLDs.
+
+Aggregator process exit is not release eligibility. A pre-SSH `HELD`
+gate may exit 0 so `uat-final-outcome.json` can be uploaded with
+`result=HOLD` / `uat_deployment_outcome=HELD`. SSH stays gated on
+`needs.predeploy-gate.outputs.eligible == 'true'`; the deploy job is
+skipped on HOLD regardless of the aggregator exit code.
 
 A live Deploy UAT HOLD still requires one owner-authorized
 `workflow_dispatch` on `main` **or** the next `workflow_run` after Deploy UAT
@@ -155,6 +165,8 @@ failing code; produce a new SHA and retest.
 - `deploy/uat-final-outcome.test.sh` — missing, inconsistent, incomplete,
   pre-SSH dispatch, failed SSH, and failed postdeploy evidence fail closed;
   only a proven host SHA may set `uat_deployed=true`; authorized lifecycle
-  skip is optional; missing or malformed skip HOLDs.
+  skip is optional; missing, malformed, or unauthorized skip HOLDs;
+  malformed Playwright stats HOLD as `INCOMPLETE`; pre-SSH `HELD` may
+  exit 0 because eligibility is JSON + `eligible`, not aggregator rc.
 - `deploy/record-uat-ssh-execution.test.sh` — post-SSH step conclusion is
   recorded without claiming host mutation.
