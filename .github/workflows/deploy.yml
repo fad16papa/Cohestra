@@ -60,12 +60,27 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           ORIGIN_MAIN_REF: origin/main
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_READINESS_BMAD_APP_SLUG: ${{ vars.UAT_READINESS_BMAD_APP_SLUG }}
+          UAT_READINESS_CATSEC_APP_SLUG: ${{ vars.UAT_READINESS_CATSEC_APP_SLUG }}
+          UAT_READINESS_BMAD_APP_ID: ${{ vars.UAT_READINESS_BMAD_APP_ID }}
+          UAT_READINESS_CATSEC_APP_ID: ${{ vars.UAT_READINESS_CATSEC_APP_ID }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
+            env -u COHESTRA_GH_API_MOCK \
+              UAT_READINESS_MODE=predeploy \
+              UAT_READINESS_SHA="${CANDIDATE_SHA}" \
+              UAT_READINESS_OUT_DIR=artifacts \
+              bash deploy/evaluate-uat-readiness.sh || true
             env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
           else
             bash deploy/fetch-origin-main.sh
+            env -u COHESTRA_GH_API_MOCK \
+              UAT_READINESS_MODE=predeploy \
+              UAT_READINESS_SHA="${CANDIDATE_SHA}" \
+              UAT_READINESS_OUT_DIR=artifacts \
+              bash deploy/evaluate-uat-readiness.sh
+            env -u COHESTRA_GH_API_MOCK bash deploy/require-uat-readiness-predeploy.sh
             env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
           fi
 
@@ -141,14 +156,53 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           ORIGIN_MAIN_REF: origin/main
           UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_READINESS_BMAD_APP_SLUG: ${{ vars.UAT_READINESS_BMAD_APP_SLUG }}
+          UAT_READINESS_CATSEC_APP_SLUG: ${{ vars.UAT_READINESS_CATSEC_APP_SLUG }}
+          UAT_READINESS_BMAD_APP_ID: ${{ vars.UAT_READINESS_BMAD_APP_ID }}
+          UAT_READINESS_CATSEC_APP_ID: ${{ vars.UAT_READINESS_CATSEC_APP_ID }}
         run: |
           set -euo pipefail
           if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
+            env -u COHESTRA_GH_API_MOCK \
+              UAT_READINESS_MODE=predeploy \
+              UAT_READINESS_SHA="${CANDIDATE_SHA}" \
+              UAT_READINESS_OUT_DIR=artifacts \
+              bash deploy/evaluate-uat-readiness.sh || true
             env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
           else
             bash deploy/fetch-origin-main.sh
             env -u COHESTRA_GH_API_MOCK bash deploy/validate-uat-predeploy-gate.sh
+            env -u COHESTRA_GH_API_MOCK \
+              UAT_READINESS_MODE=predeploy \
+              UAT_READINESS_SHA="${CANDIDATE_SHA}" \
+              UAT_READINESS_OUT_DIR=artifacts \
+              bash deploy/evaluate-uat-readiness.sh
+            env -u COHESTRA_GH_API_MOCK bash deploy/require-uat-readiness-predeploy.sh
           fi
+
+      - name: Revalidate UAT readiness before SSH
+        env:
+          CANDIDATE_SHA: ${{ env.TARGET_SHA }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}
+          UAT_READINESS_BMAD_APP_SLUG: ${{ vars.UAT_READINESS_BMAD_APP_SLUG }}
+          UAT_READINESS_CATSEC_APP_SLUG: ${{ vars.UAT_READINESS_CATSEC_APP_SLUG }}
+          UAT_READINESS_BMAD_APP_ID: ${{ vars.UAT_READINESS_BMAD_APP_ID }}
+          UAT_READINESS_CATSEC_APP_ID: ${{ vars.UAT_READINESS_CATSEC_APP_ID }}
+        run: |
+          set -euo pipefail
+          if [[ "${UAT_DEPLOY_GATE_ACTIVE:-}" != "true" ]]; then
+            echo "RESULT=HOLD"
+            echo "HOLD_REASON=UAT_DEPLOY_GATE_ACTIVE is not true; SSH remains skipped"
+            exit 1
+          fi
+          env -u COHESTRA_GH_API_MOCK \
+            UAT_READINESS_MODE=predeploy \
+            UAT_READINESS_SHA="${CANDIDATE_SHA}" \
+            UAT_READINESS_OUT_DIR=artifacts \
+            bash deploy/evaluate-uat-readiness.sh
+          env -u COHESTRA_GH_API_MOCK bash deploy/require-uat-readiness-predeploy.sh
 
       - name: Fail closed if UAT secrets are missing
         env:
