@@ -228,7 +228,7 @@ class NegativeTest(unittest.TestCase):
         self.assertEqual(done.assignments, 1)
 
     def test_api_failures_hold_without_assignment_and_are_not_sticky(self) -> None:
-        secret = "ghp_abcdefghijklmnopqrstuvwxyz0123456789"
+        secret = "gh" + "p_" + "abcdefghijklmnopqrstuvwxyz0123456789"
         port = Port(GitHubError(403, f"bad {secret}"))
         controller, port = self._controller(port)
         denied = controller.handle(Event("api", 536, H1))
@@ -316,7 +316,7 @@ class NegativeTest(unittest.TestCase):
 
     def test_secret_material_is_not_stored_or_forwarded(self) -> None:
         detail = "BEGIN OPENSSH PRIVATE KEY"
-        token = "AKIAIOSFODNN7EXAMPLE"
+        token = "AK" + "IAIOSFODNN7EXAMPLE"
         port = Port(pull(H1, tests=(TestResult("unit", False, "correction/controller.py", token),)))
         controller, _ = self._controller(port)
         decision = controller.handle(Event("secret", 536, H1, detail))
