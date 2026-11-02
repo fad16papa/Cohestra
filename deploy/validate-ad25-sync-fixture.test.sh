@@ -188,4 +188,34 @@ else
 fi
 git -C "$TMP/src" checkout -q prd -- deploy/validate-inline-suppression.test.sh
 
+# --- 4. Fail-closed hardening contract (present on this tree; optional on a
+# 21-path-only dest that has not yet received the follow-on sync files).
+if [[ -f "$ROOT_DIR/deploy/validate-ad25-hardening.test.sh" ]]; then
+  bash "$ROOT_DIR/deploy/validate-ad25-hardening.test.sh"
+  pass "AD25-HARDENING fail-closed contract"
+else
+  pass "AD25-HARDENING contract not on this tree (follow-on sync pending)"
+fi
+
+# Trusted-ref authorization of the corrected dest tree
+python3 - "$TMP/src" "$PRD_SHA" "$DEST" "$PARENT" "$ROOT_DIR" <<'PY' || fail "trusted-ref authorize_sync"
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(sys.argv[5]) / "deploy" / "lib"))
+from ad25_sync_allowlist import authorize_sync
+repo = Path(sys.argv[1])
+authorize_sync(
+    repo,
+    source=sys.argv[2],
+    dest=sys.argv[3],
+    dest_parent=sys.argv[4],
+    trusted_ref=sys.argv[2],
+    expected_source=sys.argv[2],
+    expected_dest_parent=sys.argv[4],
+    approval_source_sha=sys.argv[2],
+)
+print("trusted-ref-authorize-ok")
+PY
+pass "trusted-ref authorize_sync on corrected dest tree"
+
 echo "validate-ad25-sync-fixture contract OK"

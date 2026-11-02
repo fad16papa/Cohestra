@@ -12,10 +12,17 @@ python3 - "$ROOT_DIR" <<'PY' || fail "allowlist or legacy-validator contract"
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(sys.argv[1]) / "deploy" / "lib"))
-from ad25_sync_allowlist import load_allowlist, stale_validator_reasons, baseline_missing
+from ad25_sync_allowlist import (
+    APPROVED_PATHS,
+    load_allowlist,
+    stale_validator_reasons,
+    baseline_missing,
+)
 
 root = Path(sys.argv[1])
 allow = load_allowlist(root)
+if allow != list(APPROVED_PATHS):
+    raise SystemExit("allowlist drifted from owner-approved 21-path set")
 missing = [p for p in allow if not (root / p).exists()]
 if missing:
     raise SystemExit("required sync path missing: " + ",".join(missing))
@@ -32,6 +39,7 @@ if "validate-ad25-sync-fixture.test.sh" not in ci or "validate-ad25-sync-fixture
 print("allowlist-count", len(allow))
 print("legacy-validators-absent")
 print("baseline-retained-present")
+print("fail-closed-allowlist")
 PY
 pass "allowlist paths exist and incompatible legacy validators are not retained"
 
@@ -46,10 +54,16 @@ pass "allowlist paths exist and incompatible legacy validators are not retained"
 #      path in deploy/ad25-sync-allowlist.txt equals the PR-D-on-main tree.
 #      Cherry-pick / same-patch only. No application/Production/ADCP paths.
 #   4. Human OWNER merge only. Never GITHUB_TOKEN. Never AD-15 auto-merge.
+#   5. Run authorize_from_trusted_ref against origin/main (or an owner-pinned
+#      SHA). PR-head validator/allowlist/workflow rewrites are not authority.
+#   6. Refuse missing trusted-ref evidence, stale source SHA, altered dest SHA,
+#      unexpected dest parent, or changed manifest without owner authorization.
 
 grep -q 'git push --ff-only origin/main:release/uat' "$0" || fail "must name FF"
 grep -q 'FORBIDDEN' "$0" || fail "must mark FF forbidden"
 grep -q 'ad25-sync-allowlist.txt' "$0" || fail "must name the allowlist"
+grep -q 'authorize_from_trusted_ref' "$0" || fail "must name trusted-ref authorization"
+grep -q 'AD-15 auto-merge' "$0" || fail "must forbid AD-15 auto-merge"
 pass "AD-25 names the allowlist and forbids git push --ff-only origin/main:release/uat"
 
 echo "AD-25 owner sync procedure contract OK"
