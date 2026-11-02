@@ -54,7 +54,10 @@ SECRET_RE = re.compile(
     r"(?:AKIA|ASIA)[0-9A-Z]{16}|"
     r"xox[baprs]-[A-Za-z0-9-]{10,}|sk_live_[A-Za-z0-9]{8,}"
 )
-KEY_RE = re.compile(r"BEGIN [A-Z0-9 ]{0,40}PRIVATE KEY", re.IGNORECASE)
+KEY_RE = re.compile(
+    r"BEGIN (?:(?:OPENSSH|RSA|EC|DSA|ENCRYPTED) )?PRIVATE KEY",
+    re.IGNORECASE,
+)
 INJECTION_RE = re.compile(
     r"ignore\s+previous\s+instructions|ignore\s+all\s+previous|you\s+are\s+now|merge\s+this\s+pr|"
     r"uat_deploy_gate_active\s*=\s*true|owner_control_ready\s*=\s*true",
@@ -98,9 +101,10 @@ def load_manifest(path: Path) -> Manifest:
     if not path.is_file():
         raise ManifestError("manifest is required")
     try:
-        if path.stat().st_size > 65536:
+        data = path.read_bytes()
+        if len(data) > 65536:
             raise ManifestError("manifest is required")
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        raw = json.loads(data.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ManifestError("manifest is required") from exc
     if not isinstance(raw, dict):
@@ -284,13 +288,24 @@ def _evidence_too_large(pull: PullView) -> bool:
             return True
         if any(len(item.paths) > 50 for item in pull.reviews):
             return True
-    except TypeError:
+    except (TypeError, AttributeError):
         return True
     values: list[object] = [pull.head_sha, pull.base_sha, pull.base_ref, pull.author_id, pull.repo, *pull.changed_paths]
+    for check in pull.checks:
+        values.extend([check.name, check.conclusion or "", check.head_sha])
     for test in pull.tests:
         values.extend([test.name, test.path, test.detail, test.head_sha])
     for review in pull.reviews:
-        values.append(review.authentication_source)
+        values.extend(
+            [
+                review.reviewer_id,
+                review.role,
+                review.head_sha,
+                review.model,
+                review.authentication_source,
+                *review.paths,
+            ]
+        )
     return any(isinstance(value, str) and len(value) > 4000 for value in values)
 
 
@@ -458,7 +473,11 @@ class Controller:
     ) -> None:
         assert_manifest_authentic(manifest)
         self.store = Path(store)
+        if self.store.is_symlink():
+            raise ManifestError("store path is unsafe")
         self.store.mkdir(parents=True, exist_ok=True)
+        if self.store.is_symlink() or not self.store.is_dir():
+            raise ManifestError("store path is unsafe")
         os.chmod(self.store, 0o700)
         self.manifest = manifest
         self.github = github
@@ -488,6 +507,9 @@ class Controller:
     def _handle_locked(self, event: Event) -> Decision:
         if self._unreadable or self.ledger is None:
             return Decision(HOLD, UNREADABLE, None, 0, NOT_VERIFIED, False, False)
+        bound = self._apply_binding()
+        if bound is not None:
+            return _decision(HOLD, bound, self.ledger.current_head, len(self.ledger.assignments))
         if not isinstance(event.event_id, str) or not event.event_id.strip():
             return Decision(HOLD, "event id is required", self.ledger.current_head, len(self.ledger.assignments), NOT_VERIFIED, False, False)
         if len(event.event_id) > MAX_EVENT_ID:
@@ -499,10 +521,10 @@ class Controller:
         text = event.untrusted_text if isinstance(event.untrusted_text, str) else ""
         if type(event.pull_number) is not int or event.pull_number != self.manifest.pull_number:
             return self._commit(stored_id, HOLD, "pull number is not the approved task", None, accept_head=False)
-        if len(text) > 10_000:
-            return self._commit(stored_id, HOLD, "event is too large", None, accept_head=False)
         if _contains_secret(event.event_id) or _contains_secret(text):
             return self._commit(stored_id, HOLD, SECRET, None, sticky=True, accept_head=True)
+        if len(text) > 10_000:
+            return self._commit(stored_id, HOLD, "event is too large", None, accept_head=False)
         if self.ledger.hold:
             if len(self.ledger.applied_event_ids) >= 400:
                 return _decision(HOLD, self.ledger.reason, self.ledger.current_head, len(self.ledger.assignments))
@@ -525,9 +547,17 @@ class Controller:
         if record_head is None or _contains_secret(pull.head_sha):
             reason = SECRET if isinstance(pull.head_sha, str) and _contains_secret(pull.head_sha) else "head sha is invalid"
             return self._commit(stored_id, HOLD, reason, None, sticky=True, accept_head=True)
-        if _evidence_too_large(pull):
+        try:
+            secret_pull = _pull_has_secret(pull)
+            too_large = _evidence_too_large(pull)
+            if not secret_pull and not too_large:
+                status, reason, sticky, findings, origins = _decide(self.manifest, self.policy, self.ledger, pull)
+        except (AttributeError, TypeError):
+            return self._commit(stored_id, HOLD, "evidence is not trustworthy", None, accept_head=False)
+        if secret_pull:
+            return self._commit(stored_id, HOLD, SECRET, None, sticky=True, accept_head=True)
+        if too_large:
             return self._commit(stored_id, HOLD, "evidence is too large", None, accept_head=False)
-        status, reason, sticky, findings, origins = _decide(self.manifest, self.policy, self.ledger, pull)
         return self._commit(
             stored_id,
             status,
@@ -610,12 +640,13 @@ class Controller:
             return None
         for item in self.ledger.trace:
             if item.get("event_id") == stored_id:
-                return _decision(
-                    str(item.get("status")),
-                    str(item.get("reason")),
-                    item.get("head_sha") if isinstance(item.get("head_sha"), str) else None,
-                    int(item.get("assignments") or 0),
-                )
+                count = item.get("assignments")
+                head = item.get("head_sha")
+                if type(count) is not int or count < 0:
+                    return _decision(HOLD, UNREADABLE, None, 0)
+                if not isinstance(head, str) or not SHA_RE.fullmatch(head) or _contains_secret(head):
+                    head = None
+                return _decision(str(item.get("status")), str(item.get("reason")), head, count)
         return _decision(HOLD, UNREADABLE, self.ledger.current_head, len(self.ledger.assignments))
 
     def _load(self) -> None:
@@ -647,16 +678,23 @@ class Controller:
             return
         if self.ledger is None:
             return
+        self._apply_binding()
+
+    def _apply_binding(self) -> str | None:
+        assert self.ledger is not None
         if self.ledger.manifest_id != self.manifest.manifest_id:
-            self.ledger.hold = True
-            self.ledger.reason = BOUND
-            self.ledger.status = HOLD
-            self._save()
+            reason = BOUND
         elif self.ledger.manifest_digest != self.manifest.digest:
-            self.ledger.hold = True
-            self.ledger.reason = DIGEST
-            self.ledger.status = HOLD
-            self._save()
+            reason = DIGEST
+        else:
+            return None
+        if self.ledger.hold and self.ledger.status == HOLD and self.ledger.reason == reason:
+            return reason
+        self.ledger.hold = True
+        self.ledger.reason = reason
+        self.ledger.status = HOLD
+        self._save()
+        return reason
 
     def _reload(self) -> bool:
         if not self.ledger_path.exists():

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from .manifest import SHA_RE
+
 
 class GitHubError(Exception):
     def __init__(self, status: int, reason: str) -> None:
@@ -173,9 +175,11 @@ class Ledger:
         if corrections < 0:
             raise ValueError("corrections")
         current = raw["current_head"]
-        if current is not None and not isinstance(current, str):
+        if current is not None and (not isinstance(current, str) or SHA_RE.fullmatch(current) is None):
             raise ValueError("current_head")
         assigned_heads = [require_text(item, "assigned_head") for item in require_list(raw["assigned_heads"], "assigned_heads")]
+        if any(SHA_RE.fullmatch(item) is None for item in assigned_heads):
+            raise ValueError("assigned_head")
         fingerprints = [require_text(item, "fingerprint") for item in require_list(raw["fingerprints"], "fingerprints")]
         applied_event_ids = [require_text(item, "event_id") for item in require_list(raw["applied_event_ids"], "applied_event_ids")]
         assignments = require_list(raw["assignments"], "assignments")

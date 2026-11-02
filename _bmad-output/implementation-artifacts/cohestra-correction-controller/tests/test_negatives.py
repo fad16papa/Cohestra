@@ -795,6 +795,82 @@ class NegativeTest(unittest.TestCase):
             with self.assertRaises(ManifestError):
                 Manifest.from_dict(raw)
 
+    def test_file_allow_entry_does_not_allow_a_nested_path(self) -> None:
+        manifest = approved_manifest(allowed_paths=["correction/controller.py"])
+        port = Port(pull(H1, tests=(failing_test(),), paths=("correction/controller.py/extra",)))
+        controller = Controller(self.store, manifest, port, approved_policy())
+        decision = controller.handle(Event("nested", 536, H1))
+        self.assertEqual(decision.reason, "changed path is outside the manifest")
+        self.assertTrue(controller.ledger.hold)
+
+    def test_private_key_prose_is_not_a_banner(self) -> None:
+        detail = "begin to review the private key handling"
+        port = Port(pull(H1, tests=(TestResult("unit", False, "correction/controller.py", detail),)))
+        controller, _ = self._controller(port)
+        decision = controller.handle(Event("prose", 536, H1))
+        self.assertEqual(decision.status, RETRY)
+        self.assertNotEqual(decision.reason, "secret material refused")
+        self.assertFalse(controller.ledger.hold)
+
+    def test_secret_hidden_in_oversized_text_still_sticks(self) -> None:
+        token = "gh" + "p_" + "abcdefghijklmnopqrstuvwxyz0123456789"
+        port = Port(ready_pull(H1))
+        controller, port = self._controller(port)
+        decision = controller.handle(Event("wide-secret", 536, H1, ("x" * 10001) + token))
+        self.assertEqual(decision.reason, "secret material refused")
+        self.assertTrue(controller.ledger.hold)
+        self.assertNotIn(token, self._text())
+        port.view = ready_pull(H2)
+        later = controller.handle(Event("wide-secret-later", 536, H2))
+        self.assertEqual(later.reason, "secret material refused")
+
+    def test_secret_hidden_in_oversized_evidence_still_sticks(self) -> None:
+        token = "gh" + "p_" + "abcdefghijklmnopqrstuvwxyz0123456789"
+        detail = ("y" * 4001) + token
+        port = Port(pull(H1, tests=(TestResult("unit", False, "correction/controller.py", detail),)))
+        controller, port = self._controller(port)
+        decision = controller.handle(Event("wide-evidence", 536, H1))
+        self.assertEqual(decision.reason, "secret material refused")
+        self.assertTrue(controller.ledger.hold)
+        self.assertNotIn(token, self._text())
+        port.view = ready_pull(H2)
+        later = controller.handle(Event("wide-evidence-later", 536, H2))
+        self.assertEqual(later.reason, "secret material refused")
+
+    def test_replay_with_a_non_integer_count_holds_without_rewriting(self) -> None:
+        controller, _ = self._controller(Port(pull(H1, tests=(failing_test(),))))
+        controller.handle(Event("counted", 536, H1))
+        raw = json.loads(self._text())
+        raw["trace"][0]["assignments"] = ["nope"]
+        payload = json.dumps(raw)
+        controller.ledger_path.write_text(payload, encoding="utf-8")
+        revived = Controller(self.store, approved_manifest(), Port(ready_pull(H2)), approved_policy())
+        decision = revived.handle(Event("counted", 536, H1))
+        self.assertEqual(decision.reason, "ledger is unreadable")
+        self.assertEqual(controller.ledger_path.read_text(encoding="utf-8"), payload)
+
+    def test_binding_is_enforced_when_construction_cannot_lock(self) -> None:
+        controller, _ = self._controller(Port())
+        controller.lock_path.write_text(json.dumps({"expires_at": 9_999_999_999, "token": "other"}), encoding="utf-8")
+        other = approved_manifest(manifest_id="man-other", task_id="other")
+        opened = Controller(self.store, other, Port(ready_pull(H1)), approved_policy())
+        self.assertEqual(json.loads(self._text())["manifest_id"], "man-536")
+        self.assertFalse(json.loads(self._text())["hold"])
+        controller.lock_path.unlink()
+        decision = opened.handle(Event("rebind", 536, H1))
+        self.assertEqual(decision.reason, "store is bound to another manifest")
+        self.assertEqual(json.loads(self._text())["manifest_id"], "man-536")
+        self.assertTrue(json.loads(self._text())["hold"])
+
+    def test_symlink_store_is_refused(self) -> None:
+        target = Path(self.tmp.name) / "target"
+        target.mkdir()
+        link = Path(self.tmp.name) / "link"
+        link.symlink_to(target, target_is_directory=True)
+        with self.assertRaises(ManifestError):
+            Controller(link, approved_manifest(), Port(), approved_policy())
+        self.assertFalse((target / "ledger.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

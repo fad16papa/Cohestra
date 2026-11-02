@@ -4,7 +4,7 @@ These items are outside the simulated controller. This build does not implement 
 
 ## Owner-controlled manifest trust root
 
-The controller digest is SHA-256 of the canonical manifest body. `Manifest.from_dict` ignores a caller-supplied digest and recomputes it. `assert_manifest_authentic` compares that recomputation with the stored digest. `Decision.owner_manifest_authorized` is literal false on every decision, including `READY_FOR_OWNER_MERGE_DECISION`.
+The controller digest is SHA-256 of the canonical manifest body. `Manifest.from_dict` rejects a caller-supplied digest as an unknown field and computes the digest from the accepted fields. `assert_manifest_authentic` compares that recomputation with the stored digest. `Decision.owner_manifest_authorized` is literal false on every decision, including `READY_FOR_OWNER_MERGE_DECISION`.
 
 A future trust root must verify a signature over that same canonical body. The verifying key must be an owner-controlled key that this controller does not mint, store, or substitute. The content digest remains an integrity check for the store binding. A matching digest must not, by itself, set `owner_manifest_authorized`.
 

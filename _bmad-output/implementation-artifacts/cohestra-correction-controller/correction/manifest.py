@@ -158,4 +158,10 @@ class Manifest:
 
 
 def path_allowed(path: str, allowed: tuple[str, ...]) -> bool:
-    return any(path == prefix or path.startswith(prefix.rstrip("/") + "/") for prefix in allowed)
+    """Match an exact allow entry. A directory prefix must end with a slash."""
+    for prefix in allowed:
+        if path == prefix.rstrip("/"):
+            return True
+        if prefix.endswith("/") and path.startswith(prefix):
+            return True
+    return False
