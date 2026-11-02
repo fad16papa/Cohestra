@@ -40,10 +40,26 @@ class Manifest:
 
     @classmethod
     def from_dict(cls, raw: dict[str, object]) -> Manifest:
+        known = {
+            "acceptance_criteria",
+            "allowed_paths",
+            "author_id",
+            "base_ref",
+            "base_sha",
+            "budget",
+            "manifest_id",
+            "model",
+            "pull_number",
+            "repo",
+            "required_checks",
+            "task_id",
+        }
+        if not isinstance(raw, dict) or set(raw) - known:
+            raise ManifestError("manifest contains an unknown field")
         try:
             pull_raw = raw["pull_number"]
             budget_raw = raw["budget"]
-            if not isinstance(budget_raw, dict):
+            if not isinstance(budget_raw, dict) or set(budget_raw) - {"max_corrections"}:
                 raise TypeError("budget")
             corrections_raw = budget_raw["max_corrections"]
             if isinstance(pull_raw, bool) or not isinstance(pull_raw, int):

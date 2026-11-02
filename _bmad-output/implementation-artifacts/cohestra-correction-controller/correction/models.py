@@ -46,6 +46,7 @@ class PullView:
     base_sha: str
     base_ref: str
     author_id: str
+    repo: str
     checks: tuple[Check, ...]
     reviews: tuple[Review, ...]
     tests: tuple[TestResult, ...]
@@ -130,19 +131,42 @@ class Ledger:
 
     @classmethod
     def from_json(cls, raw: dict[str, object]) -> Ledger:
+        def require_text(value: object, name: str) -> str:
+            if not isinstance(value, str):
+                raise ValueError(name)
+            return value
+
+        def require_int(value: object, name: str) -> int:
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise ValueError(name)
+            return value
+
+        def require_list(value: object, name: str) -> list[object]:
+            if not isinstance(value, list):
+                raise ValueError(name)
+            return value
+
+        if not isinstance(raw.get("hold"), bool):
+            raise ValueError("hold")
+        corrections = require_int(raw.get("corrections", 0), "corrections")
+        if corrections < 0:
+            raise ValueError("corrections")
+        current = raw.get("current_head")
+        if current is not None and not isinstance(current, str):
+            raise ValueError("current_head")
         return cls(
-            manifest_id=str(raw["manifest_id"]),
-            manifest_digest=str(raw["manifest_digest"]),
-            pull_number=int(raw["pull_number"]),
-            base_sha=str(raw["base_sha"]),
-            current_head=raw.get("current_head") if isinstance(raw.get("current_head"), str) else None,
-            corrections=int(raw.get("corrections") or 0),
-            assigned_heads=[str(item) for item in raw.get("assigned_heads") or []],
-            fingerprints=[str(item) for item in raw.get("fingerprints") or []],
-            applied_event_ids=[str(item) for item in raw.get("applied_event_ids") or []],
-            assignments=list(raw.get("assignments") or []),
-            trace=list(raw.get("trace") or []),
-            status=str(raw.get("status") or "IDLE"),
-            reason=str(raw.get("reason") or ""),
-            hold=bool(raw.get("hold")),
+            manifest_id=require_text(raw.get("manifest_id"), "manifest_id"),
+            manifest_digest=require_text(raw.get("manifest_digest"), "manifest_digest"),
+            pull_number=require_int(raw.get("pull_number"), "pull_number"),
+            base_sha=require_text(raw.get("base_sha"), "base_sha"),
+            current_head=current,
+            corrections=corrections,
+            assigned_heads=[require_text(item, "assigned_head") for item in require_list(raw.get("assigned_heads", []), "assigned_heads")],
+            fingerprints=[require_text(item, "fingerprint") for item in require_list(raw.get("fingerprints", []), "fingerprints")],
+            applied_event_ids=[require_text(item, "event_id") for item in require_list(raw.get("applied_event_ids", []), "applied_event_ids")],
+            assignments=require_list(raw.get("assignments", []), "assignments"),
+            trace=require_list(raw.get("trace", []), "trace"),
+            status=require_text(raw.get("status", "IDLE"), "status"),
+            reason=require_text(raw.get("reason", ""), "reason"),
+            hold=raw["hold"],
         )

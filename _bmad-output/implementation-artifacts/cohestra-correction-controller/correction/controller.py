@@ -16,7 +16,7 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-from .manifest import Manifest, ManifestError, path_allowed
+from .manifest import SHA_RE, Manifest, ManifestError, path_allowed
 from .models import Assignment, Decision, Event, GitHubError, Ledger, PullView, Review
 
 HOLD = "HOLD_OWNER_ACTION_REQUIRED"
@@ -31,16 +31,25 @@ NOT_VERIFIED = "NOT_VERIFIED"
 LEASE_SECONDS = 30
 MAX_EVENT_ID = 200
 
-FORBIDDEN_REVIEWERS = frozenset({"cursor[bot]", "cursor", "github-actions[bot]", "copilot"})
+FORBIDDEN_REVIEWERS = frozenset(
+    {
+        "cursor[bot]",
+        "cursor",
+        "github-actions[bot]",
+        "copilot",
+        "copilot[bot]",
+        "copilot-swe-agent[bot]",
+    }
+)
 REVIEW_ROLES = frozenset({"bmad", "catsec"})
-PENDING_CONCLUSIONS = frozenset({"", "pending", "queued", "in_progress", "neutral"})
+PENDING_CONCLUSIONS = frozenset({"pending", "queued", "in_progress"})
 FAILED_CONCLUSIONS = frozenset({"failure", "failed", "timed_out"})
 REFUSED_CONCLUSIONS = frozenset({"skipped", "cancelled", "canceled", "stale", "missing"})
 
 SECRET_RE = re.compile(
-    r"ghp_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+|gho_[A-Za-z0-9]+|"
-    r"AKIA[0-9A-Z]{16}|BEGIN OPENSSH PRIVATE KEY|BEGIN RSA PRIVATE KEY|"
-    r"xox[baprs]-[A-Za-z0-9-]+|sk_live_[A-Za-z0-9]+"
+    r"(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{16,}|"
+    r"(?:AKIA|ASIA)[0-9A-Z]{16}|BEGIN (?:OPENSSH |RSA )?PRIVATE KEY|"
+    r"xox[baprs]-[A-Za-z0-9-]{10,}|sk_live_[A-Za-z0-9]{8,}"
 )
 INJECTION_RE = re.compile(
     r"ignore previous instructions|ignore all previous|you are now|merge this pr|"
@@ -72,9 +81,10 @@ class ReviewPolicy:
         self.extra_forbidden = frozenset(extra_forbidden or ())
 
     def role_for(self, reviewer_id: str) -> str | None:
-        if reviewer_id in FORBIDDEN_REVIEWERS or reviewer_id in self.extra_forbidden:
+        if _is_forbidden(reviewer_id, self.extra_forbidden):
             return None
-        role = self.trusted_roles.get(reviewer_id)
+        folded = {key.casefold(): value for key, value in self.trusted_roles.items()}
+        role = folded.get(reviewer_id.casefold())
         if role not in REVIEW_ROLES:
             return None
         return role
@@ -84,8 +94,10 @@ def load_manifest(path: Path) -> Manifest:
     if not path.is_file():
         raise ManifestError("manifest is required")
     try:
+        if path.stat().st_size > 65536:
+            raise ManifestError("manifest is required")
         raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ManifestError("manifest is required") from exc
     if not isinstance(raw, dict):
         raise ManifestError("manifest fields invalid")
@@ -141,15 +153,20 @@ def _path_safe(path: str) -> bool:
     return all(part not in ("", ".", "..") for part in path.split("/"))
 
 
+def _is_forbidden(reviewer_id: str, extra: frozenset[str]) -> bool:
+    folded = reviewer_id.casefold()
+    denied = {item.casefold() for item in FORBIDDEN_REVIEWERS | extra}
+    return folded in denied
+
+
 def _public(value: str) -> str:
-    if _contains_secret(value) or INJECTION_RE.search(value):
+    if len(value) > 300 or _contains_secret(value) or INJECTION_RE.search(value):
         return "redacted"
     return value
 
 
 def _fingerprint(findings: tuple[dict[str, str], ...]) -> str:
-    reduced = [{key: value for key, value in item.items() if key not in {"blocker", "major"}} for item in findings]
-    blob = json.dumps(reduced, sort_keys=True, separators=(",", ":"))
+    blob = json.dumps(list(findings), sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
 
 
@@ -185,22 +202,27 @@ def _check_bucket(name: str, pull: PullView) -> str:
 
 
 def _pull_has_secret(pull: PullView) -> bool:
-    parts = [pull.head_sha, pull.base_sha, pull.base_ref, pull.author_id, *pull.changed_paths]
+    parts: list[object] = [pull.head_sha, pull.base_sha, pull.base_ref, pull.author_id, pull.repo, *pull.changed_paths]
     for check in pull.checks:
         parts.extend([check.name, check.conclusion or "", check.head_sha])
     for review in pull.reviews:
         parts.extend([review.reviewer_id, review.role, review.head_sha, review.model, *review.paths])
     for test in pull.tests:
         parts.extend([test.name, test.path, test.detail])
+    if any(not isinstance(part, str) for part in parts):
+        return True
     return any(_contains_secret(part) for part in parts)
 
 
 def _review_disposition(manifest: Manifest, policy: ReviewPolicy, pull: PullView, review: Review) -> str:
-    if review.reviewer_id in FORBIDDEN_REVIEWERS or review.reviewer_id in policy.extra_forbidden:
+    if not isinstance(review.reviewer_id, str) or not isinstance(review.model, str):
+        return "not_permitted"
+    if _is_forbidden(review.reviewer_id, policy.extra_forbidden):
         return "forbidden"
-    if not review.authenticated:
+    if type(review.authenticated) is not bool or not review.authenticated:
         return "unauthenticated"
-    if review.reviewer_id in (manifest.author_id, pull.author_id):
+    authors = {manifest.author_id.casefold(), pull.author_id.casefold() if isinstance(pull.author_id, str) else ""}
+    if review.reviewer_id.casefold() in authors:
         return "author"
     if policy.role_for(review.reviewer_id) is None:
         return "not_permitted"
@@ -208,16 +230,32 @@ def _review_disposition(manifest: Manifest, policy: ReviewPolicy, pull: PullView
         return "model"
     if review.head_sha != pull.head_sha:
         return "stale"
-    if review.blocker < 0 or review.major < 0:
+    if type(review.blocker) is not int or type(review.major) is not int or review.blocker < 0 or review.major < 0:
         return "counts"
     for path in review.paths:
-        if not _path_safe(path):
+        if not isinstance(path, str) or not _path_safe(path):
             return "unsafe"
         if not path_allowed(path, manifest.allowed_paths):
             return "scope"
     if review.blocker > 0 or review.major > 0:
         return "finding"
+    if not review.paths:
+        return "unscoped"
     return "pass"
+
+
+def _evidence_too_large(pull: PullView) -> bool:
+    try:
+        if len(pull.changed_paths) > 200 or len(pull.reviews) > 40 or len(pull.tests) > 200 or len(pull.checks) > 40:
+            return True
+        if any(len(item.paths) > 50 for item in pull.reviews):
+            return True
+    except TypeError:
+        return True
+    values: list[object] = [pull.head_sha, pull.base_sha, pull.base_ref, pull.author_id, pull.repo, *pull.changed_paths]
+    for test in pull.tests:
+        values.extend([test.name, test.path, test.detail])
+    return any(isinstance(value, str) and len(value) > 4000 for value in values)
 
 
 def _sort_findings(items: list[dict[str, str]]) -> tuple[dict[str, str], ...]:
@@ -230,20 +268,44 @@ def _decide(
     ledger: Ledger,
     pull: PullView,
 ) -> tuple[str, str, bool, tuple[dict[str, str], ...]]:
+    if (
+        not isinstance(pull.repo, str)
+        or not isinstance(pull.author_id, str)
+        or not isinstance(pull.base_sha, str)
+        or not isinstance(pull.base_ref, str)
+        or not isinstance(pull.head_sha, str)
+    ):
+        return HOLD, "head sha is invalid", True, ()
+    if pull.repo != manifest.repo:
+        return HOLD, "repository does not match the manifest", True, ()
+    if pull.author_id.casefold() != manifest.author_id.casefold():
+        return HOLD, "pull author does not match the manifest", True, ()
+    if (
+        type(pull.number) is not int
+        or pull.number != manifest.pull_number
+        or pull.base_sha != manifest.base_sha
+        or pull.base_ref != manifest.base_ref
+    ):
+        return HOLD, "base does not match the manifest", True, ()
+    if not SHA_RE.fullmatch(pull.head_sha):
+        return HOLD, "head sha is invalid", True, ()
     if _pull_has_secret(pull):
         return HOLD, SECRET, True, ()
-    if pull.author_id != manifest.author_id:
-        return HOLD, "pull author does not match the manifest", True, ()
-    if pull.number != manifest.pull_number or pull.base_sha != manifest.base_sha or pull.base_ref != manifest.base_ref:
-        return HOLD, "base does not match the manifest", True, ()
+    if not pull.changed_paths:
+        return HOLD, "changed paths are missing", False, ()
     for path in pull.changed_paths:
-        if not _path_safe(path):
+        if not isinstance(path, str) or not _path_safe(path):
             return HOLD, "path is unsafe", True, ()
         if not path_allowed(path, manifest.allowed_paths):
             return HOLD, "changed path is outside the manifest", True, ()
     for test in pull.tests:
-        if test.passed:
-            continue
+        if (
+            type(test.passed) is not bool
+            or not isinstance(test.name, str)
+            or not isinstance(test.path, str)
+            or not isinstance(test.detail, str)
+        ):
+            return HOLD, "test evidence is missing", True, ()
         if not _path_safe(test.path) or not path_allowed(test.path, manifest.allowed_paths):
             return HOLD, "test path is outside the manifest", True, ()
 
@@ -320,6 +382,8 @@ def _decide(
         return HOLD, "reviewer model does not match the manifest", False, ()
     if "stale" in dispositions:
         return HOLD, "stale review evidence", False, ()
+    if "unscoped" in dispositions:
+        return HOLD, "review did not name an in-scope path", False, ()
     if "not_permitted" in dispositions:
         return HOLD, "reviewer is not permitted", False, ()
     return WAITING, "independent reviews are missing", False, ()
@@ -346,6 +410,7 @@ class Controller:
         self.lock_path = self.store / "controller.lock"
         self.ledger: Ledger | None = None
         self._unreadable = False
+        self._lock_token: str | None = None
         self._load()
 
     def handle(self, event: Event) -> Decision:
@@ -353,11 +418,13 @@ class Controller:
         if token is None:
             count = len(self.ledger.assignments) if self.ledger is not None else 0
             return Decision(BUSY, "controller lock is held", None, count, NOT_VERIFIED, False, False)
+        self._lock_token = token
         try:
             self._reload()
             return self._handle_locked(event)
         finally:
             self._release(token)
+            self._lock_token = None
 
     def _handle_locked(self, event: Event) -> Decision:
         if self._unreadable or self.ledger is None:
@@ -371,38 +438,42 @@ class Controller:
         if replay is not None:
             return replay
         text = event.untrusted_text if isinstance(event.untrusted_text, str) else ""
+        if type(event.pull_number) is not int or event.pull_number != self.manifest.pull_number:
+            return self._commit(stored_id, HOLD, "pull number is not the approved task", None, accept_head=False)
         if len(text) > 10_000:
             return self._commit(stored_id, HOLD, "event is too large", None, accept_head=False)
         if _contains_secret(event.event_id) or _contains_secret(text):
-            return self._commit(stored_id, HOLD, SECRET, self.ledger.current_head, sticky=True, accept_head=True)
+            return self._commit(stored_id, HOLD, SECRET, None, sticky=True, accept_head=True)
         if self.ledger.hold:
+            if len(self.ledger.applied_event_ids) >= 400:
+                return _decision(HOLD, self.ledger.reason, self.ledger.current_head, len(self.ledger.assignments))
             return self._commit(stored_id, HOLD, self.ledger.reason, self.ledger.current_head, sticky=True, accept_head=True)
-        if event.pull_number != self.manifest.pull_number:
-            return self._commit(stored_id, HOLD, "pull number is not the approved task", None, accept_head=False)
         if getattr(self.github, "is_live", False):
             return self._commit(stored_id, HOLD, LIVE, self.ledger.current_head, sticky=True, accept_head=True)
+        if not self._refresh_lock():
+            return Decision(BUSY, "controller lock was lost", None, len(self.ledger.assignments), NOT_VERIFIED, False, False)
         try:
             pull = self.github.pull(event.pull_number)  # type: ignore[attr-defined]
         except GitHubError as exc:
             return self._commit(stored_id, HOLD, _github_reason(exc), None, accept_head=True)
+        except Exception:
+            return self._commit(stored_id, HOLD, "github api failure", None, accept_head=True)
         if not isinstance(pull, PullView):
             return self._commit(stored_id, HOLD, "github api failure", None, accept_head=True)
-        if (
-            len(pull.changed_paths) > 200
-            or len(pull.reviews) > 40
-            or len(pull.tests) > 200
-            or len(pull.checks) > 40
-            or any(len(item.paths) > 50 for item in pull.reviews)
-        ):
-            return self._commit(stored_id, HOLD, "evidence is too large", pull.head_sha, accept_head=True)
         if event.claimed_head is not None and event.claimed_head != pull.head_sha:
             return self._commit(stored_id, IGNORED, "stale event", None, accept_head=False)
+        record_head = pull.head_sha if isinstance(pull.head_sha, str) and SHA_RE.fullmatch(pull.head_sha) else None
+        if record_head is None or _contains_secret(pull.head_sha):
+            reason = SECRET if isinstance(pull.head_sha, str) and _contains_secret(pull.head_sha) else "head sha is invalid"
+            return self._commit(stored_id, HOLD, reason, None, sticky=True, accept_head=True)
+        if _evidence_too_large(pull):
+            return self._commit(stored_id, HOLD, "evidence is too large", None, accept_head=False)
         status, reason, sticky, findings = _decide(self.manifest, self.policy, self.ledger, pull)
         return self._commit(
             stored_id,
             status,
             reason,
-            pull.head_sha,
+            record_head,
             sticky=sticky,
             findings=findings,
             accept_head=True,
@@ -420,6 +491,16 @@ class Controller:
         accept_head: bool = True,
     ) -> Decision:
         assert self.ledger is not None
+        if not self._refresh_lock():
+            return Decision(BUSY, "controller lock was lost", None, len(self.ledger.assignments), NOT_VERIFIED, False, False)
+        if head is not None and (not isinstance(head, str) or not SHA_RE.fullmatch(head) or _contains_secret(head)):
+            head = None
+        if stored_id not in self.ledger.applied_event_ids and len(self.ledger.applied_event_ids) >= 400:
+            self.ledger.hold = True
+            self.ledger.status = HOLD
+            self.ledger.reason = "ledger event budget exhausted"
+            self._save()
+            return _decision(HOLD, self.ledger.reason, self.ledger.current_head, len(self.ledger.assignments))
         assignment_id = None
         if sticky:
             self.ledger.hold = True
@@ -477,6 +558,21 @@ class Controller:
         return _decision(HOLD, UNREADABLE, self.ledger.current_head, len(self.ledger.assignments))
 
     def _load(self) -> None:
+        token = self._acquire()
+        if token is None:
+            if self.ledger_path.exists():
+                self._reload()
+            else:
+                self._unreadable = True
+            return
+        self._lock_token = token
+        try:
+            self._load_locked()
+        finally:
+            self._release(token)
+            self._lock_token = None
+
+    def _load_locked(self) -> None:
         if not self.ledger_path.exists():
             self.ledger = Ledger(
                 manifest_id=self.manifest.manifest_id,
@@ -522,7 +618,8 @@ class Controller:
         if self.ledger is None:
             return
         payload = json.dumps(self.ledger.to_json(), indent=2, sort_keys=True) + "\n"
-        temporary = self.ledger_path.with_suffix(".json.tmp")
+        suffix = self._lock_token or secrets.token_hex(4)
+        temporary = self.ledger_path.with_name(f"ledger.{suffix}.tmp")
         fd = os.open(temporary, os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             handle.write(payload)
@@ -534,23 +631,41 @@ class Controller:
         now = float(self.clock())
         token = secrets.token_hex(16)
         body = json.dumps({"expires_at": now + LEASE_SECONDS, "token": token}).encode("utf-8")
-        for _ in range(2):
-            try:
-                fd = os.open(self.lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-            except FileExistsError:
-                if not self._lock_expired(now):
-                    return None
+        temporary = self.store / f".lock.{token}"
+        temporary.write_bytes(body)
+        os.chmod(temporary, 0o600)
+        try:
+            for _ in range(2):
                 try:
-                    self.lock_path.unlink()
-                except FileNotFoundError:
-                    pass
-                continue
-            try:
-                os.write(fd, body)
-            finally:
-                os.close(fd)
-            return token
-        return None
+                    os.link(temporary, self.lock_path)
+                    return token
+                except FileExistsError:
+                    if not self._lock_expired(now):
+                        return None
+                    try:
+                        self.lock_path.unlink()
+                    except FileNotFoundError:
+                        pass
+            return None
+        finally:
+            temporary.unlink(missing_ok=True)
+
+    def _refresh_lock(self) -> bool:
+        token = self._lock_token
+        if not token:
+            return False
+        try:
+            raw = json.loads(self.lock_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            return False
+        if not isinstance(raw, dict) or raw.get("token") != token:
+            return False
+        raw["expires_at"] = float(self.clock()) + LEASE_SECONDS
+        temporary = self.store / f".lock.refresh.{token}"
+        temporary.write_text(json.dumps(raw), encoding="utf-8")
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, self.lock_path)
+        return True
 
     def _lock_expired(self, now: float) -> bool:
         try:
@@ -565,7 +680,7 @@ class Controller:
             raw = json.loads(self.lock_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             return
-        if raw.get("token") == token:
+        if isinstance(raw, dict) and raw.get("token") == token:
             try:
                 self.lock_path.unlink()
             except FileNotFoundError:

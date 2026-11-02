@@ -53,7 +53,7 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 
 - **Binds:** issue-536
 - **Prevents:** Comment text becoming an assignment prompt
-- **Rule:** The controller never writes `untrusted_text` into the ledger. Injection phrases are not findings. A structured in-scope failure may still assign, and the finding fields are kind, name, path, check, role, and counts only.
+- **Rule:** The controller never writes `untrusted_text` into the ledger. Injection phrases and values longer than 300 characters are stored as the fixed word redacted. A structured in-scope failure may still assign. Finding fields are kind, name, path, check, role, and counts. Counts are part of the finding fingerprint.
 
 ### AD-3 — Simulation is not live verification
 
@@ -71,7 +71,7 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 
 - **Binds:** issue-536
 - **Prevents:** Duplicate delivery or overlapping processes creating two assignments
-- **Rule:** The lock is an exclusive file with a 30-second lease. A live lock returns BUSY and does not record the event. The holder reloads the ledger after acquiring the lock. An applied event id returns the stored decision and does not call the port again.
+- **Rule:** The lock is created with `link` so the file appears only after its body is written. The lease is 30 seconds and is refreshed before the port call and before the ledger write. A holder that no longer owns the lock discards the decision and does not write. A live lock returns BUSY and does not record the event. The holder reloads the ledger after acquiring the lock. An applied event id returns the stored decision and does not call the port again. A foreign pull number is rejected before comment text is inspected, so it cannot set the sticky hold.
 
 ### AD-6 — A stale claim is not an evaluation
 
@@ -83,19 +83,19 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 
 - **Binds:** issue-536
 - **Prevents:** A skipped, canceled, missing, stale, or differently cased success satisfying the gate
-- **Rule:** A required check counts as success only when every row with that name on the current head has conclusion `success`. `failure` and `timed_out` are retryable findings. `pending` waits. Every other conclusion, a missing name, or a row bound to another SHA refuses READY.
+- **Rule:** A required check counts as success only when every row with that name on the current head has conclusion `success`. `failure` and `timed_out` are retryable findings and still cannot become READY. Conclusions `pending`, `queued`, and `in_progress`, or a null conclusion, wait. Every other conclusion, including `neutral` and an empty string, refuses the gate. A missing name or a row bound to another SHA refuses READY. Retryable findings outrank a still-running check.
 
 ### AD-8 — Independent review is two authenticated roles
 
 - **Binds:** issue-536
 - **Prevents:** Author, bot, forged, or wrong-model approval
-- **Rule:** READY needs two distinct reviewer ids, one policy role `bmad` and one `catsec`, both authenticated, both using the manifest model, both bound to the current head, both with blocker 0 and major 0. `cursor`, `cursor[bot]`, `github-actions[bot]`, and `copilot` cannot be trusted. The author cannot satisfy the gate. Claimed role text is ignored. A trusted in-scope blocker or major is a retryable finding. An untrusted review is not a correction source.
+- **Rule:** READY needs two distinct reviewer ids, one policy role `bmad` and one `catsec`, both authenticated booleans, both using the manifest model, both bound to the current head, both with integer blocker 0 and major 0, and each naming at least one in-scope path. Forbidden logins are compared case-insensitively: `cursor`, `cursor[bot]`, `github-actions[bot]`, `copilot`, `copilot[bot]`, and `copilot-swe-agent[bot]`. The author login is also case-insensitive and cannot satisfy the gate. Claimed role text is ignored. A trusted in-scope blocker or major is a retryable finding. An untrusted review is not a correction source.
 
 ### AD-9 — Secret-shaped material is dropped
 
 - **Binds:** issue-536
 - **Prevents:** Tokens in comments, test details, or API errors reaching the ledger
-- **Rule:** Matches for GitHub tokens, AWS access-key prefixes, OpenSSH private-key banners, Slack tokens, and live secret-key prefixes produce a sticky hold. The reason is a fixed string. The matched text is not stored. GitHub error text is not copied; only the status class is.
+- **Rule:** Matches for `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`, `AKIA`, `ASIA`, private-key banners, Slack tokens, and `sk_live_` produce a sticky hold. The reason is a fixed string. The matched text is not stored. A head that is not 40 lowercase hex characters is not stored. GitHub error text is not copied; only the status class is. Any other port exception becomes the same API-failure hold.
 
 ### AD-10 — The budget bounds assignments only
 
@@ -107,7 +107,7 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 
 - **Binds:** issue-536
 - **Prevents:** A later clean snapshot erasing an escalation
-- **Rule:** Path escape, a changed path outside the manifest, a base SHA or base ref mismatch, secret material, a live port, a foreign manifest id, and a digest mismatch set `hold`. Later events return that hold and do not assign.
+- **Rule:** Path escape, a changed or test path outside the manifest, a base SHA or base ref mismatch, a repository mismatch, secret material, a live port, a foreign manifest id, and a digest mismatch set `hold`. An empty changed-path list refuses READY without sticking. Later events return a sticky hold and do not assign. Unknown manifest keys are rejected before a digest is computed.
 
 ### AD-12 — This feature does not ship or merge
 
@@ -129,8 +129,9 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 | --- | --- |
 | Python | 3.12 |
 | actions/checkout | 11d5960a326750d5838078e36cf38b85af677262 |
+| actions/setup-python | a26af69be951a213d495a4c3e4e4022e16d87065 |
 
-The controller imports the Python standard library only. The checkout pin is the commit named by the GitHub tag v4.4.0, confirmed against the GitHub git ref on 2026-11-02. The local interpreter used for the unit tests was Python 3.12.3.
+The controller imports the Python standard library only. The checkout pin is the commit named by the GitHub tag v4.4.0. The setup-python pin is the commit named by the GitHub tag v5.6.0. Both refs were read from the GitHub git API on 2026-11-02. The workflow selects Python 3.12. The local interpreter used for the unit tests was Python 3.12.3.
 
 ## Structural Seed
 

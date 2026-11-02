@@ -63,3 +63,4 @@ context:
 
 - 2026-11-02: Issue #536 and the activating message approve this draft implementation. Live Cursor dispatch stays unauthorized.
 - 2026-11-02: Controller, demo, and negative tests landed under `cohestra-correction-controller`. CI on the draft PR is still open.
+- 2026-11-02: Review correction. Failed checks stay retryable and still cannot become READY. A foreign pull cannot sticky-hold the ledger. Secret patterns include GitHub app tokens and temporary AWS keys. Empty diffs, out-of-scope green tests, and pathless pass reviews cannot READY.

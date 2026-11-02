@@ -486,6 +486,134 @@ class NegativeTest(unittest.TestCase):
         self.assertEqual(port.calls, 0)
         self.assertNotIn("ignore previous", self._text().lower())
 
+    def test_foreign_pull_secret_does_not_freeze_the_approved_task(self) -> None:
+        port = Port(pull(H1, tests=(failing_test(),)))
+        controller, port = self._controller(port)
+        foreign = controller.handle(Event("foreign", 505, H1, "ghp_" + ("a" * 20)))
+        self.assertEqual(foreign.reason, "pull number is not the approved task")
+        self.assertFalse(controller.ledger.hold)
+        self.assertNotIn("ghp_", self._text())
+        recovered = controller.handle(Event("ours", 536, H1))
+        self.assertEqual(recovered.status, RETRY)
+
+    def test_github_app_token_in_a_test_detail_is_not_stored(self) -> None:
+        token = "ghs_" + ("b" * 20)
+        port = Port(pull(H1, tests=(TestResult("unit", False, "correction/controller.py", token),)))
+        controller, _ = self._controller(port)
+        decision = controller.handle(Event("app-token", 536, H1))
+        self.assertEqual(decision.reason, "secret material refused")
+        self.assertEqual(decision.assignments, 0)
+        self.assertNotIn("ghs_", self._text())
+
+    def test_neutral_check_is_refused(self) -> None:
+        port = Port(pull(H1, tests=(passing_test(),), check_rows=checks(H1, ci="neutral")))
+        controller, _ = self._controller(port)
+        decision = controller.handle(Event("neutral", 536, H1))
+        self.assertEqual(decision.reason, "mandatory check evidence refused")
+
+    def test_empty_diff_and_out_of_scope_green_test_cannot_ready(self) -> None:
+        empty = Port(pull(H1, tests=(passing_test(),), paths=()))
+        controller, _ = self._controller(empty)
+        decision = controller.handle(Event("empty", 536, H1))
+        self.assertEqual(decision.reason, "changed paths are missing")
+        self.assertNotEqual(decision.status, READY)
+        outside = Port(pull(H1, tests=(TestResult("unit", True, "web/app.tsx"),)))
+        other = Controller(Path(self.tmp.name) / "outside", approved_manifest(), outside, approved_policy())
+        held = other.handle(Event("outside", 536, H1))
+        self.assertEqual(held.reason, "test path is outside the manifest")
+
+    def test_review_without_a_path_cannot_ready(self) -> None:
+        port = Port(
+            pull(
+                H1,
+                tests=(passing_test(),),
+                reviews=(review("bmad-one", "bmad", H1, paths=()), review("catsec-one", "catsec", H1, paths=())),
+            )
+        )
+        controller, _ = self._controller(port)
+        decision = controller.handle(Event("nopath", 536, H1))
+        self.assertEqual(decision.reason, "review did not name an in-scope path")
+        self.assertNotEqual(decision.status, READY)
+
+    def test_bot_login_case_and_copilot_names_are_forbidden(self) -> None:
+        port = Port(
+            pull(
+                H1,
+                tests=(passing_test(),),
+                reviews=(review("Cursor[bot]", "bmad", H1), review("catsec-one", "catsec", H1)),
+            )
+        )
+        controller = Controller(
+            self.store,
+            approved_manifest(),
+            port,
+            ReviewPolicy({"Cursor[bot]": "bmad", "catsec-one": "catsec"}),
+        )
+        decision = controller.handle(Event("case-bot", 536, H1))
+        self.assertEqual(decision.reason, "reviewer is not permitted")
+
+    def test_author_login_case_cannot_satisfy_review(self) -> None:
+        port = Port(
+            pull(
+                H1,
+                tests=(passing_test(),),
+                reviews=(review("Owner-Author", "bmad", H1), review("catsec-one", "catsec", H1)),
+            )
+        )
+        controller = Controller(
+            self.store,
+            approved_manifest(),
+            port,
+            ReviewPolicy({"Owner-Author": "bmad", "catsec-one": "catsec"}),
+        )
+        decision = controller.handle(Event("case-author", 536, H1))
+        self.assertEqual(decision.reason, "author cannot satisfy independent review")
+
+    def test_timeout_from_the_port_holds_without_raising(self) -> None:
+        class Slow(Port):
+            def pull(self, number: int) -> object:
+                self.calls += 1
+                raise TimeoutError("slow")
+
+        port = Slow()
+        controller, port = self._controller(port)
+        decision = controller.handle(Event("timeout", 536, H1))
+        self.assertEqual(decision.reason, "github api failure")
+        self.assertEqual(decision.assignments, 0)
+        self.assertFalse(controller.ledger.hold)
+
+    def test_unknown_manifest_field_is_refused(self) -> None:
+        raw = manifest_raw()
+        raw["owner_control_ready"] = True
+        with self.assertRaises(ManifestError):
+            from correction.manifest import Manifest
+
+            Manifest.from_dict(raw)
+
+    def test_repository_mismatch_holds(self) -> None:
+        port = Port(pull(H1, tests=(passing_test(),), repo="other/repo"))
+        controller, _ = self._controller(port)
+        decision = controller.handle(Event("repo", 536, H1))
+        self.assertEqual(decision.reason, "repository does not match the manifest")
+        self.assertTrue(controller.ledger.hold)
+
+    def test_invalid_head_is_not_stored(self) -> None:
+        port = Port(pull("not-a-sha", tests=(passing_test(),)))
+        controller, _ = self._controller(port)
+        decision = controller.handle(Event("bad-head", 536, "not-a-sha"))
+        self.assertEqual(decision.reason, "head sha is invalid")
+        self.assertNotIn("not-a-sha", self._text())
+
+    def test_higher_review_severity_is_a_new_fingerprint(self) -> None:
+        port = Port(pull(H1, tests=(passing_test(),), reviews=(review("bmad-one", "bmad", H1, major=1),)))
+        controller, port = self._controller(port)
+        first = controller.handle(Event("sev-1", 536, H1))
+        self.assertEqual(first.status, RETRY)
+        port.view = pull(H2, tests=(passing_test(),), reviews=(review("bmad-one", "bmad", H2, major=2),))
+        second = controller.handle(Event("sev-2", 536, H2))
+        self.assertEqual(second.status, RETRY)
+        self.assertEqual(second.assignments, 2)
+
     def test_simulated_ready_is_not_a_live_verification(self) -> None:
         port = Port(ready_pull(H1))
         controller, _ = self._controller(port)
