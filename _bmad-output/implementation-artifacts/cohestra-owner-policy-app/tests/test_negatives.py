@@ -103,6 +103,7 @@ def _snap(**overrides: object) -> GitHubSnapshot:
         "ruleset_strict": True,
         "ruleset_bypass_empty": True,
         "event_head_sha": HEAD,
+        "renames_included": True,
         "active_hmac_secrets": (SECRET,),
         "now_unix": NOW,
         "pulls_api_base_sha": PARENT,
@@ -599,6 +600,43 @@ class FailClosedNegatives(unittest.TestCase):
         broken = evaluate_snapshot(_snap(head_blobs=5))  # type: ignore[arg-type]
         self.assertEqual(broken.conclusion, CheckConclusion.FAILURE)
         self.assertIn("evaluator error", " ".join(broken.reasons))
+
+    def test_rename_list_must_be_explicit(self) -> None:
+        result = evaluate_snapshot(
+            _snap(
+                base_ref="main",
+                files=("src/Api/Program.cs",),
+                renames_included=False,
+                comments=(),
+                active_hmac_secrets=(),
+                pulls_api_base_sha=None,
+                compare_merge_base_sha=None,
+                source_commit_sha=None,
+                head_blobs={},
+                source_blobs={},
+            )
+        )
+        _assert_failure(self, result, "rename list is incomplete")
+
+    def test_forged_seal_ticket_is_not_evidence(self) -> None:
+        from dataclasses import replace
+
+        from owner_policy.evaluate import EvaluationRequest, evaluate, request_digest
+        from owner_policy.evidence import seal_request
+        from owner_policy.seal import _Ticket
+
+        sealed = seal_request(_snap(), load_policy())
+        bare = replace(
+            sealed,
+            changed_paths=("src/Api/Program.cs",),
+            source_blobs={},
+            dest_blobs={},
+            comments=(),
+            hmac_secrets=(),
+            seal=None,
+        )
+        forged = replace(bare, seal=_Ticket(request_digest(bare)))
+        _assert_failure(self, evaluate(forged), "unverified evidence")
 
     def test_mac_cli_does_not_print_secret(self) -> None:
         os.environ["OWNER_ATTESTATION_SECRET"] = SECRET

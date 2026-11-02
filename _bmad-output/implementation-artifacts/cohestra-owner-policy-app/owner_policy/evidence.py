@@ -12,7 +12,7 @@ FIELD_SOURCES (host contract):
 | head_sha | GET /repos/{repo}/pulls/{n} `head.sha` | missing, not 40-hex, or != webhook `pull_request.head.sha` |
 | event_head_sha | webhook payload after `X-Hub-Signature-256` | differs from pulls API head |
 | base_ref | pulls API `base.ref` | not `main` or `release/uat` |
-| files | pulls API `files` pages until `Link` rel=next is absent | `files_complete` is false |
+| files | pulls API `files` pages until `Link` rel=next is absent, plus `previous_filename` | `files_complete` is false or `renames_included` is not true |
 | comments | issues API comment pages, not the webhook body | `comments_complete` is false; edited bodies |
 | pulls_api_base_sha | pulls API `base.sha` | not 40-hex when the verdict is dest_sync |
 | compare_merge_base_sha | GET /repos/{repo}/compare/{base.sha}...{head.sha} `merge_base_commit.sha` | not equal to `base.sha` |
@@ -69,6 +69,7 @@ class GitHubSnapshot:
     head_blobs: dict[str, str] | None = None
     source_blobs: dict[str, str] | None = None
     previous_paths: tuple[str, ...] = ()
+    renames_included: bool = False
     requested_environments: tuple[str, ...] = ()
     requested_secret_names: tuple[str, ...] = ()
 
@@ -117,6 +118,8 @@ def seal_request(snapshot: GitHubSnapshot, policy: BundledPolicy) -> EvaluationR
         raise EvidenceError("github snapshot timed out")
     if snapshot.files_complete is not True:
         raise EvidenceError("file list is incomplete")
+    if snapshot.renames_included is not True:
+        raise EvidenceError("rename list is incomplete")
     if snapshot.comments_complete is not True:
         raise EvidenceError("comment list is incomplete")
     if snapshot.trees_truncated is not False:

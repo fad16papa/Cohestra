@@ -44,6 +44,7 @@ def _feature(paths: tuple[str, ...]):
             ruleset_strict=True,
             ruleset_bypass_empty=True,
             event_head_sha=HEAD,
+            renames_included=True,
             now_unix=NOW,
         )
     )
@@ -89,6 +90,11 @@ class SecretPathRegressions(unittest.TestCase):
         _assert_secret_failure(self, ("src/.aws/credentials",))
         _assert_secret_failure(self, ("config/secrets.json",))
         _assert_secret_failure(self, ("deploy/certs/.pem",))
+        _assert_secret_failure(self, ("deploy/certs/server.pem.bak",))
+        _assert_secret_failure(self, ("src/keys/prod.key.old",))
+        _assert_secret_failure(self, ("config/secrets.json.bak",))
+        _assert_secret_failure(self, ("config/secret.json",))
+        _assert_secret_failure(self, ("src/config/production.env~",))
 
     def test_case_variations(self) -> None:
         _assert_secret_failure(self, ("src/.ENV",))

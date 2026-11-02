@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 
 from .attestation import AttestationError, Comment, verify_attestation
-from .conclusions import FORBIDDEN_SOFT_EXITS, CheckConclusion
+from .conclusions import CheckConclusion
 from .paths import PathError, canonicalize_repo_path, control_filename_reason, secret_path_reason
 from .policy import BundledPolicy, PolicyError, is_control_plane_path, load_policy
 from .seal import SEAL
@@ -58,14 +58,7 @@ class EvaluationResult:
     head_sha: str = ""
 
     def as_github_check(self) -> dict[str, str]:
-        if self.conclusion.value in FORBIDDEN_SOFT_EXITS:
-            raise EvaluationError("soft check conclusions are forbidden")
-        return {
-            "name": self.check_name,
-            "conclusion": self.conclusion.value,
-            "title": self.verdict,
-            "summary": "; ".join(self.reasons) or self.verdict,
-        }
+        raise EvaluationError("post checks through github_check_body")
 
 
 def _fail(policy: BundledPolicy, head_sha: str, verdict: str, *reasons: str) -> EvaluationResult:

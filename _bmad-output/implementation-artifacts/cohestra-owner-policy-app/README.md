@@ -17,7 +17,7 @@ python3 tests/test_paths.py
 python3 tests/test_negatives.py
 ```
 
-8 path regressions and 47 fail-closed cases. The evaluator returns only
+8 path regressions and 49 fail-closed cases. The evaluator returns only
 `success` or `failure`. It never returns `neutral` or `skipped`.
 
 The tests build a `GitHubSnapshot`. That is a simulated API read. It does

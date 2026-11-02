@@ -10,7 +10,7 @@ as_of: 2026-11-02T21:40:00+08:00
 Local prototype, simulated GitHub snapshots only:
 
 - `python3 tests/test_paths.py` — 8 tests
-- `python3 tests/test_negatives.py` — 47 tests
+- `python3 tests/test_negatives.py` — 49 tests
 
 These do **not** prove a live ruleset pin or a live check-run. N3/N4 refuse spoofable integration ids inside the snapshot contract. Live F probes must prove T7.
 

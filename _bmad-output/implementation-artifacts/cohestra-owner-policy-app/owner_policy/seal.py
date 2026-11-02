@@ -19,16 +19,23 @@ class _Ticket:
 
 
 class _Seal:
+    def __init__(self) -> None:
+        self._minted: set[int] = set()
+
     def mint(self, digest: bytes) -> _Ticket:
         caller = sys._getframe(1).f_globals.get("__name__", "")
         if caller != "owner_policy.evidence":
             raise RuntimeError("seal mint refused")
         if not isinstance(digest, bytes) or len(digest) != 32:
             raise RuntimeError("seal mint refused")
-        return _Ticket(digest)
+        ticket = _Ticket(digest)
+        self._minted.add(id(ticket))
+        return ticket
 
     def ok(self, token: object, digest: bytes) -> bool:
         if not isinstance(token, _Ticket) or not isinstance(digest, bytes):
+            return False
+        if id(token) not in self._minted:
             return False
         return hmac.compare_digest(token.digest, digest)
 

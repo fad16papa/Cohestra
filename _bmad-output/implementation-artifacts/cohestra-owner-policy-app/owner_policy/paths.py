@@ -6,15 +6,6 @@ import re
 import unicodedata
 from urllib.parse import unquote
 
-_SECRET_FILE = re.compile(
-    r"^(?:"
-    r"id_(?:rsa|dsa|ecdsa|ed25519)\d*(?:[._-].*)?|"
-    r"credentials(?:\..*)?|"
-    r"secrets\.(?:json|ya?ml|txt)|"
-    r".*\.(?:pem|key|p12|pfx)"
-    r")$",
-    re.IGNORECASE,
-)
 _CONTROL_FILE = re.compile(r"^(?:codeowners|action\.ya?ml)$", re.IGNORECASE)
 
 
@@ -58,12 +49,24 @@ def canonicalize_repo_path(raw: str) -> str:
 
 def secret_path_reason(path: str) -> str | None:
     for segment in path.split("/"):
-        lowered = segment.lower()
-        if lowered.startswith(".env") or lowered.endswith(".env") or ".env." in lowered:
-            return f"secret-like path: {path}"
-        if _SECRET_FILE.match(segment):
+        if _secret_segment(segment):
             return f"secret-like path: {path}"
     return None
+
+
+def _secret_segment(segment: str) -> bool:
+    name = segment.lower()
+    if ".env" in name:
+        return True
+    if re.search(r"(?:^|[._-])(?:pem|key|p12|pfx)(?:$|[._-])", name):
+        return True
+    if re.fullmatch(r"id_(?:rsa|dsa|ecdsa|ed25519)\d*(?:[._-].*)?", name):
+        return True
+    if name == "credentials" or name.startswith("credentials."):
+        return True
+    if re.search(r"(?:^|[._-])secrets?\.(?:json|ya?ml|txt)(?:$|[._-])", name):
+        return True
+    return False
 
 
 def control_filename_reason(path: str) -> str | None:
