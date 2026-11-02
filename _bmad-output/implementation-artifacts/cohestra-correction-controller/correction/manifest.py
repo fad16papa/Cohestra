@@ -1,4 +1,9 @@
-"""Immutable owner-approved story manifest. The file is the only permission."""
+"""Immutable story manifest.
+
+The digest is SHA-256 of the canonical field JSON. It binds a store to those
+bytes. It is not an owner signature and it does not prove that an owner
+authorized the file. Owner authorization is a separate, unimplemented trust root.
+"""
 
 from __future__ import annotations
 

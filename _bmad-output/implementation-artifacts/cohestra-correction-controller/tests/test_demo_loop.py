@@ -88,6 +88,7 @@ class DemoLoopTest(unittest.TestCase):
         self.assertEqual(done.verification_plane, SIMULATED_PASS)
         self.assertFalse(done.live_scoped_loop_verified)
         self.assertFalse(done.live_read_only_transport_verified)
+        self.assertFalse(done.owner_manifest_authorized)
 
         restarted_port = Port()
         restarted = Controller(store_root, manifest, restarted_port, policy)

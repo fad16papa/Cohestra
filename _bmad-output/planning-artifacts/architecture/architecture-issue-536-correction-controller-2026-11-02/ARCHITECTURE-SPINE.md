@@ -47,13 +47,13 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 
 - **Binds:** issue-536
 - **Prevents:** A pull request, comment, or hand-edited dataclass granting itself scope
-- **Rule:** `Manifest.from_dict` accepts only pull numbers outside the forbidden set containing 505, a 40-character lowercase base SHA, safe relative allowed paths, the five mandatory acceptance criteria, required check names, a correction budget from 1 to 5, and model `grok-4.7-high-fast`. `Controller` recomputes the digest and refuses a mismatch before creating a store. One store binds one manifest id and one digest.
+- **Rule:** `Manifest.from_dict` accepts only pull numbers outside the forbidden set containing 505, a 40-character lowercase base SHA, safe relative allowed paths, the five mandatory acceptance criteria, required check names, a correction budget from 1 to 5, and model `grok-4.7-high-fast`. The digest is SHA-256 of that canonical JSON. `Controller` recomputes it and refuses a mismatch before creating a store. One store binds one manifest id and one digest. The digest is not an owner signature. `owner_manifest_authorized` is literal false on every decision.
 
 ### AD-2 — Event text is untrusted
 
 - **Binds:** issue-536
 - **Prevents:** Comment text becoming an assignment prompt
-- **Rule:** The controller never writes `untrusted_text` into the ledger. Injection phrases and values longer than 300 characters are stored as the fixed word redacted. A structured in-scope failure may still assign. Finding fields are kind, name, path, check, role, and counts. Counts are part of the finding fingerprint.
+- **Rule:** The controller never writes `untrusted_text` into the ledger. Injection phrases and values longer than 300 characters are stored as the fixed word redacted. An event id that matches a secret or an instruction is stored as `redacted:` plus SHA-256, not as the raw id. A structured in-scope failure may still assign. Finding fields are kind, name, path, check, role, and counts. The fingerprint mixes a hash of redacted source text so two different redacted strings do not collide. The raw text is not stored.
 
 ### AD-3 — Simulation is not live verification
 
@@ -71,7 +71,7 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 
 - **Binds:** issue-536
 - **Prevents:** Duplicate delivery or overlapping processes creating two assignments
-- **Rule:** The lock is created with `link` so the file appears only after its body is written. The lease is 30 seconds and is refreshed before the port call and before the ledger write. A holder that no longer owns the lock discards the decision and does not write. A live lock returns BUSY and does not record the event. The holder reloads the ledger after acquiring the lock. An applied event id returns the stored decision and does not call the port again. A foreign pull number is rejected before comment text is inspected, so it cannot set the sticky hold.
+- **Rule:** The lock is an exclusive `flock` held for the critical section. The lease body is rewritten in place on that descriptor. The lease is 30 seconds and is refreshed before the port call and before the ledger write. An unexpired token that belongs to someone else returns BUSY and is not removed. Release unlinks the lock while the flock is still held, then unlocks. A holder that no longer owns the lock discards the decision and does not write. The holder reloads the ledger after acquiring the lock. An applied event id returns the stored decision and does not call the port again. A foreign pull number is rejected before comment text is inspected, so it cannot set the sticky hold. The ledger file is fsynced, and the store directory is fsynced after the replace. `Ledger.from_json` requires every stored key. `corrections`, assignment records, assigned heads, and fingerprints must have equal length. A trace or assignment entry that is not an object makes the ledger unreadable and is not rewritten.
 
 ### AD-6 — A stale claim is not an evaluation
 
@@ -89,19 +89,19 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 
 - **Binds:** issue-536
 - **Prevents:** Author, bot, forged, or wrong-model approval
-- **Rule:** READY needs two distinct reviewer ids, one policy role `bmad` and one `catsec`, both authenticated booleans, both using the manifest model, both bound to the current head, both with integer blocker 0 and major 0, and each naming at least one in-scope path. Forbidden logins are compared case-insensitively: `cursor`, `cursor[bot]`, `github-actions[bot]`, `copilot`, `copilot[bot]`, and `copilot-swe-agent[bot]`. The author login is also case-insensitive and cannot satisfy the gate. Claimed role text is ignored. A trusted in-scope blocker or major is a retryable finding. An untrusted review is not a correction source.
+- **Rule:** READY needs two distinct reviewer ids, one policy role `bmad` and one `catsec`, both with `authenticated` true and `authentication_source` exactly `host-verified`, both using the manifest model, both bound to the current head, both with integer blocker 0 and major 0 at or below 1000000, and each naming at least one in-scope path. Forbidden logins are compared case-insensitively: `cursor`, `cursor[bot]`, `github-actions[bot]`, `copilot`, `copilot[bot]`, and `copilot-swe-agent[bot]`. The author login is also case-insensitive and cannot satisfy the gate. Claimed role text is ignored. Event text cannot set authentication. A future live adapter must not copy `authenticated` or `authentication_source` from webhook, comment, or pull-request JSON. A trusted in-scope blocker or major is a retryable finding. An untrusted review is not a correction source. Test evidence must carry the same head SHA as the pull.
 
 ### AD-9 — Secret-shaped material is dropped
 
 - **Binds:** issue-536
 - **Prevents:** Tokens in comments, test details, or API errors reaching the ledger
-- **Rule:** Matches for `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`, `AKIA`, `ASIA`, private-key banners, Slack tokens, and `sk_live_` produce a sticky hold. The reason is a fixed string. The matched text is not stored. A head that is not 40 lowercase hex characters is not stored. GitHub error text is not copied; only the status class is. Any other port exception becomes the same API-failure hold.
+- **Rule:** Matches for `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_`, `github_pat_`, `AKIA`, `ASIA`, private-key banners, Slack tokens, and `sk_live_` produce a sticky hold. Private-key banners match case-insensitively, including EC. The reason is a fixed string. The matched text is not stored. A head that is not 40 lowercase hex characters is not stored. GitHub error text is not copied; only the status class is. Any other port exception becomes the same API-failure hold.
 
 ### AD-10 — The budget bounds assignments only
 
 - **Binds:** issue-536
 - **Prevents:** An endless correction loop, and a budget hold blocking a later clean head
-- **Rule:** Each assignment increments a counter up to `max_corrections`. The same finding fingerprint on a later head holds for no progress and does not assign. A head that meets every gate can still become READY after the budget is exhausted.
+- **Rule:** Each assignment increments a counter up to `max_corrections`. That counter is an assignment count only. Elapsed time, token consumption, and cost are not accepted budget keys and are not enforced. The same finding fingerprint on a later head holds for no progress and does not assign. A head that meets every gate can still become READY after the assignment cap. That READY does not mean a time, token, or cost budget was met.
 
 ### AD-11 — Scope, base, secret, live, and digest failures stick
 
@@ -121,7 +121,7 @@ Epic 45 AD-12 pins Grok 4.6 for that epic's control plane. This feature does not
 | --- | --- |
 | Naming | Status strings are fixed: READY_FOR_OWNER_MERGE_DECISION, HOLD_OWNER_ACTION_REQUIRED, RETRYABLE_SCOPED, WAITING_EXTERNAL, IGNORED, BUSY |
 | Data and formats | Ledger JSON is UTF-8, sorted keys, mode 0600. SHAs are 40 lowercase hex characters. Findings are string dictionaries. |
-| State and auth | The manifest digest is SHA-256 of the canonical field JSON. Reviewer trust comes from the host policy, never from the review payload. The lock lease is 30 seconds. |
+| State and auth | The manifest digest is SHA-256 of the canonical field JSON and is not owner authorization. Reviewer trust comes from the host policy. `authentication_source` must be `host-verified`. Event text is not an identity. The lock is an exclusive flock with a 30-second lease. |
 
 ## Stack
 
@@ -161,6 +161,9 @@ The unit workflow requests `contents: read` and sets `persist-credentials: false
 
 - Live read-only GitHub transport. The port in this build is a test double. A passing mock is not a live read.
 - Live scoped Cursor dispatch. `is_live` is a hold, not an adapter.
+- Owner-controlled manifest trust root. A signature over the canonical body, verified against an owner key this controller does not mint. The content digest stays an integrity check. See `issue-536-follow-on-requirements.md`.
+- Live adapter reviewer authentication. The adapter must verify GitHub identity before setting `host-verified`. It must not copy authentication from webhook, comment, or pull-request JSON.
+- Execution budgets for elapsed time, token consumption, and cost. `max_corrections` does not implement those budgets.
 - GitHub App installation, ruleset changes, and required-check registration.
 - UAT activation, production deploy, and ADCP restoration.
 - Provisioning the two non-author reviewer identities that a real pull would need.

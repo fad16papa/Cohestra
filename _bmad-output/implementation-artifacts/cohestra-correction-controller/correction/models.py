@@ -29,6 +29,7 @@ class Review:
     model: str
     authenticated: bool
     paths: tuple[str, ...] = ()
+    authentication_source: str = ""
 
 
 @dataclass(frozen=True)
@@ -37,6 +38,7 @@ class TestResult:
     passed: bool
     path: str
     detail: str = ""
+    head_sha: str = ""
 
 
 @dataclass(frozen=True)
@@ -70,6 +72,7 @@ class Decision:
     verification_plane: str
     live_scoped_loop_verified: bool = False
     live_read_only_transport_verified: bool = False
+    owner_manifest_authorized: bool = False
 
 
 @dataclass
@@ -146,27 +149,56 @@ class Ledger:
                 raise ValueError(name)
             return value
 
-        if not isinstance(raw.get("hold"), bool):
+        required = {
+            "applied_event_ids",
+            "assigned_heads",
+            "assignments",
+            "base_sha",
+            "corrections",
+            "current_head",
+            "fingerprints",
+            "hold",
+            "manifest_digest",
+            "manifest_id",
+            "pull_number",
+            "reason",
+            "status",
+            "trace",
+        }
+        if set(raw) != required:
+            raise ValueError("ledger keys")
+        if not isinstance(raw["hold"], bool):
             raise ValueError("hold")
-        corrections = require_int(raw.get("corrections", 0), "corrections")
+        corrections = require_int(raw["corrections"], "corrections")
         if corrections < 0:
             raise ValueError("corrections")
-        current = raw.get("current_head")
+        current = raw["current_head"]
         if current is not None and not isinstance(current, str):
             raise ValueError("current_head")
+        assigned_heads = [require_text(item, "assigned_head") for item in require_list(raw["assigned_heads"], "assigned_heads")]
+        fingerprints = [require_text(item, "fingerprint") for item in require_list(raw["fingerprints"], "fingerprints")]
+        applied_event_ids = [require_text(item, "event_id") for item in require_list(raw["applied_event_ids"], "applied_event_ids")]
+        assignments = require_list(raw["assignments"], "assignments")
+        trace = require_list(raw["trace"], "trace")
+        if any(not isinstance(item, dict) for item in assignments):
+            raise ValueError("assignments")
+        if any(not isinstance(item, dict) for item in trace):
+            raise ValueError("trace")
+        if not (corrections == len(assignments) == len(assigned_heads) == len(fingerprints)):
+            raise ValueError("corrections")
         return cls(
-            manifest_id=require_text(raw.get("manifest_id"), "manifest_id"),
-            manifest_digest=require_text(raw.get("manifest_digest"), "manifest_digest"),
-            pull_number=require_int(raw.get("pull_number"), "pull_number"),
-            base_sha=require_text(raw.get("base_sha"), "base_sha"),
+            manifest_id=require_text(raw["manifest_id"], "manifest_id"),
+            manifest_digest=require_text(raw["manifest_digest"], "manifest_digest"),
+            pull_number=require_int(raw["pull_number"], "pull_number"),
+            base_sha=require_text(raw["base_sha"], "base_sha"),
             current_head=current,
             corrections=corrections,
-            assigned_heads=[require_text(item, "assigned_head") for item in require_list(raw.get("assigned_heads", []), "assigned_heads")],
-            fingerprints=[require_text(item, "fingerprint") for item in require_list(raw.get("fingerprints", []), "fingerprints")],
-            applied_event_ids=[require_text(item, "event_id") for item in require_list(raw.get("applied_event_ids", []), "applied_event_ids")],
-            assignments=require_list(raw.get("assignments", []), "assignments"),
-            trace=require_list(raw.get("trace", []), "trace"),
-            status=require_text(raw.get("status", "IDLE"), "status"),
-            reason=require_text(raw.get("reason", ""), "reason"),
+            assigned_heads=assigned_heads,
+            fingerprints=fingerprints,
+            applied_event_ids=applied_event_ids,
+            assignments=assignments,
+            trace=trace,
+            status=require_text(raw["status"], "status"),
+            reason=require_text(raw["reason"], "reason"),
             hold=raw["hold"],
         )

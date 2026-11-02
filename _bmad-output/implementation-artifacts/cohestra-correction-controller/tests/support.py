@@ -93,8 +93,19 @@ def review(
     model: str = MODEL,
     authenticated: bool = True,
     paths: tuple[str, ...] = ("correction/controller.py",),
+    authentication_source: str = "host-verified",
 ) -> Review:
-    return Review(reviewer, role, head, blocker, major, model, authenticated, paths)
+    return Review(
+        reviewer,
+        role,
+        head,
+        blocker,
+        major,
+        model,
+        authenticated,
+        paths,
+        authentication_source,
+    )
 
 
 def pull(
@@ -110,6 +121,12 @@ def pull(
     base_sha: str = BASE,
     base_ref: str = "main",
 ) -> PullView:
+    stamped: list[TestResult] = []
+    for test in tests:
+        if test.head_sha == "":
+            stamped.append(TestResult(test.name, test.passed, test.path, test.detail, head))
+        else:
+            stamped.append(test)
     return PullView(
         number,
         head,
@@ -119,7 +136,7 @@ def pull(
         repo,
         check_rows if check_rows is not None else checks(head),
         reviews,
-        tests,
+        tuple(stamped),
         paths,
     )
 

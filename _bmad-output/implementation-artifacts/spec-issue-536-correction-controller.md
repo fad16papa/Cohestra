@@ -64,3 +64,4 @@ context:
 - 2026-11-02: Issue #536 and the activating message approve this draft implementation. Live Cursor dispatch stays unauthorized.
 - 2026-11-02: Controller, demo, and negative tests landed under `cohestra-correction-controller`. CI on the draft PR is still open.
 - 2026-11-02: Review correction. Failed checks stay retryable and still cannot become READY. A foreign pull cannot sticky-hold the ledger. Secret patterns include GitHub app tokens and temporary AWS keys. Empty diffs, out-of-scope green tests, and pathless pass reviews cannot READY.
+- 2026-11-02: Gap review. The manifest digest is a content hash, not owner authorization. `owner_manifest_authorized` stays false. Reviewer `authentication_source` must be `host-verified`. Elapsed time, token consumption, and cost are rejected unknown budget keys and remain follow-on requirements. The CI checkbox stays open until the exact final HEAD is green.

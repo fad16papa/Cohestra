@@ -3,10 +3,13 @@
 The controller records simulated assignments. It does not call Cursor, merge,
 deploy, or read credential environment variables. A READY decision uses
 verification_plane SIMULATED_PASS and always leaves both live flags false.
+owner_manifest_authorized is always false: the manifest digest is a content
+hash, not an owner signature.
 """
 
 from __future__ import annotations
 
+import fcntl
 import hashlib
 import json
 import os
@@ -48,11 +51,12 @@ REFUSED_CONCLUSIONS = frozenset({"skipped", "cancelled", "canceled", "stale", "m
 
 SECRET_RE = re.compile(
     r"(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{16,}|"
-    r"(?:AKIA|ASIA)[0-9A-Z]{16}|BEGIN (?:OPENSSH |RSA )?PRIVATE KEY|"
+    r"(?:AKIA|ASIA)[0-9A-Z]{16}|"
     r"xox[baprs]-[A-Za-z0-9-]{10,}|sk_live_[A-Za-z0-9]{8,}"
 )
+KEY_RE = re.compile(r"BEGIN [A-Z0-9 ]{0,40}PRIVATE KEY", re.IGNORECASE)
 INJECTION_RE = re.compile(
-    r"ignore previous instructions|ignore all previous|you are now|merge this pr|"
+    r"ignore\s+previous\s+instructions|ignore\s+all\s+previous|you\s+are\s+now|merge\s+this\s+pr|"
     r"uat_deploy_gate_active\s*=\s*true|owner_control_ready\s*=\s*true",
     re.IGNORECASE,
 )
@@ -105,6 +109,7 @@ def load_manifest(path: Path) -> Manifest:
 
 
 def assert_manifest_authentic(manifest: Manifest) -> None:
+    """Recompute the content digest. This does not verify an owner signature."""
     rebuilt = Manifest.from_dict(
         {
             "acceptance_criteria": list(manifest.acceptance_criteria),
@@ -138,11 +143,11 @@ def open_controller(
 
 
 def _contains_secret(value: str) -> bool:
-    return SECRET_RE.search(value) is not None
+    return SECRET_RE.search(value) is not None or KEY_RE.search(value) is not None
 
 
 def _event_storage_id(event_id: str) -> str:
-    if _contains_secret(event_id):
+    if _contains_secret(event_id) or INJECTION_RE.search(event_id):
         return "redacted:" + hashlib.sha256(event_id.encode("utf-8")).hexdigest()
     return event_id
 
@@ -165,9 +170,20 @@ def _public(value: str) -> str:
     return value
 
 
-def _fingerprint(findings: tuple[dict[str, str], ...]) -> str:
-    blob = json.dumps(list(findings), sort_keys=True, separators=(",", ":"))
+def _fingerprint(findings: tuple[dict[str, str], ...], origins: tuple[str, ...] = ()) -> str:
+    material = {
+        "findings": list(findings),
+        "origins": [hashlib.sha256(item.encode("utf-8")).hexdigest() for item in origins],
+    }
+    blob = json.dumps(material, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _redacted_origin(value: str) -> tuple[str, str]:
+    public = _public(value)
+    if public == "redacted":
+        return public, value
+    return public, ""
 
 
 def _conclusion_bucket(conclusion: str | None) -> str:
@@ -206,9 +222,18 @@ def _pull_has_secret(pull: PullView) -> bool:
     for check in pull.checks:
         parts.extend([check.name, check.conclusion or "", check.head_sha])
     for review in pull.reviews:
-        parts.extend([review.reviewer_id, review.role, review.head_sha, review.model, *review.paths])
+        parts.extend(
+            [
+                review.reviewer_id,
+                review.role,
+                review.head_sha,
+                review.model,
+                review.authentication_source,
+                *review.paths,
+            ]
+        )
     for test in pull.tests:
-        parts.extend([test.name, test.path, test.detail])
+        parts.extend([test.name, test.path, test.detail, test.head_sha])
     if any(not isinstance(part, str) for part in parts):
         return True
     return any(_contains_secret(part) for part in parts)
@@ -221,6 +246,8 @@ def _review_disposition(manifest: Manifest, policy: ReviewPolicy, pull: PullView
         return "forbidden"
     if type(review.authenticated) is not bool or not review.authenticated:
         return "unauthenticated"
+    if review.authentication_source != "host-verified":
+        return "unauthenticated"
     authors = {manifest.author_id.casefold(), pull.author_id.casefold() if isinstance(pull.author_id, str) else ""}
     if review.reviewer_id.casefold() in authors:
         return "author"
@@ -230,7 +257,14 @@ def _review_disposition(manifest: Manifest, policy: ReviewPolicy, pull: PullView
         return "model"
     if review.head_sha != pull.head_sha:
         return "stale"
-    if type(review.blocker) is not int or type(review.major) is not int or review.blocker < 0 or review.major < 0:
+    if (
+        type(review.blocker) is not int
+        or type(review.major) is not int
+        or review.blocker < 0
+        or review.major < 0
+        or review.blocker > 1_000_000
+        or review.major > 1_000_000
+    ):
         return "counts"
     for path in review.paths:
         if not isinstance(path, str) or not _path_safe(path):
@@ -254,12 +288,10 @@ def _evidence_too_large(pull: PullView) -> bool:
         return True
     values: list[object] = [pull.head_sha, pull.base_sha, pull.base_ref, pull.author_id, pull.repo, *pull.changed_paths]
     for test in pull.tests:
-        values.extend([test.name, test.path, test.detail])
+        values.extend([test.name, test.path, test.detail, test.head_sha])
+    for review in pull.reviews:
+        values.append(review.authentication_source)
     return any(isinstance(value, str) and len(value) > 4000 for value in values)
-
-
-def _sort_findings(items: list[dict[str, str]]) -> tuple[dict[str, str], ...]:
-    return tuple(sorted(items, key=lambda item: json.dumps(item, sort_keys=True)))
 
 
 def _decide(
@@ -267,7 +299,16 @@ def _decide(
     policy: ReviewPolicy,
     ledger: Ledger,
     pull: PullView,
-) -> tuple[str, str, bool, tuple[dict[str, str], ...]]:
+) -> tuple[str, str, bool, tuple[dict[str, str], ...], tuple[str, ...]]:
+    def finish(
+        status: str,
+        reason: str,
+        sticky: bool,
+        findings: tuple[dict[str, str], ...] = (),
+        origins: tuple[str, ...] = (),
+    ) -> tuple[str, str, bool, tuple[dict[str, str], ...], tuple[str, ...]]:
+        return status, reason, sticky, findings, origins
+
     if (
         not isinstance(pull.repo, str)
         or not isinstance(pull.author_id, str)
@@ -275,89 +316,106 @@ def _decide(
         or not isinstance(pull.base_ref, str)
         or not isinstance(pull.head_sha, str)
     ):
-        return HOLD, "head sha is invalid", True, ()
+        return finish(HOLD, "head sha is invalid", True)
     if pull.repo != manifest.repo:
-        return HOLD, "repository does not match the manifest", True, ()
+        return finish(HOLD, "repository does not match the manifest", True)
     if pull.author_id.casefold() != manifest.author_id.casefold():
-        return HOLD, "pull author does not match the manifest", True, ()
+        return finish(HOLD, "pull author does not match the manifest", True)
     if (
         type(pull.number) is not int
         or pull.number != manifest.pull_number
         or pull.base_sha != manifest.base_sha
         or pull.base_ref != manifest.base_ref
     ):
-        return HOLD, "base does not match the manifest", True, ()
+        return finish(HOLD, "base does not match the manifest", True)
     if not SHA_RE.fullmatch(pull.head_sha):
-        return HOLD, "head sha is invalid", True, ()
+        return finish(HOLD, "head sha is invalid", True)
     if _pull_has_secret(pull):
-        return HOLD, SECRET, True, ()
+        return finish(HOLD, SECRET, True)
     if not pull.changed_paths:
-        return HOLD, "changed paths are missing", False, ()
+        return finish(HOLD, "changed paths are missing", False)
     for path in pull.changed_paths:
         if not isinstance(path, str) or not _path_safe(path):
-            return HOLD, "path is unsafe", True, ()
+            return finish(HOLD, "path is unsafe", True)
         if not path_allowed(path, manifest.allowed_paths):
-            return HOLD, "changed path is outside the manifest", True, ()
+            return finish(HOLD, "changed path is outside the manifest", True)
     for test in pull.tests:
         if (
             type(test.passed) is not bool
             or not isinstance(test.name, str)
             or not isinstance(test.path, str)
             or not isinstance(test.detail, str)
+            or not isinstance(test.head_sha, str)
         ):
-            return HOLD, "test evidence is missing", True, ()
+            return finish(HOLD, "test evidence is missing", True)
         if not _path_safe(test.path) or not path_allowed(test.path, manifest.allowed_paths):
-            return HOLD, "test path is outside the manifest", True, ()
+            return finish(HOLD, "test path is outside the manifest", True)
+        if test.head_sha != pull.head_sha:
+            return finish(HOLD, "stale test evidence", False)
 
     dispositions = [_review_disposition(manifest, policy, pull, review) for review in pull.reviews]
     if "counts" in dispositions:
-        return HOLD, "review counts are not trustworthy", True, ()
+        return finish(HOLD, "review counts are not trustworthy", True)
     if "unsafe" in dispositions or "scope" in dispositions:
-        return HOLD, "review path is outside the manifest", True, ()
+        return finish(HOLD, "review path is outside the manifest", True)
     if pull.head_sha in ledger.assigned_heads:
-        return HOLD, NEW_COMMIT, False, ()
+        return finish(HOLD, NEW_COMMIT, False)
 
-    findings: list[dict[str, str]] = []
+    published: list[tuple[dict[str, str], str]] = []
     for test in pull.tests:
         if test.passed:
             continue
-        findings.append({"kind": "test", "name": _public(test.name), "path": _public(test.path)})
+        name, name_origin = _redacted_origin(test.name)
+        path, path_origin = _redacted_origin(test.path)
+        published.append(({"kind": "test", "name": name, "path": path}, name_origin + "\n" + path_origin))
     check_states = {name: _check_bucket(name, pull) for name in manifest.required_checks}
     for name, state in check_states.items():
         if state == "failed":
-            findings.append({"kind": "check", "conclusion": "failed", "name": name})
+            published.append(({"kind": "check", "conclusion": "failed", "name": name}, ""))
     for review, disposition in zip(pull.reviews, dispositions, strict=True):
         if disposition != "finding":
             continue
         role = policy.role_for(review.reviewer_id) or ""
+        reviewer_public, reviewer_origin = _redacted_origin(review.reviewer_id)
         paths = review.paths or ("",)
         for path in paths:
-            findings.append(
-                {
-                    "blocker": str(review.blocker),
-                    "kind": "review",
-                    "major": str(review.major),
-                    "path": _public(path),
-                    "reviewer_id": _public(review.reviewer_id),
-                    "role": role,
-                }
+            path_public, path_origin = _redacted_origin(path)
+            published.append(
+                (
+                    {
+                        "blocker": str(review.blocker),
+                        "kind": "review",
+                        "major": str(review.major),
+                        "path": path_public,
+                        "reviewer_id": reviewer_public,
+                        "role": role,
+                    },
+                    reviewer_origin + "\n" + path_origin,
+                )
             )
-    ordered = _sort_findings(findings)
+    published.sort(
+        key=lambda pair: (
+            json.dumps(pair[0], sort_keys=True),
+            hashlib.sha256(pair[1].encode("utf-8")).hexdigest(),
+        )
+    )
+    ordered = tuple(item for item, _origin in published)
+    origins = tuple(origin for _item, origin in published)
     if ordered:
-        if _fingerprint(ordered) in ledger.fingerprints:
-            return HOLD, NO_PROGRESS, False, ()
+        if _fingerprint(ordered, origins) in ledger.fingerprints:
+            return finish(HOLD, NO_PROGRESS, False)
         if ledger.corrections >= manifest.max_corrections:
-            return HOLD, BUDGET, False, ()
-        return RETRY, ASSIGNED, False, ordered
+            return finish(HOLD, BUDGET, False)
+        return finish(RETRY, ASSIGNED, False, ordered, origins)
 
     if any(state == "stale" for state in check_states.values()):
-        return HOLD, "stale check evidence", False, ()
+        return finish(HOLD, "stale check evidence", False)
     if any(state in {"missing", "refused"} for state in check_states.values()):
-        return HOLD, "mandatory check evidence refused", False, ()
+        return finish(HOLD, "mandatory check evidence refused", False)
     if any(state == "pending" for state in check_states.values()):
-        return WAITING, "required checks are still running", False, ()
+        return finish(WAITING, "required checks are still running", False)
     if not pull.tests or any(not test.passed for test in pull.tests):
-        return HOLD, "test evidence is missing", False, ()
+        return finish(HOLD, "test evidence is missing", False)
 
     passes: list[tuple[str, str]] = []
     for review in pull.reviews:
@@ -369,24 +427,24 @@ def _decide(
     roles = {role for _, role in passes}
     identities = {reviewer_id for reviewer_id, _ in passes}
     if "bmad" in roles and "catsec" in roles and len(identities) >= 2:
-        return READY, SATISFIED, False, ()
+        return finish(READY, SATISFIED, False)
     if not pull.reviews:
-        return WAITING, "independent reviews are missing", False, ()
+        return finish(WAITING, "independent reviews are missing", False)
     if "unauthenticated" in dispositions:
-        return HOLD, "reviewer is not authenticated", False, ()
+        return finish(HOLD, "reviewer is not authenticated", False)
     if "forbidden" in dispositions:
-        return HOLD, "reviewer is not permitted", False, ()
+        return finish(HOLD, "reviewer is not permitted", False)
     if "author" in dispositions:
-        return HOLD, "author cannot satisfy independent review", False, ()
+        return finish(HOLD, "author cannot satisfy independent review", False)
     if "model" in dispositions:
-        return HOLD, "reviewer model does not match the manifest", False, ()
+        return finish(HOLD, "reviewer model does not match the manifest", False)
     if "stale" in dispositions:
-        return HOLD, "stale review evidence", False, ()
+        return finish(HOLD, "stale review evidence", False)
     if "unscoped" in dispositions:
-        return HOLD, "review did not name an in-scope path", False, ()
+        return finish(HOLD, "review did not name an in-scope path", False)
     if "not_permitted" in dispositions:
-        return HOLD, "reviewer is not permitted", False, ()
-    return WAITING, "independent reviews are missing", False, ()
+        return finish(HOLD, "reviewer is not permitted", False)
+    return finish(WAITING, "independent reviews are missing", False)
 
 
 class Controller:
@@ -411,6 +469,7 @@ class Controller:
         self.ledger: Ledger | None = None
         self._unreadable = False
         self._lock_token: str | None = None
+        self._lock_fd: int | None = None
         self._load()
 
     def handle(self, event: Event) -> Decision:
@@ -468,7 +527,7 @@ class Controller:
             return self._commit(stored_id, HOLD, reason, None, sticky=True, accept_head=True)
         if _evidence_too_large(pull):
             return self._commit(stored_id, HOLD, "evidence is too large", None, accept_head=False)
-        status, reason, sticky, findings = _decide(self.manifest, self.policy, self.ledger, pull)
+        status, reason, sticky, findings, origins = _decide(self.manifest, self.policy, self.ledger, pull)
         return self._commit(
             stored_id,
             status,
@@ -476,6 +535,7 @@ class Controller:
             record_head,
             sticky=sticky,
             findings=findings,
+            origins=origins,
             accept_head=True,
         )
 
@@ -488,6 +548,7 @@ class Controller:
         *,
         sticky: bool = False,
         findings: tuple[dict[str, str], ...] = (),
+        origins: tuple[str, ...] = (),
         accept_head: bool = True,
     ) -> Decision:
         assert self.ledger is not None
@@ -519,7 +580,7 @@ class Controller:
             self.ledger.assignments.append(assignment.as_dict())
             if head:
                 self.ledger.assigned_heads.append(head)
-            self.ledger.fingerprints.append(_fingerprint(findings))
+            self.ledger.fingerprints.append(_fingerprint(findings, origins))
         if accept_head:
             self.ledger.status = status
             self.ledger.reason = reason
@@ -626,65 +687,118 @@ class Controller:
             handle.flush()
             os.fsync(handle.fileno())
         os.replace(temporary, self.ledger_path)
+        directory = os.open(self.store, os.O_RDONLY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
 
     def _acquire(self) -> str | None:
         now = float(self.clock())
         token = secrets.token_hex(16)
-        body = json.dumps({"expires_at": now + LEASE_SECONDS, "token": token}).encode("utf-8")
-        temporary = self.store / f".lock.{token}"
-        temporary.write_bytes(body)
-        os.chmod(temporary, 0o600)
-        try:
-            for _ in range(2):
+        for _ in range(3):
+            try:
+                fd = os.open(self.lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+            except OSError:
+                return None
+            try:
+                os.chmod(self.lock_path, 0o600)
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError:
+                os.close(fd)
+                return None
+            except OSError:
+                os.close(fd)
+                return None
+            try:
                 try:
-                    os.link(temporary, self.lock_path)
-                    return token
-                except FileExistsError:
-                    if not self._lock_expired(now):
-                        return None
+                    current = os.stat(self.lock_path)
+                except FileNotFoundError:
+                    current = None
+                if current is None or os.fstat(fd).st_ino != current.st_ino:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+                    os.close(fd)
+                    continue
+                os.lseek(fd, 0, os.SEEK_SET)
+                existing = os.read(fd, 8192)
+                if existing:
                     try:
-                        self.lock_path.unlink()
-                    except FileNotFoundError:
-                        pass
-            return None
-        finally:
-            temporary.unlink(missing_ok=True)
+                        raw = json.loads(existing.decode("utf-8"))
+                        expires = float(raw["expires_at"])
+                        other = raw.get("token")
+                    except (UnicodeDecodeError, json.JSONDecodeError, KeyError, TypeError, ValueError):
+                        expires = 0.0
+                        other = None
+                    if other != token and expires > now:
+                        fcntl.flock(fd, fcntl.LOCK_UN)
+                        os.close(fd)
+                        return None
+                body = json.dumps({"expires_at": now + LEASE_SECONDS, "token": token}).encode("utf-8")
+                os.lseek(fd, 0, os.SEEK_SET)
+                os.ftruncate(fd, 0)
+                os.write(fd, body)
+                os.fsync(fd)
+                self._lock_fd = fd
+                return token
+            except OSError:
+                try:
+                    fcntl.flock(fd, fcntl.LOCK_UN)
+                except OSError:
+                    pass
+                os.close(fd)
+                return None
+        return None
 
     def _refresh_lock(self) -> bool:
+        fd = self._lock_fd
         token = self._lock_token
-        if not token:
+        if fd is None or not token:
             return False
         try:
-            raw = json.loads(self.lock_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+            os.lseek(fd, 0, os.SEEK_SET)
+            raw = json.loads(os.read(fd, 8192).decode("utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             return False
         if not isinstance(raw, dict) or raw.get("token") != token:
             return False
+        try:
+            if os.fstat(fd).st_ino != os.stat(self.lock_path).st_ino:
+                return False
+        except OSError:
+            return False
         raw["expires_at"] = float(self.clock()) + LEASE_SECONDS
-        temporary = self.store / f".lock.refresh.{token}"
-        temporary.write_text(json.dumps(raw), encoding="utf-8")
-        os.chmod(temporary, 0o600)
-        os.replace(temporary, self.lock_path)
+        body = json.dumps(raw).encode("utf-8")
+        try:
+            os.lseek(fd, 0, os.SEEK_SET)
+            os.ftruncate(fd, 0)
+            os.write(fd, body)
+            os.fsync(fd)
+        except OSError:
+            return False
         return True
 
-    def _lock_expired(self, now: float) -> bool:
-        try:
-            raw = json.loads(self.lock_path.read_text(encoding="utf-8"))
-            expires = float(raw["expires_at"])
-        except (OSError, json.JSONDecodeError, KeyError, TypeError, ValueError):
-            return True
-        return expires <= now
-
     def _release(self, token: str) -> None:
-        try:
-            raw = json.loads(self.lock_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        fd = self._lock_fd
+        self._lock_fd = None
+        if fd is None:
             return
-        if isinstance(raw, dict) and raw.get("token") == token:
+        try:
+            os.lseek(fd, 0, os.SEEK_SET)
+            raw = json.loads(os.read(fd, 8192).decode("utf-8"))
+            if isinstance(raw, dict) and raw.get("token") == token:
+                try:
+                    if os.fstat(fd).st_ino == os.stat(self.lock_path).st_ino:
+                        os.unlink(self.lock_path)
+                except FileNotFoundError:
+                    pass
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            pass
+        finally:
             try:
-                self.lock_path.unlink()
-            except FileNotFoundError:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            except OSError:
                 pass
+            os.close(fd)
 
 
 def _github_reason(exc: GitHubError) -> str:
@@ -699,4 +813,13 @@ def _github_reason(exc: GitHubError) -> str:
 
 def _decision(status: str, reason: str, head: str | None, assignments: int) -> Decision:
     plane = SIMULATED_PASS if status == READY else NOT_VERIFIED
-    return Decision(status, reason, head, assignments, plane, False, False)
+    return Decision(
+        status,
+        reason,
+        head,
+        assignments,
+        plane,
+        live_scoped_loop_verified=False,
+        live_read_only_transport_verified=False,
+        owner_manifest_authorized=False,
+    )
