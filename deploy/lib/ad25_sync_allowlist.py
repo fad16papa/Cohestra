@@ -7,10 +7,11 @@ Authorization is the intersection of:
   2. The allowlist blob at a trusted git ref (not PR-head working tree)
   3. Exact source/dest SHA + changed-path subset + blob equality
 
-A mutable PR-head copy of this file cannot create its own authority.
-Callers that need a trust boundary must execute the copy extracted from
-TRUSTED_REF (see authorize_from_trusted_ref). Missing trusted-ref evidence
-is a refuse, not a skip.
+A mutable PR-head copy of this file does not create authority by itself.
+Callers that need a trust boundary must call authorize_from_trusted_ref
+with an owner-pinned ref (origin/main or a recorded SHA), not HEAD.
+Missing trusted-ref evidence is a refuse, not a skip. A wrapper that
+skips that call is not an authorization signal.
 
 No GitHub I/O. No live deploy.
 """
@@ -78,15 +79,28 @@ def _die(message: str) -> None:
 
 
 def is_control_plane_path(path: str) -> bool:
-    return (
-        path.startswith(".github/")
-        or path.startswith("deploy/")
-        or path in {"CODEOWNERS", ".github/CODEOWNERS"}
-    )
+    """Fail-closed classifier. Ambiguous or non-canonical paths are control-plane."""
+    if not path or not isinstance(path, str):
+        return True
+    folded = path.casefold().replace("\\", "/")
+    if folded.startswith("/") or folded.startswith(".git/") or folded == ".git":
+        return True
+    parts = [part for part in folded.split("/") if part not in {"", "."}]
+    if any(part == ".." for part in folded.split("/")):
+        return True
+    if not parts:
+        return True
+    if parts[0] in {".github", "deploy"} or "codeowners" in folded:
+        return True
+    return False
 
 
 def auto_merge_eligible(paths: set[str]) -> bool:
-    """Feature-only changes may later be App-eligible. Control-plane never is."""
+    """Feature-only changes may later be App-eligible. Control-plane never is.
+
+    Fail closed: empty set, non-canonical paths, and anything that looks like
+    .github/ or deploy/ (including case and traversal forms) are ineligible.
+    """
     return bool(paths) and not any(is_control_plane_path(p) for p in paths)
 
 
@@ -96,11 +110,12 @@ def _basename(path: str) -> str:
 
 def _secret_reason(path: str) -> str | None:
     name = _basename(path)
-    if name == ".env" or name.startswith(".env."):
+    lowered = name.casefold()
+    if lowered == ".env" or lowered.startswith(".env."):
         return f"secret path refused: {path}"
-    if name in {"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa", "credentials.json", "secrets.json"}:
+    if lowered in {"id_rsa", "id_ed25519", "id_ecdsa", "id_dsa", "credentials.json", "secrets.json"}:
         return f"secret path refused: {path}"
-    if name.endswith((".pem", ".key", ".p12", ".pfx", ".kdbx")):
+    if lowered.endswith((".pem", ".key", ".p12", ".pfx", ".kdbx")):
         return f"secret path refused: {path}"
     return None
 
@@ -121,7 +136,7 @@ def _production_reason(path: str) -> str | None:
     return None
 
 
-def canonicalize_repo_path(raw: str) -> str:
+def canonicalize_repo_path(raw: str, *, require_approved: bool = True) -> str:
     """Canonical repository-relative POSIX path, or AllowlistError."""
     if raw != raw.strip():
         raise AllowlistError(f"malformed allowlist entry (outer whitespace): {raw!r}")
@@ -155,37 +170,40 @@ def canonicalize_repo_path(raw: str) -> str:
         raise AllowlistError(production)
     if raw.startswith(".github/") and raw not in APPROVED_PATHS:
         raise AllowlistError(f"unapproved privileged .github path refused: {raw}")
-    if raw not in APPROVED_PATHS:
+    if require_approved and raw not in APPROVED_PATHS:
         raise AllowlistError(f"unauthorized path refused: {raw}")
     return raw
 
 
-def parse_allowlist_text(text: str) -> list[str]:
+def parse_allowlist_text(text: str, *, require_approved_set: bool = True) -> list[str]:
     out: list[str] = []
     seen: set[str] = set()
     for raw_line in text.splitlines():
+        if raw_line != raw_line.strip():
+            stripped = raw_line.strip()
+            if stripped and not stripped.startswith("#"):
+                raise AllowlistError(f"malformed allowlist entry (outer whitespace): {raw_line!r}")
         line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
-        if line != raw_line.strip():
-            raise AllowlistError(f"malformed allowlist entry: {raw_line!r}")
-        path = canonicalize_repo_path(line)
+        path = canonicalize_repo_path(line, require_approved=require_approved_set)
         if path in seen:
             raise AllowlistError(f"duplicate allowlist entry: {path}")
         seen.add(path)
         out.append(path)
-    if ALLOWLIST_PATH not in seen:
-        raise AllowlistError("allowlist must include itself")
-    if ".github/workflows/deploy.yml" not in seen:
-        raise AllowlistError("allowlist must include deploy.yml")
-    if set(out) != set(APPROVED_PATHS):
-        missing = sorted(set(APPROVED_PATHS) - set(out))
-        extra = sorted(set(out) - set(APPROVED_PATHS))
-        raise AllowlistError(
-            "allowlist must equal the owner-approved 21-path set"
-            + (f" missing={missing}" if missing else "")
-            + (f" extra={extra}" if extra else "")
-        )
+    if require_approved_set:
+        if ALLOWLIST_PATH not in seen:
+            raise AllowlistError("allowlist must include itself")
+        if ".github/workflows/deploy.yml" not in seen:
+            raise AllowlistError("allowlist must include deploy.yml")
+        if set(out) != set(APPROVED_PATHS):
+            missing = sorted(set(APPROVED_PATHS) - set(out))
+            extra = sorted(set(out) - set(APPROVED_PATHS))
+            raise AllowlistError(
+                "allowlist must equal the owner-approved 21-path set"
+                + (f" missing={missing}" if missing else "")
+                + (f" extra={extra}" if extra else "")
+            )
     return out
 
 
@@ -376,11 +394,9 @@ def _parse_trusted_paths_from_text(text: str, *, from_policy: bool) -> frozenset
             raise AllowlistError("trusted owner policy approved_paths missing")
         paths = []
         for item in raw_paths:
-            paths.append(canonicalize_repo_path(item))
-        if set(paths) != set(APPROVED_PATHS):
-            raise AllowlistError("trusted owner policy does not match owner-approved 21-path set")
+            paths.append(canonicalize_repo_path(item, require_approved=False))
         return frozenset(paths)
-    return frozenset(parse_allowlist_text(text))
+    return frozenset(parse_allowlist_text(text, require_approved_set=False))
 
 
 def trusted_policy_paths(repo: Path, trusted_ref: str | None) -> frozenset[str]:
@@ -481,22 +497,42 @@ def authorize_from_trusted_ref(
     with tempfile.TemporaryDirectory() as tmp:
         trusted_mod = module_from_trusted_ref(repo, trusted_ref, Path(tmp))
         authorize = getattr(trusted_mod, "authorize_sync", None)
-        if authorize is None:
-            raise AllowlistError("trusted validator lacks authorize_sync")
-        try:
-            return authorize(
-                repo,
-                source=source,
-                dest=dest,
-                dest_parent=dest_parent,
-                trusted_ref=trusted_ref,
-                expected_source=expected_source,
-                expected_dest_parent=expected_dest_parent,
-                approval_source_sha=approval_source_sha,
-                working_tree=working_tree,
+        if authorize is not None:
+            try:
+                return authorize(
+                    repo,
+                    source=source,
+                    dest=dest,
+                    dest_parent=dest_parent,
+                    trusted_ref=trusted_ref,
+                    expected_source=expected_source,
+                    expected_dest_parent=expected_dest_parent,
+                    approval_source_sha=approval_source_sha,
+                    working_tree=working_tree,
+                )
+            except Exception as exc:
+                raise AllowlistError(str(exc)) from exc
+        # Pre-hardening trusted ref (no authorize_sync). Path-set authority is
+        # still the trusted-ref allowlist blob, not PR-head APPROVED_PATHS.
+        trusted_paths = trusted_policy_paths(repo, trusted_ref)
+        source_text = show_text(repo, source, ALLOWLIST_PATH)
+        if source_text is None:
+            raise AllowlistError("missing trusted policy evidence: source allowlist")
+        source_paths = frozenset(parse_allowlist_text(source_text, require_approved_set=False))
+        if source_paths != trusted_paths:
+            raise AllowlistError("changed manifest without owner authorization")
+        errors = exact_tree_errors(repo, source, dest, dest_parent, sorted(trusted_paths))
+        if errors:
+            raise AllowlistError("; ".join(errors))
+        if expected_source and not _rev_equal(repo, source, expected_source):
+            raise AllowlistError(f"stale source SHA: got {source} expected {expected_source}")
+        if expected_dest_parent and not _rev_equal(repo, dest_parent, expected_dest_parent):
+            raise AllowlistError(
+                f"unexpected destination parent: got {dest_parent} expected {expected_dest_parent}"
             )
-        except Exception as exc:
-            raise AllowlistError(str(exc)) from exc
+        if approval_source_sha and not _rev_equal(repo, approval_source_sha, source):
+            raise AllowlistError("stale approval: approval SHA does not match source")
+        return sorted(trusted_paths)
 
 
 def owner_policy_document() -> dict[str, object]:

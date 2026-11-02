@@ -136,6 +136,20 @@ def run_contract(repo_root: Path) -> int:
         lambda: parse_allowlist_text(_allowlist_text(["deploy/ad25-sync-allowlist.txt"])),
         "duplicate",
     )
+    padded = _allowlist_text().replace(
+        ".github/workflows/ci.yml",
+        "  .github/workflows/ci.yml  ",
+    )
+    suite.expect_error(
+        "padded approved line refused",
+        lambda: parse_allowlist_text(padded),
+        "whitespace",
+    )
+    suite.expect_error(
+        "secret path case variation .PEM",
+        lambda: canonicalize_repo_path("deploy/foo.PEM"),
+        "secret",
+    )
     suite.expect_error(
         "empty entry after non-comment content",
         lambda: canonicalize_repo_path(""),
@@ -263,14 +277,28 @@ def run_contract(repo_root: Path) -> int:
             "unapproved extra",
         )
 
-        # Changed manifest without owner authorization
+        # Changed manifest: trusted-ref path set is a 20-path subset.
+        twenty_text = _allowlist_text(drop={"deploy/fetch-origin-main.test.sh"})
+        (repo / ALLOWLIST_PATH).write_text(twenty_text, encoding="utf-8")
+        twenty = _commit(repo, "trusted twenty-path subset")
+        suite.expect_error(
+            "changed manifest without owner authorization",
+            lambda: authorize_sync(
+                repo,
+                source=parent,
+                dest=parent,
+                dest_parent=parent,
+                trusted_ref=twenty,
+            ),
+            "changed manifest",
+        )
         _run(["git", "-C", str(repo), "checkout", "-q", "-f", parent])
         (repo / ALLOWLIST_PATH).write_text(
             _allowlist_text(["deploy/provision-production-droplet.sh"], drop={"deploy/fetch-origin-main.test.sh"}),
             encoding="utf-8",
         )
         suite.expect_error(
-            "changed manifest without owner authorization",
+            "Production path still refused on load",
             lambda: load_allowlist_strict(repo),
             "production",
         )
@@ -302,6 +330,23 @@ def run_contract(repo_root: Path) -> int:
             ),
             "unexpected destination parent",
         )
+
+        # Dest is not a descendant of dest_parent (orphan commit).
+        _run(["git", "-C", str(repo), "checkout", "--orphan", "unrelated"])
+        (repo / "unrelated.txt").write_text("orphan\n", encoding="utf-8")
+        orphan = _commit(repo, "orphan dest")
+        suite.expect_error(
+            "dest is not a descendant of dest_parent",
+            lambda: authorize_sync(
+                repo,
+                source=parent,
+                dest=orphan,
+                dest_parent=parent,
+                trusted_ref=parent,
+            ),
+            "unexpected commits",
+        )
+        _run(["git", "-C", str(repo), "checkout", "-q", "-f", parent])
 
         # Stale approval
         suite.expect_error(
@@ -386,6 +431,22 @@ def run_contract(repo_root: Path) -> int:
         suite.check(
             "feature paths may be classified eligible",
             auto_merge_eligible({"docs/readme.md", "src/Api/Program.cs"}),
+        )
+        suite.check(
+            "traversal control-plane is not auto-merge eligible",
+            not auto_merge_eligible({"../.github/workflows/ci.yml"}),
+        )
+        suite.check(
+            "case-folded deploy/ is not auto-merge eligible",
+            not auto_merge_eligible({"Deploy/lib/ad25_sync_allowlist.py"}),
+        )
+        suite.check(
+            "absolute path is not auto-merge eligible",
+            not auto_merge_eligible({"/etc/passwd"}),
+        )
+        suite.check(
+            ".GITHUB/ is not auto-merge eligible",
+            not auto_merge_eligible({".GITHUB/workflows/ci.yml"}),
         )
 
     # --- AD-23 isolation still present on the real tree ---

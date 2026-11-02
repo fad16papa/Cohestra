@@ -62,3 +62,4 @@ Implementation Plan: Keep the 21-path exclusive tree. Put fail-closed validation
 ## Change Log
 
 - 2026-11-02 (Asia/Singapore): AD25-HARDENING fail-closed allowlist, trusted-ref authorization, owner-control design, local reproduction, and canary/sync plans. Draft PR only.
+- 2026-11-02 (Asia/Singapore): Review fixes — fixture calls `authorize_from_trusted_ref` against owner-pinned `9ccca77e` (never PR-head); hardening contract is mandatory HOLD; fail-closed auto-merge classifier; case-insensitive secrets; whitespace refuse; dest-not-descendant and changed-manifest tests.

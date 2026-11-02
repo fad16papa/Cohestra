@@ -7,6 +7,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PRC_SHA="${PRC_BASE_SHA:-1c57633fa607dec4a31aca8928c4c02adb231822}"
 PRD_SHA="${PRD_HEAD_SHA:-$(git -C "$ROOT_DIR" rev-parse HEAD)}"
+# Owner-pinned trusted policy ref. Must NOT default to PR-head / $PRD_SHA.
+TRUSTED_SHA="${AD25_TRUSTED_POLICY_REF:-9ccca77e7297dc28b0a843d3435e9603dc803da7}"
 
 pass() { echo "PASS: $1"; }
 fail() { echo "FAIL: $1"; exit 1; }
@@ -39,13 +41,14 @@ ensure_commit() {
 }
 ensure_commit "$PRC_SHA"
 ensure_commit "$PRD_SHA"
+ensure_commit "$TRUSTED_SHA"
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 git init -q -b main "$TMP/src"
 git -C "$TMP/src" config user.email t@t
 git -C "$TMP/src" config user.name t
-git -C "$TMP/src" fetch -q "$ROOT_DIR" "$PRC_SHA" "$PRD_SHA"
+git -C "$TMP/src" fetch -q "$ROOT_DIR" "$PRC_SHA" "$PRD_SHA" "$TRUSTED_SHA"
 git -C "$TMP/src" checkout -q -B release/uat "$PRC_SHA"
 git -C "$TMP/src" checkout -q -B prd "$PRD_SHA"
 PARENT="$(git -C "$TMP/src" rev-parse release/uat)"
@@ -188,34 +191,36 @@ else
 fi
 git -C "$TMP/src" checkout -q prd -- deploy/validate-inline-suppression.test.sh
 
-# --- 4. Fail-closed hardening contract (present on this tree; optional on a
-# 21-path-only dest that has not yet received the follow-on sync files).
-if [[ -f "$ROOT_DIR/deploy/validate-ad25-hardening.test.sh" ]]; then
-  bash "$ROOT_DIR/deploy/validate-ad25-hardening.test.sh"
-  pass "AD25-HARDENING fail-closed contract"
-else
-  pass "AD25-HARDENING contract not on this tree (follow-on sync pending)"
+# --- 4. Fail-closed hardening contract. Missing file is HOLD, not PASS.
+if [[ ! -f "$ROOT_DIR/deploy/validate-ad25-hardening.test.sh" ]]; then
+  fail "AD25-HARDENING contract missing (HOLD, not skip)"
 fi
+bash "$ROOT_DIR/deploy/validate-ad25-hardening.test.sh"
+pass "AD25-HARDENING fail-closed contract"
 
-# Trusted-ref authorization of the corrected dest tree
-python3 - "$TMP/src" "$PRD_SHA" "$DEST" "$PARENT" "$ROOT_DIR" <<'PY' || fail "trusted-ref authorize_sync"
+# Trusted-ref authorization: extract/enforce from owner-pinned SHA, never PR-head.
+if [[ "$TRUSTED_SHA" == "$PRD_SHA" ]]; then
+  fail "trusted-ref must not be the PR-head SHA"
+fi
+python3 - "$TMP/src" "$PRD_SHA" "$DEST" "$PARENT" "$ROOT_DIR" "$TRUSTED_SHA" <<'PY' || fail "authorize_from_trusted_ref"
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(sys.argv[5]) / "deploy" / "lib"))
-from ad25_sync_allowlist import authorize_sync
+from ad25_sync_allowlist import authorize_from_trusted_ref
 repo = Path(sys.argv[1])
-authorize_sync(
+authorize_from_trusted_ref(
     repo,
+    trusted_ref=sys.argv[6],
     source=sys.argv[2],
     dest=sys.argv[3],
     dest_parent=sys.argv[4],
-    trusted_ref=sys.argv[2],
     expected_source=sys.argv[2],
     expected_dest_parent=sys.argv[4],
     approval_source_sha=sys.argv[2],
 )
-print("trusted-ref-authorize-ok")
+print("authorize_from_trusted_ref-ok")
+print("trusted_ref=" + sys.argv[6])
 PY
-pass "trusted-ref authorize_sync on corrected dest tree"
+pass "authorize_from_trusted_ref on owner-pinned SHA (not PR-head)"
 
 echo "validate-ad25-sync-fixture contract OK"

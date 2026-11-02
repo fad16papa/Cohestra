@@ -36,6 +36,10 @@ ci = (root / ".github/workflows/ci.yml").read_text(encoding="utf-8")
 deploy = (root / ".github/workflows/deploy.yml").read_text(encoding="utf-8")
 if "validate-ad25-sync-fixture.test.sh" not in ci or "validate-ad25-sync-fixture.test.sh" not in deploy:
     raise SystemExit("ci.yml and deploy.yml must run the AD-25 two-branch fixture")
+if "validate-ad25-hardening.test.sh" not in ci:
+    raise SystemExit("ci.yml must run the AD-25 hardening contract")
+if 'if [ -f deploy/validate-ad25-hardening.test.sh ]' in ci:
+    raise SystemExit("ci.yml must not skip the hardening contract when the file is missing")
 print("allowlist-count", len(allow))
 print("legacy-validators-absent")
 print("baseline-retained-present")
@@ -65,5 +69,32 @@ grep -q 'ad25-sync-allowlist.txt' "$0" || fail "must name the allowlist"
 grep -q 'authorize_from_trusted_ref' "$0" || fail "must name trusted-ref authorization"
 grep -q 'AD-15 auto-merge' "$0" || fail "must forbid AD-15 auto-merge"
 pass "AD-25 names the allowlist and forbids git push --ff-only origin/main:release/uat"
+
+TRUSTED_SHA="${AD25_TRUSTED_POLICY_REF:-9ccca77e7297dc28b0a843d3435e9603dc803da7}"
+python3 - "$ROOT_DIR" "$TRUSTED_SHA" <<'PY' || fail "working-tree path set must match trusted-ref allowlist"
+import subprocess
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(sys.argv[1]) / "deploy" / "lib"))
+from ad25_sync_allowlist import load_allowlist, trusted_policy_paths
+
+root = Path(sys.argv[1])
+trusted_ref = sys.argv[2]
+probe = subprocess.run(
+    ["git", "-C", str(root), "cat-file", "-e", f"{trusted_ref}^{{commit}}"],
+    check=False,
+    capture_output=True,
+    text=True,
+)
+if probe.returncode != 0:
+    raise SystemExit("missing trusted policy evidence")
+head = set(load_allowlist(root))
+trusted = set(trusted_policy_paths(root, trusted_ref))
+if head != trusted:
+    raise SystemExit("changed manifest without owner authorization")
+print("trusted-ref-path-set-match", trusted_ref)
+PY
+pass "working-tree allowlist path set matches owner-pinned trusted ref"
 
 echo "AD-25 owner sync procedure contract OK"

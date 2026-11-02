@@ -41,7 +41,7 @@ Docs under `_bmad-output/` stay off the allowlist (not executed by dest CI).
 
 ## If the owner chooses not to expand the 21-path set
 
-A 21-path sync of this HEAD is still valid for dest execution of the hardened `load_allowlist` / `authorize_sync` APIs. The fixture skips the extra contract file when absent. Dest will not run the new standalone hardening test until Step 1 happens.
+Do **not** 21-path-sync this HEAD onto `release/uat` until Step 1 adds the hardening contract files. The updated fixture and `ci.yml` **HOLD** (fail) if `deploy/validate-ad25-hardening.test.sh` is missing. That is intentional: dest must not report PASS without the fail-closed contract.
 
 ## Explicit non-actions
 
