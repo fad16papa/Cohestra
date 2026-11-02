@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .manifest import SHA_RE
+from .manifest import KEY_FINGERPRINT_RE, SHA_RE
 
 
 class GitHubError(Exception):
@@ -44,6 +44,25 @@ class TestResult:
 
 
 @dataclass(frozen=True)
+class RequirementEvidence:
+    requirement_id: str
+    evidence_name: str
+    head_sha: str
+    result: str
+    source: str
+    authentication_source: str = ""
+
+
+@dataclass(frozen=True)
+class UsageEvidence:
+    head_sha: str
+    elapsed_seconds: int | None
+    tokens: int | None
+    cost_cents: int | None
+    authentication_source: str = ""
+
+
+@dataclass(frozen=True)
 class PullView:
     number: int
     head_sha: str
@@ -55,6 +74,8 @@ class PullView:
     reviews: tuple[Review, ...]
     tests: tuple[TestResult, ...]
     changed_paths: tuple[str, ...]
+    requirement_evidence: tuple[RequirementEvidence, ...] = ()
+    usage: UsageEvidence | None = None
 
 
 @dataclass(frozen=True)
@@ -75,6 +96,8 @@ class Decision:
     live_scoped_loop_verified: bool = False
     live_read_only_transport_verified: bool = False
     owner_manifest_authorized: bool = False
+    live_usage_verified: bool = False
+    usage_gate: str = "not_applicable"
 
 
 @dataclass
@@ -115,6 +138,9 @@ class Ledger:
     status: str = "IDLE"
     reason: str = "no events"
     hold: bool = False
+    no_progress_events: int = 0
+    repeated_requirement_ids: list[str] = field(default_factory=list)
+    owner_public_key_sha256: str = ""
 
     def to_json(self) -> dict[str, object]:
         return {
@@ -132,6 +158,9 @@ class Ledger:
             "status": self.status,
             "reason": self.reason,
             "hold": self.hold,
+            "no_progress_events": self.no_progress_events,
+            "repeated_requirement_ids": list(self.repeated_requirement_ids),
+            "owner_public_key_sha256": self.owner_public_key_sha256,
         }
 
     @classmethod
@@ -164,6 +193,9 @@ class Ledger:
             "manifest_id",
             "pull_number",
             "reason",
+            "no_progress_events",
+            "owner_public_key_sha256",
+            "repeated_requirement_ids",
             "status",
             "trace",
         }
@@ -190,6 +222,13 @@ class Ledger:
             raise ValueError("trace")
         if not (corrections == len(assignments) == len(assigned_heads) == len(fingerprints)):
             raise ValueError("corrections")
+        no_progress_events = require_int(raw["no_progress_events"], "no_progress_events")
+        if no_progress_events < 0:
+            raise ValueError("no_progress_events")
+        repeated = [require_text(item, "requirement_id") for item in require_list(raw["repeated_requirement_ids"], "repeated_requirement_ids")]
+        fingerprint = require_text(raw["owner_public_key_sha256"], "owner_public_key_sha256")
+        if fingerprint and KEY_FINGERPRINT_RE.fullmatch(fingerprint) is None:
+            raise ValueError("owner_public_key_sha256")
         return cls(
             manifest_id=require_text(raw["manifest_id"], "manifest_id"),
             manifest_digest=require_text(raw["manifest_digest"], "manifest_digest"),
@@ -205,4 +244,7 @@ class Ledger:
             status=require_text(raw["status"], "status"),
             reason=require_text(raw["reason"], "reason"),
             hold=raw["hold"],
+            no_progress_events=no_progress_events,
+            repeated_requirement_ids=repeated,
+            owner_public_key_sha256=fingerprint,
         )
