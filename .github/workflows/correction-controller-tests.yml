@@ -24,5 +24,8 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install pinned cryptography
+        run: python3 -m pip install --disable-pip-version-check cryptography==50.0.2
+
       - name: Run controller unit tests
         run: python3 -m unittest discover -s _bmad-output/implementation-artifacts/cohestra-correction-controller/tests -v

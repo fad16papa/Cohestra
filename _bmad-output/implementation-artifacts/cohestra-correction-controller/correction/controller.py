@@ -3,8 +3,8 @@
 The controller records simulated assignments. It does not call Cursor, merge,
 deploy, or read credential environment variables. A READY decision uses
 verification_plane SIMULATED_PASS and always leaves both live flags false.
-owner_manifest_authorized is always false: the manifest digest is a content
-hash, not an owner signature.
+Version 1 leaves owner_manifest_authorized false. Version 2 sets it only
+after an Ed25519 signature verifies. The manifest digest is not that signature.
 """
 
 from __future__ import annotations
@@ -19,8 +19,9 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
+from .authorization import OwnerKeyring, verify_owner_authorization
 from .manifest import SHA_RE, Manifest, ManifestError, path_allowed
-from .models import Assignment, Decision, Event, GitHubError, Ledger, PullView, Review
+from .models import Assignment, Decision, Event, GitHubError, Ledger, PullView, RequirementEvidence, Review
 
 HOLD = "HOLD_OWNER_ACTION_REQUIRED"
 RETRY = "RETRYABLE_SCOPED"
@@ -114,22 +115,7 @@ def load_manifest(path: Path) -> Manifest:
 
 def assert_manifest_authentic(manifest: Manifest) -> None:
     """Recompute the content digest. This does not verify an owner signature."""
-    rebuilt = Manifest.from_dict(
-        {
-            "acceptance_criteria": list(manifest.acceptance_criteria),
-            "allowed_paths": list(manifest.allowed_paths),
-            "author_id": manifest.author_id,
-            "base_ref": manifest.base_ref,
-            "base_sha": manifest.base_sha,
-            "budget": {"max_corrections": manifest.max_corrections},
-            "manifest_id": manifest.manifest_id,
-            "model": manifest.model,
-            "pull_number": manifest.pull_number,
-            "repo": manifest.repo,
-            "required_checks": list(manifest.required_checks),
-            "task_id": manifest.task_id,
-        }
-    )
+    rebuilt = Manifest.from_dict(manifest.to_dict())
     if rebuilt.digest != manifest.digest:
         raise ManifestError("manifest digest is not authentic")
 
@@ -140,10 +126,11 @@ def open_controller(
     github: object,
     policy: ReviewPolicy,
     clock: Callable[[], float] | None = None,
+    keyring: OwnerKeyring | None = None,
 ) -> Controller:
     if manifest is None:
         raise ManifestError("manifest is required")
-    return Controller(store, manifest, github, policy, clock=clock)
+    return Controller(store, manifest, github, policy, clock=clock, keyring=keyring)
 
 
 def _contains_secret(value: str) -> bool:
@@ -238,6 +225,22 @@ def _pull_has_secret(pull: PullView) -> bool:
         )
     for test in pull.tests:
         parts.extend([test.name, test.path, test.detail, test.head_sha])
+    if pull.usage is not None:
+        parts.extend([pull.usage.head_sha, pull.usage.authentication_source])
+        for number in (pull.usage.elapsed_seconds, pull.usage.tokens, pull.usage.cost_cents):
+            if isinstance(number, str):
+                parts.append(number)
+    for evidence in pull.requirement_evidence:
+        parts.extend(
+            [
+                evidence.requirement_id,
+                evidence.evidence_name,
+                evidence.head_sha,
+                evidence.result,
+                evidence.source,
+                evidence.authentication_source,
+            ]
+        )
     if any(not isinstance(part, str) for part in parts):
         return True
     return any(_contains_secret(part) for part in parts)
@@ -284,7 +287,13 @@ def _review_disposition(manifest: Manifest, policy: ReviewPolicy, pull: PullView
 
 def _evidence_too_large(pull: PullView) -> bool:
     try:
-        if len(pull.changed_paths) > 200 or len(pull.reviews) > 40 or len(pull.tests) > 200 or len(pull.checks) > 40:
+        if (
+            len(pull.changed_paths) > 200
+            or len(pull.reviews) > 40
+            or len(pull.tests) > 200
+            or len(pull.checks) > 40
+            or len(pull.requirement_evidence) > 40
+        ):
             return True
         if any(len(item.paths) > 50 for item in pull.reviews):
             return True
@@ -306,7 +315,156 @@ def _evidence_too_large(pull: PullView) -> bool:
                 *review.paths,
             ]
         )
+    for evidence in pull.requirement_evidence:
+        values.extend(
+            [
+                evidence.requirement_id,
+                evidence.evidence_name,
+                evidence.head_sha,
+                evidence.result,
+                evidence.source,
+                evidence.authentication_source,
+            ]
+        )
+    if pull.usage is not None:
+        values.extend([pull.usage.head_sha, pull.usage.authentication_source])
     return any(isinstance(value, str) and len(value) > 4000 for value in values)
+
+
+def _usage_reason(manifest: Manifest, pull: PullView) -> str | None:
+    if manifest.manifest_version != 2:
+        return None
+    usage = pull.usage
+    if usage is None or usage.authentication_source != "host-verified" or usage.head_sha != pull.head_sha:
+        if usage is not None and usage.authentication_source == "host-verified" and usage.head_sha != pull.head_sha:
+            return "stale usage evidence"
+        return "usage evidence is unknown"
+    numbers = (usage.elapsed_seconds, usage.tokens, usage.cost_cents)
+    if any(type(value) is not int or value < 0 for value in numbers):
+        return "usage evidence is unknown"
+    assert manifest.max_elapsed_seconds is not None
+    assert manifest.max_tokens is not None
+    assert manifest.max_cost_cents is not None
+    if usage.elapsed_seconds > manifest.max_elapsed_seconds:  # type: ignore[operator]
+        return "elapsed time budget exhausted"
+    if usage.tokens > manifest.max_tokens:  # type: ignore[operator]
+        return "token budget exhausted"
+    if usage.cost_cents > manifest.max_cost_cents:  # type: ignore[operator]
+        return "cost budget exhausted"
+    return None
+
+
+def _requirement_view(manifest: Manifest, pull: PullView) -> tuple[list[dict[str, str]], str | None]:
+    if manifest.manifest_version != 2:
+        return [], None
+    findings: list[dict[str, str]] = []
+    block: str | None = None
+    rank = {
+        "stale requirement evidence": 1,
+        "requirement source is not independent": 2,
+        "requirement evidence does not match": 3,
+        "requirement is unverified": 4,
+        "requirement evidence is missing": 5,
+    }
+    for requirement in manifest.requirements:
+        if not requirement.mandatory:
+            continue
+        state, finding = _one_requirement(requirement.requirement_id, requirement.evidence_name, pull)
+        if finding is not None:
+            findings.append(finding)
+            continue
+        if state == "pass":
+            continue
+        if block is None or rank.get(state, 9) < rank.get(block, 9):
+            block = state
+    return findings, block
+
+
+def _row_state(evidence: RequirementEvidence, evidence_name: str, pull: PullView) -> str:
+    if evidence.authentication_source != "host-verified" or evidence.source not in {"bmad", "catsec"}:
+        return "requirement source is not independent"
+    if evidence.head_sha != pull.head_sha:
+        return "stale requirement evidence"
+    if evidence.evidence_name != evidence_name:
+        return "requirement evidence does not match"
+    if evidence.result == "fail":
+        return "fail"
+    if evidence.result == "pass":
+        return "pass"
+    return "requirement is unverified"
+
+
+def _row_for_state(
+    candidates: list[RequirementEvidence],
+    evidence_name: str,
+    pull: PullView,
+    state: str,
+) -> RequirementEvidence | None:
+    if state == "requirement evidence is missing":
+        return None
+    for evidence in candidates:
+        if _row_state(evidence, evidence_name, pull) == state:
+            return evidence
+    return None
+
+
+def _one_requirement(requirement_id: str, evidence_name: str, pull: PullView) -> tuple[str, dict[str, str] | None]:
+    """Every row for the id must pass. One trusted fail outranks a pass row."""
+    rows = [item for item in pull.requirement_evidence if item.requirement_id == requirement_id]
+    if not rows:
+        return "requirement evidence is missing", None
+    states = [_row_state(evidence, evidence_name, pull) for evidence in rows]
+    if "fail" in states:
+        return "fail", {
+            "evidence_name": evidence_name,
+            "kind": "requirement",
+            "requirement_id": requirement_id,
+            "result": "fail",
+        }
+    for state in (
+        "stale requirement evidence",
+        "requirement source is not independent",
+        "requirement evidence does not match",
+        "requirement is unverified",
+    ):
+        if state in states:
+            return state, None
+    return "pass", None
+
+
+def _requirement_trace(manifest: Manifest, pull: PullView) -> tuple[dict[str, object], ...]:
+    """Host-reported requirement rows. This is not a live test run."""
+    recorded: list[dict[str, object]] = []
+    for requirement in manifest.requirements:
+        matched_rows = [item for item in pull.requirement_evidence if item.requirement_id == requirement.requirement_id]
+        state, _finding = _one_requirement(requirement.requirement_id, requirement.evidence_name, pull)
+        matched = _row_for_state(matched_rows, requirement.evidence_name, pull, state)
+        recorded.append(
+            {
+                "authentication_source": matched.authentication_source if matched is not None else "",
+                "evidence_kind": requirement.evidence_kind,
+                "evidence_name": requirement.evidence_name,
+                "expected_behavior": requirement.expected_behavior,
+                "head_sha": matched.head_sha if matched is not None else "",
+                "mandatory": requirement.mandatory,
+                "requirement_id": requirement.requirement_id,
+                "result": state,
+                "source": matched.source if matched is not None else "",
+            }
+        )
+    return tuple(recorded)
+
+
+def _repeated_exhausted(manifest: Manifest, ledger: Ledger, findings: tuple[dict[str, str], ...]) -> bool:
+    if manifest.max_repeated_failures is None:
+        return False
+    for item in findings:
+        if item.get("kind") != "requirement":
+            continue
+        seen = ledger.repeated_requirement_ids.count(item["requirement_id"])
+        if seen >= manifest.max_repeated_failures:
+            return True
+    return False
 
 
 def _decide(
@@ -314,15 +472,17 @@ def _decide(
     policy: ReviewPolicy,
     ledger: Ledger,
     pull: PullView,
-) -> tuple[str, str, bool, tuple[dict[str, str], ...], tuple[str, ...]]:
+    owner_authorized: bool = False,
+) -> tuple[str, str, bool, tuple[dict[str, str], ...], tuple[str, ...], str]:
     def finish(
         status: str,
         reason: str,
         sticky: bool,
         findings: tuple[dict[str, str], ...] = (),
         origins: tuple[str, ...] = (),
-    ) -> tuple[str, str, bool, tuple[dict[str, str], ...], tuple[str, ...]]:
-        return status, reason, sticky, findings, origins
+        gate: str = "not_applicable",
+    ) -> tuple[str, str, bool, tuple[dict[str, str], ...], tuple[str, ...], str]:
+        return status, reason, sticky, findings, origins, gate
 
     if (
         not isinstance(pull.repo, str)
@@ -367,14 +527,21 @@ def _decide(
             return finish(HOLD, "test path is outside the manifest", True)
         if test.head_sha != pull.head_sha:
             return finish(HOLD, "stale test evidence", False)
+    if manifest.manifest_version == 2 and not owner_authorized:
+        return finish(HOLD, "owner authorization is not verified", True)
+    usage_reason = _usage_reason(manifest, pull)
+    if usage_reason:
+        gate = "unknown" if "unknown" in usage_reason or usage_reason.startswith("stale usage") else "exceeded"
+        return finish(HOLD, usage_reason, False, gate=gate)
+    accepted = "host_supplied" if manifest.manifest_version == 2 else "not_applicable"
 
     dispositions = [_review_disposition(manifest, policy, pull, review) for review in pull.reviews]
     if "counts" in dispositions:
-        return finish(HOLD, "review counts are not trustworthy", True)
+        return finish(HOLD, "review counts are not trustworthy", True, gate=accepted)
     if "unsafe" in dispositions or "scope" in dispositions:
-        return finish(HOLD, "review path is outside the manifest", True)
+        return finish(HOLD, "review path is outside the manifest", True, gate=accepted)
     if pull.head_sha in ledger.assigned_heads:
-        return finish(HOLD, NEW_COMMIT, False)
+        return finish(HOLD, NEW_COMMIT, False, gate=accepted)
 
     published: list[tuple[dict[str, str], str]] = []
     for test in pull.tests:
@@ -408,6 +575,9 @@ def _decide(
                     reviewer_origin + "\n" + path_origin,
                 )
             )
+    requirement_findings, requirement_block = _requirement_view(manifest, pull)
+    for finding in requirement_findings:
+        published.append((finding, ""))
     published.sort(
         key=lambda pair: (
             json.dumps(pair[0], sort_keys=True),
@@ -418,19 +588,25 @@ def _decide(
     origins = tuple(origin for _item, origin in published)
     if ordered:
         if _fingerprint(ordered, origins) in ledger.fingerprints:
-            return finish(HOLD, NO_PROGRESS, False)
+            if manifest.max_no_progress is not None and ledger.no_progress_events >= manifest.max_no_progress:
+                return finish(HOLD, "no-progress threshold exhausted", True, gate=accepted)
+            return finish(HOLD, NO_PROGRESS, False, gate=accepted)
+        if _repeated_exhausted(manifest, ledger, ordered):
+            return finish(HOLD, "repeated-failure threshold exhausted", True, gate=accepted)
         if ledger.corrections >= manifest.max_corrections:
-            return finish(HOLD, BUDGET, False)
-        return finish(RETRY, ASSIGNED, False, ordered, origins)
+            return finish(HOLD, BUDGET, False, gate=accepted)
+        return finish(RETRY, ASSIGNED, False, ordered, origins, accepted)
 
     if any(state == "stale" for state in check_states.values()):
-        return finish(HOLD, "stale check evidence", False)
+        return finish(HOLD, "stale check evidence", False, gate=accepted)
     if any(state in {"missing", "refused"} for state in check_states.values()):
-        return finish(HOLD, "mandatory check evidence refused", False)
+        return finish(HOLD, "mandatory check evidence refused", False, gate=accepted)
     if any(state == "pending" for state in check_states.values()):
-        return finish(WAITING, "required checks are still running", False)
+        return finish(WAITING, "required checks are still running", False, gate=accepted)
     if not pull.tests or any(not test.passed for test in pull.tests):
-        return finish(HOLD, "test evidence is missing", False)
+        return finish(HOLD, "test evidence is missing", False, gate=accepted)
+    if requirement_block:
+        return finish(HOLD, requirement_block, False, gate=accepted)
 
     passes: list[tuple[str, str]] = []
     for review in pull.reviews:
@@ -442,24 +618,24 @@ def _decide(
     roles = {role for _, role in passes}
     identities = {reviewer_id for reviewer_id, _ in passes}
     if "bmad" in roles and "catsec" in roles and len(identities) >= 2:
-        return finish(READY, SATISFIED, False)
+        return finish(READY, SATISFIED, False, gate=accepted)
     if not pull.reviews:
-        return finish(WAITING, "independent reviews are missing", False)
+        return finish(WAITING, "independent reviews are missing", False, gate=accepted)
     if "unauthenticated" in dispositions:
-        return finish(HOLD, "reviewer is not authenticated", False)
+        return finish(HOLD, "reviewer is not authenticated", False, gate=accepted)
     if "forbidden" in dispositions:
-        return finish(HOLD, "reviewer is not permitted", False)
+        return finish(HOLD, "reviewer is not permitted", False, gate=accepted)
     if "author" in dispositions:
-        return finish(HOLD, "author cannot satisfy independent review", False)
+        return finish(HOLD, "author cannot satisfy independent review", False, gate=accepted)
     if "model" in dispositions:
-        return finish(HOLD, "reviewer model does not match the manifest", False)
+        return finish(HOLD, "reviewer model does not match the manifest", False, gate=accepted)
     if "stale" in dispositions:
-        return finish(HOLD, "stale review evidence", False)
+        return finish(HOLD, "stale review evidence", False, gate=accepted)
     if "unscoped" in dispositions:
-        return finish(HOLD, "review did not name an in-scope path", False)
+        return finish(HOLD, "review did not name an in-scope path", False, gate=accepted)
     if "not_permitted" in dispositions:
-        return finish(HOLD, "reviewer is not permitted", False)
-    return finish(WAITING, "independent reviews are missing", False)
+        return finish(HOLD, "reviewer is not permitted", False, gate=accepted)
+    return finish(WAITING, "independent reviews are missing", False, gate=accepted)
 
 
 class Controller:
@@ -470,8 +646,11 @@ class Controller:
         github: object,
         policy: ReviewPolicy,
         clock: Callable[[], float] | None = None,
+        keyring: OwnerKeyring | None = None,
     ) -> None:
         assert_manifest_authentic(manifest)
+        self.owner_authorized = verify_owner_authorization(manifest, keyring)
+        self.keyring = keyring
         self.store = Path(store)
         if self.store.is_symlink():
             raise ManifestError("store path is unsafe")
@@ -518,6 +697,14 @@ class Controller:
         replay = self._replay(stored_id)
         if replay is not None:
             return replay
+        if self._public_key_mismatch():
+            assert self.ledger is not None
+            return _decision(
+                HOLD,
+                "owner public key does not match the store",
+                self.ledger.current_head,
+                len(self.ledger.assignments),
+            )
         text = event.untrusted_text if isinstance(event.untrusted_text, str) else ""
         if type(event.pull_number) is not int or event.pull_number != self.manifest.pull_number:
             return self._commit(stored_id, HOLD, "pull number is not the approved task", None, accept_head=False)
@@ -547,11 +734,21 @@ class Controller:
         if record_head is None or _contains_secret(pull.head_sha):
             reason = SECRET if isinstance(pull.head_sha, str) and _contains_secret(pull.head_sha) else "head sha is invalid"
             return self._commit(stored_id, HOLD, reason, None, sticky=True, accept_head=True)
+        requirement_results: tuple[dict[str, object], ...] = ()
+        usage_gate = "not_applicable"
         try:
             secret_pull = _pull_has_secret(pull)
             too_large = _evidence_too_large(pull)
             if not secret_pull and not too_large:
-                status, reason, sticky, findings, origins = _decide(self.manifest, self.policy, self.ledger, pull)
+                status, reason, sticky, findings, origins, usage_gate = _decide(
+                    self.manifest,
+                    self.policy,
+                    self.ledger,
+                    pull,
+                    self.owner_authorized,
+                )
+                if self.manifest.manifest_version == 2:
+                    requirement_results = _requirement_trace(self.manifest, pull)
         except (AttributeError, TypeError):
             return self._commit(stored_id, HOLD, "evidence is not trustworthy", None, accept_head=False)
         if secret_pull:
@@ -567,6 +764,8 @@ class Controller:
             findings=findings,
             origins=origins,
             accept_head=True,
+            requirement_results=requirement_results,
+            usage_gate=usage_gate,
         )
 
     def _commit(
@@ -580,6 +779,8 @@ class Controller:
         findings: tuple[dict[str, str], ...] = (),
         origins: tuple[str, ...] = (),
         accept_head: bool = True,
+        requirement_results: tuple[dict[str, object], ...] = (),
+        usage_gate: str | None = None,
     ) -> Decision:
         assert self.ledger is not None
         if not self._refresh_lock():
@@ -595,6 +796,8 @@ class Controller:
         assignment_id = None
         if sticky:
             self.ledger.hold = True
+        if reason == NO_PROGRESS:
+            self.ledger.no_progress_events += 1
         if status == RETRY:
             self.ledger.corrections += 1
             assignment = Assignment(
@@ -611,6 +814,9 @@ class Controller:
             if head:
                 self.ledger.assigned_heads.append(head)
             self.ledger.fingerprints.append(_fingerprint(findings, origins))
+            for item in findings:
+                if item.get("kind") == "requirement":
+                    self.ledger.repeated_requirement_ids.append(item["requirement_id"])
         if accept_head:
             self.ledger.status = status
             self.ledger.reason = reason
@@ -619,18 +825,29 @@ class Controller:
         if stored_id not in self.ledger.applied_event_ids:
             self.ledger.applied_event_ids.append(stored_id)
         reported_head = head if accept_head else None
-        decision = _decision(status, reason, reported_head, len(self.ledger.assignments))
-        self.ledger.trace.append(
-            {
-                "assignment_id": assignment_id,
-                "assignments": decision.assignments,
-                "event_id": stored_id,
-                "head_sha": decision.head_sha,
-                "reason": reason,
-                "status": status,
-                "verification_plane": decision.verification_plane,
-            }
+        decision = _decision(
+            status,
+            reason,
+            reported_head,
+            len(self.ledger.assignments),
+            owner_manifest_authorized=self._owner_flag(),
+            usage_gate="not_applicable" if usage_gate is None else usage_gate,
         )
+        entry: dict[str, object] = {
+            "assignment_id": assignment_id,
+            "assignments": decision.assignments,
+            "event_id": stored_id,
+            "head_sha": decision.head_sha,
+            "live_usage_verified": False,
+            "owner_manifest_authorized": decision.owner_manifest_authorized,
+            "reason": reason,
+            "status": status,
+            "usage_gate": decision.usage_gate,
+            "verification_plane": decision.verification_plane,
+        }
+        if self.manifest.manifest_version == 2:
+            entry["requirement_results"] = [dict(item) for item in requirement_results]
+        self.ledger.trace.append(entry)
         self._save()
         return decision
 
@@ -646,8 +863,43 @@ class Controller:
                     return _decision(HOLD, UNREADABLE, None, 0)
                 if not isinstance(head, str) or not SHA_RE.fullmatch(head) or _contains_secret(head):
                     head = None
-                return _decision(str(item.get("status")), str(item.get("reason")), head, count)
+                stored = _stored_decision_flags(item)
+                if stored is None:
+                    return _decision(HOLD, UNREADABLE, None, 0)
+                owner_flag, gate = stored
+                return _decision(
+                    str(item.get("status")),
+                    str(item.get("reason")),
+                    head,
+                    count,
+                    owner_manifest_authorized=owner_flag,
+                    usage_gate=gate,
+                )
         return _decision(HOLD, UNREADABLE, self.ledger.current_head, len(self.ledger.assignments))
+
+    def _public_key_mismatch(self) -> bool:
+        assert self.ledger is not None
+        expected = self.ledger.owner_public_key_sha256
+        if not expected:
+            return False
+        if self.keyring is None:
+            return True
+        public = self.keyring.public_key(self.manifest.owner_key_id)
+        if public is None:
+            return True
+        return hashlib.sha256(public).hexdigest() != expected
+
+    def _owner_flag(self) -> bool:
+        return self.manifest.manifest_version == 2 and self.owner_authorized
+
+    def _usage_gate(self, reason: str) -> str:
+        if self.manifest.manifest_version != 2 or reason == "owner authorization is not verified":
+            return "not_applicable"
+        if reason in {"usage evidence is unknown", "stale usage evidence"}:
+            return "unknown"
+        if reason in {"elapsed time budget exhausted", "token budget exhausted", "cost budget exhausted"}:
+            return "exceeded"
+        return "host_supplied"
 
     def _load(self) -> None:
         token = self._acquire()
@@ -671,6 +923,7 @@ class Controller:
                 manifest_digest=self.manifest.digest,
                 pull_number=self.manifest.pull_number,
                 base_sha=self.manifest.base_sha,
+                owner_public_key_sha256=self.manifest.public_key_sha256,
             )
             self._save()
             return
@@ -849,7 +1102,25 @@ def _github_reason(exc: GitHubError) -> str:
     return "github api failure"
 
 
-def _decision(status: str, reason: str, head: str | None, assignments: int) -> Decision:
+def _stored_decision_flags(item: dict[str, object]) -> tuple[bool, str] | None:
+    owner = item.get("owner_manifest_authorized")
+    gate = item.get("usage_gate")
+    live_usage = item.get("live_usage_verified")
+    if type(owner) is not bool or type(live_usage) is not bool or live_usage is not False:
+        return None
+    if gate not in {"not_applicable", "unknown", "exceeded", "host_supplied"}:
+        return None
+    return owner, str(gate)
+
+
+def _decision(
+    status: str,
+    reason: str,
+    head: str | None,
+    assignments: int,
+    owner_manifest_authorized: bool = False,
+    usage_gate: str = "not_applicable",
+) -> Decision:
     plane = SIMULATED_PASS if status == READY else NOT_VERIFIED
     return Decision(
         status,
@@ -859,5 +1130,7 @@ def _decision(status: str, reason: str, head: str | None, assignments: int) -> D
         plane,
         live_scoped_loop_verified=False,
         live_read_only_transport_verified=False,
-        owner_manifest_authorized=False,
+        owner_manifest_authorized=owner_manifest_authorized,
+        live_usage_verified=False,
+        usage_gate=usage_gate,
     )

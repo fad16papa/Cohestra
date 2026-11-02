@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from correction.controller import ReviewPolicy
 from correction.manifest import Manifest
-from correction.models import Check, PullView, Review, TestResult
+from correction.models import Check, PullView, RequirementEvidence, Review, TestResult, UsageEvidence
 
 BASE = "b" * 40
 H1 = "1" * 40
@@ -120,6 +120,8 @@ def pull(
     number: int = 536,
     base_sha: str = BASE,
     base_ref: str = "main",
+    requirement_evidence: tuple[RequirementEvidence, ...] = (),
+    usage: UsageEvidence | None = None,
 ) -> PullView:
     stamped: list[TestResult] = []
     for test in tests:
@@ -138,6 +140,8 @@ def pull(
         reviews,
         tuple(stamped),
         paths,
+        requirement_evidence,
+        usage,
     )
 
 
