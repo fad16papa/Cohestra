@@ -95,6 +95,10 @@ class SecretPathRegressions(unittest.TestCase):
         _assert_secret_failure(self, ("config/secrets.json.bak",))
         _assert_secret_failure(self, ("config/secret.json",))
         _assert_secret_failure(self, ("src/config/production.env~",))
+        _assert_secret_failure(self, ("web/id_rsa~",))
+        _assert_secret_failure(self, ("deploy/certs/server.pem~",))
+        _assert_secret_failure(self, ("config/secrets.json~",))
+        _assert_secret_failure(self, ("src/.aws/credentials~",))
 
     def test_case_variations(self) -> None:
         _assert_secret_failure(self, ("src/.ENV",))

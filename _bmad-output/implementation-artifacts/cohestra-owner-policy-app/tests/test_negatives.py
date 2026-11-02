@@ -635,8 +635,10 @@ class FailClosedNegatives(unittest.TestCase):
             hmac_secrets=(),
             seal=None,
         )
-        forged = replace(bare, seal=_Ticket(request_digest(bare)))
+        forged = replace(bare, seal=_Ticket(request_digest(bare), b"\x00" * 32))
         _assert_failure(self, evaluate(forged), "unverified evidence")
+        with self.assertRaises(AttributeError):
+            sealed.seal.digest = request_digest(bare)
 
     def test_mac_cli_does_not_print_secret(self) -> None:
         os.environ["OWNER_ATTESTATION_SECRET"] = SECRET

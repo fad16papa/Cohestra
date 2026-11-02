@@ -58,13 +58,13 @@ def _secret_segment(segment: str) -> bool:
     name = segment.lower()
     if ".env" in name:
         return True
-    if re.search(r"(?:^|[._-])(?:pem|key|p12|pfx)(?:$|[._-])", name):
+    if re.search(r"(?:^|[._~-])(?:pem|key|p12|pfx)(?:$|[._~-])", name):
         return True
-    if re.fullmatch(r"id_(?:rsa|dsa|ecdsa|ed25519)\d*(?:[._-].*)?", name):
+    if re.fullmatch(r"id_(?:rsa|dsa|ecdsa|ed25519)\d*(?:[._~-].*)?", name):
         return True
-    if name == "credentials" or name.startswith("credentials."):
+    if re.fullmatch(r"credentials(?:$|[._~-].*)", name):
         return True
-    if re.search(r"(?:^|[._-])secrets?\.(?:json|ya?ml|txt)(?:$|[._-])", name):
+    if re.search(r"(?:^|[._~-])secrets?\.(?:json|ya?ml|txt)(?:$|[._~-])", name):
         return True
     return False
 
