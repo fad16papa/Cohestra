@@ -44,25 +44,37 @@ flowchart TB
 
 ## Evaluation inputs (reads only)
 
-From GitHub API, never from executing PR scripts:
+The prototype does not call GitHub. `GitHubSnapshot` is the host contract. A hand-built `EvaluationRequest` returns `failure` / `unverified evidence`. Filling the snapshot in a unit test does **not** prove a live ruleset pin or a live check-run.
 
-- PR number, `head.sha`, `base.ref`
-- Changed files list
-- Blob SHAs via `GET /repos/{owner}/{repo}/git/trees/{sha}?recursive=1` or `GET .../contents/{path}?ref=`
-- Issue comments
-- For dest_sync: GitHub compare/commits merge-base of dest_parent vs PR HEAD. The host MUST set `merge_base_sha` from that API result, `source_ref` to the claimed `main` SHA, `dest_ref` to PR HEAD, `source_blobs` from the main tree, `dest_blobs` from the PR tree. The evaluator refuses dest_sync if `merge_base_sha != dest_parent_sha` or `dest_ref != head_sha`.
+| Field | How the hosted App obtains it | Fail when |
+| --- | --- | --- |
+| `head_sha` | `GET /repos/{repo}/pulls/{n}` `head.sha`, equal to the signed webhook | missing, not 40-hex lowercase, or differs from `event_head_sha` |
+| `base_ref` | pulls `base.ref` | not `main` or `release/uat` |
+| `files` | pulls `files` pages until `Link` rel=next is absent | `files_complete` is false |
+| `comments` | issues comments pages, including `created_at` and `updated_at` | `comments_complete` is false; edited or deleted owner attestation |
+| `pulls_api_base_sha` | pulls `base.sha` | not 40-hex on dest_sync |
+| `compare_merge_base_sha` | `GET /repos/{repo}/compare/{base.sha}...{head.sha}` `merge_base_commit.sha` | not equal to pulls `base.sha`. Do not copy one variable into both fields |
+| `source_commit_sha` | `GET /repos/{repo}/commits/main` | missing on dest_sync |
+| `source_blobs` / `head_blobs` | `GET /repos/{repo}/git/trees/{sha}?recursive=1` | `truncated=true` or a required path has no blob |
+| `app_integration_id` | App config / JWT `iss`, never the PR | 15368, 1210556, or 46505 |
+| `ruleset_checks` | `GET /repos/{repo}/rulesets/{id}` | `AD25-Owner-Policy` missing, null, duplicated, or a different integration |
+| `active_hmac_secrets` | host env only | empty, or echoed in check text |
+| published app id | `GET /repos/{repo}/check-runs/{id}` `app.id` after POST | `github_check_body` refuses success without a matching read-back |
 
-Never: Environments, Actions secrets, `git show` piped to `exec`.
+`posting_integration_id`, `expected_integration_id`, `merge_base_sha`, `source_ref`, `dest_ref`, `dest_parent_sha`, and the blob maps are derived inside `seal_request`. Callers do not get to assert them.
+
+Never: Environments, Actions secrets, `git show` piped to `exec`, or treating a valid HMAC as human presence.
 
 ## Verdicts
 
 | `base.ref` | Changed paths | Attestation | Tree | Result |
 | --- | --- | --- | --- | --- |
-| `main` or `release/uat` | no `.github/` or `deploy/` (includes `src/`/`web/` product PRs) | not required | n/a | `feature` success |
-| `main` | ⊆ sync ∪ expansion | HMAC required | not required | `policy_expansion` |
-| `release/uat` | ⊆ sync ∪ expansion | HMAC required | exact blobs + ancestor dest_parent | `dest_sync` |
-| any | mixed control-plane + `src/`/`web/`/`secret` | n/a | n/a | failure |
-| any | Production workflow, ADCP, unknown `deploy/` | n/a | n/a | failure |
+| `main` or `release/uat` | ordinary product paths, including `src/` and `web/` | not required | n/a | `feature` success |
+| any | `.env`, nested `.env*`, private keys, `*.pem`, `credentials.json`, traversal, ambiguous encoding | n/a | n/a | failure |
+| `main` | ⊆ sync ∪ expansion, no product paths | HMAC v2 | not required | `policy_expansion` |
+| `release/uat` | ⊆ sync ∪ expansion, no product paths | HMAC v2 | exact blobs and compare merge-base equals pulls base SHA | `dest_sync` |
+| any | mixed control-plane and application paths | n/a | n/a | failure |
+| any | Production workflow, ADCP, unknown `deploy/` or `.github/` | n/a | n/a | failure |
 
 ## Hosting (owner later; not this task)
 

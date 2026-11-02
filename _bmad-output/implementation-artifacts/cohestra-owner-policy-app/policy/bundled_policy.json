@@ -1,9 +1,9 @@
 {
   "policy_id": "AD25-OWNER-POLICY",
-  "policy_version": 1,
+  "policy_version": 2,
   "check_name": "AD25-Owner-Policy",
   "independent_authorization": true,
-  "note": "App-bundled policy. Not loaded from a git blob. Not executed as Python from the repository. Reference snapshot only — production copy lives in a separate owner-controlled repo.",
+  "note": "App-bundled policy. Not loaded from a git blob. Not executed as Python from the repository. Reference snapshot only — production copy lives in a separate owner-controlled repo. hmac_canonical_version 2 binds repo, PR, base, HEAD, and ts. forbidden_path_prefixes and secret_name_markers are intentionally empty: path classification lives in owner_policy/paths.py. Filename-shaped secrets are refused even when no control-plane path is present. Ordinary src/ and web/ code is allowed. The substring secret is not a marker.",
   "owner_logins": ["fad16papa"],
   "forbidden_actor_logins": [
     "cursor",
@@ -14,9 +14,9 @@
   ],
   "protected_bases": ["main", "release/uat"],
   "control_plane_prefixes": [".github/", "deploy/"],
-  "forbidden_path_prefixes": ["src/", "web/"],
+  "forbidden_path_prefixes": [],
   "forbidden_name_substrings": ["adcp", "deploy-production"],
-  "secret_name_markers": [".env", ".pem", "id_rsa", "secret"],
+  "secret_name_markers": [],
   "sync_approved_paths": [
     ".github/workflows/ci.yml",
     ".github/workflows/deploy.yml",
@@ -47,7 +47,9 @@
     "deploy/reproduce-ad25-trust-boundary.sh"
   ],
   "hmac_required": true,
-  "hmac_canonical_version": 1,
+  "hmac_canonical_version": 2,
+  "hmac_max_age_seconds": 86400,
+  "hmac_future_skew_seconds": 120,
   "known_spoof_integration_ids": {
     "github_actions": 15368,
     "cursor": 1210556,

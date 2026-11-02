@@ -2,14 +2,17 @@
 label: AD25-OWNER-AUTH
 status: test-spec
 prototype: _bmad-output/implementation-artifacts/cohestra-owner-policy-app/
-as_of: 2026-11-02T20:50:00+08:00
+as_of: 2026-11-02T21:40:00+08:00
 ---
 
 # Fail-closed negative-case matrix
 
-Local prototype: `python3 tests/test_negatives.py` (27 tests, OK on this HEAD).
+Local prototype, simulated GitHub snapshots only:
 
-N3/N4 in the evaluator are **App-ID collision guards**. They do not prove a GitHub ruleset pin. Live F probes must prove T7.
+- `python3 tests/test_paths.py` — 8 tests
+- `python3 tests/test_negatives.py` — 42 tests
+
+These do **not** prove a live ruleset pin or a live check-run. N3/N4 refuse spoofable integration ids inside the snapshot contract. Live F probes must prove T7.
 
 GitHub-live probes in the rollout plan are **owner-executed later**. This agent must not run them against production rulesets.
 
@@ -31,6 +34,14 @@ Every unauthorized path must yield check conclusion `failure`. `success`, `neutr
 | N12 | Missing check-run / App failure | Evaluator | `test_app_failure_unknown_exception_is_failure`, `test_missing_hmac_secret_fails_closed` | `failure` (never skipped) |
 | N13 | Attempted Production or secret access | Evaluator | `test_production_environment_access_refused`, `test_secret_access_refused` | `failure` |
 | N14 | Blob mismatch / missing evidence | Evaluator | `test_blob_mismatch`, `test_missing_blob_evidence` | `failure` |
+| N15 | Secret, traversal, case, encoding | Classifier | `tests/test_paths.py` | `failure`; ordinary `src/` and `web/` still `feature` |
+| N16 | HMAC expiry, edit, delete, conflict, rotation, one-nibble MAC | Evaluator | `test_expired_and_future_attestation`, `test_edited_and_deleted_attestation`, `test_conflicting_attestations_fail_closed`, `test_hmac_rotation_window`, `test_one_hex_mac_difference_fails` | `failure` |
+| N17 | Replay across PR or repo | Evaluator | `test_hmac_replay_across_pull_requests`, `test_hmac_replay_across_repos` | `failure` |
+| N18 | Incomplete page, timeout, truncated tree, stale event | Snapshot | `test_incomplete_timeout_truncation_and_stale_event` | `failure` / hold |
+| N19 | Ruleset not strict, bypass, or unpinned | Snapshot | `test_ruleset_strict_and_bypass`, `test_unpinned_integration_id` | `failure` |
+| N20 | Published check app id mismatch | Check post | `test_published_check_identity` | success body refused |
+| N21 | Hand-built request | Seal | `test_hand_built_request_is_not_evidence` | `failure` / unverified evidence |
+| N22 | Malformed SHA | Snapshot | `test_malformed_head_sha` | `failure` |
 
 Happy paths (must remain the only `success` conclusions):
 

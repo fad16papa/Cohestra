@@ -1,4 +1,9 @@
-"""Fail-closed evaluator. App-bundled policy only. No git-blob exec."""
+"""Fail-closed evaluator. App-bundled policy only. No git-blob exec.
+
+Direct EvaluationRequest objects are refused. The host must call
+evidence.evaluate_snapshot, which is the only code allowed to mint a seal.
+A seal is an in-process guard. It is not a live GitHub proof.
+"""
 
 from __future__ import annotations
 
@@ -6,7 +11,9 @@ from dataclasses import dataclass
 
 from .attestation import AttestationError, Comment, verify_attestation
 from .conclusions import FORBIDDEN_SOFT_EXITS, CheckConclusion
-from .policy import BundledPolicy, PolicyError, forbidden_path_reason, is_control_plane_path, load_policy
+from .paths import PathError, canonicalize_repo_path, secret_path_reason
+from .policy import BundledPolicy, PolicyError, is_control_plane_path, load_policy
+from .seal import SEAL
 
 SHA_LEN = 40
 
@@ -26,18 +33,18 @@ class EvaluationRequest:
     source_blobs: dict[str, str]
     dest_blobs: dict[str, str]
     comments: tuple[Comment, ...]
-    hmac_secret: str | None
+    hmac_secrets: tuple[str, ...]
+    now_unix: int
     posting_integration_id: int | None
     expected_integration_id: int | None
     check_name: str
     merge_base_sha: str | None = None
     source_ref: str | None = None
     dest_ref: str | None = None
-    requesting_merge_actor: str | None = None
-    requesting_merge_actor_type: str | None = None
     requested_environments: tuple[str, ...] = ()
     requested_secret_names: tuple[str, ...] = ()
     spoof_integration_id: int | None = None
+    seal: object = None
 
 
 @dataclass(frozen=True)
@@ -81,30 +88,44 @@ def _sha_ok(value: str | None, label: str) -> None:
         raise EvaluationError(f"{label} is not 40-char lowercase hex")
 
 
-def _classify(policy: BundledPolicy, paths: tuple[str, ...], base_ref: str) -> str:
+def _classify(policy: BundledPolicy, paths: tuple[str, ...]) -> tuple[str, tuple[str, ...]]:
     if not paths:
         raise EvaluationError("changed path list missing")
-    control: list[str] = []
-    product: list[str] = []
-    for path in paths:
-        forbidden = forbidden_path_reason(path, policy)
-        if is_control_plane_path(path, policy):
-            if forbidden:
-                raise EvaluationError(forbidden)
-            control.append(path)
-        elif forbidden:
-            product.append(path)
-    if control and product:
+    canonical: list[str] = []
+    seen: set[str] = set()
+    for raw in paths:
+        try:
+            path = canonicalize_repo_path(raw)
+        except PathError as exc:
+            raise EvaluationError(str(exc)) from exc
+        if path in seen:
+            raise EvaluationError(f"ambiguous path: {path}")
+        seen.add(path)
+        canonical.append(path)
+        secret = secret_path_reason(path)
+        if secret:
+            raise EvaluationError(secret)
+        lowered = path.lower()
+        for fragment in policy.forbidden_name_substrings:
+            if fragment.lower() in lowered:
+                raise EvaluationError(f"forbidden control-plane path: {path}")
+    control = [path for path in canonical if is_control_plane_path(path, policy)]
+    other = [path for path in canonical if path not in control]
+    if control and other:
         raise EvaluationError(
-            "mixed control-plane and application/secret paths: "
-            + ", ".join(sorted(set(control + product)))
+            "mixed control-plane and application paths: "
+            + ", ".join(sorted(control + other))
         )
     if not control:
-        return "feature"
+        return "feature", tuple(canonical)
     allowed = policy.sync_approved_paths | policy.expansion_paths
-    unexpected = [p for p in control if p not in allowed]
+    unexpected = [path for path in control if path not in allowed]
     if unexpected:
         raise EvaluationError("unexpected control-plane paths: " + ", ".join(sorted(unexpected)))
+    return "control", tuple(canonical)
+
+
+def _control_kind(policy: BundledPolicy, base_ref: str) -> str:
     if base_ref == "main":
         return "policy_expansion"
     if base_ref == "release/uat":
@@ -115,19 +136,22 @@ def _classify(policy: BundledPolicy, paths: tuple[str, ...], base_ref: str) -> s
 def _require_hmac(policy: BundledPolicy, req: EvaluationRequest) -> None:
     verify_attestation(
         policy,
-        secret=req.hmac_secret,
+        secrets=req.hmac_secrets,
         comments=list(req.comments),
         repo=req.repo,
         pull_number=req.pull_number,
         head_sha=req.head_sha,
         base_ref=req.base_ref,
+        now_unix=req.now_unix,
     )
 
 
 def _evaluate_inner(policy: BundledPolicy, req: EvaluationRequest) -> EvaluationResult:
+    if not SEAL.ok(req.seal):
+        raise EvaluationError("unverified evidence")
     if req.check_name != policy.check_name:
         raise EvaluationError(
-            f"check name mismatch: got {req.check_name} expected {policy.check_name}"
+            f"check name mismatch: got {req.check_name!s} expected {policy.check_name}"
         )
 
     spoof_ids = set(policy.known_spoof_integration_ids.values())
@@ -157,40 +181,41 @@ def _evaluate_inner(policy: BundledPolicy, req: EvaluationRequest) -> Evaluation
             "evaluator must not access secrets: " + ", ".join(req.requested_secret_names)
         )
 
-    kind = _classify(policy, req.changed_paths, req.base_ref)
-
+    kind, canonical = _classify(policy, req.changed_paths)
     if kind == "feature":
         return _ok(policy, "feature", "no control-plane paths; attestation not required")
 
     _require_hmac(policy, req)
+    verdict = _control_kind(policy, req.base_ref)
+    allowed = policy.sync_approved_paths | policy.expansion_paths
+    extra = [path for path in canonical if path not in allowed]
+    if extra:
+        raise EvaluationError("policy expansion includes paths outside the expansion set")
 
-    if kind == "policy_expansion":
-        if req.base_ref != "main":
-            raise EvaluationError("policy expansion must target main, not a dest-sync branch")
-        extra = [p for p in req.changed_paths if p not in (policy.sync_approved_paths | policy.expansion_paths)]
-        if extra:
-            raise EvaluationError("policy expansion includes paths outside the expansion set")
-        return _ok(policy, "policy_expansion", "HMAC attestation accepted; dest-tree exact-match not required")
+    if verdict == "policy_expansion":
+        return _ok(
+            policy,
+            "policy_expansion",
+            "HMAC attestation accepted; dest-tree exact-match not required",
+        )
 
-    # dest_sync
-    if req.base_ref != "release/uat":
-        raise EvaluationError("dest-tree sync must target release/uat")
     _sha_ok(req.dest_parent_sha, "destination parent SHA")
     _sha_ok(req.merge_base_sha, "merge-base SHA")
     if req.merge_base_sha != req.dest_parent_sha:
-        raise EvaluationError("destination is not a descendant of dest_parent")
+        raise EvaluationError(
+            "destination is not a descendant of dest_parent: "
+            "compare merge-base does not match pulls base sha"
+        )
     _sha_ok(req.source_ref, "source ref SHA")
     if req.dest_ref != req.head_sha:
         raise EvaluationError("dest tree SHA must equal current HEAD")
-    approved = policy.sync_approved_paths | policy.expansion_paths
-    unexpected = [p for p in req.changed_paths if p not in approved]
-    if unexpected:
-        raise EvaluationError("dest sync changed paths outside approved set")
     must_match = set(policy.sync_approved_paths)
-    must_match.update(p for p in req.changed_paths if p in policy.expansion_paths)
+    must_match.update(path for path in canonical if path in policy.expansion_paths)
     for path in sorted(must_match):
-        src = req.source_blobs.get(path)
-        dest = req.dest_blobs.get(path)
+        src = req.source_blobs.get(path) if isinstance(req.source_blobs, dict) else None
+        dest = req.dest_blobs.get(path) if isinstance(req.dest_blobs, dict) else None
+        if not isinstance(req.source_blobs, dict) or not isinstance(req.dest_blobs, dict):
+            raise EvaluationError(f"missing blob evidence for {path}")
         if src is None or dest is None:
             raise EvaluationError(f"missing blob evidence for {path}")
         _sha_ok(src, f"source blob {path}")
@@ -216,14 +241,13 @@ def evaluate(
         if result.conclusion is CheckConclusion.SUCCESS and result.verdict in {
             "policy_expansion",
             "dest_sync",
+            "feature",
         }:
-            return result
-        if result.conclusion is CheckConclusion.SUCCESS and result.verdict == "feature":
             return result
         if result.conclusion is CheckConclusion.FAILURE:
             return result
         return _fail(loaded, "internal", "evaluator produced a non-fail-closed conclusion")
-    except (EvaluationError, AttestationError, PolicyError) as exc:
+    except (EvaluationError, AttestationError, PolicyError, PathError) as exc:
         check_name = loaded.check_name if loaded is not None else "AD25-Owner-Policy"
         return EvaluationResult(
             conclusion=CheckConclusion.FAILURE,

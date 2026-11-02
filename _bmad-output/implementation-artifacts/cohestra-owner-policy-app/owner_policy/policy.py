@@ -28,6 +28,8 @@ class BundledPolicy:
     expansion_paths: frozenset[str]
     hmac_required: bool
     hmac_canonical_version: int
+    hmac_max_age_seconds: int
+    hmac_future_skew_seconds: int
     known_spoof_integration_ids: dict[str, int]
     raw: dict[str, Any]
 
@@ -62,6 +64,8 @@ def load_policy(path: Path | None = None) -> BundledPolicy:
             expansion_paths=frozenset(str(x) for x in raw["expansion_paths"]),
             hmac_required=bool(raw["hmac_required"]),
             hmac_canonical_version=int(raw["hmac_canonical_version"]),
+            hmac_max_age_seconds=int(raw["hmac_max_age_seconds"]),
+            hmac_future_skew_seconds=int(raw["hmac_future_skew_seconds"]),
             known_spoof_integration_ids={
                 str(k): int(v) for k, v in dict(raw["known_spoof_integration_ids"]).items()
             },
@@ -72,18 +76,27 @@ def load_policy(path: Path | None = None) -> BundledPolicy:
 
 
 def is_control_plane_path(path: str, policy: BundledPolicy) -> bool:
-    return any(path.startswith(prefix) for prefix in policy.control_plane_prefixes)
+    lowered = path.lower()
+    return any(lowered.startswith(prefix.lower()) for prefix in policy.control_plane_prefixes)
 
 
 def forbidden_path_reason(path: str, policy: BundledPolicy) -> str | None:
-    lowered = path.lower()
-    for prefix in policy.forbidden_path_prefixes:
-        if path.startswith(prefix):
-            return f"forbidden application path: {path}"
-    for marker in policy.secret_name_markers:
-        if marker in lowered:
-            return f"secret-like path: {path}"
+    """Legacy helper. The evaluator classifies with paths.py, not substrings.
+
+    `src/` and `web/` are ordinary application trees. The substring `secret`
+    is not a secret marker, so `src/SecretRotation.cs` stays product code.
+    """
+    from .paths import PathError, canonicalize_repo_path, secret_path_reason
+
+    try:
+        canon = canonicalize_repo_path(path)
+    except PathError as exc:
+        return str(exc)
+    secret = secret_path_reason(canon)
+    if secret:
+        return secret
+    lowered = canon.lower()
     for fragment in policy.forbidden_name_substrings:
-        if fragment in lowered:
-            return f"forbidden control-plane path: {path}"
+        if fragment.lower() in lowered:
+            return f"forbidden control-plane path: {canon}"
     return None

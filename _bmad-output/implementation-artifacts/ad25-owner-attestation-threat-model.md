@@ -29,7 +29,9 @@ Comment `OWNER_APPROVE_CONTROL_PLANE sha=<SHA>` is **owner-account identity**. C
 | T3 | Comment-only attestation | User token posts `sha=` without MAC | **Yes** (evaluator FAILURE) | — |
 | T4 | Stolen HMAC | Secret in Cursor chat, Cohestra secrets, or App logs | **No** if secret leaks | Secret hygiene; rotate |
 | T5 | Replay MAC onto new HEAD | Same MAC, new commit | **Yes** (HMAC message includes SHA) | — |
-| T6 | Replay MAC onto another PR or base | Same MAC, different PR/base | **Yes** (message includes repo+pr+base+sha) | — |
+| T6 | Replay MAC onto another PR, repo, or base | Same MAC, different binding | **Yes** (message includes repo+pr+base+sha+ts) | — |
+| T15 | Expired, future, edited, or deleted HMAC | Comment metadata or `ts` | **Yes** (v2 window 86400s, skew 120s; `updated_at` must equal `created_at`) | Host must copy comment timestamps from the issues API, not the webhook body |
+| T16 | Conflicting owner attestations | One valid MAC plus one stale or comment-only line | **Yes** (any invalid owner attestation fails the check) | — |
 | T13 | Stolen Owner-Policy private key | Check `success` without evaluator | **No** | Rotate App key; pin still trusts this App |
 | T14 | Owner-token ruleset unpin | Administration / PAT | **No** | Process: no PAT with admin in Cursor secrets |
 | T7 | PR-head job named `AD25-Owner-Policy` | Actions 15368 | **Yes** if ruleset pin is live; **No** if `integration_id` is null | Abort if pin missing |

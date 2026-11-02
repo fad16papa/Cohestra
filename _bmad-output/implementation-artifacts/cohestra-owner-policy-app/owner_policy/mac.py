@@ -2,7 +2,9 @@
 
 Example:
   python3 -m owner_policy.mac --repo fad16papa/Cohestra --pr 542 \\
-      --sha ade3c8281e8a2ec82ef45771bc5b68df64901a41
+      --base release/uat --sha <40-hex> --ts <unix>
+
+The process prints the comment line only. It never prints the secret.
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pr", required=True, type=int)
     parser.add_argument("--sha", required=True)
     parser.add_argument("--base", required=True, help="PR base ref, e.g. release/uat")
+    parser.add_argument("--ts", required=True, type=int, help="Unix seconds bound into the MAC")
     parser.add_argument(
         "--secret-env",
         default="OWNER_ATTESTATION_SECRET",
@@ -38,9 +41,10 @@ def main(argv: list[str] | None = None) -> int:
         pull_number=args.pr,
         sha=args.sha,
         base_ref=args.base,
+        ts=args.ts,
         version=policy.hmac_canonical_version,
     )
-    print(f"OWNER_APPROVE_CONTROL_PLANE sha={args.sha} mac={mac}")
+    print(f"OWNER_APPROVE_CONTROL_PLANE sha={args.sha} ts={args.ts} mac={mac}")
     return 0
 
 

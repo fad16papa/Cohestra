@@ -13,7 +13,7 @@ as_of: 2026-11-02T21:10:00+08:00
 | Cursor permission options | `ad25-cursor-permission-mechanics.md` |
 | App architecture + prototype | `ad25-owner-policy-app-implementation.md` + `cohestra-owner-policy-app/` |
 | Threat model | `ad25-owner-attestation-threat-model.md` |
-| Negative matrix | `ad25-owner-policy-negative-tests.md` (27 local tests OK) |
+| Negative matrix | `ad25-owner-policy-negative-tests.md` (8 path + 42 negative local tests; simulated, not a live pin) |
 | Owner rollout A–I | `ad25-owner-policy-rollout.md` |
 | Spine | `planning-artifacts/architecture/architecture-ad25-owner-policy-2026-11-02/` |
 | CAT-SEC | `ad25-owner-policy-plan-cat-sec.md` |

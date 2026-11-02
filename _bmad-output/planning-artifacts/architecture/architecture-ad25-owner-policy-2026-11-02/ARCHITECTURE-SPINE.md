@@ -75,13 +75,13 @@ flowchart LR
 
 - **Binds:** PR classification
 - **Prevents:** dest-sync exact-tree blocking policy expansion, and expansion attestation skipping dest-tree checks
-- **Rule:** `base=main` + control-plane → `policy_expansion`. `base=release/uat` + control-plane → `dest_sync`. Feature PRs have no control-plane paths.
+- **Rule:** `base=main` + control-plane → `policy_expansion`. `base=release/uat` + control-plane → `dest_sync`. Feature PRs have no control-plane paths and no secret-like paths. A secret-like path is failure even when the PR has zero control-plane files.
 
 ### AD-6 — HMAC attestation, not comment-only [ADOPTED]
 
 - **Binds:** owner approval
 - **Prevents:** user-token `OWNER_APPROVE_CONTROL_PLANE sha=` minting success
-- **Rule:** Required comment is `OWNER_APPROVE_CONTROL_PLANE sha=<40-hex> mac=<64-hex>` with HMAC-SHA256 over repo+PR+base+SHA using a secret that is not in Cohestra or Cursor. Comment-only is FAILURE.
+- **Rule:** Required comment is `OWNER_APPROVE_CONTROL_PLANE sha=<40-hex> ts=<unix> mac=<64-hex>`. HMAC-SHA256 covers repo, PR, base, exact HEAD, and ts (canonical version 2). Max age 86400s, future skew 120s. Edited, deleted, expired, conflicting, or comment-only attestations are FAILURE. A valid MAC is account binding, not human presence. The secret is not in Cohestra, Cursor, PR comments, or CI logs.
 
 ### AD-7 — Fail closed [ADOPTED]
 
@@ -95,12 +95,24 @@ flowchart LR
 - **Prevents:** one App both authorizing and merging
 - **Rule:** Owner-Policy App never merges. PR-E is a later, different `integration_id`, refused on control-plane paths.
 
+### AD-9 — Canonical paths, fail closed [ADOPTED]
+
+- **Binds:** path classification
+- **Prevents:** `.env`, nested dotenv, private keys, traversal, and encoded paths classifying as feature success
+- **Rule:** Every changed path is canonicalized before classification. Reject NUL, backslash, non-ASCII, double percent-decoding, absolute paths, empty or dot segments, and `..`. Secret filenames are matched on the filename segment, case-insensitively. The substring `secret` is not a marker. Ordinary `src/` and `web/` code, including `src/SecretRotation.cs`, stays `feature`.
+
+### AD-10 — Snapshot evidence, not caller authority [ADOPTED]
+
+- **Binds:** host inputs
+- **Prevents:** a hand-built `EvaluationRequest` or a caller-supplied merge-base boolean authorizing a merge
+- **Rule:** Only `evaluate_snapshot` can mint a seal. Ancestry is `compare.merge_base_commit.sha == pulls.base.sha`, both 40-hex, from two API reads. Ruleset `integration_id` must equal the installation and must not be 15368, 1210556, or 46505. A success check body requires a read-back of the posted check-run `app.id`. Unit tests that build a `GitHubSnapshot` are simulated. They do not prove a live pin.
+
 ## Consistency Conventions
 
 | Concern | Convention |
 | --- | --- |
 | Check name | `AD25-Owner-Policy` exactly |
-| HMAC envelope | `OWNER_APPROVE_CONTROL_PLANE sha=<40 lowercase hex> mac=<64 lowercase hex>` |
+| HMAC envelope | `OWNER_APPROVE_CONTROL_PLANE sha=<40 lowercase hex> ts=<unix> mac=<64 lowercase hex>` |
 | Policy file | `policy/bundled_policy.json` in the App image |
 | Hosting | Private repo `fad16papa/cohestra-owner-policy` (proposal), not this tree as runtime |
 | Errors | Map every exception to check `failure` |

@@ -13,11 +13,17 @@ an authorization root.
 ## What this prototype proves locally
 
 ```bash
+python3 tests/test_paths.py
 python3 tests/test_negatives.py
 ```
 
-27 tests (happy paths plus fail-closed negatives). The evaluator returns only
+8 path regressions and 42 fail-closed cases. The evaluator returns only
 `success` or `failure`. It never returns `neutral` or `skipped`.
+
+The tests build a `GitHubSnapshot`. That is a simulated API read. It does
+not prove a live ruleset pin, a live check-run, or human presence. A valid
+HMAC binds repo, pull request, base, exact HEAD, and timestamp. It is not
+proof a person was at the keyboard.
 
 ## What this prototype does not do
 
@@ -34,11 +40,13 @@ On a machine Cursor does not control:
 
 ```bash
 export OWNER_ATTESTATION_SECRET='…'   # never in Cohestra or Cursor secrets
-python3 -m owner_policy.mac --repo fad16papa/Cohestra --pr 542 --base release/uat --sha <40-hex>
+python3 -m owner_policy.mac --repo fad16papa/Cohestra --pr 542 \
+  --base release/uat --sha <40-hex> --ts <unix-seconds>
 ```
 
 Paste the printed line as a GitHub.com issue comment. Do not paste the secret
-or the MAC into a Cursor chat.
+or the MAC into a Cursor chat. The comment expires after 86400 seconds.
+Editing or deleting it invalidates the attestation.
 
 ## Hosting sketch (owner later)
 
@@ -48,6 +56,9 @@ or the MAC into a Cursor chat.
 4. Host a small HTTPS service (Fly.io / Cloud Run / a $5 VM). Env: App id,
    private key, webhook secret, `OWNER_ATTESTATION_SECRET`.
 5. Subscribe: `pull_request`, `issue_comment`, `check_suite`, `check_run`.
-6. On each event: build `EvaluationRequest` from GitHub API **reads**, call
-   `evaluate()`, `POST /check-runs` with name `AD25-Owner-Policy`.
+6. On each event: fill `GitHubSnapshot` from the API reads in
+   `owner_policy/evidence.py`, call `evaluate_snapshot()`, then
+   `POST /check-runs`. Read the check-run back and pass `app.id` into
+   `github_check_body` before treating a success as posted. A caller-supplied
+   merge-base SHA is not ancestry.
 7. Pin that App's `integration_id` on ruleset `26322151` and a new main ruleset.
