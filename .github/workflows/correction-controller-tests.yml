@@ -1,0 +1,23 @@
+name: Correction controller tests
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Correction controller unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - name: Run controller unit tests
+        run: python3 -m unittest discover -s _bmad-output/implementation-artifacts/cohestra-correction-controller/tests -v
