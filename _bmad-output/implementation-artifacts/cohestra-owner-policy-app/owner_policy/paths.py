@@ -7,11 +7,15 @@ import unicodedata
 from urllib.parse import unquote
 
 _SECRET_FILE = re.compile(
-    r"^(?:\.env(?:\..*)?|"
-    r"id_rsa(?:[._-].*)?|id_dsa(?:[._-].*)?|id_ecdsa(?:[._-].*)?|id_ed25519(?:[._-].*)?|"
-    r"credentials\.(?:json|ya?ml|txt)|.+\.(?:pem|key|p12|pfx))$",
+    r"^(?:"
+    r"id_(?:rsa|dsa|ecdsa|ed25519)\d*(?:[._-].*)?|"
+    r"credentials(?:\..*)?|"
+    r"secrets\.(?:json|ya?ml|txt)|"
+    r".*\.(?:pem|key|p12|pfx)"
+    r")$",
     re.IGNORECASE,
 )
+_CONTROL_FILE = re.compile(r"^(?:codeowners|action\.ya?ml)$", re.IGNORECASE)
 
 
 class PathError(Exception):
@@ -54,6 +58,16 @@ def canonicalize_repo_path(raw: str) -> str:
 
 def secret_path_reason(path: str) -> str | None:
     for segment in path.split("/"):
+        lowered = segment.lower()
+        if lowered.startswith(".env") or lowered.endswith(".env") or ".env." in lowered:
+            return f"secret-like path: {path}"
         if _SECRET_FILE.match(segment):
             return f"secret-like path: {path}"
+    return None
+
+
+def control_filename_reason(path: str) -> str | None:
+    for segment in path.split("/"):
+        if _CONTROL_FILE.match(segment):
+            return f"forbidden control-plane path: {path}"
     return None

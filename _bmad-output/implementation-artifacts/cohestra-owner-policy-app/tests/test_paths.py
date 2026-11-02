@@ -83,6 +83,12 @@ class SecretPathRegressions(unittest.TestCase):
         _assert_secret_failure(self, ("web/credentials.json",))
         _assert_secret_failure(self, ("web/id_rsa.txt",))
         _assert_secret_failure(self, ("src/keys/id_ed25519.old",))
+        _assert_secret_failure(self, ("src/keys/id_rsa2",))
+        _assert_secret_failure(self, ("src/config/production.env",))
+        _assert_secret_failure(self, ("web/.envrc",))
+        _assert_secret_failure(self, ("src/.aws/credentials",))
+        _assert_secret_failure(self, ("config/secrets.json",))
+        _assert_secret_failure(self, ("deploy/certs/.pem",))
 
     def test_case_variations(self) -> None:
         _assert_secret_failure(self, ("src/.ENV",))

@@ -118,7 +118,7 @@ def _snap(**overrides: object) -> GitHubSnapshot:
 def _assert_failure(test: unittest.TestCase, result, needle: str) -> None:
     test.assertEqual(result.conclusion, CheckConclusion.FAILURE)
     test.assertNotIn(result.conclusion.value, {"neutral", "skipped", "success"})
-    body = github_check_body(result, HEAD)
+    body = github_check_body(result, result.head_sha)
     test.assertEqual(body["conclusion"], "failure")
     test.assertEqual(body["name"], "AD25-Owner-Policy")
     joined = " ".join(result.reasons)
@@ -304,7 +304,7 @@ class FailClosedNegatives(unittest.TestCase):
 
         sealed = seal_request(_snap(), load_policy())
         result = evaluate(replace(sealed, check_name="CI"))
-        _assert_failure(self, result, "check name mismatch")
+        _assert_failure(self, result, "unverified evidence")
 
     def test_policy_expansion_on_uat_without_being_dest_sync_blobs(self) -> None:
         policy = load_policy()
@@ -531,6 +531,74 @@ class FailClosedNegatives(unittest.TestCase):
             installation_app_id=OWNER_APP_ID,
         )
         self.assertEqual(posted["conclusion"], "success")
+        self.assertEqual(posted["head_sha"], HEAD)
+        with self.assertRaises(CheckPostError):
+            github_check_body(
+                success,
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                published_app_id=OWNER_APP_ID,
+                installation_app_id=OWNER_APP_ID,
+            )
+
+    def test_seal_binds_request_fields(self) -> None:
+        from dataclasses import replace
+
+        from owner_policy.evidence import seal_request
+        from owner_policy.evaluate import evaluate
+
+        sealed = seal_request(_snap(), load_policy())
+        tampered = evaluate(
+            replace(sealed, changed_paths=("docs/readme.md",), comments=(), hmac_secrets=())
+        )
+        _assert_failure(self, tampered, "unverified evidence")
+        ancestry = evaluate(
+            replace(sealed, merge_base_sha="ffffffffffffffffffffffffffffffffffffffff")
+        )
+        _assert_failure(self, ancestry, "unverified evidence")
+
+    def test_rename_keeps_previous_secret_path(self) -> None:
+        result = evaluate_snapshot(
+            _snap(
+                base_ref="main",
+                files=("notes.txt",),
+                previous_paths=(".env",),
+                comments=(),
+                active_hmac_secrets=(),
+                pulls_api_base_sha=None,
+                compare_merge_base_sha=None,
+                source_commit_sha=None,
+                head_blobs={},
+                source_blobs={},
+            )
+        )
+        _assert_failure(self, result, "secret-like path")
+
+    def test_codeowners_and_local_action_are_not_feature(self) -> None:
+        _assert_failure(
+            self,
+            evaluate_snapshot(_snap(files=("CODEOWNERS",))),
+            "forbidden control-plane path",
+        )
+        _assert_failure(
+            self,
+            evaluate_snapshot(_snap(files=("src/actions/checkout/action.yml",))),
+            "forbidden control-plane path",
+        )
+
+    def test_reposted_mac_on_a_new_comment_fails(self) -> None:
+        stale_comment = _owner_comment(ts=NOW - 600, created_at=NOW, updated_at=NOW)
+        result = evaluate_snapshot(_snap(comments=(stale_comment,)))
+        _assert_failure(self, result, "does not match the comment")
+
+    def test_whitespace_secret_and_malformed_snapshot_fail_closed(self) -> None:
+        _assert_failure(
+            self,
+            evaluate_snapshot(_snap(active_hmac_secrets=("   ",))),
+            "attestation secret missing",
+        )
+        broken = evaluate_snapshot(_snap(head_blobs=5))  # type: ignore[arg-type]
+        self.assertEqual(broken.conclusion, CheckConclusion.FAILURE)
+        self.assertIn("evaluator error", " ".join(broken.reasons))
 
     def test_mac_cli_does_not_print_secret(self) -> None:
         os.environ["OWNER_ATTESTATION_SECRET"] = SECRET

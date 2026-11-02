@@ -9,9 +9,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from hashlib import sha256
+
 from .attestation import AttestationError, Comment, verify_attestation
 from .conclusions import FORBIDDEN_SOFT_EXITS, CheckConclusion
-from .paths import PathError, canonicalize_repo_path, secret_path_reason
+from .paths import PathError, canonicalize_repo_path, control_filename_reason, secret_path_reason
 from .policy import BundledPolicy, PolicyError, is_control_plane_path, load_policy
 from .seal import SEAL
 
@@ -53,6 +55,7 @@ class EvaluationResult:
     verdict: str
     reasons: tuple[str, ...]
     check_name: str
+    head_sha: str = ""
 
     def as_github_check(self) -> dict[str, str]:
         if self.conclusion.value in FORBIDDEN_SOFT_EXITS:
@@ -65,21 +68,23 @@ class EvaluationResult:
         }
 
 
-def _fail(policy: BundledPolicy, verdict: str, *reasons: str) -> EvaluationResult:
+def _fail(policy: BundledPolicy, head_sha: str, verdict: str, *reasons: str) -> EvaluationResult:
     return EvaluationResult(
         conclusion=CheckConclusion.FAILURE,
         verdict=verdict,
         reasons=reasons,
         check_name=policy.check_name,
+        head_sha=head_sha,
     )
 
 
-def _ok(policy: BundledPolicy, verdict: str, *reasons: str) -> EvaluationResult:
+def _ok(policy: BundledPolicy, head_sha: str, verdict: str, *reasons: str) -> EvaluationResult:
     return EvaluationResult(
         conclusion=CheckConclusion.SUCCESS,
         verdict=verdict,
         reasons=reasons,
         check_name=policy.check_name,
+        head_sha=head_sha,
     )
 
 
@@ -105,6 +110,9 @@ def _classify(policy: BundledPolicy, paths: tuple[str, ...]) -> tuple[str, tuple
         secret = secret_path_reason(path)
         if secret:
             raise EvaluationError(secret)
+        control_file = control_filename_reason(path)
+        if control_file:
+            raise EvaluationError(control_file)
         lowered = path.lower()
         for fragment in policy.forbidden_name_substrings:
             if fragment.lower() in lowered:
@@ -133,6 +141,41 @@ def _control_kind(policy: BundledPolicy, base_ref: str) -> str:
     raise EvaluationError(f"base ref is not a protected control-plane branch: {base_ref}")
 
 
+def request_digest(req: EvaluationRequest) -> bytes:
+    """Fingerprint every field a caller could swap after sealing. Excludes the seal."""
+    comments = tuple(
+        (item.login, item.user_type, item.body, item.created_at, item.updated_at, item.deleted)
+        for item in req.comments
+    )
+    if not isinstance(req.source_blobs, dict) or not isinstance(req.dest_blobs, dict):
+        raise EvaluationError("unverified evidence")
+    material = repr(
+        (
+            req.repo,
+            req.pull_number,
+            req.head_sha,
+            req.base_ref,
+            req.dest_parent_sha,
+            req.merge_base_sha,
+            req.source_ref,
+            req.dest_ref,
+            tuple(req.changed_paths),
+            comments,
+            tuple(req.hmac_secrets),
+            req.now_unix,
+            req.posting_integration_id,
+            req.expected_integration_id,
+            req.check_name,
+            tuple(req.requested_environments),
+            tuple(req.requested_secret_names),
+            req.spoof_integration_id,
+            tuple(sorted(req.source_blobs.items())),
+            tuple(sorted(req.dest_blobs.items())),
+        )
+    )
+    return sha256(material.encode("utf-8")).digest()
+
+
 def _require_hmac(policy: BundledPolicy, req: EvaluationRequest) -> None:
     verify_attestation(
         policy,
@@ -147,8 +190,20 @@ def _require_hmac(policy: BundledPolicy, req: EvaluationRequest) -> None:
 
 
 def _evaluate_inner(policy: BundledPolicy, req: EvaluationRequest) -> EvaluationResult:
-    if not SEAL.ok(req.seal):
+    try:
+        digest = request_digest(req)
+    except Exception as exc:  # noqa: BLE001 — a broken request is not evidence
+        raise EvaluationError("unverified evidence") from exc
+    if not SEAL.ok(req.seal, digest):
         raise EvaluationError("unverified evidence")
+    if type(req.pull_number) is not int or req.pull_number < 1:
+        raise EvaluationError("pull number is malformed")
+    if (
+        type(req.repo) is not str
+        or req.repo.count("/") != 1
+        or any(char in req.repo for char in "\r\n ")
+    ):
+        raise EvaluationError("repo is malformed")
     if req.check_name != policy.check_name:
         raise EvaluationError(
             f"check name mismatch: got {req.check_name!s} expected {policy.check_name}"
@@ -183,7 +238,7 @@ def _evaluate_inner(policy: BundledPolicy, req: EvaluationRequest) -> Evaluation
 
     kind, canonical = _classify(policy, req.changed_paths)
     if kind == "feature":
-        return _ok(policy, "feature", "no control-plane paths; attestation not required")
+        return _ok(policy, req.head_sha, "feature", "no control-plane paths; attestation not required")
 
     _require_hmac(policy, req)
     verdict = _control_kind(policy, req.base_ref)
@@ -195,6 +250,7 @@ def _evaluate_inner(policy: BundledPolicy, req: EvaluationRequest) -> Evaluation
     if verdict == "policy_expansion":
         return _ok(
             policy,
+            req.head_sha,
             "policy_expansion",
             "HMAC attestation accepted; dest-tree exact-match not required",
         )
@@ -224,6 +280,7 @@ def _evaluate_inner(policy: BundledPolicy, req: EvaluationRequest) -> Evaluation
             raise EvaluationError(f"blob mismatch on {path}")
     return _ok(
         policy,
+        req.head_sha,
         "dest_sync",
         "HMAC attestation accepted; exact-tree and dest_parent verified",
     )
@@ -246,20 +303,24 @@ def evaluate(
             return result
         if result.conclusion is CheckConclusion.FAILURE:
             return result
-        return _fail(loaded, "internal", "evaluator produced a non-fail-closed conclusion")
+        return _fail(loaded, req.head_sha, "internal", "evaluator produced a non-fail-closed conclusion")
     except (EvaluationError, AttestationError, PolicyError, PathError) as exc:
         check_name = loaded.check_name if loaded is not None else "AD25-Owner-Policy"
+        head = req.head_sha if isinstance(getattr(req, "head_sha", None), str) else ""
         return EvaluationResult(
             conclusion=CheckConclusion.FAILURE,
             verdict="hold",
             reasons=(str(exc),),
             check_name=check_name,
+            head_sha=head,
         )
     except Exception as exc:  # noqa: BLE001 — fail closed on unexpected errors
         check_name = loaded.check_name if loaded is not None else "AD25-Owner-Policy"
+        head = req.head_sha if isinstance(getattr(req, "head_sha", None), str) else ""
         return EvaluationResult(
             conclusion=CheckConclusion.FAILURE,
             verdict="hold",
             reasons=(f"evaluator error: {type(exc).__name__}",),
             check_name=check_name,
+            head_sha=head,
         )

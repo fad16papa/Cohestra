@@ -10,7 +10,7 @@ as_of: 2026-11-02T21:40:00+08:00
 Local prototype, simulated GitHub snapshots only:
 
 - `python3 tests/test_paths.py` — 8 tests
-- `python3 tests/test_negatives.py` — 42 tests
+- `python3 tests/test_negatives.py` — 47 tests
 
 These do **not** prove a live ruleset pin or a live check-run. N3/N4 refuse spoofable integration ids inside the snapshot contract. Live F probes must prove T7.
 
@@ -40,8 +40,10 @@ Every unauthorized path must yield check conclusion `failure`. `success`, `neutr
 | N18 | Incomplete page, timeout, truncated tree, stale event | Snapshot | `test_incomplete_timeout_truncation_and_stale_event` | `failure` / hold |
 | N19 | Ruleset not strict, bypass, or unpinned | Snapshot | `test_ruleset_strict_and_bypass`, `test_unpinned_integration_id` | `failure` |
 | N20 | Published check app id mismatch | Check post | `test_published_check_identity` | success body refused |
-| N21 | Hand-built request | Seal | `test_hand_built_request_is_not_evidence` | `failure` / unverified evidence |
+| N21 | Hand-built request or post-seal field swap | Seal | `test_hand_built_request_is_not_evidence`, `test_seal_binds_request_fields` | `failure` / unverified evidence |
 | N22 | Malformed SHA | Snapshot | `test_malformed_head_sha` | `failure` |
+| N23 | Rename drops the old secret name | Snapshot | `test_rename_keeps_previous_secret_path` | `failure` |
+| N24 | Check body SHA differs from the evaluated HEAD | Check post | `test_published_check_identity` | post refused |
 
 Happy paths (must remain the only `success` conclusions):
 

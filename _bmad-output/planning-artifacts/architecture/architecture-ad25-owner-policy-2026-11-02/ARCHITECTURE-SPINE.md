@@ -99,13 +99,13 @@ flowchart LR
 
 - **Binds:** path classification
 - **Prevents:** `.env`, nested dotenv, private keys, traversal, and encoded paths classifying as feature success
-- **Rule:** Every changed path is canonicalized before classification. Reject NUL, backslash, non-ASCII, double percent-decoding, absolute paths, empty or dot segments, and `..`. Secret filenames are matched on the filename segment, case-insensitively. The substring `secret` is not a marker. Ordinary `src/` and `web/` code, including `src/SecretRotation.cs`, stays `feature`.
+- **Rule:** Every changed path, including a rename's previous name, is canonicalized before classification. Reject NUL, backslash, non-ASCII, double percent-decoding, absolute paths, empty or dot segments, and `..`. Secret filenames include `.env*`, `*.env`, private keys, `credentials`, `secrets.json`, and certificate extensions. `CODEOWNERS` and `action.yml` are control-plane names. The substring `secret` is not a marker. Ordinary `src/` and `web/` code, including `src/SecretRotation.cs`, stays `feature`.
 
 ### AD-10 — Snapshot evidence, not caller authority [ADOPTED]
 
 - **Binds:** host inputs
 - **Prevents:** a hand-built `EvaluationRequest` or a caller-supplied merge-base boolean authorizing a merge
-- **Rule:** Only `evaluate_snapshot` can mint a seal. Ancestry is `compare.merge_base_commit.sha == pulls.base.sha`, both 40-hex, from two API reads. Ruleset `integration_id` must equal the installation and must not be 15368, 1210556, or 46505. A success check body requires a read-back of the posted check-run `app.id`. Unit tests that build a `GitHubSnapshot` are simulated. They do not prove a live pin.
+- **Rule:** Only `evaluate_snapshot` can mint a seal, and the seal is a digest of the request fields. Changing a field after sealing is `failure`. Ancestry is `compare.merge_base_commit.sha == pulls.base.sha`, both 40-hex, from two API reads. Ruleset `integration_id` must equal the installation and must not be 15368, 1210556, or 46505. A success check body uses the evaluated HEAD and requires a read-back of the posted check-run `app.id`. Unit tests that build a `GitHubSnapshot` are simulated. They do not prove a live pin.
 
 ## Consistency Conventions
 

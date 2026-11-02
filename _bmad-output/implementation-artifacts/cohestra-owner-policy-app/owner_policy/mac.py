@@ -13,7 +13,7 @@ import argparse
 import os
 import sys
 
-from .attestation import compute_mac
+from .attestation import AttestationError, compute_mac
 from .policy import load_policy
 
 
@@ -35,15 +35,19 @@ def main(argv: list[str] | None = None) -> int:
         print(f"missing {args.secret_env}", file=sys.stderr)
         return 2
     policy = load_policy()
-    mac = compute_mac(
-        secret,
-        repo=args.repo,
-        pull_number=args.pr,
-        sha=args.sha,
-        base_ref=args.base,
-        ts=args.ts,
-        version=policy.hmac_canonical_version,
-    )
+    try:
+        mac = compute_mac(
+            secret,
+            repo=args.repo,
+            pull_number=args.pr,
+            sha=args.sha,
+            base_ref=args.base,
+            ts=args.ts,
+            version=policy.hmac_canonical_version,
+        )
+    except AttestationError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
     print(f"OWNER_APPROVE_CONTROL_PLANE sha={args.sha} ts={args.ts} mac={mac}")
     return 0
 

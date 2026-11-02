@@ -68,8 +68,10 @@ def compute_mac(
     ts: int,
     version: int,
 ) -> str:
-    if not secret:
+    if not isinstance(secret, str) or not secret.strip():
         raise AttestationError("attestation secret missing")
+    if any(char in repo or char in base_ref for char in "\r\n") or not repo or not base_ref:
+        raise AttestationError("attestation binding is malformed")
     if not SHA_RE.fullmatch(sha):
         raise AttestationError("attestation SHA is not 40-char lowercase hex")
     if not base_ref:
@@ -94,7 +96,7 @@ def compute_mac(
 
 
 def _active_secrets(secrets: tuple[str, ...] | list[str]) -> tuple[str, ...]:
-    active = tuple(item for item in secrets if item)
+    active = tuple(item for item in secrets if isinstance(item, str) and item.strip())
     if not active:
         raise AttestationError("attestation secret missing")
     return active
@@ -125,6 +127,10 @@ def verify_attestation(
     if policy.hmac_canonical_version != CANONICAL_VERSION:
         raise AttestationError("unsupported hmac canonical version")
     active = _active_secrets(secrets)
+    if type(pull_number) is not int or pull_number < 1:
+        raise AttestationError("pull number is malformed")
+    if any(char in repo or char in base_ref for char in "\r\n") or not repo or not base_ref:
+        raise AttestationError("attestation binding is malformed")
     if not SHA_RE.fullmatch(head_sha):
         raise AttestationError("head SHA is not 40-char lowercase hex")
     if not isinstance(now_unix, int) or isinstance(now_unix, bool) or now_unix <= 0:
@@ -154,6 +160,11 @@ def verify_attestation(
         if not MAC_RE.fullmatch(mac):
             raise AttestationError("attestation MAC is malformed")
         ts = int(ts_text)
+        if (
+            comment.created_at > ts + policy.hmac_future_skew_seconds
+            or ts > comment.created_at + policy.hmac_future_skew_seconds
+        ):
+            raise AttestationError("attestation timestamp does not match the comment")
         if policy.hmac_max_age_seconds <= 0 or policy.hmac_future_skew_seconds < 0:
             raise AttestationError("unsupported hmac window")
         if ts > now_unix + policy.hmac_future_skew_seconds:

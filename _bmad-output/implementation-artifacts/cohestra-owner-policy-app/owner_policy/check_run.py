@@ -22,7 +22,11 @@ def github_check_body(
         raise CheckPostError("refusing to post a soft check conclusion")
     if result.check_name != "AD25-Owner-Policy":
         raise CheckPostError("refusing to post a check under any other name")
+    if head_sha != result.head_sha:
+        raise CheckPostError("check head sha does not match the evaluated snapshot")
     if result.conclusion is CheckConclusion.SUCCESS:
+        if len(result.head_sha) != 40 or any(char not in "0123456789abcdef" for char in result.head_sha):
+            raise CheckPostError("check head sha does not match the evaluated snapshot")
         if published_app_id is None or installation_app_id is None:
             raise CheckPostError("success check requires published app id read-back")
         try:
@@ -34,7 +38,7 @@ def github_check_body(
             raise CheckPostError(str(exc)) from exc
     return {
         "name": "AD25-Owner-Policy",
-        "head_sha": head_sha,
+        "head_sha": result.head_sha,
         "status": "completed",
         "conclusion": result.conclusion.value,
         "output": {

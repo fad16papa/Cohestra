@@ -1,27 +1,36 @@
-"""In-process marker for requests built by the snapshot verifier.
+"""Request-bound marker for snapshots built by the verifier.
 
-This is not a cryptographic boundary and it does not prove a live GitHub
-read. mint() refuses callers other than owner_policy.evidence so tests and
-hosts cannot build a successful EvaluationRequest by hand.
+The ticket is an in-process guard. It is not a live GitHub proof.
+mint() refuses callers other than owner_policy.evidence. ok() fails when
+the request bytes change after the ticket is minted.
 """
 
 from __future__ import annotations
 
+import hmac
 import sys
 
 
-class _Seal:
-    def __init__(self) -> None:
-        self._token = object()
+class _Ticket:
+    __slots__ = ("digest",)
 
-    def mint(self) -> object:
+    def __init__(self, digest: bytes) -> None:
+        self.digest = digest
+
+
+class _Seal:
+    def mint(self, digest: bytes) -> _Ticket:
         caller = sys._getframe(1).f_globals.get("__name__", "")
         if caller != "owner_policy.evidence":
             raise RuntimeError("seal mint refused")
-        return self._token
+        if not isinstance(digest, bytes) or len(digest) != 32:
+            raise RuntimeError("seal mint refused")
+        return _Ticket(digest)
 
-    def ok(self, token: object) -> bool:
-        return token is self._token
+    def ok(self, token: object, digest: bytes) -> bool:
+        if not isinstance(token, _Ticket) or not isinstance(digest, bytes):
+            return False
+        return hmac.compare_digest(token.digest, digest)
 
 
 SEAL = _Seal()
