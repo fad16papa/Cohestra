@@ -580,6 +580,10 @@ class StoryAcceptanceTest(unittest.TestCase):
         self.assertEqual(failed.status, RETRY)
         self.assertNotEqual(failed.status, READY)
         self.assertEqual(failed.assignments, 1)
+        traced = json.loads(controller.ledger_path.read_text(encoding="utf-8"))["trace"][-1]["requirement_results"]
+        registration = next(item for item in traced if item["requirement_id"] == "REQ-REG")
+        self.assertEqual(registration["result"], "fail")
+        self.assertEqual(registration["source"], "catsec")
         missing, port_missing = self._controller()
         port_missing.view = pull(
             H1,
@@ -647,6 +651,17 @@ class StoryAcceptanceTest(unittest.TestCase):
         self.assertFalse(ledger["hold"])
         self.assertEqual(ledger["status"], READY)
         self.assertEqual(len(ledger["trace"]), 1)
+
+    def test_a_secret_hold_does_not_claim_accepted_usage(self) -> None:
+        controller, _port = self._controller()
+        # Split so the fixture does not contain one contiguous credential literal.
+        secret = "gh" + "p_" + ("a" * 36)
+        decision = controller.handle(Event("secret-usage", 536, H1, secret))
+        self.assertEqual(decision.status, HOLD)
+        self.assertEqual(decision.usage_gate, "not_applicable")
+        self.assertNotEqual(decision.usage_gate, "host_supplied")
+        ledger = controller.ledger_path.read_text(encoding="utf-8")
+        self.assertNotIn(secret, ledger)
 
     def test_controller_package_does_not_mint_signatures(self) -> None:
         text = "\n".join(path.read_text(encoding="utf-8") for path in PACKAGE.glob("*.py"))

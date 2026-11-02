@@ -3,8 +3,8 @@
 The controller records simulated assignments. It does not call Cursor, merge,
 deploy, or read credential environment variables. A READY decision uses
 verification_plane SIMULATED_PASS and always leaves both live flags false.
-owner_manifest_authorized is always false: the manifest digest is a content
-hash, not an owner signature.
+Version 1 leaves owner_manifest_authorized false. Version 2 sets it only
+after an Ed25519 signature verifies. The manifest digest is not that signature.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from pathlib import Path
 
 from .authorization import OwnerKeyring, verify_owner_authorization
 from .manifest import SHA_RE, Manifest, ManifestError, path_allowed
-from .models import Assignment, Decision, Event, GitHubError, Ledger, PullView, Review
+from .models import Assignment, Decision, Event, GitHubError, Ledger, PullView, RequirementEvidence, Review
 
 HOLD = "HOLD_OWNER_ACTION_REQUIRED"
 RETRY = "RETRYABLE_SCOPED"
@@ -225,6 +225,11 @@ def _pull_has_secret(pull: PullView) -> bool:
         )
     for test in pull.tests:
         parts.extend([test.name, test.path, test.detail, test.head_sha])
+    if pull.usage is not None:
+        parts.extend([pull.usage.head_sha, pull.usage.authentication_source])
+        for number in (pull.usage.elapsed_seconds, pull.usage.tokens, pull.usage.cost_cents):
+            if isinstance(number, str):
+                parts.append(number)
     for evidence in pull.requirement_evidence:
         parts.extend(
             [
@@ -236,8 +241,6 @@ def _pull_has_secret(pull: PullView) -> bool:
                 evidence.authentication_source,
             ]
         )
-    if pull.usage is not None:
-        parts.extend([pull.usage.head_sha, pull.usage.authentication_source])
     if any(not isinstance(part, str) for part in parts):
         return True
     return any(_contains_secret(part) for part in parts)
@@ -313,7 +316,18 @@ def _evidence_too_large(pull: PullView) -> bool:
             ]
         )
     for evidence in pull.requirement_evidence:
-        values.extend([evidence.requirement_id, evidence.evidence_name, evidence.head_sha, evidence.result, evidence.source])
+        values.extend(
+            [
+                evidence.requirement_id,
+                evidence.evidence_name,
+                evidence.head_sha,
+                evidence.result,
+                evidence.source,
+                evidence.authentication_source,
+            ]
+        )
+    if pull.usage is not None:
+        values.extend([pull.usage.head_sha, pull.usage.authentication_source])
     return any(isinstance(value, str) and len(value) > 4000 for value in values)
 
 
@@ -366,25 +380,40 @@ def _requirement_view(manifest: Manifest, pull: PullView) -> tuple[list[dict[str
     return findings, block
 
 
+def _row_state(evidence: RequirementEvidence, evidence_name: str, pull: PullView) -> str:
+    if evidence.authentication_source != "host-verified" or evidence.source not in {"bmad", "catsec"}:
+        return "requirement source is not independent"
+    if evidence.head_sha != pull.head_sha:
+        return "stale requirement evidence"
+    if evidence.evidence_name != evidence_name:
+        return "requirement evidence does not match"
+    if evidence.result == "fail":
+        return "fail"
+    if evidence.result == "pass":
+        return "pass"
+    return "requirement is unverified"
+
+
+def _row_for_state(
+    candidates: list[RequirementEvidence],
+    evidence_name: str,
+    pull: PullView,
+    state: str,
+) -> RequirementEvidence | None:
+    if state == "requirement evidence is missing":
+        return None
+    for evidence in candidates:
+        if _row_state(evidence, evidence_name, pull) == state:
+            return evidence
+    return None
+
+
 def _one_requirement(requirement_id: str, evidence_name: str, pull: PullView) -> tuple[str, dict[str, str] | None]:
     """Every row for the id must pass. One trusted fail outranks a pass row."""
     rows = [item for item in pull.requirement_evidence if item.requirement_id == requirement_id]
     if not rows:
         return "requirement evidence is missing", None
-    states: list[str] = []
-    for evidence in rows:
-        if evidence.authentication_source != "host-verified" or evidence.source not in {"bmad", "catsec"}:
-            states.append("requirement source is not independent")
-        elif evidence.head_sha != pull.head_sha:
-            states.append("stale requirement evidence")
-        elif evidence.evidence_name != evidence_name:
-            states.append("requirement evidence does not match")
-        elif evidence.result == "fail":
-            states.append("fail")
-        elif evidence.result == "pass":
-            states.append("pass")
-        else:
-            states.append("requirement is unverified")
+    states = [_row_state(evidence, evidence_name, pull) for evidence in rows]
     if "fail" in states:
         return "fail", {
             "evidence_name": evidence_name,
@@ -405,14 +434,12 @@ def _one_requirement(requirement_id: str, evidence_name: str, pull: PullView) ->
 
 def _requirement_trace(manifest: Manifest, pull: PullView) -> tuple[dict[str, object], ...]:
     """Host-reported requirement rows. This is not a live test run."""
-    rows: list[dict[str, object]] = []
+    recorded: list[dict[str, object]] = []
     for requirement in manifest.requirements:
-        matched = next(
-            (item for item in pull.requirement_evidence if item.requirement_id == requirement.requirement_id),
-            None,
-        )
+        matched_rows = [item for item in pull.requirement_evidence if item.requirement_id == requirement.requirement_id]
         state, _finding = _one_requirement(requirement.requirement_id, requirement.evidence_name, pull)
-        rows.append(
+        matched = _row_for_state(matched_rows, requirement.evidence_name, pull, state)
+        recorded.append(
             {
                 "authentication_source": matched.authentication_source if matched is not None else "",
                 "evidence_kind": requirement.evidence_kind,
@@ -425,7 +452,7 @@ def _requirement_trace(manifest: Manifest, pull: PullView) -> tuple[dict[str, ob
                 "source": matched.source if matched is not None else "",
             }
         )
-    return tuple(rows)
+    return tuple(recorded)
 
 
 def _repeated_exhausted(manifest: Manifest, ledger: Ledger, findings: tuple[dict[str, str], ...]) -> bool:
@@ -804,7 +831,7 @@ class Controller:
             reported_head,
             len(self.ledger.assignments),
             owner_manifest_authorized=self._owner_flag(),
-            usage_gate=usage_gate if usage_gate is not None else self._usage_gate(reason),
+            usage_gate="not_applicable" if usage_gate is None else usage_gate,
         )
         entry: dict[str, object] = {
             "assignment_id": assignment_id,
