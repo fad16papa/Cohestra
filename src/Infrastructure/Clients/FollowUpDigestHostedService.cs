@@ -2,6 +2,7 @@ using System.Text.Json;
 using Cohestra.Application.Outbox;
 using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Observability;
 using Cohestra.Infrastructure.Outbox;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Tenants;
@@ -45,7 +46,9 @@ public sealed class FollowUpDigestHostedService(
         {
             try
             {
-                await RunDailyDigestAsync(stoppingToken);
+                await CohestraTelemetry.TraceJobAsync(
+                    "follow-up-digest",
+                    () => RunDailyDigestAsync(stoppingToken));
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
