@@ -133,6 +133,10 @@ public static class DependencyInjection
         SendGridSettingsValidator.ValidateForEnvironment(
             sendGridSettings,
             environment.EnvironmentName);
+        if (DeploymentPlane.IsDedicatedProduction(configuration))
+        {
+            SendGridSettingsValidator.ValidateForDedicatedProduction(sendGridSettings);
+        }
 
         if (string.IsNullOrWhiteSpace(sendGridSettings.ApiKey))
         {

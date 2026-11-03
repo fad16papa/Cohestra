@@ -92,3 +92,17 @@ Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-e
 - Rollback: `deploy/production-rollback.sh` with explicit SHA; DB restore is 46.5 and never implicit.
 - UAT `deploy.yml` / `deploy-uat` remains automatic and unchanged.
 - Control-plane files exist in-repo. Environment `production` is not created here. Do not dispatch. This file does not deploy Production.
+
+## Story 46.4 runtime / secrets isolation (repository contract)
+
+Canonical story: `_bmad-output/implementation-artifacts/46-4-production-runtime-config-and-secrets-isolation.md`
+
+- Dedicated plane marker: `Cohestra__DeploymentPlane=Production` (compose-locked). UAT keeps running `ASPNETCORE_ENVIRONMENT=Production` without this marker.
+- API start is fail-closed: seeds off, `DEV_TENANT_SLUG` unset, Redis password required, Production-only CORS / `PUBLIC_BASE_URL`, independent SendGrid, placeholder secrets refused.
+- Public registration is an explicit owner pair: compose requires `SelfServeSignup__RegistrationClosed` and `SelfServeSignup__Recaptcha__Enabled` (no silent `false`/`false`). Open signup without recaptcha is refused. Bypass token is compose-locked empty.
+- `PaddleCredentialGuard` is unchanged: sandbox/live mix and live Paddle on UAT hosts still refuse. Compose still locks sandbox / `AllowLive=false` (46.10).
+- PostgreSQL 16 and Redis 7 remain on `cohestra_production_internal` with no published 5432/6379.
+- Owner procedure: [production-runtime-secrets.md](./production-runtime-secrets.md). `deploy/prepare-production-host-env.sh` does not write a repo `.env`.
+- Classified UAT-versus-Production comparison uses names + 4-character suffixes only. Synthetic fixtures are not live proof.
+- Owner gate `production_host_application_secrets` is **PENDING** until the owner runs classified verification.
+- Combined integration with 46.6/46.9 is a dedicated draft PR. Live classified isolation remains PENDING. Do not compose-up Production. Production remains **NO-GO**.
