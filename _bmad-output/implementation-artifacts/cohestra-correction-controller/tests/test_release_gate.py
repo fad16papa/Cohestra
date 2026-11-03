@@ -67,6 +67,12 @@ class ReleaseGateTest(unittest.TestCase):
         self.assertFalse(text.eligible)
         self.assertIn("changed paths are missing", text.reasons)
         self.assertNotIn("control-plane change requires separate owner authorization", text.reasons)
+        spaced = assess(
+            verification_plane="SIMULATED_PASS",
+            changed_paths=(" .github/workflows/ci.yml",),
+        )
+        self.assertFalse(spaced.eligible)
+        self.assertIn("control-plane change requires separate owner authorization", spaced.reasons)
 
 
 if __name__ == "__main__":

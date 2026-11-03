@@ -92,7 +92,7 @@ def parse_recorded(envelope: dict[str, object], *, repo: str, pull_number: int) 
     if not isinstance(pull_raw, dict):
         raise EvidenceError("pull identity is incomplete")
     number, head, base_sha, base_ref, author, seen_repo = _pull_identity(pull_raw)
-    if number != pull_number or seen_repo != repo:
+    if type(pull_number) is not int or number != pull_number or seen_repo != repo:
         raise EvidenceError("pull identity does not match the requested repository")
     if not SHA_RE.fullmatch(head) or not SHA_RE.fullmatch(base_sha):
         raise EvidenceError("head sha is invalid")
@@ -191,10 +191,13 @@ def _one_check(raw: dict[str, object], head: str) -> Check | None:
         raise EvidenceError("check run is incomplete")
     if run_head != head or not isinstance(slug, str):
         return None
-    if "gitguardian" in name.casefold():
+    if name in GITGUARDIAN_NAMES or "gitguardian" in name.casefold():
         if slug != GITGUARDIAN_APP:
             return None
     elif slug != ACTIONS_APP:
+        return None
+    status = raw.get("status")
+    if status is not None and status != "completed":
         return None
     if conclusion is not None and not isinstance(conclusion, str):
         raise EvidenceError("check run is incomplete")

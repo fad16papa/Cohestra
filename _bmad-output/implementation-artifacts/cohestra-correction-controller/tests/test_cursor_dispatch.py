@@ -146,6 +146,11 @@ class CursorDispatchTest(unittest.TestCase):
                 )
             )
         self.assertEqual(str(saved.exception), "assignment id conflicts")
+        padded = SimulatedCursorDispatcher()
+        padded.resume((DispatchReceipt(" sim-1 ", H1, "grok-4.7-high-fast"),))
+        with self.assertRaises(DispatchHold) as padded_conflict:
+            padded.dispatch({"assignment_id": "sim-1", "head_sha": H2, "model": "grok-4.7-high-fast"})
+        self.assertEqual(str(padded_conflict.exception), "assignment id conflicts")
 
 
 if __name__ == "__main__":

@@ -238,6 +238,26 @@ class GitHubReadOnlyTest(unittest.TestCase):
         reviews["total_count"] = len(review_items)
         identities = parse_recorded(padded, repo=REPO, pull_number=536).review_identities
         self.assertEqual([item.reviewer_id for item in identities], ["independent-reviewer"])
+        with self.assertRaises(EvidenceError):
+            parse_recorded(envelope(), repo=REPO, pull_number=True)  # type: ignore[arg-type]
+
+        running = envelope()
+        running_checks = running["check_runs"]
+        assert isinstance(running_checks, dict)
+        running_items = running_checks["items"]
+        assert isinstance(running_items, list)
+        running_items.append(
+            {
+                "name": "ci",
+                "status": "queued",
+                "conclusion": "success",
+                "head_sha": HEAD,
+                "app": {"slug": "github-actions"},
+            }
+        )
+        running_checks["total_count"] = len(running_items)
+        current = parse_recorded(running, repo=REPO, pull_number=536)
+        self.assertEqual([item.name for item in current.pull.checks], ["ci", "GitGuardian Security Checks"])
 
     def test_module_does_not_issue_owner_authorization(self) -> None:
         snapshot = parse_recorded(envelope(), repo=REPO, pull_number=536)

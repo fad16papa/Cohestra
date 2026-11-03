@@ -97,14 +97,24 @@ class SimulatedCursorDispatcher:
             if (
                 not isinstance(receipt.assignment_id, str)
                 or not receipt.assignment_id.strip()
+                or not isinstance(receipt.head_sha, str)
                 or SHA_RE.fullmatch(receipt.head_sha) is None
                 or receipt.model != MODEL
             ):
                 raise DispatchHold("saved receipt is invalid")
-            existing = self._receipts.get(receipt.assignment_id)
+            assignment_id = receipt.assignment_id.strip()
+            normalized = DispatchReceipt(
+                assignment_id,
+                receipt.head_sha,
+                receipt.model,
+                receipt.dispatcher,
+                False,
+                False,
+            )
+            existing = self._receipts.get(assignment_id)
             if existing is not None and existing.head_sha != receipt.head_sha:
                 raise DispatchHold("assignment id conflicts")
-            self._receipts.setdefault(receipt.assignment_id, receipt)
+            self._receipts.setdefault(assignment_id, normalized)
 
 
 class LiveCursorDispatcher:

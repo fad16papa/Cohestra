@@ -44,7 +44,7 @@ def _control_plane(paths: tuple[str, ...]) -> bool:
     for path in paths:
         if not isinstance(path, str):
             return True
-        normalized = posixpath.normpath(path.replace("\\", "/").lstrip("/"))
+        normalized = posixpath.normpath(path.replace("\\", "/").strip().lstrip("/"))
         folded = normalized.casefold()
         if (
             folded.startswith("..")
