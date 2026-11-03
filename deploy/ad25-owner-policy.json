@@ -1,0 +1,30 @@
+{
+  "policy_id": "AD25-OWNER-POLICY",
+  "label": "AD25-HARDENING",
+  "authority": "owner-approved-permitted-path-set",
+  "independent_authorization": false,
+  "note": "In-repo copy of the owner-approved 21-path set. Not independent authorization. Trusted-ref extraction plus an owner-controlled GitHub App or native ruleset is required to stop a PR-head from supplying its own validator.",
+  "approved_paths": [
+    ".github/workflows/ci.yml",
+    ".github/workflows/deploy.yml",
+    "deploy/ad25-sync-allowlist.txt",
+    "deploy/commission-uat-hold.sh",
+    "deploy/commission-uat-hold.test.sh",
+    "deploy/fetch-origin-main.test.sh",
+    "deploy/fetch-origin-uat.sh",
+    "deploy/fetch-origin-uat.test.sh",
+    "deploy/lib/ad25_sync_allowlist.py",
+    "deploy/lib/uat-predeploy-gate.py",
+    "deploy/reproduce-ad25-seven-path-gap.sh",
+    "deploy/simulate-merge-token-trigger.py",
+    "deploy/validate-ad25-sync-fixture.test.sh",
+    "deploy/validate-ad25-sync-procedure.sh",
+    "deploy/validate-deploy-uat-workflow.sh",
+    "deploy/validate-inline-suppression.test.sh",
+    "deploy/validate-prd-ad23.test.sh",
+    "deploy/validate-uat-predeploy-gate.sh",
+    "deploy/validate-uat-predeploy-gate.test.sh",
+    "deploy/write-uat-deploy-provenance.sh",
+    "deploy/write-uat-deploy-provenance.test.sh"
+  ]
+}
