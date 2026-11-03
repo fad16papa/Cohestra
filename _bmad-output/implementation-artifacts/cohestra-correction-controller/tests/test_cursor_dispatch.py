@@ -124,6 +124,28 @@ class CursorDispatchTest(unittest.TestCase):
         source = Path(__file__).resolve().parents[1].joinpath("correction", "cursor_dispatch.py").read_text(encoding="utf-8")
         self.assertNotIn("api.cursor.com", source)
         self.assertNotIn("urlopen", source)
+        self.assertNotIn("http.client", source)
+        self.assertNotIn("httpx", source)
+        self.assertNotIn("requests", source)
+        dispatcher = SimulatedCursorDispatcher()
+        first = dispatcher.dispatch({"assignment_id": "sim-1", "head_sha": H1, "model": "grok-4.7-high-fast"})
+        self.assertFalse(first.duplicate)
+        with self.assertRaises(DispatchHold) as collided:
+            dispatcher.dispatch({"assignment_id": "sim-1", "head_sha": H2, "model": "grok-4.7-high-fast"})
+        self.assertEqual(str(collided.exception), "assignment id conflicts")
+        with self.assertRaises(DispatchHold):
+            dispatcher.dispatch({"assignment_id": "   ", "head_sha": H1, "model": "grok-4.7-high-fast"})
+        with self.assertRaises(DispatchHold):
+            dispatcher.dispatch("not-a-dict")  # type: ignore[arg-type]
+        revived = SimulatedCursorDispatcher()
+        with self.assertRaises(DispatchHold) as saved:
+            revived.resume(
+                (
+                    DispatchReceipt("sim-1", H1, "grok-4.7-high-fast"),
+                    DispatchReceipt("sim-1", H2, "grok-4.7-high-fast"),
+                )
+            )
+        self.assertEqual(str(saved.exception), "assignment id conflicts")
 
 
 if __name__ == "__main__":

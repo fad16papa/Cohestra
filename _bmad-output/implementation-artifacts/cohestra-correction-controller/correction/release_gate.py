@@ -7,6 +7,7 @@ NO-GO.
 
 from __future__ import annotations
 
+import posixpath
 from dataclasses import dataclass
 
 UAT_DEPLOY_GATE_ACTIVE = False
@@ -39,10 +40,18 @@ class GateDecision:
 
 
 def _control_plane(paths: tuple[str, ...]) -> bool:
+    prefixes = tuple(prefix.casefold() for prefix in CONTROL_PLANE_PREFIXES)
     for path in paths:
         if not isinstance(path, str):
             return True
-        if path.startswith(CONTROL_PLANE_PREFIXES) or "secret" in path.casefold():
+        normalized = posixpath.normpath(path.replace("\\", "/").lstrip("/"))
+        folded = normalized.casefold()
+        if (
+            folded.startswith("..")
+            or folded.startswith(prefixes)
+            or "/.github/" in f"/{folded}"
+            or "secret" in folded
+        ):
             return True
     return False
 
@@ -67,9 +76,13 @@ def assess(
         reasons.append("owner policy enforcement is not verified")
     if not policy_activated:
         reasons.append("caller did not claim an activated policy")
-    if _control_plane(changed_paths):
+    invalid_paths = not isinstance(changed_paths, tuple) or any(
+        not isinstance(path, str) or not path.strip() for path in changed_paths
+    )
+    scan = () if invalid_paths else changed_paths
+    if _control_plane(scan):
         reasons.append("control-plane change requires separate owner authorization")
-    if not changed_paths:
+    if invalid_paths or not scan:
         reasons.append("changed paths are missing")
     return GateDecision(False, False, False, False, False, tuple(reasons))
 

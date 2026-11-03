@@ -99,6 +99,8 @@ def parse_recorded(envelope: dict[str, object], *, repo: str, pull_number: int) 
     paths = _files(_page(envelope.get("files")))
     checks = _checks(_page(envelope.get("check_runs")), head)
     identities = _reviews(_page(envelope.get("reviews")), head)
+    if "event_head" in envelope and not isinstance(envelope.get("event_head"), str):
+        raise EvidenceError("stale event head is invalid")
     event_head = envelope.get("event_head")
     stale = isinstance(event_head, str) and event_head != head
     pull = PullView(
@@ -123,21 +125,28 @@ def _pull_identity(raw: dict[str, object]) -> tuple[int, str, str, str, str, str
     user = raw.get("user")
     if type(number) is not int or number < 1 or not isinstance(head, dict) or not isinstance(base, dict):
         raise EvidenceError("pull identity is incomplete")
-    if not isinstance(user, dict) or not isinstance(user.get("login"), str):
-        raise EvidenceError("pull identity is incomplete")
+    login = user.get("login") if isinstance(user, dict) else None
     repo = base.get("repo")
-    if not isinstance(repo, dict) or not isinstance(repo.get("full_name"), str):
-        raise EvidenceError("pull identity is incomplete")
+    full_name = repo.get("full_name") if isinstance(repo, dict) else None
     sha = head.get("sha")
     base_sha = base.get("sha")
     base_ref = base.get("ref")
-    if not isinstance(sha, str) or not isinstance(base_sha, str) or not isinstance(base_ref, str):
+    if (
+        not isinstance(login, str)
+        or not login.strip()
+        or not isinstance(full_name, str)
+        or not full_name.strip()
+        or not isinstance(sha, str)
+        or not isinstance(base_sha, str)
+        or not isinstance(base_ref, str)
+        or not base_ref.strip()
+    ):
         raise EvidenceError("pull identity is incomplete")
-    return number, sha, base_sha, base_ref, str(user["login"]), str(repo["full_name"])
+    return number, sha, base_sha, base_ref.strip(), login.strip(), full_name.strip()
 
 
 def _page(raw: object) -> list[object]:
-    if not isinstance(raw, dict) or raw.get("incomplete") is True:
+    if not isinstance(raw, dict) or ("incomplete" in raw and raw.get("incomplete") is not False):
         raise EvidenceError("page is incomplete")
     items = raw.get("items")
     total = raw.get("total_count")
@@ -149,14 +158,15 @@ def _page(raw: object) -> list[object]:
 def _files(items: list[object]) -> tuple[str, ...]:
     paths: list[str] = []
     for item in items:
-        if not isinstance(item, dict) or not isinstance(item.get("filename"), str) or not item["filename"]:
+        filename = item.get("filename") if isinstance(item, dict) else None
+        if not isinstance(filename, str) or not filename.strip():
             raise EvidenceError("changed files are incomplete")
-        paths.append(str(item["filename"]))
+        paths.append(filename.strip())
         if item.get("status") == "renamed":
             previous = item.get("previous_filename")
-            if not isinstance(previous, str) or not previous:
+            if not isinstance(previous, str) or not previous.strip():
                 raise EvidenceError("rename is incomplete")
-            paths.append(previous)
+            paths.append(previous.strip())
     return tuple(paths)
 
 
@@ -164,7 +174,7 @@ def _checks(items: list[object], head: str) -> tuple[Check, ...]:
     accepted: list[Check] = []
     for item in items:
         if not isinstance(item, dict):
-            continue
+            raise EvidenceError("check run is incomplete")
         check = _one_check(item, head)
         if check is not None:
             accepted.append(check)
@@ -177,17 +187,17 @@ def _one_check(raw: dict[str, object], head: str) -> Check | None:
     app = raw.get("app")
     slug = app.get("slug") if isinstance(app, dict) else None
     conclusion = raw.get("conclusion")
-    if not isinstance(name, str) or not isinstance(run_head, str) or run_head != head:
+    if not isinstance(name, str) or not name.strip() or not isinstance(run_head, str):
+        raise EvidenceError("check run is incomplete")
+    if run_head != head or not isinstance(slug, str):
         return None
-    if not isinstance(slug, str):
-        return None
-    if name in GITGUARDIAN_NAMES or name.casefold() == "gitguardian":
+    if "gitguardian" in name.casefold():
         if slug != GITGUARDIAN_APP:
             return None
     elif slug != ACTIONS_APP:
         return None
     if conclusion is not None and not isinstance(conclusion, str):
-        return None
+        raise EvidenceError("check run is incomplete")
     return Check(name, conclusion if isinstance(conclusion, str) else None, run_head)
 
 
@@ -203,9 +213,9 @@ def _reviews(items: list[object], head: str) -> tuple[ReviewIdentity, ...]:
             continue
         login = user.get("login")
         user_type = user.get("type")
-        if not isinstance(login, str) or not login or login.casefold() in denied:
+        if not isinstance(login, str) or not login.strip() or login.strip().casefold() in denied:
             continue
         if user_type != "User":
             continue
-        found.append(ReviewIdentity(login, commit_id, "User", False, ""))
+        found.append(ReviewIdentity(login.strip(), commit_id, "User", False, ""))
     return tuple(found)

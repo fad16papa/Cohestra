@@ -57,6 +57,16 @@ class ReleaseGateTest(unittest.TestCase):
         self.assertTrue(release_gate.UAT_MAIN_DEPLOY_SUPPRESSED)
         self.assertFalse(release_gate.OWNER_POLICY_ENFORCED)
         self.assertFalse(release_gate.PRODUCTION_AUTHORIZED)
+        disguised = assess(
+            verification_plane="SIMULATED_PASS",
+            changed_paths=("docs/.github/workflows/ci.yml",),  # type: ignore[arg-type]
+        )
+        self.assertFalse(disguised.eligible)
+        self.assertIn("control-plane change requires separate owner authorization", disguised.reasons)
+        text = assess(verification_plane="SIMULATED_PASS", changed_paths="web/app/page.tsx")  # type: ignore[arg-type]
+        self.assertFalse(text.eligible)
+        self.assertIn("changed paths are missing", text.reasons)
+        self.assertNotIn("control-plane change requires separate owner authorization", text.reasons)
 
 
 if __name__ == "__main__":

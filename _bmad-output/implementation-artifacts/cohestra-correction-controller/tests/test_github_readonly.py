@@ -170,6 +170,74 @@ class GitHubReadOnlyTest(unittest.TestCase):
         source = Path(__file__).resolve().parents[1].joinpath("correction", "github_readonly.py").read_text(encoding="utf-8")
         self.assertNotIn("api.github.com", source)
         self.assertNotIn("urlopen", source)
+        self.assertNotIn("http.client", source)
+        self.assertNotIn("httpx", source)
+        self.assertNotIn("requests", source)
+
+    def test_malicious_recorded_shapes_do_not_become_current_evidence(self) -> None:
+        numbered = envelope()
+        pull = numbered["pull"]
+        assert isinstance(pull, dict)
+        pull["number"] = True
+        with self.assertRaises(EvidenceError) as boolean_number:
+            parse_recorded(numbered, repo=REPO, pull_number=1)
+        self.assertEqual(str(boolean_number.exception), "pull identity is incomplete")
+
+        flagged = envelope()
+        files = flagged["files"]
+        assert isinstance(files, dict)
+        files["incomplete"] = "true"
+        with self.assertRaises(EvidenceError) as incomplete:
+            parse_recorded(flagged, repo=REPO, pull_number=536)
+        self.assertEqual(str(incomplete.exception), "page is incomplete")
+
+        stale = envelope(event_head=1)
+        with self.assertRaises(EvidenceError) as event_head:
+            parse_recorded(stale, repo=REPO, pull_number=536)
+        self.assertEqual(str(event_head.exception), "stale event head is invalid")
+
+        damaged = envelope()
+        checks = damaged["check_runs"]
+        assert isinstance(checks, dict)
+        items = checks["items"]
+        assert isinstance(items, list)
+        items.append("not-a-check")
+        checks["total_count"] = len(items)
+        with self.assertRaises(EvidenceError) as check_item:
+            parse_recorded(damaged, repo=REPO, pull_number=536)
+        self.assertEqual(str(check_item.exception), "check run is incomplete")
+
+        disguised = envelope()
+        disguised_checks = disguised["check_runs"]
+        assert isinstance(disguised_checks, dict)
+        disguised_items = disguised_checks["items"]
+        assert isinstance(disguised_items, list)
+        disguised_items.append(
+            {
+                "name": "gitguardian security checks",
+                "conclusion": "success",
+                "head_sha": HEAD,
+                "app": {"slug": "github-actions"},
+            }
+        )
+        disguised_checks["total_count"] = len(disguised_items)
+        snapshot = parse_recorded(disguised, repo=REPO, pull_number=536)
+        self.assertEqual([item.name for item in snapshot.pull.checks], ["ci", "GitGuardian Security Checks"])
+
+        padded = envelope()
+        reviews = padded["reviews"]
+        assert isinstance(reviews, dict)
+        review_items = reviews["items"]
+        assert isinstance(review_items, list)
+        review_items.append(
+            {
+                "commit_id": HEAD,
+                "user": {"login": " github-actions[bot]", "type": "User"},
+            }
+        )
+        reviews["total_count"] = len(review_items)
+        identities = parse_recorded(padded, repo=REPO, pull_number=536).review_identities
+        self.assertEqual([item.reviewer_id for item in identities], ["independent-reviewer"])
 
     def test_module_does_not_issue_owner_authorization(self) -> None:
         snapshot = parse_recorded(envelope(), repo=REPO, pull_number=536)

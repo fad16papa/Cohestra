@@ -57,19 +57,24 @@ class SimulatedCursorDispatcher:
         self._receipts: dict[str, DispatchReceipt] = {}
 
     def dispatch(self, assignment: dict[str, object]) -> DispatchReceipt:
+        if not isinstance(assignment, dict):
+            raise DispatchHold("assignment is invalid")
         if assignment.get("live_dispatch") is True:
             raise DispatchHold("live cursor dispatch is not authorized")
         assignment_id = assignment.get("assignment_id")
         head = assignment.get("head_sha")
         model = assignment.get("model")
-        if not isinstance(assignment_id, str) or not assignment_id:
+        if not isinstance(assignment_id, str) or not assignment_id.strip():
             raise DispatchHold("assignment id is required")
+        assignment_id = assignment_id.strip()
         if not isinstance(head, str) or SHA_RE.fullmatch(head) is None:
             raise DispatchHold("head sha is invalid")
         if model != MODEL:
             raise DispatchHold("dispatch model is not the approved Grok 4.7 reviewer")
         existing = self._receipts.get(assignment_id)
         if existing is not None:
+            if existing.head_sha != head:
+                raise DispatchHold("assignment id conflicts")
             return DispatchReceipt(
                 existing.assignment_id,
                 existing.head_sha,
@@ -85,8 +90,20 @@ class SimulatedCursorDispatcher:
     def resume(self, receipts: tuple[DispatchReceipt, ...]) -> None:
         """Reload receipts saved by a previous process. Does not dispatch."""
         for receipt in receipts:
+            if not isinstance(receipt, DispatchReceipt):
+                raise DispatchHold("saved receipt is invalid")
             if receipt.live_dispatch or receipt.dispatcher != "simulated":
                 raise DispatchHold("live cursor dispatch is not authorized")
+            if (
+                not isinstance(receipt.assignment_id, str)
+                or not receipt.assignment_id.strip()
+                or SHA_RE.fullmatch(receipt.head_sha) is None
+                or receipt.model != MODEL
+            ):
+                raise DispatchHold("saved receipt is invalid")
+            existing = self._receipts.get(receipt.assignment_id)
+            if existing is not None and existing.head_sha != receipt.head_sha:
+                raise DispatchHold("assignment id conflicts")
             self._receipts.setdefault(receipt.assignment_id, receipt)
 
 
