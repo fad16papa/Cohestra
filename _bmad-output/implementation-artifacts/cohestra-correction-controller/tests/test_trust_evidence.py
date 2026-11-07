@@ -224,6 +224,35 @@ class TrustEvidenceTest(unittest.TestCase):
             ),
             CHECKS_UNTRUSTED,
         )
+        quoted_block = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n  test:\n"
+            b"    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n    \"permissions\":\n      checks: write\n"
+        )
+        self.assertEqual(
+            required_checks_hold(
+                _actions_rows(),
+                manifest,
+                config,
+                HEAD,
+                repository=REPO,
+                base_sha=BASE,
+                proof=_actions_proof(quoted_block, head_file=quoted_block),
+            ),
+            CHECKS_UNTRUSTED,
+        )
+        spaced = trusted.replace(b"permissions:", b"permissions :")
+        self.assertEqual(
+            required_checks_hold(
+                _actions_rows(),
+                manifest,
+                config,
+                HEAD,
+                repository=REPO,
+                base_sha=BASE,
+                proof=_actions_proof(spaced, head_file=spaced),
+            ),
+            CHECKS_UNTRUSTED,
+        )
         job_write = trusted.replace(
             b"    runs-on: ubuntu-latest\n",
             b"    permissions:\n      checks: write\n    runs-on: ubuntu-latest\n",

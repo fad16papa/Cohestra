@@ -591,6 +591,8 @@ def _workflow_permissions_ok(raw: bytes) -> bool:
         if not stripped or stripped.startswith("#"):
             index += 1
             continue
+        if not _grant_line_allowed(stripped):
+            return False
         indent = _indent(lines[index])
         if indent is None:
             return False
@@ -607,6 +609,13 @@ def _workflow_permissions_ok(raw: bytes) -> bool:
             return False
         index += 1
     return saw_top
+
+
+def _grant_line_allowed(stripped: str) -> bool:
+    folded = stripped.casefold()
+    if "permission" not in folded and "write" not in folded:
+        return True
+    return stripped == "permissions:" or _PERMISSION_LINE_RE.fullmatch(stripped) is not None
 
 
 def _indent(line: str) -> int | None:
