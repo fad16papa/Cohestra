@@ -581,7 +581,7 @@ def _workflow_permissions_ok(raw: bytes) -> bool:
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
         return False
-    if not text or "\x00" in text:
+    if not text or "\x00" in text or "\\" in text:
         return False
     lines = text.splitlines()
     saw_top = False

@@ -240,6 +240,23 @@ class TrustEvidenceTest(unittest.TestCase):
             ),
             CHECKS_UNTRUSTED,
         )
+        escaped = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n  test:\n"
+            b"    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n"
+            b"    \"permiss\\u0069ons\":\n      checks: \"\\u0077rite\"\n"
+        )
+        self.assertEqual(
+            required_checks_hold(
+                _actions_rows(),
+                manifest,
+                config,
+                HEAD,
+                repository=REPO,
+                base_sha=BASE,
+                proof=_actions_proof(escaped, head_file=escaped),
+            ),
+            CHECKS_UNTRUSTED,
+        )
         spaced = trusted.replace(b"permissions:", b"permissions :")
         self.assertEqual(
             required_checks_hold(
