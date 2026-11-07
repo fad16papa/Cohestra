@@ -71,9 +71,27 @@ _ACTIONS_DETAILS_RE = re.compile(
     r"^https://github\.com/(?P<repo>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/actions/runs/(?P<run>[1-9][0-9]{0,18})/job/[1-9][0-9]{0,18}$"
 )
 _ACTIONS_EVENTS = frozenset({"pull_request", "push"})
-_CHECKS_WRITE_RE = re.compile(r"checks\s*:\s*['\"]?write\b", re.IGNORECASE)
-_BROAD_PERMISSIONS_RE = re.compile(r"permissions\s*:\s*['\"]?(read-all|write-all)\b", re.IGNORECASE)
-_TOP_PERMISSIONS_RE = re.compile(r"(?m)^permissions\s*:")
+_PERMISSION_KEYS = frozenset(
+    {
+        "actions",
+        "artifact-metadata",
+        "attestations",
+        "checks",
+        "contents",
+        "deployments",
+        "discussions",
+        "id-token",
+        "issues",
+        "models",
+        "packages",
+        "pages",
+        "pull-requests",
+        "repository-projects",
+        "security-events",
+        "statuses",
+    }
+)
+_PERMISSION_LINE_RE = re.compile(r"([A-Za-z][A-Za-z0-9_-]*): (read|none)\Z")
 _MAX_ACTIONS_RUNS = 20
 
 
@@ -558,15 +576,65 @@ def _workflow_run_ok(
 
 
 def _workflow_permissions_ok(raw: bytes) -> bool:
+    """Accept only explicit read or none grants. Any other permissions shape is refused."""
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
         return False
     if not text or "\x00" in text:
         return False
-    if _CHECKS_WRITE_RE.search(text) or _BROAD_PERMISSIONS_RE.search(text):
-        return False
-    return _TOP_PERMISSIONS_RE.search(text) is not None
+    lines = text.splitlines()
+    saw_top = False
+    index = 0
+    while index < len(lines):
+        stripped = lines[index].strip()
+        if not stripped or stripped.startswith("#"):
+            index += 1
+            continue
+        indent = _indent(lines[index])
+        if indent is None:
+            return False
+        if stripped == "permissions:":
+            if indent == 0:
+                if saw_top:
+                    return False
+                saw_top = True
+            ok, index = _permission_block(lines, index + 1, indent)
+            if not ok:
+                return False
+            continue
+        if stripped.startswith("permissions:"):
+            return False
+        index += 1
+    return saw_top
+
+
+def _indent(line: str) -> int | None:
+    if "\t" in line:
+        return None
+    count = len(line) - len(line.lstrip(" "))
+    return count
+
+
+def _permission_block(lines: list[str], start: int, parent: int) -> tuple[bool, int]:
+    index = start
+    count = 0
+    while index < len(lines):
+        stripped = lines[index].strip()
+        if not stripped or stripped.startswith("#"):
+            index += 1
+            continue
+        indent = _indent(lines[index])
+        if indent is None:
+            return False, index
+        if indent <= parent:
+            break
+        matched = _PERMISSION_LINE_RE.fullmatch(stripped)
+        if matched is None or matched.group(1) not in _PERMISSION_KEYS:
+            return False, index
+        count += 1
+        index += 1
+    return count > 0, index
 
 
 def _app_id(value: str) -> int | None:

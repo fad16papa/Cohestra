@@ -198,6 +198,49 @@ class TrustEvidenceTest(unittest.TestCase):
             ),
             CHECKS_UNTRUSTED,
         )
+        quoted = trusted.replace(b"contents: read", b'"checks": write')
+        self.assertEqual(
+            required_checks_hold(
+                _actions_rows(),
+                manifest,
+                config,
+                HEAD,
+                repository=REPO,
+                base_sha=BASE,
+                proof=_actions_proof(quoted, head_file=quoted),
+            ),
+            CHECKS_UNTRUSTED,
+        )
+        aliased = b"x: &level write-all\npermissions: *level\n"
+        self.assertEqual(
+            required_checks_hold(
+                _actions_rows(),
+                manifest,
+                config,
+                HEAD,
+                repository=REPO,
+                base_sha=BASE,
+                proof=_actions_proof(aliased, head_file=aliased),
+            ),
+            CHECKS_UNTRUSTED,
+        )
+        job_write = trusted.replace(
+            b"    runs-on: ubuntu-latest\n",
+            b"    permissions:\n      checks: write\n    runs-on: ubuntu-latest\n",
+        )
+        self.assertNotEqual(job_write, trusted)
+        self.assertEqual(
+            required_checks_hold(
+                _actions_rows(),
+                manifest,
+                config,
+                HEAD,
+                repository=REPO,
+                base_sha=BASE,
+                proof=_actions_proof(job_write, head_file=job_write),
+            ),
+            CHECKS_UNTRUSTED,
+        )
         foreign = _actions_rows() + _parsed([run("TDD", 9001, "cohestra-ci")])
         self.assertEqual(
             required_checks_hold(foreign, manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=proof),
