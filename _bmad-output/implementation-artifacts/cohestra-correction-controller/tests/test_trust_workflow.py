@@ -70,7 +70,8 @@ class TrustWorkflowTest(unittest.TestCase):
         self.assertIn("cffi==2.1.1", text)
         self.assertIn("pycparser==3.12", text)
         self.assertIn("--hash=sha256:9dab55f57c74c3cad24c323bacbbd04be4705ba6eb0d92e920b1fc4837ed5079", text)
-        self.assertGreaterEqual(text.count("--hash=sha256:"), 9)
+        self.assertIn("--hash=sha256:b0431303acaea1089ad4b3e9ce4e6518193def1118d4073ca848635ee4ea2e96", text)
+        self.assertGreaterEqual(text.count("--hash=sha256:"), 15)
 
     def test_existing_controller_test_workflow_stays_read_only(self) -> None:
         text = CONTROLLER_TESTS.read_text(encoding="utf-8")
