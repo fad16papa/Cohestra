@@ -11,6 +11,8 @@ from urllib import request
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from correction.trust_evidence import (
+    _PERM_UNDECLARED,
+    _workflow_permission_issue,
     ACTIONS_UNCONFIRMED,
     BINDING_MISMATCH,
     CHECKS_UNTRUSTED,
@@ -311,6 +313,39 @@ class TrustEvidenceTest(unittest.TestCase):
         assert parsed is not None
         self.assertEqual(parsed.checks_map["tdd"].workflow, _ACTIONS_WORKFLOW)
         self.assertIsNone(parsed.checks_map["gitguardian"].workflow)
+
+    def test_ci_workflow_compatibility(self) -> None:
+        scripted = _ci_workflow_bytes().replace(
+            b"        run: python3 -m unittest discover -s _bmad-output/implementation-artifacts/cohestra-correction-controller/tests -v\n",
+            b"        run: bash deploy/write-uat-deploy-provenance.test.sh\n",
+        )
+        self.assertIn(b"write-uat-deploy-provenance.test.sh", scripted)
+        self.assertNotEqual(scripted, _ci_workflow_bytes())
+        self.assertIsNone(_workflow_permission_issue(scripted))
+        world = World()
+        manifest, _reason = parse_manifest_bytes(world.manifest_bytes())
+        assert manifest is not None
+        self.assertIsNone(
+            required_checks_hold(
+                _actions_rows(),
+                manifest,
+                _actions_config(world, manifest),
+                HEAD,
+                repository=REPO,
+                base_sha=BASE,
+                proof=_actions_proof(scripted),
+            )
+        )
+        job_level = (
+            b"name: ci\non:\n  pull_request:\njobs:\n  one:\n    permissions:\n      contents: read\n"
+            b"    runs-on: ubuntu-latest\n    steps:\n      - run: bash deploy/write-uat-deploy-provenance.test.sh\n"
+            b"  two:\n    permissions:\n      contents: read\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n"
+        )
+        self.assertIsNone(_workflow_permission_issue(job_level))
+        ci = (Path(__file__).resolve().parents[4] / ".github" / "workflows" / "ci.yml").read_bytes()
+        self.assertIn(b"write-uat-deploy-provenance.test.sh", ci)
+        self.assertNotIn(b"\npermissions:", ci)
+        self.assertEqual(_workflow_permission_issue(ci), _PERM_UNDECLARED)
 
     def test_compare_scope_and_transport_guard(self) -> None:
         world = World()

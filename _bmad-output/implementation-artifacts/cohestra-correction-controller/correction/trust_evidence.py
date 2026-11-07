@@ -92,6 +92,10 @@ _PERMISSION_KEYS = frozenset(
     }
 )
 _PERMISSION_LINE_RE = re.compile(r"([A-Za-z][A-Za-z0-9_-]*): (read|none)\Z")
+_KEY_RE = re.compile(r"([A-Za-z][A-Za-z0-9_-]*):(.*)\Z")
+_BLOCK_SCALARS = frozenset({"|", "|-", "|+", ">", ">-", ">+"})
+_PERM_UNDECLARED = "workflow permissions are not declared"
+_PERM_UNTRUSTED = "workflow permissions are not trusted"
 _MAX_ACTIONS_RUNS = 20
 
 
@@ -576,46 +580,83 @@ def _workflow_run_ok(
 
 
 def _workflow_permissions_ok(raw: bytes) -> bool:
-    """Accept only explicit read or none grants. Any other permissions shape is refused."""
+    return _workflow_permission_issue(raw) is None
+
+
+def _workflow_permission_issue(raw: bytes) -> str | None:
+    """Read permissions mappings only. Command text is not a grant."""
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError:
-        return False
-    if not text or "\x00" in text or "\\" in text:
-        return False
+        return _PERM_UNTRUSTED
+    if not text or "\x00" in text:
+        return _PERM_UNTRUSTED
     lines = text.splitlines()
-    saw_top = False
+    stack: list[tuple[int, str]] = []
+    jobs: dict[str, bool] = {}
+    workflow_permissions = False
+    scalar_at: int | None = None
     index = 0
     while index < len(lines):
-        stripped = lines[index].strip()
-        if not stripped or stripped.startswith("#"):
+        line = lines[index]
+        if scalar_at is not None:
+            indent_now = _indent(line)
+            if line.strip() and indent_now is not None and indent_now <= scalar_at:
+                scalar_at = None
+            else:
+                index += 1
+                continue
+        body = line.strip()
+        if not body or body.startswith("#"):
             index += 1
             continue
-        if not _grant_line_allowed(stripped):
-            return False
-        indent = _indent(lines[index])
+        indent = _indent(line)
         if indent is None:
-            return False
-        if stripped == "permissions:":
-            if indent == 0:
-                if saw_top:
-                    return False
-                saw_top = True
-            ok, index = _permission_block(lines, index + 1, indent)
-            if not ok:
-                return False
+            return _PERM_UNTRUSTED
+        entry = body[2:].strip() if body.startswith("- ") else body
+        if "permission" in entry.casefold() and not entry.startswith("permissions:"):
+            return _PERM_UNTRUSTED
+        if "\\" in entry and "permiss" in entry.casefold():
+            return _PERM_UNTRUSTED
+        matched = _KEY_RE.fullmatch(entry)
+        if matched is None:
+            index += 1
             continue
-        if stripped.startswith("permissions:"):
-            return False
+        key, value = matched.group(1), matched.group(2).strip()
+        while stack and stack[-1][0] >= indent:
+            stack.pop()
+        parent = stack[-1][1] if stack else ""
+        grandparent = stack[-2][1] if len(stack) >= 2 else ""
+        if key == "permissions":
+            if value or entry != "permissions:":
+                return _PERM_UNTRUSTED
+            job_name = stack[-1][1] if grandparent == "jobs" else ""
+            if parent == "" and indent == 0:
+                if workflow_permissions:
+                    return _PERM_UNTRUSTED
+                workflow_permissions = True
+            elif grandparent == "jobs" and job_name:
+                if jobs.get(job_name):
+                    return _PERM_UNTRUSTED
+                jobs[job_name] = True
+            else:
+                return _PERM_UNTRUSTED
+            scopes, index = _permission_scopes(lines, index + 1, indent)
+            if scopes is None:
+                return _PERM_UNTRUSTED
+            stack.append((indent, key))
+            continue
+        if parent == "jobs":
+            jobs.setdefault(key, False)
+        if value in _BLOCK_SCALARS:
+            scalar_at = indent
+        stack.append((indent, key))
         index += 1
-    return saw_top
-
-
-def _grant_line_allowed(stripped: str) -> bool:
-    folded = stripped.casefold()
-    if "permission" not in folded and "write" not in folded:
-        return True
-    return stripped == "permissions:" or _PERMISSION_LINE_RE.fullmatch(stripped) is not None
+    if not jobs:
+        return _PERM_UNTRUSTED
+    if workflow_permissions or all(jobs.values()):
+        return None
+    return _PERM_UNDECLARED
 
 
 def _indent(line: str) -> int | None:
@@ -625,9 +666,9 @@ def _indent(line: str) -> int | None:
     return count
 
 
-def _permission_block(lines: list[str], start: int, parent: int) -> tuple[bool, int]:
+def _permission_scopes(lines: list[str], start: int, parent: int) -> tuple[set[str] | None, int]:
     index = start
-    count = 0
+    scopes: set[str] = set()
     while index < len(lines):
         stripped = lines[index].strip()
         if not stripped or stripped.startswith("#"):
@@ -635,15 +676,17 @@ def _permission_block(lines: list[str], start: int, parent: int) -> tuple[bool, 
             continue
         indent = _indent(lines[index])
         if indent is None:
-            return False, index
+            return None, index
         if indent <= parent:
             break
         matched = _PERMISSION_LINE_RE.fullmatch(stripped)
-        if matched is None or matched.group(1) not in _PERMISSION_KEYS:
-            return False, index
-        count += 1
+        if matched is None or matched.group(1) not in _PERMISSION_KEYS or matched.group(1) in scopes:
+            return None, index
+        scopes.add(matched.group(1))
         index += 1
-    return count > 0, index
+    if not scopes:
+        return None, index
+    return scopes, index
 
 
 def _app_id(value: str) -> int | None:
