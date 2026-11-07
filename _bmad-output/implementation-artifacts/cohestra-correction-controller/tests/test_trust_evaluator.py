@@ -43,14 +43,35 @@ from correction.trust_evidence import (
     STALE_CLAIM,
     WORKFLOW_PATH,
     check_runs_url,
+    contents_url,
+    workflow_run_url,
 )
 from support import H1, Port, approved_policy, pull
-from trust_support import BMAD_CHECK, BMAD_ID, HEAD, REPO, World, run
+from trust_support import BASE, BMAD_CHECK, BMAD_ID, HEAD, REPO, World, contents_body, run
 
 PACKAGE = Path(__file__).resolve().parents[1]
 
 
 class TrustEvaluatorTest(unittest.TestCase):
+    def _actions_world(self, event_id: str, workflow: str) -> World:
+        world = World(event_id)
+        mapped = json.loads(world.map_text)
+        mapped["tdd"] = {"app_id": 15368, "name": "TDD", "workflow": workflow}
+        world.map_text = json.dumps(mapped, sort_keys=True, separators=(",", ":"))
+        world.runs = [
+            row
+            if row["name"] != "TDD"
+            else run(
+                "TDD",
+                15368,
+                "github-actions",
+                details_url=f"https://github.com/{REPO}/actions/runs/77/job/90",
+                suite=88,
+            )
+            for row in world.runs
+        ]
+        return world
+
     def setUp(self) -> None:
         self._store = tempfile.TemporaryDirectory()
         self.store = Path(self._store.name)
@@ -135,6 +156,46 @@ class TrustEvaluatorTest(unittest.TestCase):
         wrong_app = World("1013")
         wrong_app.runs = [row if row["name"] != "TDD" else run("TDD", 15368, "github-actions") for row in wrong_app.runs]
         self.assertEqual(evaluate(wrong_app.env(), wrong_app.transport(), self.store).reason, CHECKS_UNTRUSTED)
+
+    def test_actions_check_needs_the_workflow_run_and_unchanged_file(self) -> None:
+        workflow = ".github/workflows/correction-controller-tests.yml"
+        raw = (PACKAGE.parents[2] / ".github" / "workflows" / "correction-controller-tests.yml").read_bytes()
+        missing = self._actions_world("1100", workflow)
+        missing_decision = evaluate(missing.env(), missing.transport(), self.store)
+        self.assertEqual(missing_decision.status, "HOLD")
+        self.assertEqual(missing_decision.reason, CHECKS_UNTRUSTED)
+        self.assertFalse(missing_decision.execution_authorized)
+
+        matched = self._actions_world("1101", workflow)
+        proof = {
+            "check_suite_id": 88,
+            "conclusion": "success",
+            "event": "pull_request",
+            "head_repository": {"full_name": REPO},
+            "head_sha": HEAD,
+            "id": 77,
+            "path": workflow,
+            "referenced_workflows": [],
+            "status": "completed",
+        }
+        matched.extra[workflow_run_url(REPO, 77)] = (200, proof)
+        matched.extra[contents_url(REPO, workflow, HEAD)] = (200, contents_body(raw))
+        matched.extra[contents_url(REPO, workflow, BASE)] = (200, contents_body(raw))
+        transport = matched.transport()
+        decision = evaluate(matched.env(), transport, self.store)
+        self.assertEqual(decision.status, "PASS")
+        self.assertEqual(decision.reason, PASS_REASON)
+        self.assertFalse(decision.execution_authorized)
+        self.assertFalse(decision.to_dict()["live_identity_verified"])
+        self.assertIn(workflow_run_url(REPO, 77), transport.calls)
+        self.assertIn(contents_url(REPO, workflow, HEAD), transport.calls)
+        self.assertIn(contents_url(REPO, workflow, BASE), transport.calls)
+
+        changed = self._actions_world("1102", workflow)
+        changed.extra[workflow_run_url(REPO, 77)] = (200, proof)
+        changed.extra[contents_url(REPO, workflow, HEAD)] = (200, contents_body(raw + b"\n"))
+        changed.extra[contents_url(REPO, workflow, BASE)] = (200, contents_body(raw))
+        self.assertEqual(evaluate(changed.env(), changed.transport(), self.store).reason, CHECKS_UNTRUSTED)
 
     def test_pagination_sees_an_earlier_non_success(self) -> None:
         world = World("1014")

@@ -46,7 +46,8 @@ class TrustWorkflowTest(unittest.TestCase):
         self.assertIn("contents: read", text)
         self.assertIn("checks: read", text)
         self.assertIn("pull-requests: read", text)
-        for banned in ("contents: write", "checks: write", "pull-requests: write", "actions:", "id-token:", "deployments:"):
+        self.assertIn("actions: read", text)
+        for banned in ("contents: write", "checks: write", "pull-requests: write", "actions: write", "id-token:", "deployments:"):
             self.assertNotIn(banned, text)
         self.assertEqual(text.count("uses:"), 1)
         self.assertIn(CHECKOUT, text)

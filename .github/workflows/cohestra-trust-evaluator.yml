@@ -11,6 +11,7 @@ on:
       - ready_for_review
 
 permissions:
+  actions: read
   contents: read
   checks: read
   pull-requests: read

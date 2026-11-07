@@ -66,6 +66,15 @@ _APP_ID_RE = re.compile(r"^[1-9][0-9]{0,11}$")
 _CHECK_NAME_RE = re.compile(r"^[^\r\n]{1,100}$")
 _TASK_RE = re.compile(r"^[^\r\n]{1,200}$")
 _FILE_STATUSES = frozenset({"added", "removed", "modified", "renamed", "copied", "changed", "unchanged"})
+_WORKFLOW_FILE_RE = re.compile(r"^\.github/workflows/[A-Za-z0-9][A-Za-z0-9._-]{0,120}\.ya?ml$")
+_ACTIONS_DETAILS_RE = re.compile(
+    r"^https://github\.com/(?P<repo>[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/actions/runs/(?P<run>[1-9][0-9]{0,18})/job/[1-9][0-9]{0,18}$"
+)
+_ACTIONS_EVENTS = frozenset({"pull_request", "push"})
+_CHECKS_WRITE_RE = re.compile(r"checks\s*:\s*['\"]?write\b", re.IGNORECASE)
+_BROAD_PERMISSIONS_RE = re.compile(r"permissions\s*:\s*['\"]?(read-all|write-all)\b", re.IGNORECASE)
+_TOP_PERMISSIONS_RE = re.compile(r"(?m)^permissions\s*:")
+_MAX_ACTIONS_RUNS = 20
 
 
 class TransportRefused(Exception):
@@ -84,6 +93,13 @@ class EventClaim:
 
 
 @dataclass(frozen=True)
+class CheckPin:
+    name: str
+    app_id: int
+    workflow: str | None = None
+
+
+@dataclass(frozen=True)
 class TrustConfig:
     key_id: str
     public_key: bytes
@@ -93,7 +109,7 @@ class TrustConfig:
     catsec_app_id: int
     bmad_check_name: str
     catsec_check_name: str
-    checks_map: dict[str, tuple[str, int]]
+    checks_map: dict[str, CheckPin]
 
 
 @dataclass(frozen=True)
@@ -123,6 +139,9 @@ class CheckRun:
     head_sha: str
     status: str
     conclusion: str | None
+    suite_id: int | None = None
+    actions_repo: str | None = None
+    actions_run_id: int | None = None
 
 
 def fingerprint(claim: EventClaim) -> str:
@@ -234,7 +253,15 @@ def compare_url(repository: str, base_sha: str, head_sha: str) -> str:
 
 
 def manifest_url(repository: str, head_sha: str) -> str:
-    return f"{API_ORIGIN}/repos/{repository}/contents/{MANIFEST_PATH}?ref={head_sha}"
+    return contents_url(repository, MANIFEST_PATH, head_sha)
+
+
+def contents_url(repository: str, path: str, ref: str) -> str:
+    return f"{API_ORIGIN}/repos/{repository}/contents/{path}?ref={ref}"
+
+
+def workflow_run_url(repository: str, run_id: int) -> str:
+    return f"{API_ORIGIN}/repos/{repository}/actions/runs/{run_id}"
 
 
 def check_runs_url(repository: str, head_sha: str, page: int) -> str:
@@ -426,21 +453,120 @@ def reviewer_hold(runs: tuple[CheckRun, ...], config: TrustConfig, head: str, au
     return None
 
 
-def required_checks_hold(runs: tuple[CheckRun, ...], manifest: Manifest, config: TrustConfig, head: str) -> str | None:
+def required_checks_hold(
+    runs: tuple[CheckRun, ...],
+    manifest: Manifest,
+    config: TrustConfig,
+    head: str,
+    *,
+    repository: str | None = None,
+    base_sha: str | None = None,
+    proof: object | None = None,
+) -> str | None:
     for entry in manifest.required_checks:
         pinned = config.checks_map.get(entry)
         if pinned is None:
             return CHECKS_UNTRUSTED
-        name, app_id = pinned
-        if app_id == GITHUB_ACTIONS_APP_ID:
-            return ACTIONS_UNCONFIRMED
-        named = [run for run in runs if run.name == name]
+        if pinned.app_id == GITHUB_ACTIONS_APP_ID:
+            reason = _actions_hold(runs, pinned, head, repository, base_sha, proof)
+            if reason is not None:
+                return reason
+            continue
+        named = [run for run in runs if run.name == pinned.name]
         if not named:
             return CHECKS_UNTRUSTED
         for run in named:
-            if run.app_id != app_id or run.head_sha != head or run.status != "completed" or run.conclusion != "success":
+            if run.app_id != pinned.app_id or run.head_sha != head or run.status != "completed" or run.conclusion != "success":
                 return CHECKS_UNTRUSTED
     return None
+
+
+def _actions_hold(
+    runs: tuple[CheckRun, ...],
+    pin: CheckPin,
+    head: str,
+    repository: str | None,
+    base_sha: str | None,
+    proof: object | None,
+) -> str | None:
+    if pin.workflow is None:
+        return ACTIONS_UNCONFIRMED
+    if _WORKFLOW_FILE_RE.fullmatch(pin.workflow) is None:
+        return CHECKS_UNTRUSTED
+    named = [run for run in runs if run.name == pin.name]
+    if not named or len(named) > _MAX_ACTIONS_RUNS:
+        return CHECKS_UNTRUSTED
+    for run in named:
+        if (
+            run.app_id != GITHUB_ACTIONS_APP_ID
+            or run.slug != "github-actions"
+            or run.head_sha != head
+            or run.status != "completed"
+            or run.conclusion != "success"
+            or run.suite_id is None
+            or run.actions_run_id is None
+            or run.actions_repo != repository
+        ):
+            return CHECKS_UNTRUSTED
+        if proof is None or not hasattr(proof, "workflow_run"):
+            return CHECKS_UNTRUSTED
+        payload = proof.workflow_run(run.actions_run_id)
+        if not isinstance(payload, dict) or not _workflow_run_ok(
+            payload,
+            run_id=run.actions_run_id,
+            workflow=pin.workflow,
+            head=head,
+            repository=repository or "",
+            suite_id=run.suite_id,
+        ):
+            return CHECKS_UNTRUSTED
+    if proof is None or base_sha is None or not hasattr(proof, "workflow_file"):
+        return CHECKS_UNTRUSTED
+    head_bytes = proof.workflow_file(pin.workflow, head)
+    base_bytes = proof.workflow_file(pin.workflow, base_sha)
+    if not isinstance(head_bytes, bytes) or head_bytes != base_bytes or not _workflow_permissions_ok(head_bytes):
+        return CHECKS_UNTRUSTED
+    return None
+
+
+def _workflow_run_ok(
+    payload: dict[str, object],
+    *,
+    run_id: int,
+    workflow: str,
+    head: str,
+    repository: str,
+    suite_id: int,
+) -> bool:
+    repo = payload.get("head_repository")
+    full_name = repo.get("full_name") if isinstance(repo, dict) else None
+    referenced = payload.get("referenced_workflows")
+    return (
+        type(payload.get("id")) is int
+        and payload.get("id") == run_id
+        and payload.get("path") == workflow
+        and payload.get("head_sha") == head
+        and payload.get("status") == "completed"
+        and payload.get("conclusion") == "success"
+        and payload.get("event") in _ACTIONS_EVENTS
+        and isinstance(referenced, list)
+        and referenced == []
+        and type(payload.get("check_suite_id")) is int
+        and payload.get("check_suite_id") == suite_id
+        and full_name == repository
+    )
+
+
+def _workflow_permissions_ok(raw: bytes) -> bool:
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+    if not text or "\x00" in text:
+        return False
+    if _CHECKS_WRITE_RE.search(text) or _BROAD_PERMISSIONS_RE.search(text):
+        return False
+    return _TOP_PERMISSIONS_RE.search(text) is not None
 
 
 def _app_id(value: str) -> int | None:
@@ -452,7 +578,7 @@ def _app_id(value: str) -> int | None:
     return number
 
 
-def _checks_map(raw: str) -> tuple[dict[str, tuple[str, int]] | None, str | None]:
+def _checks_map(raw: str) -> tuple[dict[str, CheckPin] | None, str | None]:
     if len(raw.encode("utf-8")) > MAX_MAP_BYTES:
         return None, MATERIAL_INVALID
     payload, reason = load_object(raw.encode("utf-8"), limit=MAX_MAP_BYTES, reject_floats=True)
@@ -460,15 +586,26 @@ def _checks_map(raw: str) -> tuple[dict[str, tuple[str, int]] | None, str | None
         return None, MATERIAL_INVALID
     if len(payload) > 20:
         return None, MATERIAL_INVALID
-    mapped: dict[str, tuple[str, int]] = {}
+    mapped: dict[str, CheckPin] = {}
     for key, value in payload.items():
-        if _CHECK_NAME_RE.fullmatch(key) is None or not isinstance(value, dict) or set(value) != {"name", "app_id"}:
+        if _CHECK_NAME_RE.fullmatch(key) is None or not isinstance(value, dict):
+            return None, MATERIAL_INVALID
+        fields = set(value)
+        workflow: str | None = None
+        if fields == {"name", "app_id", "workflow"}:
+            raw_workflow = value.get("workflow")
+            if not isinstance(raw_workflow, str) or _WORKFLOW_FILE_RE.fullmatch(raw_workflow) is None:
+                return None, MATERIAL_INVALID
+            workflow = raw_workflow
+        elif fields != {"name", "app_id"}:
             return None, MATERIAL_INVALID
         name = value.get("name")
         app_id = value.get("app_id")
         if not isinstance(name, str) or _CHECK_NAME_RE.fullmatch(name) is None or type(app_id) is not int or app_id <= 0:
             return None, MATERIAL_INVALID
-        mapped[key] = (name, app_id)
+        if workflow is not None and app_id != GITHUB_ACTIONS_APP_ID:
+            return None, MATERIAL_INVALID
+        mapped[key] = CheckPin(name, app_id, workflow)
     return mapped, None
 
 
@@ -577,7 +714,28 @@ def _one_run(item: object) -> tuple[CheckRun | None, str | None]:
         return None, REVIEW_UNTRUSTED
     slug = app.get("slug")
     clean_slug = slug if isinstance(slug, str) and slug and _CHECK_NAME_RE.fullmatch(slug) else None
-    return CheckRun(name, app_id, clean_slug, head, status, conclusion if isinstance(conclusion, str) else None), None
+    suite_id = _suite_id(item.get("check_suite"))
+    actions_repo, actions_run_id = _actions_target(item.get("details_url"))
+    concluded = conclusion if isinstance(conclusion, str) else None
+    return CheckRun(name, app_id, clean_slug, head, status, concluded, suite_id, actions_repo, actions_run_id), None
+
+
+def _suite_id(value: object) -> int | None:
+    if not isinstance(value, dict):
+        return None
+    number = value.get("id")
+    if type(number) is not int or number <= 0:
+        return None
+    return number
+
+
+def _actions_target(value: object) -> tuple[str | None, int | None]:
+    if not isinstance(value, str):
+        return None, None
+    matched = _ACTIONS_DETAILS_RE.fullmatch(value)
+    if matched is None:
+        return None, None
+    return matched.group("repo"), int(matched.group("run"))
 
 
 def _author_app(slug: str, author: str) -> bool:

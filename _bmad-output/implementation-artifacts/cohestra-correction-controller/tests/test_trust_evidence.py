@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -21,6 +22,7 @@ from correction.trust_evidence import (
     REVIEW_UNTRUSTED,
     SCOPE_OUTSIDE,
     WORKFLOW_PATH,
+    CheckPin,
     TrustConfig,
     parse_check_page,
     parse_compare,
@@ -33,7 +35,7 @@ from correction.trust_evidence import (
     signature_holds,
 )
 from correction.trust_evaluator import GitHubReadTransport
-from trust_support import BASE, BMAD_CHECK, BMAD_ID, HEAD, World, default_runs
+from trust_support import BASE, BMAD_CHECK, BMAD_ID, HEAD, OTHER, REPO, World, default_runs, run
 
 
 def _runs():
@@ -99,7 +101,7 @@ class TrustEvidenceTest(unittest.TestCase):
         self.assertEqual(reviewer_hold(tuple(hidden), config, HEAD, "owner-author"), REVIEW_UNTRUSTED)
         self.assertIsNone(required_checks_hold(runs, manifest, config, HEAD))
         mapped = dict(config.checks_map)
-        mapped["tdd"] = ("TDD", 15368)
+        mapped["tdd"] = CheckPin("TDD", 15368)
         pinned = TrustConfig(
             config.key_id,
             config.public_key,
@@ -117,6 +119,109 @@ class TrustEvidenceTest(unittest.TestCase):
         self.assertEqual(required_checks_hold(tuple(foreign), manifest, config, HEAD), CHECKS_UNTRUSTED)
         skipped = [run if run.name != "TDD" else type(run)(run.name, run.app_id, run.slug, run.head_sha, "completed", "skipped") for run in runs]
         self.assertEqual(required_checks_hold(tuple(skipped), manifest, config, HEAD), CHECKS_UNTRUSTED)
+
+    def test_actions_provenance_rejects_forged_stale_skipped_duplicate_and_untrusted(self) -> None:
+        world = World()
+        manifest, _reason = parse_manifest_bytes(world.manifest_bytes())
+        assert manifest is not None
+        config = _actions_config(world, manifest)
+        trusted = _ci_workflow_bytes()
+        proof = _actions_proof(trusted)
+        self.assertIsNone(
+            required_checks_hold(_actions_rows(), manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=proof)
+        )
+        pushed = _actions_proof(trusted, event="push")
+        self.assertIsNone(
+            required_checks_hold(_actions_rows(), manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=pushed)
+        )
+
+        forged = _actions_proof(trusted, suite=99)
+        self.assertEqual(
+            required_checks_hold(_actions_rows(), manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=forged),
+            CHECKS_UNTRUSTED,
+        )
+        forged_url = _actions_rows(details_repo="attacker/Cohestra")
+        self.assertEqual(
+            required_checks_hold(forged_url, manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=proof),
+            CHECKS_UNTRUSTED,
+        )
+        stale_run = _actions_proof(trusted, run_head=OTHER)
+        self.assertEqual(
+            required_checks_hold(_actions_rows(), manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=stale_run),
+            CHECKS_UNTRUSTED,
+        )
+        stale = _actions_rows(tdd_head=OTHER)
+        self.assertEqual(
+            required_checks_hold(stale, manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=proof),
+            CHECKS_UNTRUSTED,
+        )
+        skipped = _actions_rows(conclusion="skipped")
+        self.assertEqual(
+            required_checks_hold(skipped, manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=proof),
+            CHECKS_UNTRUSTED,
+        )
+        duplicate = _actions_rows() + _actions_rows(run_id=78, suite=89, conclusion="failure")
+        self.assertEqual(
+            required_checks_hold(duplicate, manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=proof),
+            CHECKS_UNTRUSTED,
+        )
+        wrong = _actions_proof(trusted, path=".github/workflows/other.yml")
+        self.assertEqual(
+            required_checks_hold(_actions_rows(), manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=wrong),
+            CHECKS_UNTRUSTED,
+        )
+        reused = _actions_proof(trusted, referenced=[{"path": ".github/workflows/other.yml", "sha": HEAD}])
+        self.assertEqual(
+            required_checks_hold(_actions_rows(), manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=reused),
+            CHECKS_UNTRUSTED,
+        )
+        dispatched = _actions_proof(trusted, event="workflow_dispatch")
+        self.assertEqual(
+            required_checks_hold(_actions_rows(), manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=dispatched),
+            CHECKS_UNTRUSTED,
+        )
+        changed = _actions_proof(trusted, head_file=trusted + b"\n")
+        self.assertEqual(
+            required_checks_hold(_actions_rows(), manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=changed),
+            CHECKS_UNTRUSTED,
+        )
+        writable = trusted.replace(b"contents: read", b"checks: write")
+        self.assertEqual(
+            required_checks_hold(
+                _actions_rows(),
+                manifest,
+                config,
+                HEAD,
+                repository=REPO,
+                base_sha=BASE,
+                proof=_actions_proof(writable, head_file=writable),
+            ),
+            CHECKS_UNTRUSTED,
+        )
+        foreign = _actions_rows() + _parsed([run("TDD", 9001, "cohestra-ci")])
+        self.assertEqual(
+            required_checks_hold(foreign, manifest, config, HEAD, repository=REPO, base_sha=BASE, proof=proof),
+            CHECKS_UNTRUSTED,
+        )
+        bare = world.env()
+        mapped = json.loads(bare["COHESTRA_REQUIRED_CHECKS_MAP"])
+        mapped["tdd"]["workflow"] = ".github/workflows/../ci.yml"
+        bare["COHESTRA_REQUIRED_CHECKS_MAP"] = json.dumps(mapped)
+        self.assertEqual(parse_config(bare)[1], MATERIAL_INVALID)
+        other_app = world.env()
+        mapped = json.loads(other_app["COHESTRA_REQUIRED_CHECKS_MAP"])
+        mapped["tdd"]["workflow"] = ".github/workflows/ci.yml"
+        other_app["COHESTRA_REQUIRED_CHECKS_MAP"] = json.dumps(mapped)
+        self.assertEqual(parse_config(other_app)[1], MATERIAL_INVALID)
+        accepted = world.env()
+        mapped = json.loads(accepted["COHESTRA_REQUIRED_CHECKS_MAP"])
+        mapped["tdd"] = {"name": "TDD", "app_id": 15368, "workflow": _ACTIONS_WORKFLOW}
+        accepted["COHESTRA_REQUIRED_CHECKS_MAP"] = json.dumps(mapped)
+        parsed, accepted_reason = parse_config(accepted)
+        self.assertIsNone(accepted_reason)
+        assert parsed is not None
+        self.assertEqual(parsed.checks_map["tdd"].workflow, _ACTIONS_WORKFLOW)
+        self.assertIsNone(parsed.checks_map["gitguardian"].workflow)
 
     def test_compare_scope_and_transport_guard(self) -> None:
         world = World()
@@ -206,6 +311,103 @@ class TrustEvidenceTest(unittest.TestCase):
         manifest, _parsed = parse_manifest_bytes(world.manifest_bytes())
         assert manifest is not None
         self.assertEqual(reviewer_hold(rows, _config(world, manifest), HEAD, "owner-author"), REVIEW_MISSING)
+
+
+_CI_WORKFLOW = Path(__file__).resolve().parents[4] / ".github" / "workflows" / "correction-controller-tests.yml"
+_ACTIONS_WORKFLOW = ".github/workflows/correction-controller-tests.yml"
+
+
+class _Proof:
+    def __init__(
+        self,
+        runs: dict[int, dict[str, object]],
+        files: dict[tuple[str, str], bytes],
+    ) -> None:
+        self.runs = runs
+        self.files = files
+
+    def workflow_run(self, run_id: int) -> dict[str, object] | None:
+        return self.runs.get(run_id)
+
+    def workflow_file(self, path: str, sha: str) -> bytes | None:
+        return self.files.get((path, sha))
+
+
+def _ci_workflow_bytes() -> bytes:
+    return _CI_WORKFLOW.read_bytes()
+
+
+def _parsed(rows: list[dict[str, object]]):
+    _total, parsed, reason = parse_check_page({"total_count": len(rows), "check_runs": rows})
+    assert reason is None
+    return parsed
+
+
+def _actions_rows(
+    *,
+    head: str = HEAD,
+    conclusion: str = "success",
+    run_id: int = 77,
+    suite: int = 88,
+    details_repo: str = REPO,
+    tdd_head: str | None = None,
+):
+    rows = [row for row in default_runs(head) if row["name"] != "TDD"]
+    rows.append(
+        run(
+            "TDD",
+            15368,
+            "github-actions",
+            head=head if tdd_head is None else tdd_head,
+            conclusion=conclusion,
+            details_url=f"https://github.com/{details_repo}/actions/runs/{run_id}/job/90",
+            suite=suite,
+        )
+    )
+    return _parsed(rows)
+
+
+def _actions_proof(
+    base_file: bytes,
+    *,
+    head_file: bytes | None = None,
+    event: str = "pull_request",
+    path: str = _ACTIONS_WORKFLOW,
+    suite: int = 88,
+    run_id: int = 77,
+    run_head: str = HEAD,
+    referenced: list[object] | None = None,
+) -> _Proof:
+    payload = {
+        "check_suite_id": suite,
+        "conclusion": "success",
+        "event": event,
+        "head_repository": {"full_name": REPO},
+        "head_sha": run_head,
+        "id": run_id,
+        "path": path,
+        "referenced_workflows": [] if referenced is None else referenced,
+        "status": "completed",
+    }
+    files = {(_ACTIONS_WORKFLOW, HEAD): base_file if head_file is None else head_file, (_ACTIONS_WORKFLOW, BASE): base_file}
+    return _Proof({run_id: payload}, files)
+
+
+def _actions_config(world: World, manifest: object) -> TrustConfig:
+    config = _config(world, manifest)
+    mapped = dict(config.checks_map)
+    mapped["tdd"] = CheckPin("TDD", 15368, _ACTIONS_WORKFLOW)
+    return TrustConfig(
+        config.key_id,
+        config.public_key,
+        config.fingerprint,
+        config.task_id,
+        config.bmad_app_id,
+        config.catsec_app_id,
+        config.bmad_check_name,
+        config.catsec_check_name,
+        mapped,
+    )
 
 
 def _config(world: World, manifest: object | None = None) -> TrustConfig:

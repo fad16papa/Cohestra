@@ -24,6 +24,7 @@ from .manifest import SHA_RE
 from .trust_evidence import (
     API_FAILURE,
     CHECK_PAGE_SIZE,
+    CHECKS_UNTRUSTED,
     CLOSING_MISMATCH,
     EVENT_INVALID,
     MANIFEST_INVALID,
@@ -44,6 +45,7 @@ from .trust_evidence import (
     binding_holds,
     check_runs_url,
     compare_url,
+    contents_url,
     decode_manifest_response,
     fingerprint,
     load_object,
@@ -61,6 +63,7 @@ from .trust_evidence import (
     scope_holds,
     signature_holds,
     structural_hold,
+    workflow_run_url,
 )
 
 LIVE_FLAGS = (
@@ -291,8 +294,19 @@ def _evaluate_fresh(env: dict[str, str], claim: EventClaim, transport: ReadTrans
     review_reason = reviewer_hold(runs, config, facts.head_sha, facts.author)
     if review_reason is not None:
         return hold(review_reason, facts.head_sha)
-    checks_reason = required_checks_hold(runs, manifest, config, facts.head_sha)
+    proof = _ActionsProof(transport, claim.repository)
+    checks_reason = required_checks_hold(
+        runs,
+        manifest,
+        config,
+        facts.head_sha,
+        repository=claim.repository,
+        base_sha=facts.base_sha,
+        proof=proof,
+    )
     if checks_reason is not None:
+        if checks_reason == CHECKS_UNTRUSTED and proof.failure == UNAVAILABLE:
+            return hold(UNAVAILABLE, facts.head_sha)
         return hold(checks_reason, facts.head_sha)
     closed, close_reason = _get_json(transport, pull_url(claim.repository, claim.pull_number))
     if closed is None:
@@ -346,6 +360,45 @@ def _get_json(transport: ReadTransport, url: str) -> tuple[dict[str, object] | N
     if payload is None:
         return None, API_FAILURE if reason != "nonfinite" else API_FAILURE
     return payload, None
+
+
+class _ActionsProof:
+    """GET the workflow run and the two copies of its file. Nothing else."""
+
+    def __init__(self, transport: ReadTransport, repository: str) -> None:
+        self._transport = transport
+        self._repository = repository
+        self.failure: str | None = None
+        self._runs: dict[int, dict[str, object] | None] = {}
+        self._files: dict[tuple[str, str], bytes | None] = {}
+
+    def workflow_run(self, run_id: int) -> dict[str, object] | None:
+        if run_id in self._runs:
+            return self._runs[run_id]
+        payload, reason = _get_json(self._transport, workflow_run_url(self._repository, run_id))
+        if payload is None:
+            self.failure = UNAVAILABLE if reason == UNAVAILABLE else CHECKS_UNTRUSTED
+            self._runs[run_id] = None
+            return None
+        self._runs[run_id] = payload
+        return payload
+
+    def workflow_file(self, path: str, sha: str) -> bytes | None:
+        key = (path, sha)
+        if key in self._files:
+            return self._files[key]
+        payload, reason = _get_json(self._transport, contents_url(self._repository, path, sha))
+        if payload is None:
+            self.failure = UNAVAILABLE if reason == UNAVAILABLE else CHECKS_UNTRUSTED
+            self._files[key] = None
+            return None
+        raw, _decode_reason = decode_manifest_response(payload)
+        if raw is None:
+            self.failure = CHECKS_UNTRUSTED
+            self._files[key] = None
+            return None
+        self._files[key] = raw
+        return raw
 
 
 class _Store:

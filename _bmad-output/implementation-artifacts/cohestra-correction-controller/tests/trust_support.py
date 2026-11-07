@@ -137,8 +137,10 @@ def run(
     status: str = "completed",
     conclusion: str | None = "success",
     output: str = "role=BMAD independent=true",
+    details_url: str | None = None,
+    suite: int | None = None,
 ) -> dict[str, object]:
-    return {
+    body: dict[str, object] = {
         "name": name,
         "head_sha": head,
         "status": status,
@@ -146,6 +148,11 @@ def run(
         "app": {"id": app_id, "slug": slug},
         "output": {"title": "untrusted", "summary": output},
     }
+    if details_url is not None:
+        body["details_url"] = details_url
+    if suite is not None:
+        body["check_suite"] = {"id": suite}
+    return body
 
 
 def default_runs(head: str = HEAD, author_slug: str = "cohestra-bmad") -> list[dict[str, object]]:
@@ -222,6 +229,7 @@ class World:
         self.map_text = json.dumps(checks_map(), sort_keys=True, separators=(",", ":"))
         self.task_id = TASK
         self.key_id = KEY_ID
+        self.extra: dict[str, tuple[int, dict[str, object] | bytes]] = {}
 
     def manifest_bytes(self) -> bytes:
         if self.raw_manifest is not None:
@@ -268,6 +276,7 @@ class World:
             pages = [check_page(self.runs)]
         for index, page in enumerate(pages, start=1):
             responses[check_runs_url(REPO, self.head, index)] = (200, page)
+        responses.update(self.extra)
         transport = FakeTransport(responses)
         original = transport.get
 
