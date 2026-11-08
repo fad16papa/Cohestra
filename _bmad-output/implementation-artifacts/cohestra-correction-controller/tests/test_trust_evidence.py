@@ -381,6 +381,32 @@ class TrustEvidenceTest(unittest.TestCase):
         )
         self.assertEqual(_workflow_permission_issue(duplicate), _PERM_UNTRUSTED)
 
+    def test_flow_merge_and_alias_cannot_hide_an_escaped_grant(self) -> None:
+        flow = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n"
+            b"  test: {\"runs-on\": \"ubuntu-latest\", \"steps\": [{\"run\": \"echo ok\"}], "
+            b"\"\\x70ermissions\": \"write-all\"}\n"
+        )
+        merge = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n  test:\n"
+            b"    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n"
+            b"    <<: {\"\\x70ermissions\": write-all}\n"
+        )
+        alias = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\n"
+            b"proto: &proto {\"\\x70ermissions\": write-all, \"runs-on\": ubuntu-latest, "
+            b"\"steps\": [{\"run\": \"echo ok\"}]}\njobs:\n  test: *proto\n"
+        )
+        for raw in (flow, merge, alias):
+            self.assertIn(b"\\x70ermissions", raw)
+            self.assertEqual(_workflow_permission_issue(raw), _PERM_UNTRUSTED)
+        command = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n  test:\n"
+            b"    runs-on: ubuntu-latest\n    steps:\n"
+            b"      - run: echo \"\\x70ermissions\" && bash deploy/write-uat-deploy-provenance.test.sh\n"
+        )
+        self.assertIsNone(_workflow_permission_issue(command))
+
     def test_permission_inheritance_ignores_command_text(self) -> None:
         inherited = (
             b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n  test:\n"

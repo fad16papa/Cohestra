@@ -621,20 +621,19 @@ def _workflow_permission_issue(raw: bytes) -> str | None:
         if "\\" in entry and "permiss" in entry.casefold():
             return _PERM_UNTRUSTED
         try:
-            quoted_key = _yaml_double_quoted_key(entry)
-            if quoted_key is None:
-                quoted_key = _yaml_single_quoted_key(entry)
+            if _hides_permissions_key(entry):
+                return _PERM_UNTRUSTED
         except ValueError:
-            return _PERM_UNTRUSTED
-        if quoted_key == "permissions":
             return _PERM_UNTRUSTED
         matched = _KEY_RE.fullmatch(entry)
         if matched is None:
-            if entry.startswith(("!", "&", "*", "?", "{", "[")):
+            if entry.startswith(("!", "&", "*", "?", "{", "[", "<")):
                 return _PERM_UNTRUSTED
             index += 1
             continue
         key, value = matched.group(1), matched.group(2).strip()
+        if value.startswith(("{", "[", "*", "!", "&", "<")):
+            return _PERM_UNTRUSTED
         while stack and stack[-1][0] >= indent:
             stack.pop()
         parent = stack[-1][1] if stack else ""
@@ -677,44 +676,38 @@ def _workflow_permission_issue(raw: bytes) -> str | None:
     return _PERM_UNDECLARED
 
 
-def _yaml_double_quoted_key(entry: str) -> str | None:
-    """Decode a YAML 1.1 double-quoted mapping key. Invalid escapes are refused."""
-    if not entry.startswith('"'):
-        return None
-    chars: list[str] = []
-    index = 1
+def _hides_permissions_key(entry: str) -> bool:
+    """True when any quoted scalar on the line is a key that decodes to permissions."""
+    index = 0
     while index < len(entry):
-        character = entry[index]
-        if character == '"':
-            rest = entry[index + 1 :].lstrip()
-            if not rest.startswith(":"):
-                return None
-            return "".join(chars)
-        if character != "\\":
-            chars.append(character)
+        if entry[index] not in "\"'":
             index += 1
             continue
-        decoded, index = _yaml_escape(entry, index)
-        chars.append(decoded)
-    raise ValueError("unclosed")
+        decoded, index = _consume_quoted(entry, index)
+        if entry[index:].lstrip().startswith(":") and decoded == "permissions":
+            return True
+    return False
 
 
-def _yaml_single_quoted_key(entry: str) -> str | None:
-    if not entry.startswith("'"):
-        return None
+def _consume_quoted(entry: str, index: int) -> tuple[str, int]:
+    quote = entry[index]
     chars: list[str] = []
-    index = 1
+    index += 1
     while index < len(entry):
-        if entry[index] == "'":
+        character = entry[index]
+        if quote == "'" and character == "'":
             if index + 1 < len(entry) and entry[index + 1] == "'":
                 chars.append("'")
                 index += 2
                 continue
-            rest = entry[index + 1 :].lstrip()
-            if not rest.startswith(":"):
-                return None
-            return "".join(chars)
-        chars.append(entry[index])
+            return "".join(chars), index + 1
+        if quote == '"' and character == '"':
+            return "".join(chars), index + 1
+        if quote == '"' and character == "\\":
+            decoded, index = _yaml_escape(entry, index)
+            chars.append(decoded)
+            continue
+        chars.append(character)
         index += 1
     raise ValueError("unclosed")
 
