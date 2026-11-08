@@ -1,10 +1,14 @@
 using System.Security.Claims;
 using Cohestra.Application.Platform;
+using Cohestra.Application.Team;
 using Cohestra.Application.Tenants;
 using Cohestra.Contracts.Platform;
+using Cohestra.Infrastructure.Activities;
 using Cohestra.Infrastructure.Auth;
+using Cohestra.Infrastructure.Tenancy;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Cohestra.Api.Controllers.V1;
 
@@ -17,7 +21,9 @@ namespace Cohestra.Api.Controllers.V1;
 [Produces("application/json")]
 public sealed class PlatformTenantsController(
     IPlatformTenantService platformTenantService,
-    IPlatformTenantTimelineService timelineService) : ControllerBase
+    IPlatformTenantTimelineService timelineService,
+    ITeamInviteService teamInviteService,
+    IOptions<PublicWebOptions> publicWebOptions) : ControllerBase
 {
     /// <summary>Paginated tenant directory with aggregate activity/client counts (no PII export).</summary>
     [HttpGet]
@@ -232,6 +238,62 @@ public sealed class PlatformTenantsController(
         return ToActionResult(result);
     }
 
+    /// <summary>
+    /// One-time invite of the first TenantAdmin for a complimentary workspace.
+    /// The invite uses the existing accept flow. It never grants PlatformAdmin.
+    /// </summary>
+    [HttpPost("{tenantId:guid}/bootstrap-admin")]
+    [ProducesResponseType(typeof(BootstrapFirstAdminResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<BootstrapFirstAdminResponse>> BootstrapFirstAdmin(
+        Guid tenantId,
+        [FromBody] BootstrapFirstAdminRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null || string.IsNullOrWhiteSpace(request.Email))
+        {
+            return BadRequestProblem("A valid email is required.");
+        }
+
+        if (!TryGetActorUserId(out var actorUserId))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        var detail = await platformTenantService.GetByIdAsync(tenantId, cancellationToken: cancellationToken);
+        if (!detail.Succeeded || detail.Value is null)
+        {
+            return NotFoundProblem(detail.Detail ?? "Tenant not found.");
+        }
+
+        var acceptBaseUrl = TenantPublicWebUrlBuilder.BuildTenantPath(
+            publicWebOptions.Value.BaseUrl,
+            detail.Value.Tenant.Slug,
+            "/invite/accept");
+        var (result, value) = await teamInviteService.BootstrapFirstAdminAsync(
+            tenantId,
+            actorUserId,
+            request.Email,
+            acceptBaseUrl,
+            cancellationToken);
+
+        if (!result.Succeeded || value is null)
+        {
+            return result.Error switch
+            {
+                TeamInviteError.NotFound => NotFoundProblem(result.Detail ?? "Tenant not found."),
+                TeamInviteError.Conflict => ConflictProblem(result.Detail ?? "Bootstrap conflict.", "bootstrap_conflict"),
+                TeamInviteError.SeatCapReached => ConflictProblem(result.Detail ?? "Seat cap reached.", "seat_cap_reached"),
+                _ => BadRequestProblem(result.Detail ?? "Could not bootstrap the workspace admin."),
+            };
+        }
+
+        return Ok(new BootstrapFirstAdminResponse(tenantId, value.InviteId, value.Email, value.ExpiresAt));
+    }
+
     private ActionResult<TenantResponse> ToActionResult(
         PlatformTenantResult<TenantResponse> result,
         bool created = false)
@@ -284,16 +346,22 @@ public sealed class PlatformTenantsController(
         });
     }
 
-    private ObjectResult ConflictProblem(string detail)
+    private ObjectResult ConflictProblem(string detail, string? errorCode = null)
     {
         Response.ContentType = "application/problem+json";
-        return Conflict(new ProblemDetails
+        var problem = new ProblemDetails
         {
             Status = StatusCodes.Status409Conflict,
             Title = "Conflict",
             Detail = detail,
             Instance = HttpContext.Request.Path,
-        });
+        };
+        if (!string.IsNullOrWhiteSpace(errorCode))
+        {
+            problem.Extensions["errorCode"] = errorCode;
+        }
+
+        return Conflict(problem);
     }
 
     private UnauthorizedObjectResult UnauthorizedProblem(string detail)

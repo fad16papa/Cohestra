@@ -9,6 +9,14 @@ public sealed record CreateTenantRequest(
 
 public sealed record SuspendTenantRequest(string Reason);
 
+public sealed record BootstrapFirstAdminRequest(string Email);
+
+public sealed record BootstrapFirstAdminResponse(
+    Guid TenantId,
+    Guid InviteId,
+    string Email,
+    DateTimeOffset ExpiresAt);
+
 /// <summary>
 /// Set or clear complimentary (Sponsored) plan. <paramref name="IsComplimentary"/> is required
 /// (omit/null → 400). When true, <paramref name="Plan"/> must be Basic, Core, or Pro.
