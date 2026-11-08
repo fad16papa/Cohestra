@@ -842,6 +842,35 @@ desktop_skip = payload(extra=[spec_for(
     status="skipped",
 )])
 load("ok", desktop_skip)
+
+def with_duplicate(title, **kwargs):
+    raw = payload()
+    duplicate = spec_for(title, **kwargs)
+    for suite in raw["suites"][0]["suites"]:
+        specs = suite.get("specs") or []
+        for index, item in enumerate(specs):
+            if item.get("title") == title:
+                specs.insert(index, duplicate)
+                return raw
+    raise SystemExit(f"required title not seeded: {title}")
+
+load("ok", with_duplicate("Basic dashboard metrics load", status="expected"))
+load("skipped_required", with_duplicate("Basic dashboard metrics load", status="skipped"))
+load("skipped_required", payload(extra=[spec_for("Pro analytics room loads", status="skipped")]))
+load("fail", with_duplicate("Basic activities room loads", status="failed"))
+load("fail", payload(extra=[spec_for("Pro dashboard metrics load", status="failed")]))
+load("missing_required", with_duplicate("Pro website studio and public branding load", results=[]))
+load("missing_required", payload(extra=[spec_for("Basic campaigns room is Pro-locked", results=[])]))
+
+from pathlib import Path
+root = Path(sys.argv[1]).resolve().parents[2]
+declared = "\n".join(
+    Path(root, "web/e2e-uat", name).read_text()
+    for name in ("authenticated.spec.ts", "operator-core-flows.spec.ts")
+)
+for title in REQUIRED:
+    needle = f'test("{title}"'
+    assert needle in declared, title
 print("classifier cases ok")
 PY
 pass "individual required scenarios, partial coverage, and final retry outcomes are classified"

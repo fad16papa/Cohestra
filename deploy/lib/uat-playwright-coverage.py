@@ -78,6 +78,16 @@ def _norm_title(title: str) -> str:
     return " ".join(title.strip().split())
 
 
+def _worse(previous: str | None, outcome: str) -> str:
+    """A passing copy must not hide a skipped, failed, or missing copy."""
+    rank = {"fail": 3, "skipped": 2, "missing": 1, "ok": 0}
+    if previous is None:
+        return outcome
+    previous_rank = rank.get(previous, 1)
+    outcome_rank = rank.get(outcome, 1)
+    return outcome if outcome_rank > previous_rank else previous
+
+
 def classify(raw: dict[str, Any] | None) -> str:
     """Return ok, missing_required, skipped_required, or fail."""
     if not isinstance(raw, dict):
@@ -96,15 +106,7 @@ def classify(raw: dict[str, Any] | None) -> str:
             if title in AUTHORIZED_SKIP_SCENARIOS:
                 continue
             outcome = _spec_outcome(spec)
-            previous = found.get(title)
-            if previous == "fail" or outcome == "fail":
-                found[title] = "fail"
-            elif previous == "ok" or outcome == "ok":
-                found[title] = "ok"
-            elif previous == "skipped" or outcome == "skipped":
-                found[title] = "skipped"
-            else:
-                found[title] = outcome
+            found[title] = _worse(found.get(title), outcome)
     for required in REQUIRED_SCENARIOS:
         outcome = found.get(required)
         if outcome is None:

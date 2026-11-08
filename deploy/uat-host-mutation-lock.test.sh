@@ -106,6 +106,23 @@ kill "$HOLDER" >/dev/null 2>&1 || true
 wait "$HOLDER" >/dev/null 2>&1 || true
 pass "host flock refuses a second mutator"
 
+REMOTE="$ROOT_DIR/deploy/remote-deploy.sh"
+HELD="$TMP/remote.lock"
+flock -n "$HELD" -c "sleep 3" &
+REMOTE_HOLDER=$!
+sleep 0.3
+if out="$(UAT_HOST_LOCK_FILE="$HELD" bash "$REMOTE" 2>&1)"; then
+  kill "$REMOTE_HOLDER" >/dev/null 2>&1 || true
+  wait "$REMOTE_HOLDER" >/dev/null 2>&1 || true
+  echo "$out"
+  fail "remote-deploy must refuse while the UAT host lock is held"
+fi
+echo "$out" | grep -q 'REFUSE: UAT host mutation lock is held' \
+  || { echo "$out"; kill "$REMOTE_HOLDER" >/dev/null 2>&1 || true; fail "remote-deploy lock refusal"; }
+kill "$REMOTE_HOLDER" >/dev/null 2>&1 || true
+wait "$REMOTE_HOLDER" >/dev/null 2>&1 || true
+pass "remote-deploy shares the UAT host mutation lock"
+
 if grep -qiE 'adcp|workflow_dispatch:.*true' "$LOCK"; then
   fail "lock helper must not dispatch or restore ADCP"
 fi
