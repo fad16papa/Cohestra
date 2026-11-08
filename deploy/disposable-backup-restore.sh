@@ -21,6 +21,12 @@ case "$host" in
   *) refuse "host '$host' is not local" ;;
 esac
 
+# libpq uses PGHOSTADDR as the TCP address even when --host is localhost.
+if [[ -n "${PGHOSTADDR:-}" || -n "${PGSERVICE:-}" || -n "${PGSERVICEFILE:-}" ]]; then
+  refuse "PGHOSTADDR, PGSERVICE, and PGSERVICEFILE are not allowed"
+fi
+unset PGHOSTADDR PGSERVICE PGSERVICEFILE
+
 if [[ "${DATABASE_URL:-}" == *159.223.55.242* || "${DATABASE_URL:-}" == *129.212.235.2* ]]; then
   refuse "DATABASE_URL points at a known live host"
 fi

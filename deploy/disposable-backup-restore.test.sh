@@ -29,6 +29,10 @@ trap 'rm -rf "$TMP"' EXIT
 
 expect_refuse "remote host" \
   env PGHOST=159.223.55.242 "$SCRIPT" dump --database beta_src_disposable --file "$TMP/x.dump"
+expect_refuse "hostaddr override" \
+  env PGHOST=localhost PGHOSTADDR=192.0.2.1 "$SCRIPT" dump --database beta_src_disposable --file "$TMP/x.dump"
+expect_refuse "connection service override" \
+  env PGHOST=localhost PGSERVICE=live "$SCRIPT" dump --database beta_src_disposable --file "$TMP/x.dump"
 expect_refuse "uat host" \
   env PGHOST=129.212.235.2 "$SCRIPT" restore --database beta_dst_disposable --file "$TMP/x.dump"
 expect_refuse "protected database" \
