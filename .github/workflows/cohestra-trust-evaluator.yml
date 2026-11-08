@@ -1,0 +1,66 @@
+name: Cohestra trust evaluator
+
+on:
+  pull_request_target:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  actions: read
+  contents: read
+  checks: read
+  pull-requests: read
+
+jobs:
+  evaluate:
+    name: Trusted manifest and review evidence
+    if: vars.COHESTRA_TRUST_EVALUATOR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Install hash-pinned wheels
+        run: |
+          set -euo pipefail
+          python3 -m venv "${RUNNER_TEMP}/cohestra-trust-venv"
+          "${RUNNER_TEMP}/cohestra-trust-venv/bin/python" -m pip install \
+            --disable-pip-version-check \
+            --require-hashes \
+            --only-binary=:all: \
+            --no-deps \
+            --index-url https://pypi.org/simple \
+            -r _bmad-output/implementation-artifacts/cohestra-correction-controller/requirements-trust.txt
+
+      - name: Evaluate trust evidence
+        working-directory: _bmad-output/implementation-artifacts/cohestra-correction-controller
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_ID: ${{ github.run_id }}
+          REPOSITORY: ${{ github.repository }}
+          PULL_NUMBER: ${{ github.event.pull_request.number }}
+          CLAIMED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          COHESTRA_TRUST_EVALUATOR_ENABLED: ${{ vars.COHESTRA_TRUST_EVALUATOR_ENABLED }}
+          COHESTRA_OWNER_KEY_ID: ${{ vars.COHESTRA_OWNER_KEY_ID }}
+          COHESTRA_OWNER_PUBLIC_KEY: ${{ vars.COHESTRA_OWNER_PUBLIC_KEY }}
+          COHESTRA_OWNER_PUBLIC_KEY_SHA256: ${{ vars.COHESTRA_OWNER_PUBLIC_KEY_SHA256 }}
+          COHESTRA_APPROVED_TASK_ID: ${{ vars.COHESTRA_APPROVED_TASK_ID }}
+          COHESTRA_REVIEW_APP_BMAD_ID: ${{ vars.COHESTRA_REVIEW_APP_BMAD_ID }}
+          COHESTRA_REVIEW_APP_CATSEC_ID: ${{ vars.COHESTRA_REVIEW_APP_CATSEC_ID }}
+          COHESTRA_REVIEW_BMAD_CHECK_NAME: ${{ vars.COHESTRA_REVIEW_BMAD_CHECK_NAME }}
+          COHESTRA_REVIEW_CATSEC_CHECK_NAME: ${{ vars.COHESTRA_REVIEW_CATSEC_CHECK_NAME }}
+          COHESTRA_REQUIRED_CHECKS_MAP: ${{ vars.COHESTRA_REQUIRED_CHECKS_MAP }}
+          COHESTRA_TRUST_REPLAY_DIR: ${{ runner.temp }}/cohestra-trust-replay
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          "${RUNNER_TEMP}/cohestra-trust-venv/bin/python" -m correction.trust_evaluator
