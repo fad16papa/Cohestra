@@ -17,6 +17,15 @@ public sealed record BootstrapFirstAdminResponse(
     string Email,
     DateTimeOffset ExpiresAt);
 
+public sealed record EraseClientRequest(string Reason, string Confirm);
+
+public sealed record EraseClientResponse(
+    Guid TenantId,
+    Guid ClientId,
+    int RegistrationsRemoved,
+    int TimelineEventsRemoved,
+    int CampaignRecipientsRemoved);
+
 /// <summary>
 /// Set or clear complimentary (Sponsored) plan. <paramref name="IsComplimentary"/> is required
 /// (omit/null → 400). When true, <paramref name="Plan"/> must be Basic, Core, or Pro.

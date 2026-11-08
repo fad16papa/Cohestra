@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Cohestra.Application.Clients;
 using Cohestra.Application.Platform;
 using Cohestra.Application.Team;
 using Cohestra.Application.Tenants;
@@ -23,6 +24,7 @@ public sealed class PlatformTenantsController(
     IPlatformTenantService platformTenantService,
     IPlatformTenantTimelineService timelineService,
     ITeamInviteService teamInviteService,
+    IClientErasureService clientErasureService,
     IOptions<PublicWebOptions> publicWebOptions) : ControllerBase
 {
     /// <summary>Paginated tenant directory with aggregate activity/client counts (no PII export).</summary>
@@ -292,6 +294,60 @@ public sealed class PlatformTenantsController(
         }
 
         return Ok(new BootstrapFirstAdminResponse(tenantId, value.InviteId, value.Email, value.ExpiresAt));
+    }
+
+    /// <summary>
+    /// Owner-operated erasure of one client and that client's registrations,
+    /// timeline, and campaign recipients. Other workspaces are untouched.
+    /// </summary>
+    [HttpPost("{tenantId:guid}/clients/{clientId:guid}/erasure")]
+    [ProducesResponseType(typeof(EraseClientResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<EraseClientResponse>> EraseClient(
+        Guid tenantId,
+        Guid clientId,
+        [FromBody] EraseClientRequest? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequestProblem("An erasure reason is required.");
+        }
+
+        if (!string.Equals(request.Confirm, "ERASE CLIENT", StringComparison.Ordinal))
+        {
+            return BadRequestProblem("Confirm must be exactly ERASE CLIENT.");
+        }
+
+        if (!TryGetActorUserId(out var actorUserId))
+        {
+            return UnauthorizedProblem("Authenticated user id is missing.");
+        }
+
+        var result = await clientErasureService.EraseAsync(
+            tenantId,
+            clientId,
+            actorUserId,
+            request.Reason,
+            cancellationToken);
+
+        if (!result.Succeeded || result.Counts is null)
+        {
+            return result.Error switch
+            {
+                ClientErasureError.NotFound => NotFoundProblem(result.Detail ?? "Client not found."),
+                _ => BadRequestProblem(result.Detail ?? "Erasure was refused."),
+            };
+        }
+
+        return Ok(new EraseClientResponse(
+            tenantId,
+            clientId,
+            result.Counts.Registrations,
+            result.Counts.TimelineEvents,
+            result.Counts.CampaignRecipients));
     }
 
     private ActionResult<TenantResponse> ToActionResult(
