@@ -12,4 +12,6 @@ public enum PlatformAuditAction
     PasswordResetSent = 7,
     EmailVerificationResent = 8,
     SupportIssueSeverityChanged = 9,
+    FirstAdminBootstrapped = 10,
+    ClientErased = 11,
 }
