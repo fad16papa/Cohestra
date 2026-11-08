@@ -33,6 +33,7 @@ python3 - "$ROOT_DIR" "$OUT" "$EVALUATE" \
   "${UAT_PUBLIC_SMOKE_JSON:-}" \
   "${UAT_DISPATCH_JSON:-}" \
   "${UAT_PLAYWRIGHT_JSON:-}" <<'PY'
+import importlib.util
 import json, os, pathlib, re, sys
 from datetime import datetime, timezone
 
@@ -47,6 +48,15 @@ from datetime import datetime, timezone
     dispatch_override,
     playwright_override,
 ) = sys.argv[1:10]
+
+spec = importlib.util.spec_from_file_location(
+    "uat_playwright_coverage",
+    str(pathlib.Path(root) / "deploy" / "lib" / "uat-playwright-coverage.py"),
+)
+if spec is None or spec.loader is None:
+    raise SystemExit("uat-playwright-coverage helper missing")
+coverage_mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(coverage_mod)
 
 REQUIRED = (
     "story",
@@ -174,7 +184,9 @@ def playwright_stats(raw: dict | None) -> dict:
     skipped = int(stats.get("skipped") or 0)
     unexpected = int(stats.get("unexpected") or 0)
     flaky = int(stats.get("flaky") or 0)
-    result = "pass" if unexpected == 0 and expected > 0 else "fail"
+    coverage = coverage_mod.classify(raw)
+    auth_skipped = coverage_mod.authenticated_skipped(raw)
+    result = "pass" if unexpected == 0 and expected > 0 and coverage == "ok" else "fail"
     return {
         "available": True,
         "result": result,
@@ -183,7 +195,8 @@ def playwright_stats(raw: dict | None) -> dict:
         "unexpected": unexpected,
         "flaky": flaky,
         "viewports": ["1440x900", "390x844"],
-        "authenticatedSkipped": skipped > 0,
+        "authenticatedSkipped": auth_skipped,
+        "coverage": coverage,
         "artifacts": ["web/test-results/uat-playwright.json"],
     }
 
