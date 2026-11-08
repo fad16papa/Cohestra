@@ -406,6 +406,11 @@ class TrustEvidenceTest(unittest.TestCase):
             b"      - run: echo \"\\x70ermissions\" && bash deploy/write-uat-deploy-provenance.test.sh\n"
         )
         self.assertIsNone(_workflow_permission_issue(command))
+        spaced = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n  test:\n"
+            b"    permissions :\n      checks: write\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n"
+        )
+        self.assertEqual(_workflow_permission_issue(spaced), _PERM_UNTRUSTED)
 
     def test_permission_inheritance_ignores_command_text(self) -> None:
         inherited = (
