@@ -67,7 +67,15 @@ fi
 
 export PGHOST=localhost
 export PGUSER="${PGUSER:-crm}"
-export PGPASSWORD="${PGPASSWORD:-crm}"
+if [[ -z "${PGPASSWORD:-}" && -n "${ConnectionStrings__DefaultConnection:-}" ]]; then
+  if [[ "${ConnectionStrings__DefaultConnection}" =~ (^|[\;[:space:]])Password=([^\;[:space:]]+) ]]; then
+    export PGPASSWORD="${BASH_REMATCH[2]}"
+  fi
+fi
+if [[ -z "${PGPASSWORD:-}" ]]; then
+  echo "PGPASSWORD is required for the disposable restore rehearsal" >&2
+  exit 1
+fi
 
 SRC="beta_src_disposable"
 DST="beta_dst_disposable"
