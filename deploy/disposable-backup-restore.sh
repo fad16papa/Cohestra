@@ -43,11 +43,12 @@ done
 
 [[ -n "$database" ]] || usage
 
-if [[ "$database" == *uat* || "$database" == *prod* || "$database" == *production* ]]; then
+database_lc="${database,,}"
+if [[ "$database_lc" == *uat* || "$database_lc" == *prod* || "$database_lc" == *production* ]]; then
   refuse "database name '$database' looks like a live environment"
 fi
 
-case "$database" in
+case "$database_lc" in
   cohestra|cohestra_test|cohestra_uat|postgres|template0|template1)
     refuse "database '$database' is protected"
     ;;
@@ -61,7 +62,7 @@ case "$command" in
     ;;
   restore)
     [[ -n "$file" ]] || usage
-    [[ "$database" == *_disposable ]] || refuse "restore database must end with _disposable"
+    [[ "$database_lc" == *_disposable ]] || refuse "restore database must end with _disposable"
     mkdir -p "$(dirname "$lock_file")"
     exec 9>"$lock_file"
     if ! flock -w 1 9; then
@@ -74,7 +75,7 @@ case "$command" in
     echo "RESTORED $database"
     ;;
   verify)
-    [[ "$database" == *_disposable ]] || refuse "verify database must end with _disposable"
+    [[ "$database_lc" == *_disposable ]] || refuse "verify database must end with _disposable"
     psql --host="$host" --dbname="$database" --no-psqlrc --set=ON_ERROR_STOP=1 <<'SQL'
 SELECT
   (SELECT count(*) FROM rehearsal_tenants) AS tenants,

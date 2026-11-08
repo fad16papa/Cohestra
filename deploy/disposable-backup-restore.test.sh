@@ -33,6 +33,10 @@ expect_refuse "uat host" \
   env PGHOST=129.212.235.2 "$SCRIPT" restore --database beta_dst_disposable --file "$TMP/x.dump"
 expect_refuse "protected database" \
   "$SCRIPT" restore --database cohestra_test --file "$TMP/x.dump"
+expect_refuse "mixed-case protected database" \
+  "$SCRIPT" dump --database COHESTRA --file "$TMP/x.dump"
+expect_refuse "mixed-case uat name" \
+  "$SCRIPT" restore --database Cohestra_UAT_disposable --file "$TMP/missing.dump"
 expect_refuse "uat-like disposable name" \
   "$SCRIPT" restore --database cohestra_uat_disposable --file "$TMP/missing.dump"
 expect_refuse "live database url" \
