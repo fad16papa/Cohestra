@@ -95,6 +95,7 @@ INSERT INTO rehearsal_clients (id, tenant_id, full_name, phone) VALUES
 SQL
 
 "$SCRIPT" dump --database "$SRC" --file "$TMP/rehearsal.dump"
+printf '\nSET transaction_timeout = 0;\n' >>"$TMP/rehearsal.dump"
 "$SCRIPT" restore --database "$DST" --file "$TMP/rehearsal.dump" --lock-file "$TMP/restore.lock"
 "$SCRIPT" verify --database "$DST"
 

@@ -57,7 +57,8 @@ esac
 case "$command" in
   dump)
     [[ -n "$file" ]] || usage
-    pg_dump --host="$host" --format=custom --no-owner --file="$file" "$database"
+    # Plain SQL so a newer client can be filtered before restore onto Postgres 16.
+    pg_dump --host="$host" --format=plain --no-owner --file="$file" "$database"
     echo "DUMPED $database"
     ;;
   restore)
@@ -71,7 +72,12 @@ case "$command" in
     [[ -f "$file" ]] || refuse "dump file is missing"
     dropdb --host="$host" --if-exists --force "$database"
     createdb --host="$host" "$database"
-    pg_restore --host="$host" --dbname="$database" --no-owner --exit-on-error "$file"
+    # Postgres 17+ pg_dump emits SET transaction_timeout, which Postgres 16 rejects.
+    filtered="$(mktemp)"
+    grep -v -E "^[[:space:]]*SET transaction_timeout[[:space:]]*=" "$file" >"$filtered"
+    psql --host="$host" --dbname="$database" --no-psqlrc --set=ON_ERROR_STOP=1 \
+      --single-transaction --file="$filtered"
+    rm -f "$filtered"
     echo "RESTORED $database"
     ;;
   verify)
