@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from correction.trust_evidence import (
     _PERM_UNDECLARED,
+    _PERM_UNTRUSTED,
     _workflow_permission_issue,
     ACTIONS_UNCONFIRMED,
     BINDING_MISMATCH,
@@ -346,6 +347,56 @@ class TrustEvidenceTest(unittest.TestCase):
         self.assertIn(b"write-uat-deploy-provenance.test.sh", ci)
         self.assertNotIn(b"\npermissions:", ci)
         self.assertEqual(_workflow_permission_issue(ci), _PERM_UNDECLARED)
+
+    def test_escaped_job_permissions_key_is_refused(self) -> None:
+        escaped = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n  test:\n"
+            b"    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n"
+            b"    \"\\x70ermissions\": write-all\n"
+        )
+        self.assertIn(b"\\x70ermissions", escaped)
+        self.assertNotIn(b"permissions: write-all", escaped)
+        self.assertEqual(_workflow_permission_issue(escaped), _PERM_UNTRUSTED)
+        for spelling in (b"\\u0070ermissions", b"\\U00000070ermissions"):
+            variant = escaped.replace(b"\\x70ermissions", spelling)
+            self.assertEqual(_workflow_permission_issue(variant), _PERM_UNTRUSTED)
+        tagged = (
+            b"name: ci\non:\n  pull_request:\njobs:\n  test:\n    permissions: !!str write-all\n"
+            b"    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n"
+        )
+        self.assertEqual(_workflow_permission_issue(tagged), _PERM_UNTRUSTED)
+        aliased = (
+            b"name: ci\non:\n  pull_request:\nx: &grant write-all\njobs:\n  test:\n"
+            b"    permissions: *grant\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n"
+        )
+        self.assertEqual(_workflow_permission_issue(aliased), _PERM_UNTRUSTED)
+        folded = escaped.replace(
+            b"    \"\\x70ermissions\": write-all\n",
+            b"    \"\\x70\\\n    ermissions\": write-all\n",
+        )
+        self.assertEqual(_workflow_permission_issue(folded), _PERM_UNTRUSTED)
+        duplicate = (
+            b"name: ci\nname: other\non:\n  pull_request:\npermissions:\n  contents: read\n"
+            b"jobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo ok\n"
+        )
+        self.assertEqual(_workflow_permission_issue(duplicate), _PERM_UNTRUSTED)
+
+    def test_permission_inheritance_ignores_command_text(self) -> None:
+        inherited = (
+            b"name: ci\non:\n  pull_request:\npermissions:\n  contents: read\njobs:\n  test:\n"
+            b"    runs-on: ubuntu-latest\n    steps:\n      - run: bash deploy/write-uat-deploy-provenance.test.sh\n"
+        )
+        self.assertIsNone(_workflow_permission_issue(inherited))
+        narrowed = inherited.replace(
+            b"    runs-on: ubuntu-latest\n",
+            b"    permissions:\n      contents: read\n    runs-on: ubuntu-latest\n",
+        )
+        self.assertIsNone(_workflow_permission_issue(narrowed))
+        elevated = inherited.replace(
+            b"    runs-on: ubuntu-latest\n",
+            b"    permissions:\n      checks: write\n    runs-on: ubuntu-latest\n",
+        )
+        self.assertEqual(_workflow_permission_issue(elevated), _PERM_UNTRUSTED)
 
     def test_compare_scope_and_transport_guard(self) -> None:
         world = World()

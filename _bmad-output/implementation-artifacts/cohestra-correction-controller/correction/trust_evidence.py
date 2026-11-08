@@ -592,7 +592,8 @@ def _workflow_permission_issue(raw: bytes) -> str | None:
     if not text or "\x00" in text:
         return _PERM_UNTRUSTED
     lines = text.splitlines()
-    stack: list[tuple[int, str]] = []
+    stack: list[tuple[int, str, set[str]]] = []
+    root_keys: set[str] = set()
     jobs: dict[str, bool] = {}
     workflow_permissions = False
     scalar_at: int | None = None
@@ -613,13 +614,24 @@ def _workflow_permission_issue(raw: bytes) -> str | None:
         indent = _indent(line)
         if indent is None:
             return _PERM_UNTRUSTED
-        entry = body[2:].strip() if body.startswith("- ") else body
+        is_list = body.startswith("- ")
+        entry = body[2:].strip() if is_list else body
         if "permission" in entry.casefold() and not entry.startswith("permissions:"):
             return _PERM_UNTRUSTED
         if "\\" in entry and "permiss" in entry.casefold():
             return _PERM_UNTRUSTED
+        try:
+            quoted_key = _yaml_double_quoted_key(entry)
+            if quoted_key is None:
+                quoted_key = _yaml_single_quoted_key(entry)
+        except ValueError:
+            return _PERM_UNTRUSTED
+        if quoted_key == "permissions":
+            return _PERM_UNTRUSTED
         matched = _KEY_RE.fullmatch(entry)
         if matched is None:
+            if entry.startswith(("!", "&", "*", "?", "{", "[")):
+                return _PERM_UNTRUSTED
             index += 1
             continue
         key, value = matched.group(1), matched.group(2).strip()
@@ -627,8 +639,14 @@ def _workflow_permission_issue(raw: bytes) -> str | None:
             stack.pop()
         parent = stack[-1][1] if stack else ""
         grandparent = stack[-2][1] if len(stack) >= 2 else ""
+        seen = stack[-1][2] if stack else root_keys
+        if not is_list:
+            if key in seen:
+                return _PERM_UNTRUSTED
+            seen.add(key)
+        child_keys: set[str] = set()
         if key == "permissions":
-            if value or entry != "permissions:":
+            if value or entry != "permissions:" or "!" in value or "*" in value:
                 return _PERM_UNTRUSTED
             job_name = stack[-1][1] if grandparent == "jobs" else ""
             if parent == "" and indent == 0:
@@ -644,19 +662,98 @@ def _workflow_permission_issue(raw: bytes) -> str | None:
             scopes, index = _permission_scopes(lines, index + 1, indent)
             if scopes is None:
                 return _PERM_UNTRUSTED
-            stack.append((indent, key))
+            stack.append((indent, key, child_keys))
             continue
         if parent == "jobs":
             jobs.setdefault(key, False)
         if value in _BLOCK_SCALARS:
             scalar_at = indent
-        stack.append((indent, key))
+        stack.append((indent, key, child_keys))
         index += 1
     if not jobs:
         return _PERM_UNTRUSTED
     if workflow_permissions or all(jobs.values()):
         return None
     return _PERM_UNDECLARED
+
+
+def _yaml_double_quoted_key(entry: str) -> str | None:
+    """Decode a YAML 1.1 double-quoted mapping key. Invalid escapes are refused."""
+    if not entry.startswith('"'):
+        return None
+    chars: list[str] = []
+    index = 1
+    while index < len(entry):
+        character = entry[index]
+        if character == '"':
+            rest = entry[index + 1 :].lstrip()
+            if not rest.startswith(":"):
+                return None
+            return "".join(chars)
+        if character != "\\":
+            chars.append(character)
+            index += 1
+            continue
+        decoded, index = _yaml_escape(entry, index)
+        chars.append(decoded)
+    raise ValueError("unclosed")
+
+
+def _yaml_single_quoted_key(entry: str) -> str | None:
+    if not entry.startswith("'"):
+        return None
+    chars: list[str] = []
+    index = 1
+    while index < len(entry):
+        if entry[index] == "'":
+            if index + 1 < len(entry) and entry[index + 1] == "'":
+                chars.append("'")
+                index += 2
+                continue
+            rest = entry[index + 1 :].lstrip()
+            if not rest.startswith(":"):
+                return None
+            return "".join(chars)
+        chars.append(entry[index])
+        index += 1
+    raise ValueError("unclosed")
+
+
+def _yaml_escape(text: str, index: int) -> tuple[str, int]:
+    if index + 1 >= len(text) or text[index] != "\\":
+        raise ValueError("escape")
+    code = text[index + 1]
+    simple = {
+        "0": "\0",
+        "a": "\a",
+        "b": "\b",
+        "t": "\t",
+        "n": "\n",
+        "v": "\v",
+        "f": "\f",
+        "r": "\r",
+        "e": "\x1b",
+        " ": " ",
+        '"': '"',
+        "/": "/",
+        "\\": "\\",
+        "N": "\u0085",
+        "_": "\u00a0",
+        "L": "\u2028",
+        "P": "\u2029",
+    }
+    if code in simple:
+        return simple[code], index + 2
+    width = {"x": 2, "u": 4, "U": 8}.get(code)
+    if width is None:
+        raise ValueError("escape")
+    hexpart = text[index + 2 : index + 2 + width]
+    if len(hexpart) != width or any(character not in "0123456789abcdefABCDEF" for character in hexpart):
+        raise ValueError("escape")
+    number = int(hexpart, 16)
+    if number > 0x10FFFF:
+        raise ValueError("escape")
+    return chr(number), index + 2 + width
 
 
 def _indent(line: str) -> int | None:
