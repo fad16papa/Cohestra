@@ -114,6 +114,12 @@ jobs:
       - name: Build
         run: dotnet build Cohestra.sln --no-restore -c Release
 
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Disposable backup restore rehearsal
+        run: bash deploy/disposable-backup-restore.test.sh
+
       - name: Integration tests
         run: dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release --filter "Category=Integration" --verbosity normal
 
