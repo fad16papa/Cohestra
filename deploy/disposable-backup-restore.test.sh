@@ -47,6 +47,70 @@ expect_refuse "live database url" \
   env DATABASE_URL="postgres://crm@159.223.55.242/cohestra" \
   "$SCRIPT" dump --database beta_src_disposable --file "$TMP/x.dump"
 
+STUB_BIN="$TMP/stub-bin"
+INVOCATION_LOG="$TMP/client-invocations.log"
+export INVOCATION_LOG
+mkdir -p "$STUB_BIN"
+touch "$TMP/present.dump"
+: >"$INVOCATION_LOG"
+for tool in pg_dump psql dropdb createdb; do
+  cat >"$STUB_BIN/$tool" <<EOF
+#!/bin/sh
+printf '%s %s\n' "$tool" "\$*" >> "\${INVOCATION_LOG:?}"
+exit 97
+EOF
+  chmod +x "$STUB_BIN/$tool"
+done
+
+expect_client_refused() {
+  local label="$1"
+  shift
+  : >"$INVOCATION_LOG"
+  if PATH="$STUB_BIN:$PATH" "$@" >"$TMP/out" 2>"$TMP/err"; then
+    fail "$label was allowed"
+  fi
+  if ! grep -q '^REFUSED:' "$TMP/err"; then
+    cat "$TMP/err" >&2
+    fail "$label did not refuse"
+  fi
+  if [[ -s "$INVOCATION_LOG" ]]; then
+    cat "$INVOCATION_LOG" >&2
+    fail "$label invoked a database client"
+  fi
+  pass "$label"
+}
+
+expect_client_refused "postgres uri database" \
+  "$SCRIPT" dump --database "postgresql://192.0.2.1:1/cohestra" --file "$TMP/x.dump"
+expect_client_refused "postgres uri ending with disposable" \
+  "$SCRIPT" restore --database "postgres://192.0.2.1:1/cohestra?x=beta_dst_disposable" --file "$TMP/present.dump"
+expect_client_refused "keyword connection string" \
+  "$SCRIPT" dump --database "host=192.0.2.1 port=1 dbname=cohestra" --file "$TMP/x.dump"
+expect_client_refused "malformed spaced name" \
+  "$SCRIPT" dump --database "beta src" --file "$TMP/x.dump"
+expect_client_refused "malformed quoted name" \
+  "$SCRIPT" verify --database "beta'name"
+expect_client_refused "malformed path name" \
+  "$SCRIPT" restore --database "../cohestra_disposable" --file "$TMP/present.dump"
+expect_client_refused "malformed flag-like name" \
+  "$SCRIPT" dump --database "-disposable" --file "$TMP/x.dump"
+expect_client_refused "protected name does not reach a client" \
+  "$SCRIPT" restore --database cohestra --file "$TMP/present.dump"
+
+: >"$INVOCATION_LOG"
+if PATH="$STUB_BIN:$PATH" "$SCRIPT" dump --database beta_src_disposable --file "$TMP/x.dump" >"$TMP/out" 2>"$TMP/err"; then
+  fail "stub dump should fail closed"
+fi
+if grep -q '^REFUSED:' "$TMP/err"; then
+  cat "$TMP/err" >&2
+  fail "plain disposable name was refused"
+fi
+if ! grep -q 'pg_dump --host=localhost .* beta_src_disposable$' "$INVOCATION_LOG"; then
+  cat "$INVOCATION_LOG" >&2
+  fail "plain disposable name did not stay on localhost"
+fi
+pass "plain disposable name reaches local dump"
+
 LOCK="$TMP/held.lock"
 touch "$TMP/present.dump"
 flock -n "$LOCK" -c "sleep 3" &

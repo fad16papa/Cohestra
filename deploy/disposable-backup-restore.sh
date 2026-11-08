@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # Dump, restore, and verify a Postgres database on localhost only.
+# --database accepts only a plain identifier. Connection URIs and keyword
+# connection strings are refused before any Postgres client runs.
 # Restore targets must be named *_disposable. Live UAT and Production names
 # and hosts are refused. This script does not open SSH or change secrets.
 
@@ -13,6 +15,15 @@ usage() {
 refuse() {
   echo "REFUSED: $1" >&2
   exit 2
+}
+
+require_plain_database_name() {
+  local name="$1"
+  # Allowlisted unquoted identifier. Rejects URIs, keyword conninfo, flags, and paths
+  # before pg_dump, psql, dropdb, or createdb can parse them as a connection target.
+  if [[ ! "$name" =~ ^[A-Za-z_][A-Za-z0-9_]{0,62}$ ]]; then
+    refuse "database name must be a plain identifier"
+  fi
 }
 
 host="${PGHOST:-localhost}"
@@ -48,6 +59,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -n "$database" ]] || usage
+require_plain_database_name "$database"
 
 database_lc="${database,,}"
 if [[ "$database_lc" == *uat* || "$database_lc" == *prod* || "$database_lc" == *production* ]]; then

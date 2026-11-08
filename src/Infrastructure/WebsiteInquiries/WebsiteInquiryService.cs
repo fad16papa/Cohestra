@@ -147,4 +147,5 @@ internal sealed record WebsiteInquiryOperatorNotifyOutboxPayload(
     string ParticipantName,
     string? Phone,
     string? Email,
-    string Message);
+    string Message,
+    bool Redacted = false);

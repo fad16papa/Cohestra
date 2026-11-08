@@ -298,8 +298,17 @@ public sealed class PlatformTenantsController(
 
     /// <summary>
     /// Owner-operated erasure of one client and that client's registrations,
-    /// timeline, and campaign recipients. Other workspaces are untouched.
+    /// timeline, campaign recipients, and stored website-inquiry notification payloads.
+    /// Other workspaces and other clients are untouched.
     /// </summary>
+    /// <remarks>
+    /// Emails the provider has already accepted cannot be recalled.
+    /// Backups and database dumps taken before this call still contain the erased data.
+    /// Erasure waits while a website-inquiry notification for this client is inside its
+    /// send call, then removes or redacts the stored personal data before it reports success.
+    /// Pending notifications for this client are removed and are not sent.
+    /// A stored row is changed only when its payload identifies this client. Unparseable rows are left as they are.
+    /// </remarks>
     [HttpPost("{tenantId:guid}/clients/{clientId:guid}/erasure")]
     [ProducesResponseType(typeof(EraseClientResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
