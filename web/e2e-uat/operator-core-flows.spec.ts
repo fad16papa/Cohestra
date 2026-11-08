@@ -330,10 +330,11 @@ async function unpublishIfPresent(
 
 test.describe("19.5 operator core flows", () => {
   test("Basic dashboard metrics load", async ({ page }) => {
-    test.skip(
-      !basicEmail || !basicPassword,
-      "UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped",
-    );
+    if (!basicEmail || !basicPassword) {
+      throw new Error(
+        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(basicSlug);
     await loginOnWorkspace(page, origin, basicEmail, basicPassword);
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
@@ -344,10 +345,11 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic activities room loads", async ({ page }) => {
-    test.skip(
-      !basicEmail || !basicPassword,
-      "UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped",
-    );
+    if (!basicEmail || !basicPassword) {
+      throw new Error(
+        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(basicSlug);
     await loginOnWorkspace(page, origin, basicEmail, basicPassword);
     await page.goto(`${origin}/activities`, { waitUntil: "domcontentloaded" });
@@ -358,10 +360,11 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic website is Core-locked and public stub home loads", async ({ page }) => {
-    test.skip(
-      !basicEmail || !basicPassword,
-      "UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped",
-    );
+    if (!basicEmail || !basicPassword) {
+      throw new Error(
+        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(basicSlug);
     await loginOnWorkspace(page, origin, basicEmail, basicPassword);
     await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
@@ -376,10 +379,11 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic campaigns room is Pro-locked", async ({ page }) => {
-    test.skip(
-      !basicEmail || !basicPassword,
-      "UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped",
-    );
+    if (!basicEmail || !basicPassword) {
+      throw new Error(
+        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(basicSlug);
     await loginOnWorkspace(page, origin, basicEmail, basicPassword);
     await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
@@ -390,10 +394,11 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro dashboard metrics load", async ({ page }) => {
-    test.skip(
-      !proEmail || !proPassword,
-      "UAT_AUTO_PRO_EMAIL/PASSWORD are not mapped",
-    );
+    if (!proEmail || !proPassword) {
+      throw new Error(
+        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(proSlug);
     await loginOnWorkspace(page, origin, proEmail, proPassword);
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
@@ -404,10 +409,11 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro analytics room loads", async ({ page }) => {
-    test.skip(
-      !proEmail || !proPassword,
-      "UAT_AUTO_PRO_EMAIL/PASSWORD are not mapped",
-    );
+    if (!proEmail || !proPassword) {
+      throw new Error(
+        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(proSlug);
     await loginOnWorkspace(page, origin, proEmail, proPassword);
     await page.goto(`${origin}/analytics`, { waitUntil: "domcontentloaded" });
@@ -418,10 +424,11 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro website studio and public branding load", async ({ page }) => {
-    test.skip(
-      !proEmail || !proPassword,
-      "UAT_AUTO_PRO_EMAIL/PASSWORD are not mapped",
-    );
+    if (!proEmail || !proPassword) {
+      throw new Error(
+        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(proSlug);
     await loginOnWorkspace(page, origin, proEmail, proPassword);
     await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
@@ -439,10 +446,11 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro campaigns room loads without sending a blast", async ({ page }) => {
-    test.skip(
-      !proEmail || !proPassword,
-      "UAT_AUTO_PRO_EMAIL/PASSWORD are not mapped",
-    );
+    if (!proEmail || !proPassword) {
+      throw new Error(
+        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(proSlug);
     await loginOnWorkspace(page, origin, proEmail, proPassword);
     await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
@@ -455,10 +463,11 @@ test.describe("19.5 operator core flows", () => {
   test("Pro create, publish, share, register, dedup, CSV, and campaign test-send", async ({
     page,
   }, testInfo) => {
-    test.skip(
-      !proEmail || !proPassword,
-      "UAT_AUTO_PRO_EMAIL/PASSWORD are not mapped",
-    );
+    if (!proEmail || !proPassword) {
+      throw new Error(
+        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     test.skip(!isDesktopProject(testInfo.project.name), "mutating Pro walk runs once on desktop");
     test.setTimeout(180_000);
 

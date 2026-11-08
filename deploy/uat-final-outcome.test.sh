@@ -38,9 +38,103 @@ JSON
 
 write_browser() {
   mkdir -p "$1/web/test-results"
-  cat >"$1/web/test-results/uat-playwright.json" <<JSON
-{"stats":{"expected":8,"skipped":2,"unexpected":${2:-0},"flaky":0}}
-JSON
+  python3 - "$1/web/test-results/uat-playwright.json" "${2:-0}" <<'PY'
+import json, sys
+unexpected = int(sys.argv[2])
+required = [
+    ("dedicated automation login when credentials exist", "authenticated.spec.ts"),
+    ("Basic dashboard metrics load", "operator-core-flows.spec.ts"),
+    ("Basic activities room loads", "operator-core-flows.spec.ts"),
+    ("Basic website is Core-locked and public stub home loads", "operator-core-flows.spec.ts"),
+    ("Basic campaigns room is Pro-locked", "operator-core-flows.spec.ts"),
+    ("Pro dashboard metrics load", "operator-core-flows.spec.ts"),
+    ("Pro analytics room loads", "operator-core-flows.spec.ts"),
+    ("Pro website studio and public branding load", "operator-core-flows.spec.ts"),
+    ("Pro campaigns room loads without sending a blast", "operator-core-flows.spec.ts"),
+]
+core = [item for item in required if item[1] == "operator-core-flows.spec.ts"]
+login = [item for item in required if item[1] == "authenticated.spec.ts"]
+payload = {
+  "stats": {"expected": 10, "skipped": 2, "unexpected": unexpected, "flaky": 0},
+  "suites": [{
+    "title": "e2e-uat",
+    "suites": [
+      {
+        "title": "45.4 authenticated UAT",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "unexpected" if unexpected else "expected", "results": [{"status": "unexpected" if unexpected else "expected"}]}],
+        } for title, file_name in login],
+      },
+      {
+        "title": "19.5 operator core flows",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "expected", "results": [{"status": "expected"}]}],
+        } for title, file_name in core] + [{
+          "title": "Pro create, publish, share, register, dedup, CSV, and campaign test-send",
+          "file": "operator-core-flows.spec.ts",
+          "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
+        }],
+      },
+      {
+        "title": "45.5 OTP mailbox",
+        "specs": [{
+          "title": "signup OTP is read from the dedicated mailbox when configured",
+          "file": "authenticated.spec.ts",
+          "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
+        }],
+      },
+    ],
+  }],
+}
+json.dump(payload, open(sys.argv[1], "w"))
+PY
+}
+
+write_browser_auth_skipped() {
+  mkdir -p "$1/web/test-results"
+  python3 - "$1/web/test-results/uat-playwright.json" <<'PY'
+import json, sys
+required = [
+    ("dedicated automation login when credentials exist", "authenticated.spec.ts"),
+    ("Basic dashboard metrics load", "operator-core-flows.spec.ts"),
+    ("Basic activities room loads", "operator-core-flows.spec.ts"),
+    ("Basic website is Core-locked and public stub home loads", "operator-core-flows.spec.ts"),
+    ("Basic campaigns room is Pro-locked", "operator-core-flows.spec.ts"),
+    ("Pro dashboard metrics load", "operator-core-flows.spec.ts"),
+    ("Pro analytics room loads", "operator-core-flows.spec.ts"),
+    ("Pro website studio and public branding load", "operator-core-flows.spec.ts"),
+    ("Pro campaigns room loads without sending a blast", "operator-core-flows.spec.ts"),
+]
+payload = {
+  "stats": {"expected": 6, "skipped": 10, "unexpected": 0, "flaky": 0},
+  "suites": [{
+    "title": "e2e-uat",
+    "suites": [
+      {
+        "title": "45.4 authenticated UAT",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
+        } for title, file_name in required if file_name == "authenticated.spec.ts"],
+      },
+      {
+        "title": "19.5 operator core flows",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
+        } for title, file_name in required if file_name == "operator-core-flows.spec.ts"],
+      },
+    ],
+  }],
+}
+json.dump(payload, open(sys.argv[1], "w"))
+PY
 }
 
 write_lifecycle() {
@@ -573,16 +667,14 @@ PY
 pass "duplicate conflicting Playwright artifacts HOLD with host-proven deploy"
 
 # Live Deploy UAT downloads Playwright to the checkout root, not artifacts/.
-mkdir -p "$TMP/live/artifacts" "$TMP/live/web/test-results"
+mkdir -p "$TMP/live/artifacts"
 write_predeploy "$TMP/live/artifacts" PASS "ok"
 write_dispatch "$TMP/live/artifacts"
 write_ssh "$TMP/live/artifacts" success
 write_acceptance "$TMP/live/artifacts" pass
 write_smoke "$TMP/live/artifacts" pass
 write_lifecycle "$TMP/live/artifacts" pass
-cat >"$TMP/live/web/test-results/uat-playwright.json" <<JSON
-{"stats":{"expected":8,"skipped":2,"unexpected":0,"flaky":0}}
-JSON
+write_browser "$TMP/live" 0
 out="$(
   cd "$TMP/live" &&
   UAT_FINAL_OUTCOME_DIR="$TMP/live/artifacts" TARGET_SHA="$SHA" bash "$OUTCOME"
@@ -595,6 +687,164 @@ assert p["browser"] == "pass", p
 assert p["uat_deployed"] is True
 PY
 pass "live Playwright path at cwd/web/test-results is aggregated"
+
+mkdir -p "$TMP/auth-skip/artifacts"
+write_proven_host "$TMP/auth-skip/artifacts"
+write_browser_auth_skipped "$TMP/auth-skip/artifacts"
+run_outcome "$TMP/auth-skip/artifacts"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "skipped Basic/Pro must not accept"; }
+python3 - "$TMP/auth-skip/artifacts/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["browser"] in {"skipped_required", "missing_required"}, p
+assert p["result"] == "HOLD", p
+PY
+pass "skipped mandatory Basic/Pro coverage cannot be DEPLOYED_ACCEPTED"
+
+mkdir -p "$TMP/partial-skip/artifacts"
+write_proven_host "$TMP/partial-skip/artifacts"
+write_browser "$TMP/partial-skip/artifacts" 0
+python3 - "$TMP/partial-skip/artifacts/web/test-results/uat-playwright.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+for spec in p["suites"][0]["suites"][1]["specs"]:
+    if spec["title"] == "Basic activities room loads":
+        spec["tests"][0]["status"] = "skipped"
+        spec["tests"][0]["results"] = [{"status": "skipped"}]
+json.dump(p, open(sys.argv[1], "w"))
+PY
+run_outcome "$TMP/partial-skip/artifacts"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "partial Basic skip must not accept"; }
+python3 - "$TMP/partial-skip/artifacts/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["browser"] == "skipped_required", p
+assert p["result"] == "HOLD", p
+PY
+pass "one required Basic pass plus another required Basic skip cannot be DEPLOYED_ACCEPTED"
+
+mkdir -p "$TMP/retry-final-fail/artifacts"
+write_proven_host "$TMP/retry-final-fail/artifacts"
+write_browser "$TMP/retry-final-fail/artifacts" 0
+python3 - "$TMP/retry-final-fail/artifacts/web/test-results/uat-playwright.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+for spec in p["suites"][0]["suites"][1]["specs"]:
+    if spec["title"] == "Pro analytics room loads":
+        spec["tests"][0]["status"] = "unexpected"
+        spec["tests"][0]["results"] = [{"status": "passed"}, {"status": "failed"}]
+json.dump(p, open(sys.argv[1], "w"))
+PY
+run_outcome "$TMP/retry-final-fail/artifacts"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "final retry failure must not accept"; }
+python3 - "$TMP/retry-final-fail/artifacts/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] == "DEPLOYED_REJECTED", p
+assert p["browser"] == "fail", p
+PY
+pass "final retry failure after an earlier pass is DEPLOYED_REJECTED"
+
+mkdir -p "$TMP/stats-only/artifacts"
+write_proven_host "$TMP/stats-only/artifacts"
+write_browser_raw "$TMP/stats-only/artifacts" '{"stats":{"expected":8,"skipped":2,"unexpected":0,"flaky":0}}'
+run_outcome "$TMP/stats-only/artifacts"
+[[ "$OUTCOME_RC" -ne 0 ]] || { echo "$OUTCOME_OUT"; fail "stats-only Playwright must not accept"; }
+python3 - "$TMP/stats-only/artifacts/uat-final-outcome.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1]))
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["browser"] == "missing_required", p
+PY
+pass "stats-only Playwright JSON cannot prove authenticated coverage"
+
+python3 - "$ROOT_DIR/deploy/lib/uat-playwright-coverage.py" <<'PY'
+import importlib.util, json, sys
+spec = importlib.util.spec_from_file_location("cov", sys.argv[1])
+mod = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mod)
+
+REQUIRED = list(mod.REQUIRED_SCENARIOS)
+
+def spec_for(title, status="expected", results=None, test_status=None):
+    file_name = "authenticated.spec.ts" if "login" in title else "operator-core-flows.spec.ts"
+    result_status = results if results is not None else [{"status": status}]
+    test = {"results": result_status}
+    if test_status is not None:
+        test["status"] = test_status
+    elif len(result_status) == 1:
+        test["status"] = result_status[0]["status"]
+    return {"title": title, "file": file_name, "tests": [test]}
+
+def payload(overrides=None, extra=None):
+    titles = list(REQUIRED)
+    states = {title: {} for title in titles}
+    if overrides:
+        states.update(overrides)
+    specs = [spec_for(title, **states.get(title, {})) for title in titles]
+    if extra:
+        specs.extend(extra)
+    login = [item for item in specs if item["file"] == "authenticated.spec.ts"]
+    core = [item for item in specs if item["file"] == "operator-core-flows.spec.ts"]
+    return {
+      "stats": {"expected": 10, "skipped": 1, "unexpected": 0, "flaky": 0},
+      "suites": [{
+        "title": "e2e-uat",
+        "suites": [
+          {"title": "45.4 authenticated UAT", "specs": login},
+          {"title": "19.5 operator core flows", "specs": core},
+          {"title": "45.5 OTP mailbox", "specs": [spec_for("signup OTP is read from the dedicated mailbox when configured", status="skipped")]},
+        ],
+      }],
+    }
+
+def load(label, raw):
+    got = mod.classify(raw)
+    assert got == label, (got, label, json.dumps(raw)[:400])
+
+load("ok", payload())
+load("skipped_required", payload({"Pro analytics room loads": {"status": "skipped"}}))
+load("skipped_required", payload({"Basic activities room loads": {"status": "skipped"}}))
+load("missing_required", payload({"Pro campaigns room loads without sending a blast": {"results": []}}))
+# One required Basic/Pro passes while another required test is skipped.
+partial = payload({"Basic campaigns room is Pro-locked": {"status": "skipped"}})
+load("skipped_required", partial)
+# Same group: dashboard pass + website missing must not accept.
+missing_sibling = payload()
+missing_sibling["suites"][0]["suites"][1]["specs"] = [
+    item for item in missing_sibling["suites"][0]["suites"][1]["specs"]
+    if item["title"] != "Pro website studio and public branding load"
+]
+load("missing_required", missing_sibling)
+interrupted = payload({"Pro dashboard metrics load": {"status": "interrupted", "results": [{"status": "interrupted"}]}})
+load("missing_required", interrupted)
+retry_pass = payload({"Pro analytics room loads": {"results": [{"status": "failed"}, {"status": "passed"}]}})
+load("ok", retry_pass)
+retry_fail = payload({
+    "Pro analytics room loads": {
+        "test_status": "unexpected",
+        "results": [{"status": "passed"}, {"status": "failed"}],
+    }
+})
+load("fail", retry_fail)
+retry_last_fail = payload({
+    "Basic dashboard metrics load": {
+        "results": [{"status": "passed"}, {"status": "failed"}],
+    }
+})
+load("fail", retry_last_fail)
+otp_skip_ok = payload(extra=[spec_for("signup OTP is read from the dedicated mailbox when configured", status="skipped")])
+load("ok", otp_skip_ok)
+desktop_skip = payload(extra=[spec_for(
+    "Pro create, publish, share, register, dedup, CSV, and campaign test-send",
+    status="skipped",
+)])
+load("ok", desktop_skip)
+print("classifier cases ok")
+PY
+pass "individual required scenarios, partial coverage, and final retry outcomes are classified"
 
 python3 - "$WF" <<'PY'
 from pathlib import Path
