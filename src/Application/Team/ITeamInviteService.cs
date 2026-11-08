@@ -67,6 +67,11 @@ public sealed record AcceptInviteResultDto(
     string TenantSlug,
     bool CreatedAccount);
 
+public sealed record BootstrapFirstAdminDto(
+    Guid InviteId,
+    string Email,
+    DateTimeOffset ExpiresAt);
+
 public interface ITeamInviteService
 {
     Task<TeamOverviewDto> GetOverviewAsync(Guid tenantId, CancellationToken cancellationToken = default);
@@ -76,6 +81,17 @@ public interface ITeamInviteService
         Guid invitedByUserId,
         string email,
         TenantMembershipRole role,
+        string acceptBaseUrl,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// One-time PlatformAdmin bootstrap of the first TenantAdmin on a complimentary workspace.
+    /// Does not grant the PlatformAdmin identity role. Basic uses its single seat for this invite.
+    /// </summary>
+    Task<(TeamInviteResult Result, BootstrapFirstAdminDto? Value)> BootstrapFirstAdminAsync(
+        Guid tenantId,
+        Guid invitedByUserId,
+        string email,
         string acceptBaseUrl,
         CancellationToken cancellationToken = default);
 
