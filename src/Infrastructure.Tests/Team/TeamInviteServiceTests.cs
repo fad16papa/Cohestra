@@ -317,6 +317,27 @@ public sealed class TeamInviteServiceTests
     }
 
     [Fact]
+    public async Task CompleteActivation_WeakPassword_DoesNotConsumeCode()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Basic, complimentary: true));
+        var token = TeamInviteService.GenerateToken();
+        db.TenantInvites.Add(PendingInvite(tenantId, "owner@example.com", token, requiresOtp: true));
+        await db.SaveChangesAsync();
+        var otp = new RecordingOtpStore();
+
+        var (result, value) = await CreateService(db, otp: otp).CompleteInviteActivationAsync(
+            new CompleteInviteActivationCommand(token, "longenough", "Beta Owner", "123456"));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(TeamInviteError.Validation, result.Error);
+        Assert.Null(value);
+        Assert.Equal(0, otp.ValidateCalls);
+        Assert.Equal(0, await db.TenantMemberships.CountAsync());
+    }
+
+    [Fact]
     public void MaskEmail_HidesTheLocalPart()
     {
         Assert.Equal("o***@example.com", TeamInviteService.MaskEmail("owner@example.com"));
@@ -373,6 +394,7 @@ public sealed class TeamInviteServiceTests
         public OtpPurpose StoredPurpose { get; private set; }
         public string? StoredScope => _scope;
         public bool Removed { get; private set; }
+        public int ValidateCalls { get; private set; }
 
         public Task<bool> TryStoreAsync(
             string email,
@@ -397,6 +419,7 @@ public sealed class TeamInviteServiceTests
             CancellationToken cancellationToken = default,
             string? bindingScope = null)
         {
+            ValidateCalls++;
             var match = _code is not null
                 && string.Equals(email, StoredEmail, StringComparison.OrdinalIgnoreCase)
                 && purpose == StoredPurpose

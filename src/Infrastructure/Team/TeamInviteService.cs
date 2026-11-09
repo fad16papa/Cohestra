@@ -596,9 +596,18 @@ public sealed class TeamInviteService(
         CompleteInviteActivationCommand command,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(command.Password) || command.Password.Length < 8)
+        if (!MeetsPasswordPolicy(command.Password))
         {
-            return (TeamInviteResult.Fail(TeamInviteError.Validation, "Password must be at least 8 characters."), null);
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "Password must be at least 8 characters and include upper case, lower case, and a digit."), null);
+        }
+
+        if (!string.IsNullOrWhiteSpace(command.Nickname) && !NicknamePattern.IsMatch(command.Nickname.Trim()))
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "Display name must be 3–32 characters using letters, numbers, spaces, or -_. "), null);
         }
 
         var settings = otpOptions.Value;
@@ -786,6 +795,11 @@ public sealed class TeamInviteService(
 
         if (!membershipResult.Succeeded)
         {
+            if (createdAccount)
+            {
+                await userManager.DeleteAsync(user);
+            }
+
             if (membershipResult.Error == TenantMembershipError.Conflict)
             {
                 return (TeamInviteResult.Fail(TeamInviteError.Conflict, "You are already on this team."), null);
@@ -799,6 +813,13 @@ public sealed class TeamInviteService(
 
         return (TeamInviteResult.Ok(), new AcceptInviteResultDto(invite.Email, tenant.Slug, createdAccount));
     }
+
+    internal static bool MeetsPasswordPolicy(string? password) =>
+        !string.IsNullOrEmpty(password)
+        && password.Length >= 8
+        && password.Any(char.IsUpper)
+        && password.Any(char.IsLower)
+        && password.Any(char.IsDigit);
 
     internal static string MaskEmail(string email)
     {
