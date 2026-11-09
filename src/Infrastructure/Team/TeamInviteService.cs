@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Cohestra.Application.Email;
 using Cohestra.Application.Team;
@@ -171,6 +172,169 @@ public sealed class TeamInviteService(
         return TeamInviteResult.Ok();
     }
 
+    public async Task<(TeamInviteResult Result, BootstrapFirstAdminDto? Value)> BootstrapFirstAdminAsync(
+        Guid tenantId,
+        Guid invitedByUserId,
+        string email,
+        string acceptBaseUrl,
+        CancellationToken cancellationToken = default)
+    {
+        email = email.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.Validation, "A valid email is required."), null);
+        }
+
+        if (invitedByUserId == Guid.Empty)
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.Validation, "Platform admin actor is required."), null);
+        }
+
+        var relational = dbContext.Database.IsRelational();
+        await using var transaction = relational
+            ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
+            : null;
+
+        if (relational)
+        {
+            var key = AdvisoryKey(tenantId);
+            await dbContext.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock({key})",
+                cancellationToken);
+        }
+
+        var tenant = await dbContext.Tenants
+            .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+
+        if (tenant is null)
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.NotFound, "Tenant not found."), null);
+        }
+
+        if (!tenant.IsComplimentary)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Conflict,
+                "Only complimentary workspaces can receive a first-admin bootstrap."), null);
+        }
+
+        if (tenant.Status != TenantStatus.Active)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Conflict,
+                "Suspended or archived workspaces cannot be bootstrapped."), null);
+        }
+
+        var memberCount = await dbContext.IgnoreTenantFilters<TenantMembership>()
+            .CountAsync(m => m.TenantId == tenantId, cancellationToken);
+        if (memberCount > 0)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Conflict,
+                "This workspace already has a member. Bootstrap is one-time."), null);
+        }
+
+        var limits = TenantPlanLimits.For(tenant.Plan);
+        if (ActiveMembersFillSeatCap(memberCount, limits.Seats))
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.SeatCapReached,
+                "Seat cap reached."), null);
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var pending = await dbContext.IgnoreTenantFilters<TenantInvite>().AnyAsync(
+            i => i.TenantId == tenantId
+                && i.RevokedAt == null
+                && i.AcceptedAt == null
+                && i.ExpiresAt > now,
+            cancellationToken);
+        if (pending)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Conflict,
+                "A first-admin invite is already pending."), null);
+        }
+
+        var existingUser = await userManager.FindByEmailAsync(email);
+        if (existingUser is not null
+            && await userManager.IsInRoleAsync(existingUser, global::Cohestra.Infrastructure.Auth.PlatformAdminSeeder.PlatformAdminRole))
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Conflict,
+                "Platform administrators cannot become workspace admins."), null);
+        }
+
+        var rawToken = GenerateToken();
+        var invite = new TenantInvite
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Email = email,
+            Role = TenantMembershipRole.TenantAdmin,
+            TokenHash = HashToken(rawToken),
+            InvitedByUserId = invitedByUserId,
+            ExpiresAt = now.Add(InviteTtl),
+            CreatedAt = now,
+        };
+
+        dbContext.TenantInvites.Add(invite);
+        dbContext.PlatformAuditLogs.Add(new PlatformAuditLog
+        {
+            Id = Guid.CreateVersion7(),
+            ActorUserId = invitedByUserId,
+            TenantId = tenantId,
+            Action = PlatformAuditAction.FirstAdminBootstrapped,
+            Reason = null,
+            DetailsJson = JsonSerializer.Serialize(new
+            {
+                invite.Email,
+                Role = TenantMembershipRole.TenantAdmin.ToString(),
+                tenant.Plan,
+                tenant.IsComplimentary,
+            }),
+            CreatedAt = now,
+        });
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var acceptUrl = BuildAcceptUrl(acceptBaseUrl, rawToken);
+        var sent = await SendInviteEmailAsync(tenant.Name, email, acceptUrl, cancellationToken);
+        if (!sent)
+        {
+            if (transaction is not null)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+            }
+            else
+            {
+                invite.RevokedAt = DateTimeOffset.UtcNow;
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "Invitation email could not be sent. No invite was kept."), null);
+        }
+
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
+
+        return (
+            TeamInviteResult.Ok(),
+            new BootstrapFirstAdminDto(invite.Id, invite.Email, invite.ExpiresAt));
+    }
+
+    internal static bool ActiveMembersFillSeatCap(int activeMembers, int seatLimit) =>
+        activeMembers >= seatLimit;
+
+    private static long AdvisoryKey(Guid tenantId)
+    {
+        var bytes = tenantId.ToByteArray();
+        return BitConverter.ToInt64(bytes, 0);
+    }
+
     public async Task<TeamInviteResult> RevokeInviteAsync(
         Guid tenantId,
         Guid inviteId,
@@ -326,13 +490,35 @@ public sealed class TeamInviteService(
             return (TeamInviteResult.Fail(TeamInviteError.NotFound, "Workspace not found."), null);
         }
 
-        var overview = await GetOverviewAsync(invite.TenantId, cancellationToken);
-        if (overview.SeatCapReached)
+        if (tenant.Status != TenantStatus.Active)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Conflict,
+                "This workspace is not accepting members."), null);
+        }
+
+        if (invite.Role is not (TenantMembershipRole.TenantAdmin or TenantMembershipRole.TenantMember))
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "Invite role cannot grant platform access."), null);
+        }
+
+        var memberCount = await dbContext.IgnoreTenantFilters<TenantMembership>()
+            .CountAsync(m => m.TenantId == invite.TenantId, cancellationToken);
+        if (ActiveMembersFillSeatCap(memberCount, TenantPlanLimits.For(tenant.Plan).Seats))
         {
             return (TeamInviteResult.Fail(TeamInviteError.SeatCapReached, "Seat cap reached for this workspace."), null);
         }
 
         var user = await userManager.FindByEmailAsync(invite.Email);
+        if (user is not null
+            && await userManager.IsInRoleAsync(user, global::Cohestra.Infrastructure.Auth.PlatformAdminSeeder.PlatformAdminRole))
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Conflict,
+                "Platform administrators cannot join a workspace."), null);
+        }
         var createdAccount = false;
 
         if (user is null)
@@ -427,7 +613,7 @@ public sealed class TeamInviteService(
         return $"{acceptBaseUrl.TrimEnd('/')}{separator}token={Uri.EscapeDataString(rawToken)}";
     }
 
-    private async Task SendInviteEmailAsync(
+    private async Task<bool> SendInviteEmailAsync(
         string tenantName,
         string email,
         string acceptUrl,
@@ -452,11 +638,13 @@ public sealed class TeamInviteService(
 
         try
         {
-            await emailSender.SendAsync(message, cancellationToken);
+            var result = await emailSender.SendAsync(message, cancellationToken);
+            return result.Success;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to send team invite email to {Email}", email);
+            return false;
         }
     }
 }
