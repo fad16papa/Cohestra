@@ -40,16 +40,20 @@ test.describe("45.6 Layer A real UAT recaptcha", () => {
     test.skip(viewport?.width !== 1440, "one bounded empty-token probe per deploy");
     const response = await postSignup(request, { captchaToken: null });
     const body = await response.text();
-    expect(response.status(), body).toBe(400);
-    expect(body).toMatch(/CAPTCHA/i);
+    // Invite-only UAT closes signup before CAPTCHA verification. HTTP 403 is
+    // the closed-signup result. Open-signup CAPTCHA 400 stays in Layer B.
+    expect(response.status(), body).toBe(403);
+    expect(body).toMatch(/signup-closed/i);
+    expect(body).toMatch(/currently closed/i);
   });
 
   test("invalid CAPTCHA token is rejected", async ({ request, viewport }) => {
     test.skip(viewport?.width !== 1440, "one bounded invalid-token probe per deploy");
     const response = await postSignup(request, { captchaToken: "19-3-invalid-not-a-google-token" });
     const body = await response.text();
-    expect(response.status(), body).toBe(400);
-    expect(body).toMatch(/CAPTCHA/i);
+    expect(response.status(), body).toBe(403);
+    expect(body).toMatch(/signup-closed/i);
+    expect(body).toMatch(/currently closed/i);
   });
 });
 

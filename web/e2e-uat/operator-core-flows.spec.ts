@@ -1,5 +1,7 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
+import { resolveUatWorkspaceOrigin } from "../lib/uat-workspace-origin";
+
 /**
  * Story 19.5 operator walks.
  *
@@ -63,23 +65,34 @@ function workspaceOrigin(slug: string): string {
   if (!base) {
     throw new Error("UAT_PUBLIC_BASE_URL is required");
   }
-  const url = new URL(base);
-  if (!url.hostname.startsWith(`${slug}.`)) {
-    url.hostname = `${slug}.${url.hostname}`;
-  }
-  return url.origin;
+  return resolveUatWorkspaceOrigin(base, slug);
 }
 
 function isDesktopProject(testInfoName: string): boolean {
   return testInfoName.includes("desktop");
 }
 
+function isSettledWorkspaceUrl(url: URL): boolean {
+  const path = url.pathname;
+  const onWorkspace =
+    path === "/dashboard"
+    || path.startsWith("/dashboard/")
+    || path === "/platform"
+    || path.startsWith("/platform/");
+  return onWorkspace && !url.searchParams.has("handoff");
+}
+
+/**
+ * Email/password login. Apex login returns a one-time handoff to the
+ * account's tenant host. Wait until that exchange finishes and return the
+ * workspace origin. A later goto back to the marketing apex drops the session.
+ */
 async function loginOnWorkspace(
   page: Page,
   origin: string,
   email: string,
   password: string,
-) {
+): Promise<string> {
   const response = await page.goto(`${origin}/login`, {
     waitUntil: "networkidle",
   });
@@ -93,8 +106,10 @@ async function loginOnWorkspace(
   await page.locator("#email").fill(email);
   await page.locator("#password").fill(password);
   await submit.click();
-  await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 20_000 });
+  await page.waitForURL(isSettledWorkspaceUrl, { timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
   await expect(page.locator("main, [role='main']").first()).toBeVisible();
+  return new URL(page.url()).origin;
 }
 
 async function sessionAccessToken(page: Page): Promise<string> {
@@ -335,8 +350,12 @@ test.describe("19.5 operator core flows", () => {
         "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(basicSlug);
-    await loginOnWorkspace(page, origin, basicEmail, basicPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(basicSlug),
+      basicEmail,
+      basicPassword,
+    );
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
@@ -350,8 +369,12 @@ test.describe("19.5 operator core flows", () => {
         "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(basicSlug);
-    await loginOnWorkspace(page, origin, basicEmail, basicPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(basicSlug),
+      basicEmail,
+      basicPassword,
+    );
     await page.goto(`${origin}/activities`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Activities" })).toBeVisible({
@@ -365,8 +388,12 @@ test.describe("19.5 operator core flows", () => {
         "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(basicSlug);
-    await loginOnWorkspace(page, origin, basicEmail, basicPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(basicSlug),
+      basicEmail,
+      basicPassword,
+    );
     await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toBeVisible({
@@ -384,8 +411,12 @@ test.describe("19.5 operator core flows", () => {
         "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(basicSlug);
-    await loginOnWorkspace(page, origin, basicEmail, basicPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(basicSlug),
+      basicEmail,
+      basicPassword,
+    );
     await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /email campaigns are a pro craft/i })).toBeVisible({
@@ -399,8 +430,12 @@ test.describe("19.5 operator core flows", () => {
         "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(proSlug);
-    await loginOnWorkspace(page, origin, proEmail, proPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(proSlug),
+      proEmail,
+      proPassword,
+    );
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
@@ -414,8 +449,12 @@ test.describe("19.5 operator core flows", () => {
         "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(proSlug);
-    await loginOnWorkspace(page, origin, proEmail, proPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(proSlug),
+      proEmail,
+      proPassword,
+    );
     await page.goto(`${origin}/analytics`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible({
@@ -429,8 +468,12 @@ test.describe("19.5 operator core flows", () => {
         "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(proSlug);
-    await loginOnWorkspace(page, origin, proEmail, proPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(proSlug),
+      proEmail,
+      proPassword,
+    );
     await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toHaveCount(0);
@@ -451,13 +494,20 @@ test.describe("19.5 operator core flows", () => {
         "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(proSlug);
-    await loginOnWorkspace(page, origin, proEmail, proPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(proSlug),
+      proEmail,
+      proPassword,
+    );
     await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /email campaigns are a pro craft/i })).toHaveCount(0);
     await expect(page.getByRole("heading", { name: /upgrade|unlock/i })).toHaveCount(0);
-    await expect(page.locator("main, [role='main']").first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { level: 1, name: "Campaigns" })).toBeVisible({
+      timeout: 20_000,
+    });
   });
 
   test("Pro create, publish, share, register, dedup, CSV, and campaign test-send", async ({
@@ -471,8 +521,12 @@ test.describe("19.5 operator core flows", () => {
     test.skip(!isDesktopProject(testInfo.project.name), "mutating Pro walk runs once on desktop");
     test.setTimeout(180_000);
 
-    const origin = workspaceOrigin(proSlug);
-    await loginOnWorkspace(page, origin, proEmail, proPassword);
+    const origin = await loginOnWorkspace(
+      page,
+      workspaceOrigin(proSlug),
+      proEmail,
+      proPassword,
+    );
     const request = page.request;
     const token = await sessionAccessToken(page);
     const me = await request.get(`${origin}/api/v1/admin/me`, { headers: authHeaders(token) });
