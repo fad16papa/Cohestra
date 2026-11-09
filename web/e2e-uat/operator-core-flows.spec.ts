@@ -1,22 +1,20 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
-import {
-  configuredSlugIsMarketingApex,
-  resolveUatWorkspaceOrigin,
-} from "../lib/uat-workspace-origin";
+import { resolveUatWorkspaceOrigin } from "../lib/uat-workspace-origin";
+import { requireConfiguredQaSlug, type QaRole } from "../lib/uat-qa-tenant";
+import { assertLiveQaSession } from "./qa-session";
 
 /**
  * Story 19.5 operator walks.
  *
- * UAT_AUTO_BASIC_* / UAT_AUTO_PRO_* are Environment `uat` aliases for
- * EXISTING isolated UAT TenantAdmins. They are not a requirement to
- * provision new users or mailboxes. UAT_AUTO_BASIC_SLUG /
- * UAT_AUTO_PRO_SLUG select the tenant host (fallbacks default /
- * creativorare). Do not hardcode a live slug here.
+ * Required workspaces, after owner provisioning: cohestra-qa-basic and
+ * cohestra-qa-pro. UAT_AUTO_BASIC_SLUG and UAT_AUTO_PRO_SLUG must be those
+ * slugs. Acceptance does not fall back to the marketing apex or another
+ * organization. After login, /api/v1/public/door and /api/v1/admin/shell
+ * must show that workspace, its plan, and an active door.
  *
  * Canonical 19.5 login is email/password on the tenant host.
  * Signup OTP (Epic 45.5 / Story 19.3) is out of scope here.
- * Do not suspend or archive `default` or `creativorare`.
  * Do not POST /api/v1/admin/campaigns/send (list blast). Test-send only.
  */
 
@@ -25,8 +23,6 @@ const basicPassword = process.env.UAT_AUTO_BASIC_PASSWORD ?? "";
 const proEmail = process.env.UAT_AUTO_PRO_EMAIL ?? "";
 const proPassword = process.env.UAT_AUTO_PRO_PASSWORD ?? "";
 
-const basicSlug = process.env.UAT_AUTO_BASIC_SLUG?.trim() || "default";
-const proSlug = process.env.UAT_AUTO_PRO_SLUG?.trim() || "creativorare";
 
 const HARNESS_COMMUNITY = "19.5 Harness";
 const HARNESS_CATEGORY = "19.5 Category";
@@ -115,46 +111,29 @@ async function loginOnWorkspace(
   return new URL(page.url()).origin;
 }
 
-function assertProSlugIsTenant(): void {
+async function loginQa(page: Page, role: QaRole): Promise<string> {
+  const email = role === "basic" ? basicEmail : proEmail;
+  const password = role === "basic" ? basicPassword : proPassword;
+  const slug = requireConfiguredQaSlug(
+    role,
+    role === "basic" ? process.env.UAT_AUTO_BASIC_SLUG : process.env.UAT_AUTO_PRO_SLUG,
+  );
+  if (!email || !password) {
+    throw new Error(
+      role === "basic"
+        ? "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip"
+        : "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+    );
+  }
+
   const base = process.env.UAT_PUBLIC_BASE_URL ?? "";
-  if (!base) {
-    throw new Error("UAT_PUBLIC_BASE_URL is required");
-  }
-  if (configuredSlugIsMarketingApex(base, proSlug)) {
-    throw new Error(
-      "REQUIRED OWNER ACTION: UAT_AUTO_PRO_SLUG is the UAT marketing apex label, not a tenant slug. Set UAT_AUTO_PRO_SLUG to the Pro workspace slug. Acceptance will not follow a handoff onto a different tenant.",
-    );
-  }
-}
-
-async function loginPro(page: Page): Promise<string> {
-  assertProSlugIsTenant();
-  if (!proEmail || !proPassword) {
-    throw new Error(
-      "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-    );
-  }
-
-  const requested = workspaceOrigin(proSlug);
-  const origin = await loginOnWorkspace(page, requested, proEmail, proPassword);
-  const sessionHost = new URL(origin).hostname;
-  const expectedHost = new URL(requested).hostname;
-  expect(sessionHost, "Pro session host").toBe(expectedHost);
-
-  const shell = await page.request.get(`${origin}/api/v1/admin/shell`, {
-    headers: authHeaders(await sessionAccessToken(page)),
+  const origin = await loginOnWorkspace(page, workspaceOrigin(slug), email, password);
+  await assertLiveQaSession(page, {
+    role,
+    base,
+    configuredSlug: slug,
+    sessionOrigin: origin,
   });
-  expect(shell.ok(), `admin/shell ${shell.status()}`).toBeTruthy();
-  const body = (await shell.json()) as {
-    tenantSlug?: string;
-    TenantSlug?: string;
-    plan?: string;
-    Plan?: string;
-  };
-  const tenantSlug = String(body.tenantSlug ?? body.TenantSlug ?? "").trim().toLowerCase();
-  const plan = String(body.plan ?? body.Plan ?? "").trim();
-  expect(tenantSlug, "authenticated tenant").toBe(proSlug.trim().toLowerCase());
-  expect(plan, "Pro entitlement").toBe("Pro");
   return origin;
 }
 
@@ -391,17 +370,7 @@ async function unpublishIfPresent(
 
 test.describe("19.5 operator core flows", () => {
   test("Basic dashboard metrics load", async ({ page }) => {
-    if (!basicEmail || !basicPassword) {
-      throw new Error(
-        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(basicSlug),
-      basicEmail,
-      basicPassword,
-    );
+    const origin = await loginQa(page, "basic");
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
@@ -410,17 +379,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic activities room loads", async ({ page }) => {
-    if (!basicEmail || !basicPassword) {
-      throw new Error(
-        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(basicSlug),
-      basicEmail,
-      basicPassword,
-    );
+    const origin = await loginQa(page, "basic");
     await page.goto(`${origin}/activities`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Activities" })).toBeVisible({
@@ -429,17 +388,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic website is Core-locked and public stub home loads", async ({ page }) => {
-    if (!basicEmail || !basicPassword) {
-      throw new Error(
-        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(basicSlug),
-      basicEmail,
-      basicPassword,
-    );
+    const origin = await loginQa(page, "basic");
     await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toBeVisible({
@@ -452,17 +401,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic campaigns room is Pro-locked", async ({ page }) => {
-    if (!basicEmail || !basicPassword) {
-      throw new Error(
-        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(basicSlug),
-      basicEmail,
-      basicPassword,
-    );
+    const origin = await loginQa(page, "basic");
     await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /email campaigns are a pro craft/i })).toBeVisible({
@@ -471,7 +410,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro dashboard metrics load", async ({ page }) => {
-    const origin = await loginPro(page);
+    const origin = await loginQa(page, "pro");
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
@@ -480,7 +419,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro analytics room loads", async ({ page }) => {
-    const origin = await loginPro(page);
+    const origin = await loginQa(page, "pro");
     await page.goto(`${origin}/analytics`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible({
@@ -489,7 +428,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro website studio and public branding load", async ({ page }) => {
-    const origin = await loginPro(page);
+    const origin = await loginQa(page, "pro");
     await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toHaveCount(0);
@@ -504,7 +443,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro campaigns room loads without sending a blast", async ({ page }) => {
-    const origin = await loginPro(page);
+    const origin = await loginQa(page, "pro");
     await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /email campaigns are a pro craft/i })).toHaveCount(0);
@@ -521,7 +460,7 @@ test.describe("19.5 operator core flows", () => {
     test.skip(!isDesktopProject(testInfo.project.name), "mutating Pro walk runs once on desktop");
     test.setTimeout(180_000);
 
-    const origin = await loginPro(page);
+    const origin = await loginQa(page, "pro");
     const request = page.request;
     const token = await sessionAccessToken(page);
     const me = await request.get(`${origin}/api/v1/admin/me`, { headers: authHeaders(token) });
