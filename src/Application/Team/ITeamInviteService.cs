@@ -12,6 +12,8 @@ public enum TeamInviteError
     NotFound,
     Expired,
     Revoked,
+    ActivationOtpRequired,
+    RateLimited,
 }
 
 public sealed record TeamInviteResult(
@@ -55,7 +57,21 @@ public sealed record InvitePreviewDto(
     string TenantSlug,
     string Email,
     string Role,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    bool RequiresActivationOtp);
+
+public sealed record StartInviteActivationCommand(string Token, string? Nickname);
+
+public sealed record StartInviteActivationDto(
+    bool CodeSent,
+    string MaskedEmail,
+    int ExpiresInSeconds);
+
+public sealed record CompleteInviteActivationCommand(
+    string Token,
+    string Password,
+    string? Nickname,
+    string Code);
 
 public sealed record AcceptInviteCommand(
     string Token,
@@ -110,5 +126,13 @@ public interface ITeamInviteService
 
     Task<(TeamInviteResult Result, AcceptInviteResultDto? Value)> AcceptInviteAsync(
         AcceptInviteCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<(TeamInviteResult Result, StartInviteActivationDto? Value)> StartInviteActivationAsync(
+        StartInviteActivationCommand command,
+        CancellationToken cancellationToken = default);
+
+    Task<(TeamInviteResult Result, AcceptInviteResultDto? Value)> CompleteInviteActivationAsync(
+        CompleteInviteActivationCommand command,
         CancellationToken cancellationToken = default);
 }

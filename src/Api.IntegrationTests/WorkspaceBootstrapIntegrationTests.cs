@@ -57,10 +57,19 @@ public sealed class WorkspaceBootstrapIntegrationTests(IntegrationTestFixture fi
         Assert.Equal("bootstrap_conflict", await IntegrationTestHelpers.ReadProblemErrorCodeAsync(duplicate));
 
         using var acceptClient = Factory.CreateClient();
-        using var accept = await acceptClient.PostAsJsonAsync(
+        using var blocked = await acceptClient.PostAsJsonAsync(
             "/api/v1/public/team/invites/accept",
             new AcceptTeamInviteRequest(token!, Password, "Beta Owner"),
             IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.BadRequest, blocked.StatusCode);
+        Assert.Equal("activation_otp_required", await IntegrationTestHelpers.ReadProblemErrorCodeAsync(blocked));
+        await using (var scope = Factory.Services.CreateAsyncScope())
+        {
+            var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            Assert.Null(await users.FindByEmailAsync(email));
+        }
+
+        using var accept = await ActivateWithOtpAsync(acceptClient, token!, email, "Beta Owner");
         Assert.Equal(HttpStatusCode.OK, accept.StatusCode);
 
         using var reused = await acceptClient.PostAsJsonAsync(
@@ -260,10 +269,7 @@ public sealed class WorkspaceBootstrapIntegrationTests(IntegrationTestFixture fi
         Assert.Equal(HttpStatusCode.OK, bootstrap.StatusCode);
 
         using var acceptClient = Factory.CreateClient();
-        using var accept = await acceptClient.PostAsJsonAsync(
-            "/api/v1/public/team/invites/accept",
-            new AcceptTeamInviteRequest(ReadInviteToken(email), Password, "Live Owner"),
-            IntegrationTestHelpers.JsonOptions);
+        using var accept = await ActivateWithOtpAsync(acceptClient, ReadInviteToken(email), email, "Live Owner");
         Assert.Equal(HttpStatusCode.OK, accept.StatusCode);
 
         using var suspend = await platform.PostAsJsonAsync(
@@ -311,10 +317,94 @@ public sealed class WorkspaceBootstrapIntegrationTests(IntegrationTestFixture fi
     {
         var sender = (FakeEmailSender)Factory.Services.GetRequiredService<IEmailSender>();
         var message = sender.Sent.Last(sent =>
-            string.Equals(sent.ToEmail, email, StringComparison.OrdinalIgnoreCase));
+            string.Equals(sent.ToEmail, email, StringComparison.OrdinalIgnoreCase)
+            && sent.PlainTextBody.Contains("token=", StringComparison.Ordinal));
         var match = Regex.Match(message.PlainTextBody, @"token=([^&\s]+)");
         Assert.True(match.Success, "Invite email did not include a token.");
         return Uri.UnescapeDataString(match.Groups[1].Value);
+    }
+
+    [SkippableFact]
+    public async Task InvitationCode_IsBoundToThatInvite()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var slugA = NewSlug();
+        var emailA = $"a-{slugA}@example.com";
+        var slugB = NewSlug();
+        var emailB = $"b-{slugB}@example.com";
+        using var platform = await PlatformClientAsync();
+        var tenantA = await CreateComplimentaryAsync(platform, slugA, TenantPlan.Basic, emailA);
+        var tenantB = await CreateComplimentaryAsync(platform, slugB, TenantPlan.Basic, emailB);
+        using var bootA = await platform.PostAsJsonAsync(
+            $"/api/v1/platform/tenants/{tenantA.Id}/bootstrap-admin",
+            new BootstrapFirstAdminRequest(emailA),
+            IntegrationTestHelpers.JsonOptions);
+        using var bootB = await platform.PostAsJsonAsync(
+            $"/api/v1/platform/tenants/{tenantB.Id}/bootstrap-admin",
+            new BootstrapFirstAdminRequest(emailB),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, bootA.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, bootB.StatusCode);
+
+        using var client = Factory.CreateClient();
+        var tokenB = ReadInviteToken(emailB);
+        using var startB = await client.PostAsJsonAsync(
+            "/api/v1/public/team/invites/activation",
+            new StartInviteActivationRequest(tokenB, "Owner B"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, startB.StatusCode);
+        using var startA = await client.PostAsJsonAsync(
+            "/api/v1/public/team/invites/activation",
+            new StartInviteActivationRequest(ReadInviteToken(emailA), "Owner A"),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, startA.StatusCode);
+
+        using var crossed = await client.PostAsJsonAsync(
+            "/api/v1/public/team/invites/activation/verify",
+            new CompleteInviteActivationRequest(tokenB, Password, "Owner B", ReadInvitationCode(emailA)),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.BadRequest, crossed.StatusCode);
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        Assert.Null(await users.FindByEmailAsync(emailB));
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        Assert.Equal(0, await db.IgnoreTenantFilters<TenantMembership>().CountAsync(row => row.TenantId == tenantB.Id));
+    }
+
+    private async Task<HttpResponseMessage> ActivateWithOtpAsync(
+        HttpClient client,
+        string token,
+        string email,
+        string nickname)
+    {
+        using var start = await client.PostAsJsonAsync(
+            "/api/v1/public/team/invites/activation",
+            new StartInviteActivationRequest(token, nickname),
+            IntegrationTestHelpers.JsonOptions);
+        Assert.Equal(HttpStatusCode.OK, start.StatusCode);
+        var started = await start.Content.ReadFromJsonAsync<StartInviteActivationResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(started);
+        Assert.True(started!.CodeSent);
+        Assert.DoesNotContain(email, started.MaskedEmail, StringComparison.OrdinalIgnoreCase);
+
+        return await client.PostAsJsonAsync(
+            "/api/v1/public/team/invites/activation/verify",
+            new CompleteInviteActivationRequest(token, Password, nickname, ReadInvitationCode(email)),
+            IntegrationTestHelpers.JsonOptions);
+    }
+
+    private string ReadInvitationCode(string email)
+    {
+        var sender = (FakeEmailSender)Factory.Services.GetRequiredService<IEmailSender>();
+        var message = sender.Sent.Last(sent =>
+            string.Equals(sent.ToEmail, email, StringComparison.OrdinalIgnoreCase)
+            && sent.PlainTextBody.Contains("invitation code is:", StringComparison.OrdinalIgnoreCase));
+        var match = Regex.Match(message.PlainTextBody, @"invitation code is: (\d{6})", RegexOptions.IgnoreCase);
+        Assert.True(match.Success, "Activation email did not include a code.");
+        return match.Groups[1].Value;
     }
 
     private static string NewSlug() => "b" + Guid.NewGuid().ToString("N")[..12];

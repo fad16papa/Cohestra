@@ -2,9 +2,11 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Cohestra.Application.Auth;
 using Cohestra.Application.Email;
 using Cohestra.Application.Team;
 using Cohestra.Application.Tenants;
+using Cohestra.Infrastructure.Auth;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Email;
 using Cohestra.Infrastructure.Identity;
@@ -22,7 +24,9 @@ public sealed class TeamInviteService(
     ITenantMembershipService membershipService,
     IEmailSender emailSender,
     IOptions<SendGridSettings> sendGridOptions,
-    ILogger<TeamInviteService> logger) : ITeamInviteService
+    ILogger<TeamInviteService> logger,
+    IAuthOtpStore otpStore,
+    IOptions<AuthOtpSettings> otpOptions) : ITeamInviteService
 {
     private static readonly TimeSpan InviteTtl = TimeSpan.FromDays(7);
 
@@ -276,6 +280,7 @@ public sealed class TeamInviteService(
             InvitedByUserId = invitedByUserId,
             ExpiresAt = now.Add(InviteTtl),
             CreatedAt = now,
+            RequiresActivationOtp = true,
         };
 
         dbContext.TenantInvites.Add(invite);
@@ -440,7 +445,8 @@ public sealed class TeamInviteService(
             tenant.Slug,
             invite.Email,
             invite.Role.ToString(),
-            invite.ExpiresAt);
+            invite.ExpiresAt,
+            invite.RequiresActivationOtp);
     }
 
     public async Task<(TeamInviteResult Result, AcceptInviteResultDto? Value)> AcceptInviteAsync(
@@ -511,6 +517,208 @@ public sealed class TeamInviteService(
             return (TeamInviteResult.Fail(TeamInviteError.SeatCapReached, "Seat cap reached for this workspace."), null);
         }
 
+        if (invite.RequiresActivationOtp)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.ActivationOtpRequired,
+                "This invitation needs the email code before the account can be activated."), null);
+        }
+
+        return await ActivateInviteAsync(invite, tenant, command.Password, command.Nickname, cancellationToken);
+    }
+
+    public async Task<(TeamInviteResult Result, StartInviteActivationDto? Value)> StartInviteActivationAsync(
+        StartInviteActivationCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        var loaded = await LoadActionableInviteAsync(command.Token, cancellationToken);
+        if (loaded.Failure is not null)
+        {
+            return (loaded.Failure, null);
+        }
+
+        var invite = loaded.Invite!;
+        if (!invite.RequiresActivationOtp)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "This invitation is accepted without an email code."), null);
+        }
+
+        if (!string.IsNullOrWhiteSpace(command.Nickname) && !NicknamePattern.IsMatch(command.Nickname.Trim()))
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "Display name must be 3–32 characters using letters, numbers, spaces, or -_. "), null);
+        }
+
+        var settings = otpOptions.Value;
+        var scope = ActivationScope(invite);
+        var sendAllowed = await otpStore.TryRecordSendAttemptAsync(
+            invite.Email,
+            OtpPurpose.InviteActivation,
+            settings.MaxSendAttemptsPerWindow,
+            TimeSpan.FromMinutes(settings.SendWindowMinutes),
+            cancellationToken,
+            scope);
+        if (!sendAllowed)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.RateLimited,
+                "Too many code requests. Wait a few minutes and try again."), null);
+        }
+
+        var code = GenerateNumericCode(settings.CodeLength);
+        var ttl = TimeSpan.FromMinutes(settings.ExpiryMinutes);
+        await otpStore.TryStoreAsync(
+            invite.Email,
+            OtpPurpose.InviteActivation,
+            code,
+            ttl,
+            cancellationToken,
+            scope);
+
+        var sent = await SendActivationCodeAsync(invite.Email, code, settings.ExpiryMinutes, invite.Id, cancellationToken);
+        if (!sent)
+        {
+            await otpStore.RemoveAsync(invite.Email, OtpPurpose.InviteActivation, cancellationToken, scope);
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "The email code could not be sent. No account was created."), null);
+        }
+
+        return (
+            TeamInviteResult.Ok(),
+            new StartInviteActivationDto(true, MaskEmail(invite.Email), settings.ExpiryMinutes * 60));
+    }
+
+    public async Task<(TeamInviteResult Result, AcceptInviteResultDto? Value)> CompleteInviteActivationAsync(
+        CompleteInviteActivationCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(command.Password) || command.Password.Length < 8)
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.Validation, "Password must be at least 8 characters."), null);
+        }
+
+        var settings = otpOptions.Value;
+        var code = command.Code?.Trim() ?? string.Empty;
+        if (code.Length != settings.CodeLength || code.Any(ch => !char.IsDigit(ch)))
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.Validation, "Enter the email code."), null);
+        }
+
+        var loaded = await LoadActionableInviteAsync(command.Token, cancellationToken);
+        if (loaded.Failure is not null)
+        {
+            return (loaded.Failure, null);
+        }
+
+        var invite = loaded.Invite!;
+        var tenant = loaded.Tenant!;
+        if (!invite.RequiresActivationOtp)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "This invitation is accepted without an email code."), null);
+        }
+
+        var scope = ActivationScope(invite);
+        var consumed = await otpStore.ValidateAndConsumeAsync(
+            invite.Email,
+            OtpPurpose.InviteActivation,
+            code,
+            cancellationToken,
+            scope);
+        if (!consumed)
+        {
+            var stillAllowed = await otpStore.TryRecordFailedVerificationAsync(
+                invite.Email,
+                OtpPurpose.InviteActivation,
+                settings.MaxFailedVerificationAttempts,
+                cancellationToken,
+                scope);
+            return stillAllowed
+                ? (TeamInviteResult.Fail(TeamInviteError.Validation, "That code is invalid or expired."), null)
+                : (TeamInviteResult.Fail(
+                    TeamInviteError.RateLimited,
+                    "Too many incorrect codes. Request a new code."), null);
+        }
+
+        return await ActivateInviteAsync(invite, tenant, command.Password, command.Nickname, cancellationToken);
+    }
+
+    private async Task<(TeamInviteResult? Failure, TenantInvite? Invite, Tenant? Tenant)> LoadActionableInviteAsync(
+        string token,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.Validation, "Invite token is required."), null, null);
+        }
+
+        var hash = HashToken(token.Trim());
+        var invite = await dbContext.IgnoreTenantFilters<TenantInvite>()
+            .FirstOrDefaultAsync(i => i.TokenHash == hash, cancellationToken);
+        if (invite is null)
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.NotFound, "Invite not found."), null, null);
+        }
+
+        if (invite.RevokedAt is not null)
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.Revoked, "This invite was revoked."), null, null);
+        }
+
+        if (invite.AcceptedAt is not null)
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.Conflict, "This invite was already accepted."), null, null);
+        }
+
+        if (invite.ExpiresAt <= DateTimeOffset.UtcNow)
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.Expired, "This invite has expired."), null, null);
+        }
+
+        var tenant = await dbContext.Tenants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == invite.TenantId, cancellationToken);
+        if (tenant is null)
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.NotFound, "Workspace not found."), null, null);
+        }
+
+        if (tenant.Status != TenantStatus.Active)
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Conflict,
+                "This workspace is not accepting members."), null, null);
+        }
+
+        if (invite.Role is not (TenantMembershipRole.TenantAdmin or TenantMembershipRole.TenantMember))
+        {
+            return (TeamInviteResult.Fail(
+                TeamInviteError.Validation,
+                "Invite role cannot grant platform access."), null, null);
+        }
+
+        var memberCount = await dbContext.IgnoreTenantFilters<TenantMembership>()
+            .CountAsync(m => m.TenantId == invite.TenantId, cancellationToken);
+        if (ActiveMembersFillSeatCap(memberCount, TenantPlanLimits.For(tenant.Plan).Seats))
+        {
+            return (TeamInviteResult.Fail(TeamInviteError.SeatCapReached, "Seat cap reached for this workspace."), null, null);
+        }
+
+        return (null, invite, tenant);
+    }
+
+    private async Task<(TeamInviteResult Result, AcceptInviteResultDto? Value)> ActivateInviteAsync(
+        TenantInvite invite,
+        Tenant tenant,
+        string password,
+        string? nickname,
+        CancellationToken cancellationToken)
+    {
         var user = await userManager.FindByEmailAsync(invite.Email);
         if (user is not null
             && await userManager.IsInRoleAsync(user, global::Cohestra.Infrastructure.Auth.PlatformAdminSeeder.PlatformAdminRole))
@@ -523,11 +731,11 @@ public sealed class TeamInviteService(
 
         if (user is null)
         {
-            var nickname = string.IsNullOrWhiteSpace(command.Nickname)
+            var displayName = string.IsNullOrWhiteSpace(nickname)
                 ? invite.Email.Split('@')[0]
-                : command.Nickname.Trim();
+                : nickname.Trim();
 
-            if (!NicknamePattern.IsMatch(nickname))
+            if (!NicknamePattern.IsMatch(displayName))
             {
                 return (TeamInviteResult.Fail(
                     TeamInviteError.Validation,
@@ -539,11 +747,11 @@ public sealed class TeamInviteService(
                 Id = Guid.NewGuid(),
                 Email = invite.Email,
                 UserName = invite.Email,
-                Nickname = nickname,
+                Nickname = displayName,
                 EmailConfirmed = true,
             };
 
-            var createResult = await userManager.CreateAsync(user, command.Password);
+            var createResult = await userManager.CreateAsync(user, password);
             if (!createResult.Succeeded)
             {
                 var detail = string.Join(" ", createResult.Errors.Select(e => e.Description));
@@ -561,7 +769,7 @@ public sealed class TeamInviteService(
                     "Verify your email before accepting this invite."), null);
             }
 
-            var passwordValid = await userManager.CheckPasswordAsync(user, command.Password);
+            var passwordValid = await userManager.CheckPasswordAsync(user, password);
             if (!passwordValid)
             {
                 return (TeamInviteResult.Fail(
@@ -590,6 +798,63 @@ public sealed class TeamInviteService(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return (TeamInviteResult.Ok(), new AcceptInviteResultDto(invite.Email, tenant.Slug, createdAccount));
+    }
+
+    internal static string MaskEmail(string email)
+    {
+        var at = email.IndexOf('@');
+        if (at <= 0 || at == email.Length - 1)
+        {
+            return "***";
+        }
+
+        var local = email[..at];
+        var visible = local.Length == 1 ? "*" : local[..1] + "***";
+        return visible + "@" + email[(at + 1)..];
+    }
+
+    private static string ActivationScope(TenantInvite invite) =>
+        $"{invite.Id:D}|{invite.TenantId:D}|{invite.Email.Trim().ToLowerInvariant()}";
+
+    private static string GenerateNumericCode(int length)
+    {
+        var digits = length < 6 ? 6 : length;
+        var max = (int)Math.Pow(10, digits);
+        var min = max / 10;
+        return RandomNumberGenerator.GetInt32(min, max).ToString();
+    }
+
+    private async Task<bool> SendActivationCodeAsync(
+        string email,
+        string code,
+        int expiryMinutes,
+        Guid inviteId,
+        CancellationToken cancellationToken)
+    {
+        var settings = sendGridOptions.Value;
+        var fromEmail = string.IsNullOrWhiteSpace(settings.FromEmail) ? "noreply@cohestra.app" : settings.FromEmail;
+        var fromName = string.IsNullOrWhiteSpace(settings.FromName) ? "Cohestra" : settings.FromName;
+        var content = AuthOtpEmailBuilder.BuildInviteActivation(code, expiryMinutes);
+        var message = new EmailMessage(
+            email,
+            null,
+            content.Subject,
+            content.PlainTextBody,
+            content.HtmlBody,
+            fromEmail,
+            fromName,
+            content.InlineAttachments);
+
+        try
+        {
+            var result = await emailSender.SendAsync(message, cancellationToken);
+            return result.Success;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to send invitation activation code for invite {InviteId}", inviteId);
+            return false;
+        }
     }
 
     internal static string HashToken(string token)

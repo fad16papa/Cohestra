@@ -96,14 +96,14 @@ function InviteActivationForm({
   const trimmedNickname = nickname.trim();
 
   useEffect(() => {
-    if (step !== 2 || expiresInSeconds <= 0) {
+    if (step !== 2) {
       return;
     }
     const timer = window.setInterval(() => {
       setExpiresInSeconds((current) => (current > 0 ? current - 1 : 0));
     }, 1000);
     return () => window.clearInterval(timer);
-  }, [step, expiresInSeconds]);
+  }, [step]);
 
   async function sendCode() {
     setSubmitting(true);

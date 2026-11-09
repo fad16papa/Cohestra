@@ -385,7 +385,7 @@ export default function PlatformTenantDetailPage() {
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                disabled={busy || bootstrapEmail.trim().length === 0}
+                disabled={busy || bootstrapSuccess !== null || bootstrapEmail.trim().length === 0}
                 onClick={() => setBootstrapConfirmOpen(true)}
                 className="min-h-11 rounded-[10px] bg-[var(--plat-lagoon)] px-4 text-sm font-semibold text-[var(--plat-lagoon-fg)] disabled:opacity-50"
               >
@@ -419,7 +419,7 @@ export default function PlatformTenantDetailPage() {
                 Cancel
               </AlertDialogCancel>
               <AlertDialogAction
-                disabled={busy || bootstrapEmail.trim().length === 0}
+                disabled={busy || bootstrapSuccess !== null || bootstrapEmail.trim().length === 0}
                 className="min-h-11"
                 onClick={() => {
                   setBootstrapConfirmOpen(false);
