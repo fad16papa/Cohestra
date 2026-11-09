@@ -208,6 +208,163 @@ public sealed class AuthServiceMembershipGuardTests
     }
 
     [Fact]
+    public async Task VerifyEmail_confirmed_account_does_not_issue_a_session()
+    {
+        await using var harness = await AuthHarness.CreateAsync(useCountingOtpLimiter: true);
+        var confirmed = await harness.CreateUserAsync(
+            "confirmed@test.local",
+            "ChangeMe123!",
+            emailConfirmed: false,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            confirmed.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var (failedTokens, _, _) = await harness.Auth.VerifyEmailAsync(
+                new VerifyEmailOtpRequest("confirmed@test.local", "000000"),
+                "default.localhost",
+                clientIp: "203.0.113.10");
+            Assert.Null(failedTokens);
+        }
+
+        await harness.SetEmailConfirmedAsync(confirmed.Id, true);
+        harness.Otp.Plant("confirmed@test.local", OtpPurpose.EmailVerification, "123456");
+
+        var (tokens, error, errorCode) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("confirmed@test.local", "123456"),
+            "default.localhost",
+            clientIp: "203.0.113.10");
+
+        Assert.Null(tokens);
+        Assert.Null(errorCode);
+        Assert.Contains("already verified", error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(2, harness.Otp.ValidateCalls);
+        Assert.Equal(2, harness.VerifyLimiter!.FailureCount("confirmed@test.local", "203.0.113.10"));
+        Assert.True((await harness.GetUserAsync(confirmed.Id)).EmailConfirmed);
+    }
+
+    [Fact]
+    public async Task VerifyEmail_pending_account_with_valid_otp_issues_default_tenant_session()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var pending = await harness.CreateUserAsync(
+            "pending@test.local",
+            "ChangeMe123!",
+            emailConfirmed: false,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+        harness.Otp.Plant("pending@test.local", OtpPurpose.EmailVerification, "123456");
+
+        var (tokens, error, errorCode) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("pending@test.local", "123456"),
+            "default.localhost",
+            clientIp: null);
+
+        Assert.Null(error);
+        Assert.Null(errorCode);
+        Assert.NotNull(tokens);
+        Assert.Contains($"tenant={TenantIds.Default}", tokens.AccessToken, StringComparison.Ordinal);
+        Assert.Contains("role=TenantAdmin", tokens.AccessToken, StringComparison.Ordinal);
+        Assert.False(string.IsNullOrWhiteSpace(tokens.RefreshToken));
+        Assert.True((await harness.GetUserAsync(pending.Id)).EmailConfirmed);
+    }
+
+    [Fact]
+    public async Task VerifyEmail_replayed_otp_does_not_issue_another_session()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var pending = await harness.CreateUserAsync(
+            "pending@test.local",
+            "ChangeMe123!",
+            emailConfirmed: false,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+        harness.Otp.Plant("pending@test.local", OtpPurpose.EmailVerification, "123456");
+
+        var (first, _, _) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("pending@test.local", "123456"),
+            "default.localhost",
+            clientIp: null);
+        Assert.NotNull(first);
+
+        harness.Otp.Plant("pending@test.local", OtpPurpose.EmailVerification, "123456");
+        var (replay, replayError, _) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("pending@test.local", "123456"),
+            "default.localhost",
+            clientIp: null);
+
+        Assert.Null(replay);
+        Assert.Contains("already verified", replayError, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task VerifyEmail_expired_incorrect_and_missing_codes_do_not_issue_tokens()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var pending = await harness.CreateUserAsync(
+            "pending@test.local",
+            "ChangeMe123!",
+            emailConfirmed: false,
+            roles: [OperatorSeeder.TenantAdminRole]);
+        await harness.Membership.EnsureMembershipAsync(
+            pending.Id, TenantIds.Default, TenantMembershipRole.TenantAdmin);
+
+        harness.Otp.Plant(
+            "pending@test.local",
+            OtpPurpose.EmailVerification,
+            "123456",
+            TimeSpan.FromMinutes(-1));
+        var (expired, expiredError, _) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("pending@test.local", "123456"),
+            "default.localhost",
+            clientIp: null);
+        Assert.Null(expired);
+        Assert.Contains("Invalid or expired", expiredError, StringComparison.OrdinalIgnoreCase);
+        Assert.False((await harness.GetUserAsync(pending.Id)).EmailConfirmed);
+
+        harness.Otp.Plant("pending@test.local", OtpPurpose.EmailVerification, "123456");
+        var (incorrect, incorrectError, _) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("pending@test.local", "000000"),
+            "default.localhost",
+            clientIp: null);
+        Assert.Null(incorrect);
+        Assert.Contains("Invalid or expired", incorrectError, StringComparison.OrdinalIgnoreCase);
+        Assert.False((await harness.GetUserAsync(pending.Id)).EmailConfirmed);
+
+        var (missing, missingError, _) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("pending@test.local", ""),
+            "default.localhost",
+            clientIp: null);
+        Assert.Null(missing);
+        Assert.Contains("Invalid verification code", missingError, StringComparison.OrdinalIgnoreCase);
+        Assert.False((await harness.GetUserAsync(pending.Id)).EmailConfirmed);
+    }
+
+    [Fact]
+    public async Task VerifyEmail_confirmed_member_does_not_receive_another_tenants_session()
+    {
+        await using var harness = await AuthHarness.CreateAsync();
+        var otherTenantId = await harness.SeedTenantAsync("other-workspace", "Other");
+        var member = await harness.CreateUserAsync(
+            "member@test.local",
+            "ChangeMe123!",
+            emailConfirmed: true,
+            roles: []);
+        await harness.Membership.EnsureMembershipAsync(
+            member.Id, otherTenantId, TenantMembershipRole.TenantMember);
+
+        var (tokens, _, _) = await harness.Auth.VerifyEmailAsync(
+            new VerifyEmailOtpRequest("member@test.local", "123456"),
+            "other-workspace.localhost",
+            clientIp: null);
+
+        Assert.Null(tokens);
+    }
+
+    [Fact]
     public async Task Refresh_orphan_revokes_without_consuming_rotation()
     {
         await using var harness = await AuthHarness.CreateAsync();
@@ -502,12 +659,16 @@ public sealed class AuthServiceMembershipGuardTests
             ServiceProvider provider,
             AuthService auth,
             ITenantMembershipService membership,
-            InMemoryRefreshTokenStore refreshTokens)
+            InMemoryRefreshTokenStore refreshTokens,
+            InMemoryOtpStore otp,
+            CountingAuthOtpVerifyRateLimiter? verifyLimiter)
         {
             _provider = provider;
             Auth = auth;
             Membership = membership;
             RefreshTokens = refreshTokens;
+            Otp = otp;
+            VerifyLimiter = verifyLimiter;
         }
 
         public AuthService Auth { get; }
@@ -515,6 +676,10 @@ public sealed class AuthServiceMembershipGuardTests
         public ITenantMembershipService Membership { get; }
 
         public InMemoryRefreshTokenStore RefreshTokens { get; }
+
+        public InMemoryOtpStore Otp { get; }
+
+        public CountingAuthOtpVerifyRateLimiter? VerifyLimiter { get; }
 
         public static async Task<AuthHarness> CreateAsync(
             bool useCountingOtpLimiter = false,
@@ -555,11 +720,13 @@ public sealed class AuthServiceMembershipGuardTests
             var refreshStore = new InMemoryRefreshTokenStore();
             services.AddSingleton<IRefreshTokenStore>(refreshStore);
             services.AddSingleton(refreshStore);
-            services.AddSingleton<IAuthOtpStore>(new InMemoryOtpStore());
+            var otpStore = new InMemoryOtpStore();
+            services.AddSingleton<IAuthOtpStore>(otpStore);
+            CountingAuthOtpVerifyRateLimiter? countingLimiter = null;
             if (useCountingOtpLimiter)
             {
-                services.AddSingleton<IAuthOtpVerifyRateLimiter>(
-                    new CountingAuthOtpVerifyRateLimiter(maxFailures: 3));
+                countingLimiter = new CountingAuthOtpVerifyRateLimiter(maxFailures: 3);
+                services.AddSingleton<IAuthOtpVerifyRateLimiter>(countingLimiter);
             }
             else
             {
@@ -601,7 +768,9 @@ public sealed class AuthServiceMembershipGuardTests
                 provider,
                 provider.GetRequiredService<AuthService>(),
                 provider.GetRequiredService<ITenantMembershipService>(),
-                provider.GetRequiredService<InMemoryRefreshTokenStore>());
+                provider.GetRequiredService<InMemoryRefreshTokenStore>(),
+                otpStore,
+                countingLimiter);
         }
 
         public async Task<Guid> SeedTenantAsync(string slug, string name)
@@ -661,6 +830,15 @@ public sealed class AuthServiceMembershipGuardTests
             var user = await userManager.FindByIdAsync(userId.ToString());
             Assert.NotNull(user);
             return user;
+        }
+
+        public async Task SetEmailConfirmedAsync(Guid userId, bool confirmed)
+        {
+            var userManager = _provider.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await userManager.FindByIdAsync(userId.ToString());
+            Assert.NotNull(user);
+            user.EmailConfirmed = confirmed;
+            Assert.True((await userManager.UpdateAsync(user)).Succeeded);
         }
 
         public ValueTask DisposeAsync()
@@ -776,6 +954,9 @@ public sealed class AuthServiceMembershipGuardTests
             return Task.FromResult(count < maxFailures);
         }
 
+        public int FailureCount(string email, string? clientIdentifier) =>
+            _failures.GetValueOrDefault(BuildKey(email, clientIdentifier));
+
         public Task RecordFailedVerifyAsync(
             string email,
             string? clientIdentifier,
@@ -801,20 +982,50 @@ public sealed class AuthServiceMembershipGuardTests
 
     private sealed class InMemoryOtpStore : IAuthOtpStore
     {
+        private readonly Dictionary<string, OtpEntry> _codes = new(StringComparer.Ordinal);
+
+        public int ValidateCalls { get; private set; }
+
+        public void Plant(string email, OtpPurpose purpose, string code, TimeSpan? ttl = null)
+        {
+            _codes[Key(email, purpose)] = new OtpEntry(
+                code.Trim(),
+                DateTimeOffset.UtcNow.Add(ttl ?? TimeSpan.FromMinutes(10)));
+        }
+
         public Task<bool> TryStoreAsync(
             string email,
             OtpPurpose purpose,
             string code,
             TimeSpan ttl,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(true);
+            CancellationToken cancellationToken = default)
+        {
+            Plant(email, purpose, code, ttl);
+            return Task.FromResult(true);
+        }
 
         public Task<bool> ValidateAndConsumeAsync(
             string email,
             OtpPurpose purpose,
             string code,
-            CancellationToken cancellationToken = default) =>
-            Task.FromResult(false);
+            CancellationToken cancellationToken = default)
+        {
+            ValidateCalls++;
+            var key = Key(email, purpose);
+            if (!_codes.TryGetValue(key, out var entry) || entry.ExpiresAt <= DateTimeOffset.UtcNow)
+            {
+                _codes.Remove(key);
+                return Task.FromResult(false);
+            }
+
+            if (!string.Equals(entry.Code, code.Trim(), StringComparison.Ordinal))
+            {
+                return Task.FromResult(false);
+            }
+
+            _codes.Remove(key);
+            return Task.FromResult(true);
+        }
 
         public Task<bool> TryRecordSendAttemptAsync(
             string email,
@@ -823,6 +1034,11 @@ public sealed class AuthServiceMembershipGuardTests
             TimeSpan window,
             CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
+
+        private static string Key(string email, OtpPurpose purpose) =>
+            $"{email.Trim().ToLowerInvariant()}|{purpose}";
+
+        private readonly record struct OtpEntry(string Code, DateTimeOffset ExpiresAt);
     }
 
     private sealed class StubEmailSender : IEmailSender
