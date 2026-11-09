@@ -16,6 +16,8 @@ import {
   acceptTeamInvite,
   fetchInvitePreview,
   formatInviteRole,
+  startInviteActivation,
+  verifyInviteActivation,
   type InvitePreview,
 } from "@/lib/team/team-api";
 
@@ -30,6 +32,249 @@ function buildTenantLoginUrl(slug: string, query: Record<string, string>): strin
   const loginUrl = dashboardUrl.replace(/\/dashboard\/?$/, "/login");
   const params = new URLSearchParams(query);
   return `${loginUrl}?${params.toString()}`;
+}
+
+function finishInviteLogin(
+  result: { email: string; tenantSlug: string },
+  password: string,
+  applyProfile: ReturnType<typeof useAuth>["applyProfile"]
+): Promise<void> {
+  clearAuthSession();
+  return loginWithPassword(result.email, password).then((loginResult) => {
+    if (loginResult.ok) {
+      if ("redirected" in loginResult && loginResult.redirected) {
+        return;
+      }
+      if ("profile" in loginResult) {
+        applyProfile(loginResult.profile);
+      }
+      window.location.assign(buildTenantDashboardUrl(result.tenantSlug));
+      return;
+    }
+    window.location.assign(
+      buildTenantLoginUrl(result.tenantSlug, {
+        email: result.email,
+        invited: "1",
+      })
+    );
+  });
+}
+
+function formatExpiryCountdown(seconds: number): string {
+  if (seconds <= 0) {
+    return "Code may have expired.";
+  }
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  if (minutes > 0) {
+    return `Code expires in about ${minutes} minute${minutes === 1 ? "" : "s"}${
+      remainder > 0 ? ` ${remainder}s` : ""
+    }.`;
+  }
+  return `Code expires in ${seconds} second${seconds === 1 ? "" : "s"}.`;
+}
+
+function InviteActivationForm({
+  preview,
+  token,
+  applyProfile,
+}: {
+  preview: InvitePreview;
+  token: string;
+  applyProfile: ReturnType<typeof useAuth>["applyProfile"];
+}) {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [password, setPassword] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [code, setCode] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState<string | null>(null);
+  const [expiresInSeconds, setExpiresInSeconds] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const roleLabel = formatInviteRole(preview.role);
+  const trimmedNickname = nickname.trim();
+
+  useEffect(() => {
+    if (step !== 2 || expiresInSeconds <= 0) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setExpiresInSeconds((current) => (current > 0 ? current - 1 : 0));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [step, expiresInSeconds]);
+
+  async function sendCode() {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const result = await startInviteActivation(token, trimmedNickname);
+      setMaskedEmail(result.maskedEmail);
+      setExpiresInSeconds(result.expiresInSeconds);
+      setStep(2);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send verification code.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (step === 1) {
+    return (
+      <form
+        className="space-y-5"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void sendCode();
+        }}
+      >
+        <div className="rounded-xl border border-line bg-paper-warm px-4 py-3 text-sm leading-relaxed text-text-muted">
+          <p>
+            You are setting up{" "}
+            <span className="font-medium text-ink">{preview.tenantName}</span> as its first{" "}
+            <span className="font-medium text-ink">{roleLabel}</span>.
+          </p>
+          <p className="mt-1 min-w-0 break-words">
+            We will email a one-time code to confirm the address on this invite.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="activation-nickname" className="text-ink">
+            Display name
+          </Label>
+          <div className={fieldShellClassName}>
+            <UserRound className="size-4 shrink-0 text-icon-muted" aria-hidden />
+            <input
+              id="activation-nickname"
+              name="nickname"
+              type="text"
+              autoComplete="nickname"
+              required
+              value={nickname}
+              onChange={(event) => setNickname(event.target.value)}
+              className={inviteInputClassName}
+              placeholder="How teammates see you"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="activation-password" className="text-ink">
+            Password
+          </Label>
+          <div className={fieldShellClassName}>
+            <Lock className="size-4 shrink-0 text-icon-muted" aria-hidden />
+            <input
+              id="activation-password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className={inviteInputClassName}
+              placeholder="At least 8 characters"
+            />
+          </div>
+        </div>
+
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+
+        <Button type="submit" disabled={submitting || trimmedNickname.length === 0} className="min-h-11 w-full">
+          {submitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Sending code…
+            </>
+          ) : (
+            "Continue"
+          )}
+        </Button>
+      </form>
+    );
+  }
+
+  return (
+    <form
+      className="space-y-5"
+      onSubmit={(event) => {
+        event.preventDefault();
+        setSubmitting(true);
+        setError(null);
+        void verifyInviteActivation(token, password, trimmedNickname, code.trim())
+          .then((result) => finishInviteLogin(result, password, applyProfile))
+          .catch((err) =>
+            setError(err instanceof Error ? err.message : "Could not verify code.")
+          )
+          .finally(() => setSubmitting(false));
+      }}
+    >
+      <div className="rounded-xl border border-line bg-paper-warm px-4 py-3 text-sm leading-relaxed text-text-muted">
+        <p className="font-medium text-ink">Verify your email</p>
+        <p className="mt-1 min-w-0 break-words">
+          Enter the six-digit code we sent to{" "}
+          <span className="font-medium text-ink">{maskedEmail ?? "your email"}</span>.
+        </p>
+        <p className="mt-2 text-xs">{formatExpiryCountdown(expiresInSeconds)}</p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="activation-code" className="text-ink">
+          Verification code
+        </Label>
+        <div className={fieldShellClassName}>
+          <input
+            id="activation-code"
+            name="one-time-code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            aria-label="Six-digit verification code"
+            required
+            maxLength={6}
+            pattern="[0-9]{6}"
+            value={code}
+            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+            className={inviteInputClassName}
+            placeholder="000000"
+          />
+        </div>
+      </div>
+
+      {error ? (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+
+      <Button type="submit" disabled={submitting || code.trim().length !== 6} className="min-h-11 w-full">
+        {submitting ? (
+          <>
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            Verifying…
+          </>
+        ) : (
+          "Verify and join"
+        )}
+      </Button>
+
+      <button
+        type="button"
+        disabled={submitting}
+        onClick={() => void sendCode()}
+        className="min-h-11 w-full text-sm font-medium text-text-link underline-offset-2 hover:underline disabled:opacity-50"
+      >
+        Resend code
+      </button>
+    </form>
+  );
 }
 
 function InviteAcceptForm({
@@ -56,30 +301,7 @@ function InviteAcceptForm({
         setSubmitting(true);
         setError(null);
         void acceptTeamInvite(token, password, nickname.trim() || undefined)
-          .then(async (result) => {
-            clearAuthSession();
-
-            const loginResult = await loginWithPassword(result.email, password);
-            if (loginResult.ok) {
-              if ("redirected" in loginResult && loginResult.redirected) {
-                return;
-              }
-
-              if ("profile" in loginResult) {
-                applyProfile(loginResult.profile);
-              }
-
-              window.location.assign(buildTenantDashboardUrl(result.tenantSlug));
-              return;
-            }
-
-            window.location.assign(
-              buildTenantLoginUrl(result.tenantSlug, {
-                email: result.email,
-                invited: "1",
-              })
-            );
-          })
+          .then((result) => finishInviteLogin(result, password, applyProfile))
           .catch((err) =>
             setError(err instanceof Error ? err.message : "Could not accept invite.")
           )
@@ -230,7 +452,11 @@ export function InviteAcceptPageClient() {
         </p>
       }
     >
-      <InviteAcceptForm preview={preview} token={token} applyProfile={applyProfile} />
+      {preview.requiresActivationOtp ? (
+        <InviteActivationForm preview={preview} token={token} applyProfile={applyProfile} />
+      ) : (
+        <InviteAcceptForm preview={preview} token={token} applyProfile={applyProfile} />
+      )}
     </AuthFlowShell>
   );
 }
