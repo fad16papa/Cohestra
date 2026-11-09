@@ -18,7 +18,7 @@ describe("first-admin invite activation source contract", () => {
     expect(TENANT).toContain("bootstrapFirstAdmin");
     expect(TENANT).toContain("AlertDialog");
     expect(TENANT).toContain("canBootstrapFirstAdmin");
-    expect(TENANT).toMatch(/tenant\.isComplimentary.*tenant\.status === "Active"/s);
+    expect(TENANT).toMatch(/tenant\.isComplimentary[\s\S]*tenant\.status === "Active"/);
     expect(TENANT).toContain("DEFAULT_TENANT_ID");
   });
 
