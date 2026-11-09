@@ -1,6 +1,9 @@
 import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
 
-import { resolveUatWorkspaceOrigin } from "../lib/uat-workspace-origin";
+import {
+  configuredSlugIsMarketingApex,
+  resolveUatWorkspaceOrigin,
+} from "../lib/uat-workspace-origin";
 
 /**
  * Story 19.5 operator walks.
@@ -110,6 +113,49 @@ async function loginOnWorkspace(
   await expect(page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
   await expect(page.locator("main, [role='main']").first()).toBeVisible();
   return new URL(page.url()).origin;
+}
+
+function assertProSlugIsTenant(): void {
+  const base = process.env.UAT_PUBLIC_BASE_URL ?? "";
+  if (!base) {
+    throw new Error("UAT_PUBLIC_BASE_URL is required");
+  }
+  if (configuredSlugIsMarketingApex(base, proSlug)) {
+    throw new Error(
+      "REQUIRED OWNER ACTION: UAT_AUTO_PRO_SLUG is the UAT marketing apex label, not a tenant slug. Set UAT_AUTO_PRO_SLUG to the Pro workspace slug. Acceptance will not follow a handoff onto a different tenant.",
+    );
+  }
+}
+
+async function loginPro(page: Page): Promise<string> {
+  assertProSlugIsTenant();
+  if (!proEmail || !proPassword) {
+    throw new Error(
+      "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+    );
+  }
+
+  const requested = workspaceOrigin(proSlug);
+  const origin = await loginOnWorkspace(page, requested, proEmail, proPassword);
+  const sessionHost = new URL(origin).hostname;
+  const expectedHost = new URL(requested).hostname;
+  expect(sessionHost, "Pro session host").toBe(expectedHost);
+
+  const shell = await page.request.get(`${origin}/api/v1/admin/shell`, {
+    headers: authHeaders(await sessionAccessToken(page)),
+  });
+  expect(shell.ok(), `admin/shell ${shell.status()}`).toBeTruthy();
+  const body = (await shell.json()) as {
+    tenantSlug?: string;
+    TenantSlug?: string;
+    plan?: string;
+    Plan?: string;
+  };
+  const tenantSlug = String(body.tenantSlug ?? body.TenantSlug ?? "").trim().toLowerCase();
+  const plan = String(body.plan ?? body.Plan ?? "").trim();
+  expect(tenantSlug, "authenticated tenant").toBe(proSlug.trim().toLowerCase());
+  expect(plan, "Pro entitlement").toBe("Pro");
+  return origin;
 }
 
 async function sessionAccessToken(page: Page): Promise<string> {
@@ -425,17 +471,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro dashboard metrics load", async ({ page }) => {
-    if (!proEmail || !proPassword) {
-      throw new Error(
-        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(proSlug),
-      proEmail,
-      proPassword,
-    );
+    const origin = await loginPro(page);
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
@@ -444,17 +480,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro analytics room loads", async ({ page }) => {
-    if (!proEmail || !proPassword) {
-      throw new Error(
-        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(proSlug),
-      proEmail,
-      proPassword,
-    );
+    const origin = await loginPro(page);
     await page.goto(`${origin}/analytics`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible({
@@ -463,17 +489,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Pro website studio and public branding load", async ({ page }) => {
-    if (!proEmail || !proPassword) {
-      throw new Error(
-        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(proSlug),
-      proEmail,
-      proPassword,
-    );
+    const origin = await loginPro(page);
     await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toHaveCount(0);
@@ -482,24 +498,13 @@ test.describe("19.5 operator core flows", () => {
     });
 
     const site = await page.request.get(`${origin}/api/v1/public/site`);
-    expect(site.ok()).toBeTruthy();
-    const body = (await site.json()) as { published?: { siteName?: string } };
-    const siteName = body.published?.siteName ?? "";
-    expect(siteName.toLowerCase()).toContain("creativorare");
+    expect(site.ok(), `public site ${site.status()}`).toBeTruthy();
+    const body = (await site.json()) as { published?: unknown };
+    expect(body.published, "published public site on the authenticated tenant").toBeTruthy();
   });
 
   test("Pro campaigns room loads without sending a blast", async ({ page }) => {
-    if (!proEmail || !proPassword) {
-      throw new Error(
-        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(proSlug),
-      proEmail,
-      proPassword,
-    );
+    const origin = await loginPro(page);
     await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /email campaigns are a pro craft/i })).toHaveCount(0);
@@ -513,20 +518,10 @@ test.describe("19.5 operator core flows", () => {
   test("Pro create, publish, share, register, dedup, CSV, and campaign test-send", async ({
     page,
   }, testInfo) => {
-    if (!proEmail || !proPassword) {
-      throw new Error(
-        "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-      );
-    }
     test.skip(!isDesktopProject(testInfo.project.name), "mutating Pro walk runs once on desktop");
     test.setTimeout(180_000);
 
-    const origin = await loginOnWorkspace(
-      page,
-      workspaceOrigin(proSlug),
-      proEmail,
-      proPassword,
-    );
+    const origin = await loginPro(page);
     const request = page.request;
     const token = await sessionAccessToken(page);
     const me = await request.get(`${origin}/api/v1/admin/me`, { headers: authHeaders(token) });
