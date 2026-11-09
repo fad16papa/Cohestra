@@ -11,14 +11,21 @@ public sealed class FakeEmailSender : IEmailSender
 
     public int SentCount => _sent.Count;
 
-    public Task<EmailSendResult> SendAsync(
+    public Func<EmailMessage, CancellationToken, Task>? BeforeSendAsync { get; set; }
+
+    public async Task<EmailSendResult> SendAsync(
         EmailMessage message,
         CancellationToken cancellationToken = default)
     {
+        if (BeforeSendAsync is not null)
+        {
+            await BeforeSendAsync(message, cancellationToken);
+        }
+
         _sent.Add(message);
-        return Task.FromResult(new EmailSendResult(
+        return new EmailSendResult(
             Success: true,
             ProviderMessageId: "integration-test-message-id",
-            FailureReason: null));
+            FailureReason: null);
     }
 }

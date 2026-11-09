@@ -7,6 +7,17 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+# Same lock the previous-SHA rollback holds for the whole host mutation.
+# GitHub concurrency already keeps the two workflows apart. This refuses an
+# on-host deploy that starts while that rollback still holds the lock.
+LOCK_FILE="${UAT_HOST_LOCK_FILE:-/tmp/cohestra-uat-host-mutation.lock}"
+mkdir -p "$(dirname "$LOCK_FILE")"
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  echo "REFUSE: UAT host mutation lock is held"
+  exit 1
+fi
+
 DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
 
 if [[ ! -f .env ]]; then

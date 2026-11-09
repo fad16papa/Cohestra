@@ -21,7 +21,11 @@ function workspaceOrigin(slug: string): string {
 
 test.describe("45.4 authenticated UAT", () => {
   test("dedicated automation login when credentials exist", async ({ page }) => {
-    test.skip(!email || !password, "UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped");
+    if (!email || !password) {
+      throw new Error(
+        "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+      );
+    }
     const origin = workspaceOrigin(basicSlug);
     const response = await page.goto(`${origin}/login`, { waitUntil: "networkidle" });
     expect(response?.ok()).toBeTruthy();

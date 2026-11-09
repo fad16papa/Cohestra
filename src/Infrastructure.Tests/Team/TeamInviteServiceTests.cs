@@ -88,6 +88,91 @@ public sealed class TeamInviteServiceTests
     }
 
     [Fact]
+    public void ActiveMembersFillSeatCap_BasicSingleSeat_IsFullAtOneMember()
+    {
+        Assert.False(TeamInviteService.ActiveMembersFillSeatCap(0, 1));
+        Assert.True(TeamInviteService.ActiveMembersFillSeatCap(1, 1));
+    }
+
+    [Fact]
+    public async Task CreateInvite_BasicPlan_StaysPlanLocked()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Basic, complimentary: true));
+        await db.SaveChangesAsync();
+
+        var result = await CreateService(db).CreateInviteAsync(
+            tenantId,
+            Guid.NewGuid(),
+            "second@example.com",
+            TenantMembershipRole.TenantMember,
+            "https://example.test/invite/accept");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(TeamInviteError.PlanLocked, result.Error);
+    }
+
+    [Fact]
+    public async Task Bootstrap_NonComplimentary_ReturnsConflict()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Basic, complimentary: false));
+        await db.SaveChangesAsync();
+
+        var (result, value) = await CreateService(db).BootstrapFirstAdminAsync(
+            tenantId,
+            Guid.NewGuid(),
+            "owner@example.com",
+            "https://example.test/invite/accept");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(TeamInviteError.Conflict, result.Error);
+        Assert.Null(value);
+        Assert.Equal(0, await db.TenantInvites.CountAsync());
+    }
+
+    [Fact]
+    public async Task Bootstrap_Suspended_ReturnsConflict()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        var tenant = NewTenant(tenantId, TenantPlan.Basic, complimentary: true);
+        tenant.Status = TenantStatus.Suspended;
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync();
+
+        var (result, _) = await CreateService(db).BootstrapFirstAdminAsync(
+            tenantId,
+            Guid.NewGuid(),
+            "owner@example.com",
+            "https://example.test/invite/accept");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(TeamInviteError.Conflict, result.Error);
+    }
+
+    [Fact]
+    public async Task Bootstrap_WhenMemberExists_ReturnsConflict()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Core, complimentary: true));
+        SeedMembership(db, tenantId, Guid.NewGuid(), TenantMembershipRole.TenantAdmin);
+        await db.SaveChangesAsync();
+
+        var (result, _) = await CreateService(db).BootstrapFirstAdminAsync(
+            tenantId,
+            Guid.NewGuid(),
+            "owner@example.com",
+            "https://example.test/invite/accept");
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(TeamInviteError.Conflict, result.Error);
+    }
+
+    [Fact]
     public async Task RemoveMember_OtherAdminWhenActorAlsoAdmin_Succeeds()
     {
         await using var db = CreateDb();
@@ -103,6 +188,24 @@ public sealed class TeamInviteServiceTests
         Assert.True(result.Succeeded);
         Assert.Equal(1, await db.TenantMemberships.CountAsync());
         Assert.Equal(actor, Assert.Single(db.TenantMemberships).UserId);
+    }
+
+    private static Tenant NewTenant(Guid tenantId, TenantPlan plan, bool complimentary)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return new Tenant
+        {
+            Id = tenantId,
+            Slug = "ws-" + tenantId.ToString("N")[..12],
+            Name = "Workspace",
+            Plan = plan,
+            Status = TenantStatus.Active,
+            BillingStatus = BillingStatus.Free,
+            IsComplimentary = complimentary,
+            AdminContactEmail = "contact@example.com",
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
     }
 
     private static void SeedMembership(
