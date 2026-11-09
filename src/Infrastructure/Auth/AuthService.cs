@@ -416,14 +416,7 @@ public sealed class AuthService(
 
         if (user.EmailConfirmed)
         {
-            var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
-            if (session.ErrorCode is not null)
-            {
-                return (null, session.ErrorMessage, null);
-            }
-
-            await otpVerifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
-            return (await IssueTokensAsync(user, session.TenantId, session.MembershipRole, cancellationToken), null, null);
+            return (null, "This email is already verified. Sign in instead.", null);
         }
 
         // Another confirmed TenantAdmin already closed bootstrap — do not confirm a second admin.
