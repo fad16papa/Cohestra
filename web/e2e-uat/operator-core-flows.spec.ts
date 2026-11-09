@@ -1,63 +1,22 @@
-import { expect, test, type APIRequestContext, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { resolveUatWorkspaceOrigin } from "../lib/uat-workspace-origin";
-import { requireConfiguredQaSlug, type QaRole } from "../lib/uat-qa-tenant";
+import { requireConfiguredQaSlug } from "../lib/uat-qa-tenant";
 import { assertLiveQaSession } from "./qa-session";
 
 /**
- * Story 19.5 operator walks.
+ * Basic-beta operator walks on cohestra-qa-basic.
  *
- * Required workspaces, after owner provisioning: cohestra-qa-basic and
- * cohestra-qa-pro. UAT_AUTO_BASIC_SLUG and UAT_AUTO_PRO_SLUG must be those
- * slugs. Acceptance does not fall back to the marketing apex or another
- * organization. After login, /api/v1/public/door and /api/v1/admin/shell
- * must show that workspace, its plan, and an active door.
+ * UAT_AUTO_BASIC_SLUG must be that slug. Acceptance does not fall back to
+ * the marketing apex or another organization. After login, the public door
+ * and /api/v1/admin/shell must show that workspace, the Basic plan, and an
+ * active door. Pro live coverage is not part of this job.
  *
- * Canonical 19.5 login is email/password on the tenant host.
- * Signup OTP (Epic 45.5 / Story 19.3) is out of scope here.
- * Do not POST /api/v1/admin/campaigns/send (list blast). Test-send only.
+ * Canonical login is email/password on the tenant host.
  */
 
 const basicEmail = process.env.UAT_AUTO_BASIC_EMAIL ?? "";
 const basicPassword = process.env.UAT_AUTO_BASIC_PASSWORD ?? "";
-const proEmail = process.env.UAT_AUTO_PRO_EMAIL ?? "";
-const proPassword = process.env.UAT_AUTO_PRO_PASSWORD ?? "";
-
-
-const HARNESS_COMMUNITY = "19.5 Harness";
-const HARNESS_CATEGORY = "19.5 Category";
-
-const HARNESS_FORM_SCHEMA = {
-  version: 1,
-  fields: [
-    {
-      id: "full_name",
-      type: "text",
-      label: "Full name",
-      required: true,
-    },
-    {
-      id: "phone",
-      type: "phone",
-      label: "Phone",
-      required: true,
-      phoneCountry: "SG",
-    },
-    {
-      id: "email",
-      type: "email",
-      label: "Email",
-      required: true,
-    },
-    {
-      id: "consent",
-      type: "consent",
-      label: "Consent",
-      required: true,
-      consentText: "I agree to be contacted about future activities.",
-    },
-  ],
-};
 
 function workspaceOrigin(slug: string): string {
   const base = process.env.UAT_PUBLIC_BASE_URL ?? "";
@@ -65,10 +24,6 @@ function workspaceOrigin(slug: string): string {
     throw new Error("UAT_PUBLIC_BASE_URL is required");
   }
   return resolveUatWorkspaceOrigin(base, slug);
-}
-
-function isDesktopProject(testInfoName: string): boolean {
-  return testInfoName.includes("desktop");
 }
 
 function isSettledWorkspaceUrl(url: URL): boolean {
@@ -81,18 +36,16 @@ function isSettledWorkspaceUrl(url: URL): boolean {
   return onWorkspace && !url.searchParams.has("handoff");
 }
 
-/**
- * Email/password login. Apex login returns a one-time handoff to the
- * account's tenant host. Wait until that exchange finishes and return the
- * workspace origin. A later goto back to the marketing apex drops the session.
- */
-async function loginOnWorkspace(
-  page: Page,
-  origin: string,
-  email: string,
-  password: string,
-): Promise<string> {
-  const response = await page.goto(`${origin}/login`, {
+async function loginBasic(page: Page): Promise<string> {
+  const slug = requireConfiguredQaSlug("basic", process.env.UAT_AUTO_BASIC_SLUG);
+  if (!basicEmail || !basicPassword) {
+    throw new Error(
+      "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
+    );
+  }
+
+  const base = process.env.UAT_PUBLIC_BASE_URL ?? "";
+  const response = await page.goto(`${workspaceOrigin(slug)}/login`, {
     waitUntil: "networkidle",
   });
   expect(response?.ok()).toBeTruthy();
@@ -102,34 +55,15 @@ async function loginOnWorkspace(
   await page.locator("form").evaluate((form) => {
     form.setAttribute("method", "post");
   });
-  await page.locator("#email").fill(email);
-  await page.locator("#password").fill(password);
+  await page.locator("#email").fill(basicEmail);
+  await page.locator("#password").fill(basicPassword);
   await submit.click();
   await page.waitForURL(isSettledWorkspaceUrl, { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
   await expect(page.locator("main, [role='main']").first()).toBeVisible();
-  return new URL(page.url()).origin;
-}
-
-async function loginQa(page: Page, role: QaRole): Promise<string> {
-  const email = role === "basic" ? basicEmail : proEmail;
-  const password = role === "basic" ? basicPassword : proPassword;
-  const slug = requireConfiguredQaSlug(
-    role,
-    role === "basic" ? process.env.UAT_AUTO_BASIC_SLUG : process.env.UAT_AUTO_PRO_SLUG,
-  );
-  if (!email || !password) {
-    throw new Error(
-      role === "basic"
-        ? "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip"
-        : "UAT_AUTO_PRO_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
-    );
-  }
-
-  const base = process.env.UAT_PUBLIC_BASE_URL ?? "";
-  const origin = await loginOnWorkspace(page, workspaceOrigin(slug), email, password);
+  const origin = new URL(page.url()).origin;
   await assertLiveQaSession(page, {
-    role,
+    role: "basic",
     base,
     configuredSlug: slug,
     sessionOrigin: origin,
@@ -137,240 +71,9 @@ async function loginQa(page: Page, role: QaRole): Promise<string> {
   return origin;
 }
 
-async function sessionAccessToken(page: Page): Promise<string> {
-  const token = await page.evaluate(() => {
-    const raw = window.localStorage.getItem("auth_session");
-    if (!raw) {
-      return "";
-    }
-    try {
-      const parsed = JSON.parse(raw) as { accessToken?: string };
-      return typeof parsed.accessToken === "string" ? parsed.accessToken : "";
-    } catch {
-      return "";
-    }
-  });
-  expect(token, "auth_session access token after login").toBeTruthy();
-  return token;
-}
-
-function authHeaders(token: string): Record<string, string> {
-  return { Authorization: `Bearer ${token}` };
-}
-
-async function readJson(response: { json: () => Promise<unknown> }): Promise<Record<string, unknown>> {
-  return (await response.json()) as Record<string, unknown>;
-}
-
-async function listNamedItems(
-  request: APIRequestContext,
-  origin: string,
-  token: string,
-  path: string,
-): Promise<Array<{ id: string; name: string }>> {
-  const response = await request.get(`${origin}${path}`, { headers: authHeaders(token) });
-  if (!response.ok()) {
-    return [];
-  }
-  const body = await readJson(response);
-  const items = (body.items ?? body.Items) as
-    | Array<{ id?: string; Id?: string; name?: string; Name?: string }>
-    | undefined;
-  return (items ?? [])
-    .map((item) => ({
-      id: String(item.id ?? item.Id ?? ""),
-      name: String(item.name ?? item.Name ?? "").trim(),
-    }))
-    .filter((item) => item.name.length > 0);
-}
-
-function findNamed(
-  items: Array<{ id: string; name: string }>,
-  desiredName: string,
-): { id: string; name: string } | undefined {
-  const wanted = desiredName.trim().toLowerCase();
-  return items.find((item) => item.name.toLowerCase() === wanted);
-}
-
-async function ensureNamedCategory(
-  request: APIRequestContext,
-  origin: string,
-  token: string,
-): Promise<string> {
-  const existing = findNamed(
-    await listNamedItems(request, origin, token, "/api/v1/admin/categories"),
-    HARNESS_CATEGORY,
-  );
-  if (existing) {
-    return existing.name;
-  }
-
-  const created = await request.post(`${origin}/api/v1/admin/categories`, {
-    headers: authHeaders(token),
-    data: { name: HARNESS_CATEGORY },
-  });
-  if (created.ok()) {
-    const body = await readJson(created);
-    return String(body.name ?? body.Name ?? HARNESS_CATEGORY);
-  }
-
-  const retry = findNamed(
-    await listNamedItems(request, origin, token, "/api/v1/admin/categories"),
-    HARNESS_CATEGORY,
-  );
-  if (retry) {
-    return retry.name;
-  }
-
-  expect(
-    created.ok(),
-    `create category ${HARNESS_CATEGORY} ${created.status()} ${await created.text()}`,
-  ).toBeTruthy();
-  return HARNESS_CATEGORY;
-}
-
-async function communityWithoutDefaultTemplate(
-  request: APIRequestContext,
-  origin: string,
-  token: string,
-  items: Array<{ id: string; name: string }>,
-): Promise<string | null> {
-  for (const item of items) {
-    if (!item.id) {
-      continue;
-    }
-    const detail = await request.get(`${origin}/api/v1/admin/communities/${item.id}`, {
-      headers: authHeaders(token),
-    });
-    if (!detail.ok()) {
-      continue;
-    }
-    const body = await readJson(detail);
-    const templateId = body.defaultFormTemplateId ?? body.DefaultFormTemplateId;
-    if (templateId == null || templateId === "") {
-      return item.name;
-    }
-  }
-  return null;
-}
-
-async function ensureHarnessCommunity(
-  request: APIRequestContext,
-  origin: string,
-  token: string,
-): Promise<string> {
-  const listed = await listNamedItems(request, origin, token, "/api/v1/admin/communities");
-  const existing = findNamed(listed, HARNESS_COMMUNITY);
-  if (existing) {
-    return existing.name;
-  }
-
-  const created = await request.post(`${origin}/api/v1/admin/communities`, {
-    headers: authHeaders(token),
-    data: { name: HARNESS_COMMUNITY },
-  });
-  if (created.ok()) {
-    const body = await readJson(created);
-    return String(body.name ?? body.Name ?? HARNESS_COMMUNITY);
-  }
-
-  const retry = findNamed(
-    await listNamedItems(request, origin, token, "/api/v1/admin/communities"),
-    HARNESS_COMMUNITY,
-  );
-  if (retry) {
-    return retry.name;
-  }
-
-  const untemplated = await communityWithoutDefaultTemplate(request, origin, token, listed);
-  if (untemplated) {
-    return untemplated;
-  }
-
-  // Pro cap exhausted and every community has a pin: still create against
-  // the first catalog row. Product prefill is fail-open so a corrupt pin
-  // cannot 500 POST /activities.
-  if (listed[0]?.name) {
-    return listed[0].name;
-  }
-
-  expect(
-    created.ok(),
-    `create community ${HARNESS_COMMUNITY} ${created.status()} ${await created.text()}`,
-  ).toBeTruthy();
-  return HARNESS_COMMUNITY;
-}
-
-async function ensureCatalog(
-  request: APIRequestContext,
-  origin: string,
-  token: string,
-): Promise<{ community: string; category: string }> {
-  return {
-    community: await ensureHarnessCommunity(request, origin, token),
-    category: await ensureNamedCategory(request, origin, token),
-  };
-}
-
-async function createPublishedActivity(
-  request: APIRequestContext,
-  origin: string,
-  token: string,
-  catalog: { community: string; category: string },
-  name: string,
-): Promise<{ id: string; slug: string }> {
-  const created = await request.post(`${origin}/api/v1/admin/activities`, {
-    headers: authHeaders(token),
-    data: {
-      name,
-      category: catalog.category,
-      schedule: "Sat 10:00",
-      location: "UAT harness",
-      communityLabel: catalog.community,
-      status: "draft",
-    },
-  });
-  expect(
-    created.ok(),
-    `create activity ${created.status()} community=${catalog.community} category=${catalog.category} ${await created.text()}`,
-  ).toBeTruthy();
-  const activity = await readJson(created);
-  const id = String(activity.id ?? activity.Id);
-  const slug = String(activity.slug ?? activity.Slug);
-
-  const schema = await request.put(`${origin}/api/v1/admin/activities/${id}/form-schema`, {
-    headers: authHeaders(token),
-    data: { formSchema: HARNESS_FORM_SCHEMA },
-  });
-  expect(schema.ok(), `form schema ${schema.status()} ${await schema.text()}`).toBeTruthy();
-
-  const published = await request.post(`${origin}/api/v1/admin/activities/${id}/publish`, {
-    headers: authHeaders(token),
-  });
-  expect(published.ok(), `publish ${published.status()} ${await published.text()}`).toBeTruthy();
-
-  return { id, slug };
-}
-
-async function unpublishIfPresent(
-  request: APIRequestContext,
-  origin: string,
-  token: string,
-  activityId: string | undefined,
-) {
-  if (!activityId) {
-    return;
-  }
-  const unpublish = await request.post(
-    `${origin}/api/v1/admin/activities/${activityId}/unpublish`,
-    { headers: authHeaders(token) },
-  );
-  expect(unpublish.ok(), `unpublish ${unpublish.status()}`).toBeTruthy();
-}
-
 test.describe("19.5 operator core flows", () => {
   test("Basic dashboard metrics load", async ({ page }) => {
-    const origin = await loginQa(page, "basic");
+    const origin = await loginBasic(page);
     await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
@@ -379,7 +82,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic activities room loads", async ({ page }) => {
-    const origin = await loginQa(page, "basic");
+    const origin = await loginBasic(page);
     await page.goto(`${origin}/activities`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { level: 1, name: "Activities" })).toBeVisible({
@@ -388,7 +91,7 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic website is Core-locked and public stub home loads", async ({ page }) => {
-    const origin = await loginQa(page, "basic");
+    const origin = await loginBasic(page);
     await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toBeVisible({
@@ -401,164 +104,11 @@ test.describe("19.5 operator core flows", () => {
   });
 
   test("Basic campaigns room is Pro-locked", async ({ page }) => {
-    const origin = await loginQa(page, "basic");
+    const origin = await loginBasic(page);
     await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
     await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
     await expect(page.getByRole("heading", { name: /email campaigns are a pro craft/i })).toBeVisible({
       timeout: 20_000,
     });
-  });
-
-  test("Pro dashboard metrics load", async ({ page }) => {
-    const origin = await loginQa(page, "pro");
-    await page.goto(`${origin}/dashboard`, { waitUntil: "domcontentloaded" });
-    await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
-    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
-      timeout: 20_000,
-    });
-  });
-
-  test("Pro analytics room loads", async ({ page }) => {
-    const origin = await loginQa(page, "pro");
-    await page.goto(`${origin}/analytics`, { waitUntil: "domcontentloaded" });
-    await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
-    await expect(page.getByRole("heading", { level: 1, name: "Analytics" })).toBeVisible({
-      timeout: 20_000,
-    });
-  });
-
-  test("Pro website studio and public branding load", async ({ page }) => {
-    const origin = await loginQa(page, "pro");
-    await page.goto(`${origin}/dashboard/website`, { waitUntil: "domcontentloaded" });
-    await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
-    await expect(page.getByRole("heading", { name: /unlock a branded public homepage/i })).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: /website studio/i })).toBeVisible({
-      timeout: 20_000,
-    });
-
-    const site = await page.request.get(`${origin}/api/v1/public/site`);
-    expect(site.ok(), `public site ${site.status()}`).toBeTruthy();
-    const body = (await site.json()) as { published?: unknown };
-    expect(body.published, "published public site on the authenticated tenant").toBeTruthy();
-  });
-
-  test("Pro campaigns room loads without sending a blast", async ({ page }) => {
-    const origin = await loginQa(page, "pro");
-    await page.goto(`${origin}/campaigns`, { waitUntil: "domcontentloaded" });
-    await expect(page).not.toHaveURL(/\/login(?:\?|$)/);
-    await expect(page.getByRole("heading", { name: /email campaigns are a pro craft/i })).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: /upgrade|unlock/i })).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
-    await expect(page.getByRole("heading", { level: 1, name: "Campaigns" })).toBeVisible({
-      timeout: 20_000,
-    });
-  });
-
-  test("Pro create, publish, share, register, dedup, CSV, and campaign test-send", async ({
-    page,
-  }, testInfo) => {
-    test.skip(!isDesktopProject(testInfo.project.name), "mutating Pro walk runs once on desktop");
-    test.setTimeout(180_000);
-
-    const origin = await loginQa(page, "pro");
-    const request = page.request;
-    const token = await sessionAccessToken(page);
-    const me = await request.get(`${origin}/api/v1/admin/me`, { headers: authHeaders(token) });
-    expect(me.ok(), `admin/me ${me.status()}`).toBeTruthy();
-
-    const catalog = await ensureCatalog(request, origin, token);
-    const stamp = Date.now().toString(36);
-    let firstId: string | undefined;
-    let secondId: string | undefined;
-
-    try {
-      const first = await createPublishedActivity(
-        request,
-        origin,
-        token,
-        catalog,
-        `19-5 harness a ${stamp}`,
-      );
-      firstId = first.id;
-      const second = await createPublishedActivity(
-        request,
-        origin,
-        token,
-        catalog,
-        `19-5 harness b ${stamp}`,
-      );
-      secondId = second.id;
-
-      await page.goto(`${origin}/activities/${first.id}?tab=share`, {
-        waitUntil: "domcontentloaded",
-      });
-      await expect(page.getByRole("tab", { name: /share kit/i })).toHaveAttribute(
-        "aria-selected",
-        "true",
-        { timeout: 20_000 },
-      );
-      // Share kit keeps inactive panels in the DOM with the hidden attribute.
-      // Open ?tab=share so the labeled URL input is actually visible.
-      const shareUrl = page.getByLabel("Public registration URL");
-      await expect(shareUrl).toBeVisible({ timeout: 20_000 });
-      await expect(shareUrl).toHaveValue(new RegExp(`/register/${first.slug}`));
-
-      const registerPage = await request.get(`${origin}/register/${first.slug}`);
-      expect(registerPage.ok()).toBeTruthy();
-
-      const phone = `8${String(Date.now()).slice(-7)}`;
-      const email = `uat195-${stamp}@example.test`;
-      const answers = {
-        full_name: "19.5 Harness Registrant",
-        phone,
-        email,
-        consent: true,
-      };
-
-      const firstReg = await request.post(`${origin}/api/v1/public/registrations`, {
-        data: { activitySlug: first.slug, answers },
-      });
-      expect(firstReg.status(), await firstReg.text()).toBe(201);
-      const firstBody = await readJson(firstReg);
-      const firstClientId = String(firstBody.clientId ?? firstBody.ClientId);
-      expect(firstClientId).toMatch(/^[0-9a-f-]{36}$/i);
-
-      const secondReg = await request.post(`${origin}/api/v1/public/registrations`, {
-        data: {
-          activitySlug: second.slug,
-          answers: { ...answers, full_name: "19.5 Harness Registrant Two" },
-        },
-      });
-      expect(secondReg.status(), await secondReg.text()).toBe(201);
-      const secondBody = await readJson(secondReg);
-      expect(String(secondBody.clientId ?? secondBody.ClientId)).toBe(firstClientId);
-      expect(String(secondBody.registrationId ?? secondBody.RegistrationId)).not.toBe(
-        String(firstBody.registrationId ?? firstBody.RegistrationId),
-      );
-
-      const csv = await request.get(`${origin}/api/v1/admin/reports/export?preset=weekly`, {
-        headers: authHeaders(token),
-      });
-      expect(csv.ok(), `csv ${csv.status()}`).toBeTruthy();
-      const contentType = csv.headers()["content-type"] ?? "";
-      expect(contentType).toMatch(/csv/i);
-      const csvText = await csv.text();
-      expect(csvText.length).toBeGreaterThan(10);
-
-      const testSend = await request.post(`${origin}/api/v1/admin/campaigns/send-test`, {
-        headers: authHeaders(token),
-        data: {
-          subject: `19.5 harness ${stamp}`,
-          body: "<p>Story 19.5 campaign test send. Do not blast the list.</p>",
-          bodyFormat: "html",
-        },
-      });
-      expect(testSend.ok(), `campaign test-send ${testSend.status()} ${await testSend.text()}`).toBeTruthy();
-      const sendBody = await readJson(testSend);
-      expect(sendBody.success ?? sendBody.Success).toBeTruthy();
-    } finally {
-      await unpublishIfPresent(request, origin, token, firstId);
-      await unpublishIfPresent(request, origin, token, secondId);
-    }
   });
 });

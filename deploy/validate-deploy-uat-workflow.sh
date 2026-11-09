@@ -196,19 +196,37 @@ else
   fail "workflow must run npm run test:e2e:uat after a successful deploy"
 fi
 
-if grep -q 'UAT_AUTO_BASIC_EMAIL' "$WF" && grep -q 'UAT_AUTO_PRO_EMAIL' "$WF" \
-  && grep -q 'UAT_AUTO_PRO_PASSWORD' "$WF"; then
-  pass "browser job receives Basic and Pro operator aliases"
+if grep -q 'UAT_AUTO_BASIC_EMAIL' "$WF" && grep -q 'UAT_AUTO_BASIC_PASSWORD' "$WF" \
+  && ! grep -q 'UAT_AUTO_PRO_EMAIL' "$WF" \
+  && ! grep -q 'UAT_AUTO_PRO_PASSWORD' "$WF"; then
+  pass "browser job receives Basic aliases and does not require Pro credentials"
 else
-  fail "browser job must pass UAT_AUTO_BASIC_* and UAT_AUTO_PRO_* aliases"
+  fail "browser job must pass UAT_AUTO_BASIC_* and must not require UAT_AUTO_PRO_EMAIL or UAT_AUTO_PRO_PASSWORD"
 fi
 
 if grep -q 'UAT_AUTO_BASIC_SLUG: ${{ vars.UAT_AUTO_BASIC_SLUG || secrets.UAT_AUTO_BASIC_SLUG }}' "$WF" \
-  && grep -q 'UAT_AUTO_PRO_SLUG: ${{ vars.UAT_AUTO_PRO_SLUG || secrets.UAT_AUTO_PRO_SLUG }}' "$WF"; then
-  pass "browser job receives Basic and Pro tenant slugs from vars with secret fallback"
+  && ! grep -q 'UAT_AUTO_PRO_SLUG' "$WF"; then
+  pass "browser job receives the Basic tenant slug and does not require a Pro slug"
 else
-  fail "browser job must pass UAT_AUTO_BASIC_SLUG and UAT_AUTO_PRO_SLUG from vars or secrets"
+  fail "browser job must pass UAT_AUTO_BASIC_SLUG and must not require UAT_AUTO_PRO_SLUG"
 fi
+
+for required_job in \
+  "UAT post-merge — .NET build and test" \
+  "UAT post-merge — API integration tests" \
+  "UAT post-merge — Next.js build" \
+  "UAT post-merge — Frontend unit tests" \
+  "UAT post-merge — AuthN AuthZ regression" \
+  "UAT post-merge — Billing entitlement regression" \
+  "UAT post-merge — Docker stack smoke" \
+  "UAT post-merge — UAT isolation contract" \
+  "UAT post-merge — Exact-SHA security scan" \
+  "UAT post-merge — GitGuardian exact-SHA API scan" \
+  "UAT post-merge — Deploy artifact provenance"
+do
+  grep -q "name: ${required_job}" "$WF" || fail "missing required post-merge job: ${required_job}"
+done
+pass "all 11 exact-SHA post-merge validation jobs remain"
 
 if grep -q 'name: UAT acceptance summary' "$WF" && grep -q 'uat-acceptance-summary.sh' "$WF"; then
   pass "Deploy UAT builds acceptance-summary.json after deploy and browser"

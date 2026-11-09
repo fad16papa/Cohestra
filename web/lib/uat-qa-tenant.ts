@@ -3,7 +3,7 @@ import {
   resolveUatWorkspaceOrigin,
 } from "./uat-workspace-origin";
 
-export type QaRole = "basic" | "pro";
+export type QaRole = "basic";
 
 export const UAT_QA_TENANTS = {
   basic: {
@@ -12,13 +12,6 @@ export const UAT_QA_TENANTS = {
     name: "Cohestra QA Basic",
     plan: "Basic",
     seats: 1,
-  },
-  pro: {
-    envName: "UAT_AUTO_PRO_SLUG",
-    slug: "cohestra-qa-pro",
-    name: "Cohestra QA Pro",
-    plan: "Pro",
-    seats: 10,
   },
 } as const;
 

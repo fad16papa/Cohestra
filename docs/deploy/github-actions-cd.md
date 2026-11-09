@@ -27,7 +27,9 @@ push / merge to main
     → uat-acceptance.json + public smoke + Playwright (required)
     → 19-5-lifecycle.json (opt-in; authorized skip is SKIPPED, not a required pass)
     → acceptance-summary.json (story, sha, deployment, runtime, browser, security, provider, tests, result)
-    → uat-final-outcome.json (DEPLOYED_ACCEPTED only when required checks pass;
+    → uat-final-outcome.json (DEPLOYED_ACCEPTED_BASIC_BETA only when required
+      Basic-beta checks pass; scope=basic_beta and Pro live NOT_TESTED.
+      That is not full Basic/Core/Pro market readiness.
       pre-SSH HELD may exit 0 — eligibility is eligible==true, not aggregator rc)
 ```
 
