@@ -79,6 +79,32 @@ public sealed class WebsiteInquiryService(
             now,
             cancellationToken);
 
+        var notifyOperator = tenant.EmailOnNewRegistration
+            && !string.IsNullOrWhiteSpace(tenant.AdminContactEmail);
+        var relational = dbContext.Database.IsRelational();
+        await using var transaction = notifyOperator && relational
+            ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
+            : null;
+        if (transaction is not null)
+        {
+            // Same lock erasure holds, so this insert cannot land after erasure's snapshot.
+            await WebsiteInquiryOutboxIdentity.LockDispatchAsync(
+                dbContext.Database,
+                tenantId,
+                client.Id,
+                cancellationToken);
+
+            if (!clientCreated)
+            {
+                var stillThere = await dbContext.Clients
+                    .AnyAsync(row => row.Id == client.Id, cancellationToken);
+                if (!stillThere)
+                {
+                    return WebsiteInquirySubmitResult.NotFound();
+                }
+            }
+        }
+
         var timelineEvent = new ClientTimelineEvent
         {
             Id = Guid.NewGuid(),
@@ -92,8 +118,7 @@ public sealed class WebsiteInquiryService(
 
         dbContext.ClientTimelineEvents.Add(timelineEvent);
 
-        if (tenant.EmailOnNewRegistration
-            && !string.IsNullOrWhiteSpace(tenant.AdminContactEmail))
+        if (notifyOperator)
         {
             var payload = JsonSerializer.Serialize(
                 new WebsiteInquiryOperatorNotifyOutboxPayload(
@@ -111,6 +136,10 @@ public sealed class WebsiteInquiryService(
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
 
         return WebsiteInquirySubmitResult.Created(client.Id, clientCreated);
     }
@@ -147,4 +176,5 @@ internal sealed record WebsiteInquiryOperatorNotifyOutboxPayload(
     string ParticipantName,
     string? Phone,
     string? Email,
-    string Message);
+    string Message,
+    bool Redacted = false);
