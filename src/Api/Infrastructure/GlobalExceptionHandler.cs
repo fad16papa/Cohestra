@@ -1,3 +1,4 @@
+using Cohestra.Application.Auth;
 using Cohestra.Application.RateLimiting;
 using Cohestra.Application.Tenants;
 using Microsoft.AspNetCore.Diagnostics;
@@ -39,6 +40,32 @@ public sealed class GlobalExceptionHandler(
             httpContext.Response.StatusCode = locked.Status.Value;
             httpContext.Response.ContentType = "application/problem+json";
             await httpContext.Response.WriteAsJsonAsync(locked, cancellationToken);
+            return true;
+        }
+
+        if (exception is AuthSessionStoreUnavailableException authStoreUnavailable)
+        {
+            logger.LogWarning(
+                authStoreUnavailable,
+                "Auth session store {StoreName} unavailable during {Method} {Path}",
+                authStoreUnavailable.StoreName,
+                httpContext.Request.Method,
+                httpContext.Request.Path);
+
+            var authUnavailable = new ProblemDetails
+            {
+                Status = StatusCodes.Status503ServiceUnavailable,
+                Title = "Service temporarily unavailable",
+                Detail = "Try again shortly. If the problem persists, contact support.",
+                Instance = httpContext.Request.Path,
+                Type = "https://cohestra.app/errors/service-unavailable",
+            };
+            authUnavailable.Extensions["errorCode"] = AuthErrorCodes.SessionStoreUnavailable;
+            authUnavailable.Extensions["traceId"] = httpContext.TraceIdentifier;
+
+            httpContext.Response.StatusCode = authUnavailable.Status.Value;
+            httpContext.Response.ContentType = "application/problem+json";
+            await httpContext.Response.WriteAsJsonAsync(authUnavailable, cancellationToken);
             return true;
         }
 
