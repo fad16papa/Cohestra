@@ -296,6 +296,7 @@ jobs:
           set -euo pipefail
           bash deploy/validate-prd-ad23.test.sh
           bash deploy/validate-ad25-sync-procedure.sh
+          bash deploy/validate-ad25-hardening.test.sh
           bash deploy/validate-ad25-sync-fixture.test.sh
           bash deploy/write-uat-deploy-provenance.test.sh
 
