@@ -1,6 +1,9 @@
+using Cohestra.Application.Auth;
+using Cohestra.Application.Email;
 using Cohestra.Application.Team;
 using Cohestra.Domain.Billing;
 using Cohestra.Domain.Tenants;
+using Cohestra.Infrastructure.Auth;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Team;
 using Microsoft.EntityFrameworkCore;
@@ -225,14 +228,239 @@ public sealed class TeamInviteServiceTests
         });
     }
 
-    private static TeamInviteService CreateService(CohestraDbContext db) =>
+    [Fact]
+    public async Task Accept_FirstAdminInvite_DoesNotCreateMembership()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Basic, complimentary: true));
+        var token = TeamInviteService.GenerateToken();
+        db.TenantInvites.Add(PendingInvite(tenantId, "owner@example.com", token, requiresOtp: true));
+        await db.SaveChangesAsync();
+
+        var (result, value) = await CreateService(db).AcceptInviteAsync(
+            new AcceptInviteCommand(token, "ChangeMe123!", "Owner"));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(TeamInviteError.ActivationOtpRequired, result.Error);
+        Assert.Null(value);
+        Assert.Equal(0, await db.TenantMemberships.CountAsync());
+        Assert.Null(Assert.Single(db.IgnoreTenantFilters<TenantInvite>()).AcceptedAt);
+    }
+
+    [Fact]
+    public async Task StartActivation_SendsCodeToStoredInviteEmailOnly()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Basic, complimentary: true));
+        var token = TeamInviteService.GenerateToken();
+        db.TenantInvites.Add(PendingInvite(tenantId, "owner@example.com", token, requiresOtp: true));
+        await db.SaveChangesAsync();
+        var email = new RecordingEmailSender();
+        var otp = new RecordingOtpStore();
+
+        var (result, value) = await CreateService(db, email, otp).StartInviteActivationAsync(
+            new StartInviteActivationCommand(token, "Beta Owner"));
+
+        Assert.True(result.Succeeded);
+        Assert.NotNull(value);
+        Assert.True(value!.CodeSent);
+        Assert.Equal("o***@example.com", value.MaskedEmail);
+        Assert.DoesNotContain("owner@", value.MaskedEmail, StringComparison.Ordinal);
+        Assert.Equal("owner@example.com", email.LastTo);
+        Assert.Contains("invitation code is:", email.LastPlainText, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(OtpPurpose.InviteActivation, otp.StoredPurpose);
+        Assert.Equal("owner@example.com", otp.StoredEmail);
+        Assert.Contains(db.IgnoreTenantFilters<TenantInvite>().Single().Id.ToString("D"), otp.StoredScope);
+        Assert.Equal(0, await db.TenantMemberships.CountAsync());
+    }
+
+    [Fact]
+    public async Task StartActivation_EmailFailure_RemovesCodeAndCreatesNothing()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Basic, complimentary: true));
+        var token = TeamInviteService.GenerateToken();
+        db.TenantInvites.Add(PendingInvite(tenantId, "owner@example.com", token, requiresOtp: true));
+        await db.SaveChangesAsync();
+        var otp = new RecordingOtpStore();
+
+        var (result, value) = await CreateService(db, new RecordingEmailSender { Succeed = false }, otp)
+            .StartInviteActivationAsync(new StartInviteActivationCommand(token, "Beta Owner"));
+
+        Assert.False(result.Succeeded);
+        Assert.Null(value);
+        Assert.True(otp.Removed);
+        Assert.Equal(0, await db.TenantMemberships.CountAsync());
+        Assert.Null(Assert.Single(db.IgnoreTenantFilters<TenantInvite>()).AcceptedAt);
+    }
+
+    [Fact]
+    public async Task CompleteActivation_WrongCode_CreatesNothing()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Basic, complimentary: true));
+        var token = TeamInviteService.GenerateToken();
+        db.TenantInvites.Add(PendingInvite(tenantId, "owner@example.com", token, requiresOtp: true));
+        await db.SaveChangesAsync();
+
+        var (result, value) = await CreateService(db).CompleteInviteActivationAsync(
+            new CompleteInviteActivationCommand(token, "ChangeMe123!", "Beta Owner", "000000"));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(TeamInviteError.Validation, result.Error);
+        Assert.Null(value);
+        Assert.Equal(0, await db.TenantMemberships.CountAsync());
+    }
+
+    [Fact]
+    public async Task CompleteActivation_WeakPassword_DoesNotConsumeCode()
+    {
+        await using var db = CreateDb();
+        var tenantId = Guid.NewGuid();
+        db.Tenants.Add(NewTenant(tenantId, TenantPlan.Basic, complimentary: true));
+        var token = TeamInviteService.GenerateToken();
+        db.TenantInvites.Add(PendingInvite(tenantId, "owner@example.com", token, requiresOtp: true));
+        await db.SaveChangesAsync();
+        var otp = new RecordingOtpStore();
+
+        var (result, value) = await CreateService(db, otp: otp).CompleteInviteActivationAsync(
+            new CompleteInviteActivationCommand(token, "longenough", "Beta Owner", "123456"));
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(TeamInviteError.Validation, result.Error);
+        Assert.Null(value);
+        Assert.Equal(0, otp.ValidateCalls);
+        Assert.Equal(0, await db.TenantMemberships.CountAsync());
+    }
+
+    [Fact]
+    public void MaskEmail_HidesTheLocalPart()
+    {
+        Assert.Equal("o***@example.com", TeamInviteService.MaskEmail("owner@example.com"));
+        Assert.DoesNotContain("owner", TeamInviteService.MaskEmail("owner@example.com"), StringComparison.Ordinal);
+    }
+
+    private static TenantInvite PendingInvite(Guid tenantId, string email, string token, bool requiresOtp) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            Email = email,
+            Role = TenantMembershipRole.TenantAdmin,
+            TokenHash = TeamInviteService.HashToken(token),
+            InvitedByUserId = Guid.NewGuid(),
+            ExpiresAt = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedAt = DateTimeOffset.UtcNow,
+            RequiresActivationOtp = requiresOtp,
+        };
+
+    private static TeamInviteService CreateService(
+        CohestraDbContext db,
+        RecordingEmailSender? email = null,
+        RecordingOtpStore? otp = null) =>
         new(
             db,
             userManager: null!,
             membershipService: null!,
-            emailSender: null!,
+            emailSender: email ?? new RecordingEmailSender(),
             sendGridOptions: Options.Create(new Cohestra.Infrastructure.Email.SendGridSettings()),
-            logger: NullLogger<TeamInviteService>.Instance);
+            logger: NullLogger<TeamInviteService>.Instance,
+            otpStore: otp ?? new RecordingOtpStore(),
+            otpOptions: Options.Create(new AuthOtpSettings()));
+
+    private sealed class RecordingEmailSender : IEmailSender
+    {
+        public bool Succeed { get; init; } = true;
+        public string? LastTo { get; private set; }
+        public string? LastPlainText { get; private set; }
+
+        public Task<EmailSendResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+        {
+            LastTo = message.ToEmail;
+            LastPlainText = message.PlainTextBody;
+            return Task.FromResult(new EmailSendResult(Succeed, Succeed ? "test" : null, Succeed ? null : "down"));
+        }
+    }
+
+    private sealed class RecordingOtpStore : IAuthOtpStore
+    {
+        private string? _code;
+        private string? _scope;
+        public string? StoredEmail { get; private set; }
+        public OtpPurpose StoredPurpose { get; private set; }
+        public string? StoredScope => _scope;
+        public bool Removed { get; private set; }
+        public int ValidateCalls { get; private set; }
+
+        public Task<bool> TryStoreAsync(
+            string email,
+            OtpPurpose purpose,
+            string code,
+            TimeSpan ttl,
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null)
+        {
+            StoredEmail = email;
+            StoredPurpose = purpose;
+            _code = code;
+            _scope = bindingScope;
+            Removed = false;
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> ValidateAndConsumeAsync(
+            string email,
+            OtpPurpose purpose,
+            string code,
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null)
+        {
+            ValidateCalls++;
+            var match = _code is not null
+                && string.Equals(email, StoredEmail, StringComparison.OrdinalIgnoreCase)
+                && purpose == StoredPurpose
+                && bindingScope == _scope
+                && code == _code;
+            if (match)
+            {
+                _code = null;
+            }
+
+            return Task.FromResult(match);
+        }
+
+        public Task<bool> TryRecordSendAttemptAsync(
+            string email,
+            OtpPurpose purpose,
+            int maxAttempts,
+            TimeSpan window,
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null) =>
+            Task.FromResult(true);
+
+        public Task RemoveAsync(
+            string email,
+            OtpPurpose purpose,
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null)
+        {
+            Removed = true;
+            _code = null;
+            return Task.CompletedTask;
+        }
+
+        public Task<bool> TryRecordFailedVerificationAsync(
+            string email,
+            OtpPurpose purpose,
+            int maxFailures,
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null) =>
+            Task.FromResult(true);
+    }
 
     private static CohestraDbContext CreateDb()
     {

@@ -29,6 +29,10 @@ internal sealed class TenantInviteConfiguration : IEntityTypeConfiguration<Tenan
         builder.Property(invite => invite.ExpiresAt).IsRequired();
         builder.Property(invite => invite.CreatedAt).IsRequired();
 
+        builder.Property(invite => invite.RequiresActivationOtp)
+            .HasDefaultValue(false)
+            .IsRequired();
+
         builder.HasIndex(invite => invite.TokenHash).IsUnique();
         builder.HasIndex(invite => new { invite.TenantId, invite.Email });
 
