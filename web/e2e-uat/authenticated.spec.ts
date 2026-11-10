@@ -1,9 +1,12 @@
 import { expect, test } from "@playwright/test";
+
+import { requireConfiguredQaSlug } from "../lib/uat-qa-tenant";
+import { resolveUatWorkspaceOrigin } from "../lib/uat-workspace-origin";
 import { mailboxSecretsPresent, readSignupOtp } from "./otp-mailbox";
+import { assertLiveQaSession } from "./qa-session";
 
 const email = process.env.UAT_AUTO_BASIC_EMAIL ?? "";
 const password = process.env.UAT_AUTO_BASIC_PASSWORD ?? "";
-const basicSlug = process.env.UAT_AUTO_BASIC_SLUG?.trim() || "default";
 const mailboxAddress =
   process.env.UAT_OTP_MAILBOX_ADDRESS ?? process.env.UAT_OTP_MAILBOX_USER ?? "";
 
@@ -12,11 +15,17 @@ function workspaceOrigin(slug: string): string {
   if (!base) {
     throw new Error("UAT_PUBLIC_BASE_URL is required");
   }
-  const url = new URL(base);
-  if (!url.hostname.startsWith(`${slug}.`)) {
-    url.hostname = `${slug}.${url.hostname}`;
-  }
-  return url.origin;
+  return resolveUatWorkspaceOrigin(base, slug);
+}
+
+function isSettledWorkspaceUrl(url: URL): boolean {
+  const path = url.pathname;
+  const onWorkspace =
+    path === "/dashboard"
+    || path.startsWith("/dashboard/")
+    || path === "/platform"
+    || path.startsWith("/platform/");
+  return onWorkspace && !url.searchParams.has("handoff");
 }
 
 test.describe("45.4 authenticated UAT", () => {
@@ -26,7 +35,8 @@ test.describe("45.4 authenticated UAT", () => {
         "UAT_AUTO_BASIC_EMAIL/PASSWORD are required; authenticated coverage cannot skip",
       );
     }
-    const origin = workspaceOrigin(basicSlug);
+    const slug = requireConfiguredQaSlug("basic", process.env.UAT_AUTO_BASIC_SLUG);
+    const origin = workspaceOrigin(slug);
     const response = await page.goto(`${origin}/login`, { waitUntil: "networkidle" });
     expect(response?.ok()).toBeTruthy();
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
@@ -38,7 +48,16 @@ test.describe("45.4 authenticated UAT", () => {
     await page.locator("#email").fill(email);
     await page.locator("#password").fill(password);
     await submit.click();
-    await expect(page).not.toHaveURL(/\/login(?:\?|$)/, { timeout: 20_000 });
+    await page.waitForURL(isSettledWorkspaceUrl, { timeout: 20_000 });
+    await expect(page.getByRole("heading", { name: "Sign in" })).toHaveCount(0);
+    expect(new URL(page.url()).origin).toBe(origin);
+    const base = process.env.UAT_PUBLIC_BASE_URL ?? "";
+    await assertLiveQaSession(page, {
+      role: "basic",
+      base,
+      configuredSlug: slug,
+      sessionOrigin: origin,
+    });
   });
 });
 

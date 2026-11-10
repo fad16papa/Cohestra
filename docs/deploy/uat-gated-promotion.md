@@ -59,7 +59,9 @@ required-check failure is `DEPLOYED_REJECTED`, never â€œno deployment occurred.â
 Host acceptance, public smoke, and Playwright must pass. Playwright
 `stats.expected` / `stats.unexpected` must be present nonnegative integers;
 absent, zero-expected, non-integer, boolean, negative, or unparseable
-stats are `INCOMPLETE`/`HOLD`, never `DEPLOYED_ACCEPTED`. A host-proven
+stats are `INCOMPLETE`/`HOLD`, never `DEPLOYED_ACCEPTED_BASIC_BETA`.
+A basic-beta pass is `scope=basic_beta` with Pro live `NOT_TESTED`, not full
+Basic/Core/Pro market readiness. A host-proven
 deploy keeps `uat_deployed=true` when browser evidence is malformed.
 Story 19.5 lifecycle is opt-in: `result=skip` with
 `reason=lifecycle_disabled` or `story_closed` is `SKIPPED`, not a
