@@ -986,21 +986,18 @@ public sealed class AuthServiceMembershipGuardTests
 
         public int ValidateCalls { get; private set; }
 
-        public void Plant(string email, OtpPurpose purpose, string code, TimeSpan? ttl = null)
-        {
-            _codes[Key(email, purpose)] = new OtpEntry(
-                code.Trim(),
-                DateTimeOffset.UtcNow.Add(ttl ?? TimeSpan.FromMinutes(10)));
-        }
+        public void Plant(string email, OtpPurpose purpose, string code, TimeSpan? ttl = null) =>
+            Plant(email, purpose, code, ttl, bindingScope: null);
 
         public Task<bool> TryStoreAsync(
             string email,
             OtpPurpose purpose,
             string code,
             TimeSpan ttl,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null)
         {
-            Plant(email, purpose, code, ttl);
+            Plant(email, purpose, code, ttl, bindingScope);
             return Task.FromResult(true);
         }
 
@@ -1008,10 +1005,11 @@ public sealed class AuthServiceMembershipGuardTests
             string email,
             OtpPurpose purpose,
             string code,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null)
         {
             ValidateCalls++;
-            var key = Key(email, purpose);
+            var key = Key(email, purpose, bindingScope);
             if (!_codes.TryGetValue(key, out var entry) || entry.ExpiresAt <= DateTimeOffset.UtcNow)
             {
                 _codes.Remove(key);
@@ -1032,11 +1030,35 @@ public sealed class AuthServiceMembershipGuardTests
             OtpPurpose purpose,
             int maxAttempts,
             TimeSpan window,
-            CancellationToken cancellationToken = default) =>
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null) =>
             Task.FromResult(true);
 
-        private static string Key(string email, OtpPurpose purpose) =>
-            $"{email.Trim().ToLowerInvariant()}|{purpose}";
+        public Task RemoveAsync(
+            string email,
+            OtpPurpose purpose,
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null)
+        {
+            _codes.Remove(Key(email, purpose, bindingScope));
+            return Task.CompletedTask;
+        }
+
+        public Task<bool> TryRecordFailedVerificationAsync(
+            string email,
+            OtpPurpose purpose,
+            int maxFailures,
+            CancellationToken cancellationToken = default,
+            string? bindingScope = null) =>
+            Task.FromResult(true);
+
+        public void Plant(string email, OtpPurpose purpose, string code, TimeSpan? ttl, string? bindingScope) =>
+            _codes[Key(email, purpose, bindingScope)] = new OtpEntry(
+                code.Trim(),
+                DateTimeOffset.UtcNow.Add(ttl ?? TimeSpan.FromMinutes(10)));
+
+        private static string Key(string email, OtpPurpose purpose, string? bindingScope) =>
+            $"{email.Trim().ToLowerInvariant()}|{purpose}|{bindingScope ?? string.Empty}";
 
         private readonly record struct OtpEntry(string Code, DateTimeOffset ExpiresAt);
     }
