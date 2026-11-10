@@ -2,6 +2,7 @@ using System.Text.Json;
 using Cohestra.Application.Outbox;
 using Cohestra.Domain.Campaigns;
 using Cohestra.Domain.Outbox;
+using Cohestra.Infrastructure.Observability;
 using Cohestra.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -41,35 +42,39 @@ public sealed class OutboxProcessor(
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            if (!_handlers.TryGetValue(message.MessageType, out var handler))
+            await CohestraTelemetry.TraceOutboxDispatchAsync(message.MessageType, async () =>
             {
-                await MarkFailedAsync(
-                    message,
-                    $"No outbox handler registered for message type '{message.MessageType}'.",
-                    settings,
-                    cancellationToken,
-                    deadLetter: true);
-                processed++;
-                continue;
-            }
+                if (!_handlers.TryGetValue(message.MessageType, out var handler))
+                {
+                    await MarkFailedAsync(
+                        message,
+                        $"No outbox handler registered for message type '{message.MessageType}'.",
+                        settings,
+                        cancellationToken,
+                        deadLetter: true);
+                    return OutboxMessageStatus.Failed;
+                }
 
-            try
-            {
-                await handler.HandleAsync(message, cancellationToken);
-                await MarkCompletedAsync(message, cancellationToken);
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                logger.LogWarning(
-                    ex,
-                    "Outbox message {MessageId} ({MessageType}) failed on attempt {Attempt}.",
-                    message.Id,
-                    message.MessageType,
-                    message.AttemptCount);
+                try
+                {
+                    await handler.HandleAsync(message, cancellationToken);
+                    await MarkCompletedAsync(message, cancellationToken);
+                    return OutboxMessageStatus.Completed;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    logger.LogWarning(
+                        ex,
+                        "Outbox message {MessageId} ({MessageType}) failed on attempt {Attempt}.",
+                        message.Id,
+                        message.MessageType,
+                        message.AttemptCount);
 
-                var isDeadLetter = message.AttemptCount >= settings.MaxAttempts;
-                await MarkFailedAsync(message, ex.Message, settings, cancellationToken, deadLetter: isDeadLetter);
-            }
+                    var isDeadLetter = message.AttemptCount >= settings.MaxAttempts;
+                    await MarkFailedAsync(message, ex.Message, settings, cancellationToken, deadLetter: isDeadLetter);
+                    return OutboxMessageStatus.Failed;
+                }
+            });
 
             processed++;
         }

@@ -1,6 +1,9 @@
 # generated: 2026-06-16
-# last_updated: 2026-10-24
-# Epic 46 in-progress 2026-10-24. 46.3 CLOSURE_READY on main 7e1cf5d4 (pending owner merge of docs PR #501). Owner-attested Docker RESULT=PASS. Gate B validation NOT DISPATCHED. Do not start 46.4. Production NO-GO.
+# last_updated: 2026-10-25
+# Epic 46 integration PR 2026-10-25. Combined 46.4 + 46.6 + 46.9 repository contracts on a dedicated draft PR. Source PRs #502/#503/#504 stay open. Owner host .env, classified live check, and live security probes PENDING. Do not compose-up Production. Do not dispatch Production. Do not merge autonomously. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
+# Epic 46 in-progress 2026-10-24. 46.4 in-progress from main e962c8c3. Repository-side runtime/secrets isolation only. Owner host .env and classified live check PENDING. Do not compose-up Production. Do not dispatch Production. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
+# Epic 46 in-progress 2026-10-24. Story 46.6 review on HEAD d6596101 (draft PR #503). BMAD review PASS (0 BLOCKER/0 MAJOR). Do not merge. Do not implement 46.7 dashboards. Do not rewrite Production compose/secrets (46.4). Do not run a broad security audit (46.9). Production NO-GO.
+# Epic 46 in-progress 2026-10-24. 46.9 in-progress (security hardening, draft PR). 46.3 CLOSURE_READY on main 7e1cf5d4 (pending owner merge of docs PR #501). Do not start 46.4 compose secrets. Production NO-GO.
 # Epic 46 in-progress 2026-10-22. 46.3 planning correction: Layer A exact-SHA CI + Layer B GitGuardian on merge-time PR HEAD. Still ready-for-dev; do not start implementation; do not merge planning PR until owner accepts. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
 # Epic 46 in-progress 2026-10-21. 46.2 done (main 5d52d6e3 includes #484 CI flake fix after 46.2 merge). 46.3 ready-for-dev (planning only). Do not start 46.3 implementation. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
 # Epic 46 in-progress 2026-10-20. 46.1 done (main 36601be5). 46.2 review: dedicated Production droplet 610830617 / 159.223.55.242. OWNER_GATE droplet_purchase APPROVED. Cutover GRANTED; release NOT YET COMPLETE. Do not start 46.3.
@@ -84,7 +87,7 @@
 # - uat-handoff-checklist cancelled (single-operator handoff — enterprise pivot)
 
 generated: 2026-06-16
-last_updated: 2026-10-23
+last_updated: 2026-10-25
 project: cohestra
 project_key: NOKEY
 tracking_system: file-system
@@ -500,12 +503,12 @@ development_status:
   46-1-production-architecture-and-infrastructure-baseline: done
   46-2-dedicated-production-host-and-network-hardening: done
   46-3-github-production-environment-and-owner-gated-ci-cd: done
-  46-4-production-runtime-config-and-secrets-isolation: backlog
+  46-4-production-runtime-config-and-secrets-isolation: review
   46-5-postgresql-backup-restore-and-dr: backlog
-  46-6-production-observability-instrumentation: backlog
+  46-6-production-observability-instrumentation: review
   46-7-metrics-dashboards-and-alerting: backlog
   46-8-platform-admin-production-support-telemetry-integration: backlog
-  46-9-production-security-and-tenant-isolation-hardening: backlog
+  46-9-production-security-and-tenant-isolation-hardening: review
   46-10-paddle-live-readiness: backlog
   46-11-sendgrid-and-email-production-readiness: backlog
   46-12-performance-capacity-and-load-acceptance: backlog
