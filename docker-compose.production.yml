@@ -73,6 +73,7 @@ services:
       - support_attachments_data:/app/data/support-attachments
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      Cohestra__DeploymentPlane: Production
       ASPNETCORE_URLS: http://+:8080
       GIT_SHA: ${GIT_SHA:-}
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-cohestra};Username=${POSTGRES_USER:-cohestra};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
@@ -90,6 +91,8 @@ services:
       CampaignAssets__PublicApiBaseUrl: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
       Support__AttachmentStoragePath: /app/data/support-attachments
       Cors__AllowedOrigins__0: ${PUBLIC_BASE_URL:?Set PUBLIC_BASE_URL in .env}
+      Cors__AllowedOrigins__1: ""
+      Cors__AllowedOrigins__2: ""
       SendGrid__ApiKey: ${SendGrid__ApiKey:?Set SendGrid__ApiKey in .env}
       SendGrid__FromEmail: ${SendGrid__FromEmail:?Set SendGrid__FromEmail in .env}
       SendGrid__FromName: ${SendGrid__FromName:-Cohestra}
