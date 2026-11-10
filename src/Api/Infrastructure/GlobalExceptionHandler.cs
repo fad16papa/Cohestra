@@ -1,5 +1,6 @@
 using Cohestra.Application.RateLimiting;
 using Cohestra.Application.Tenants;
+using Cohestra.Infrastructure.Observability;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -71,6 +72,7 @@ public sealed class GlobalExceptionHandler(
         logger.LogError(exception, "Unhandled exception processing {Method} {Path}",
             httpContext.Request.Method,
             httpContext.Request.Path);
+        CohestraTelemetry.RecordUnhandledException(httpContext.Request.Method);
 
         var problemDetails = new ProblemDetails
         {

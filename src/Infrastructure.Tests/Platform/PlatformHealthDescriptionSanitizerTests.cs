@@ -32,6 +32,7 @@ public sealed class PlatformHealthDescriptionSanitizerTests
             PlatformHealthDescriptionSanitizer.Sanitize("Default tenant (Platform 0) is present."));
         Assert.Null(PlatformHealthDescriptionSanitizer.Sanitize("  "));
         Assert.Equal(200, PlatformHealthDescriptionSanitizer.Sanitize(new string('x', 250))!.Length);
+        Assert.Equal(250, PlatformHealthDescriptionSanitizer.Sanitize(new string('x', 250), maxLength: 0)!.Length);
     }
 
     [Theory]

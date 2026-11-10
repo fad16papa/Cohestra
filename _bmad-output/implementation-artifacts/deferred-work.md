@@ -826,3 +826,12 @@ HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolve
 ## Deferred from: code review of 39-2-mobile-navigation.md (2026-10-02)
 
 - Calendar popout remains a named 38.6 custom-dialog exception; 43.5 owns rename/trap. 39.2 only hides the FAB and relocates the opener
+
+## Deferred from: code review of 46-6-production-observability-instrumentation.md (2026-10-24)
+
+- ASP.NET `http.route` is usually absent at sample time; paddle HTTP parent always-on branch is ineffective. Custom `paddle.webhook` span remains always-on.
+- Console/file `ILogger` sinks bypass `TelemetryRedactingLogProcessor`. SendGrid/NullEmail are source-fixed; remaining sites belong to 46.9.
+- `AddRedisInstrumentation` resolves `IConnectionMultiplexer` at TracerProvider build. Pre-existing Redis `Connect` singleton; 46.4 owns runtime.
+- Nested `answers` JSON regex is first-`}` best-effort. Keys `answers` / `form_answer` are fully redacted.
+- Empty outbox polls emit always-on `job.run`. Volume, not cardinality; 46.7 dashboards.
+- Collector-outage integration host uses the simple export processor. Production default is batch.

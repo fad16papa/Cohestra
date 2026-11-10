@@ -2,6 +2,7 @@ using System.Text;
 using Cohestra.Application.Billing;
 using Cohestra.Domain.Billing;
 using Cohestra.Infrastructure.Billing;
+using Cohestra.Infrastructure.Observability;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -23,6 +24,8 @@ public sealed class PaddleWebhookController(
         var webhookSecret = paddleOptions.Value.WebhookSecret;
         if (string.IsNullOrWhiteSpace(webhookSecret))
         {
+            using var missingSecret = CohestraTelemetry.StartPaddleWebhook("missing");
+            CohestraTelemetry.CompletePaddleWebhook(missingSecret, nameof(PaddleWebhookDeliveryDisposition.Rejected));
             await RecordSafelyAsync(
                 new PaddleWebhookDeliveryRecord(
                     PaddleWebhookDeliveryDisposition.Rejected,
@@ -35,6 +38,8 @@ public sealed class PaddleWebhookController(
         var signatureHeader = Request.Headers["Paddle-Signature"].ToString();
         if (string.IsNullOrWhiteSpace(signatureHeader))
         {
+            using var missingSignature = CohestraTelemetry.StartPaddleWebhook("missing");
+            CohestraTelemetry.CompletePaddleWebhook(missingSignature, nameof(PaddleWebhookDeliveryDisposition.Rejected));
             await RecordSafelyAsync(
                 new PaddleWebhookDeliveryRecord(
                     PaddleWebhookDeliveryDisposition.Rejected,
@@ -53,6 +58,8 @@ public sealed class PaddleWebhookController(
         if (!PaddleSignature.TryValidate(webhookSecret, signatureHeader, json, DateTimeOffset.UtcNow, out var reason))
         {
             logger.LogWarning("Paddle webhook signature rejected: {Reason}", reason);
+            using var rejected = CohestraTelemetry.StartPaddleWebhook("rejected");
+            CohestraTelemetry.CompletePaddleWebhook(rejected, nameof(PaddleWebhookDeliveryDisposition.Rejected));
             await RecordSafelyAsync(
                 new PaddleWebhookDeliveryRecord(
                     PaddleWebhookDeliveryDisposition.Rejected,
@@ -62,7 +69,25 @@ public sealed class PaddleWebhookController(
             return BadRequest("Invalid Paddle-Signature.");
         }
 
-        var result = await webhookProcessor.ProcessAsync(json, cancellationToken);
+        using var processed = CohestraTelemetry.StartPaddleWebhook(null);
+        PaddleWebhookProcessResult result;
+        try
+        {
+            result = await webhookProcessor.ProcessAsync(json, cancellationToken);
+            processed?.SetTag("paddle.event_type", CohestraTelemetry.NormalizePaddleEventType(result.EventType));
+            CohestraTelemetry.CompletePaddleWebhook(processed, result.Disposition.ToString());
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            CohestraTelemetry.CompletePaddleWebhook(processed, "Canceled");
+            throw;
+        }
+        catch (Exception)
+        {
+            CohestraTelemetry.CompletePaddleWebhook(processed, "Failed");
+            throw;
+        }
+
         var statusCode = PaddleWebhookHttp.StatusCodeFor(result);
         if (result.Disposition == PaddleWebhookDisposition.Retryable)
         {
