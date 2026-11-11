@@ -35,9 +35,11 @@ Public signup keeps its own email-verification code. First-admin activation stay
 
 ## Acceptance
 
-- Landing hero is a workspace preview: Follow-up, Activities, Registration, Clients. Website shows Core. Campaigns shows Pro.
+- Headline states the customer benefit: who registered, and who still needs a reply.
+- Landing hero uses the Follow-up room's category labels and row layout (avatar, title, context caption, category chip). Website shows Core. Campaigns shows Pro.
+- Preview titles are roles (new registration, returning client, known client). Captions are the product's own empty-state strings. No named people, counts, or customer results.
 - Copy names Activities, Registration, Clients, Follow-up, Form Studio, Website Studio, Analytics, Campaigns, and Cohestra AI.
-- Form recipe limits stated as Basic 1, Core 5, Pro 25.
+- Saved-form limits stated as Basic 1, Core 5, Pro 25.
 - No stock sports hero, no named fictional clients, no “under an hour” claim, no testimonials.
 - Basic / Core / Pro prices and limits stay the published contract.
 - Signup still requires terms, password rules, slug availability, and CAPTCHA when enabled.
@@ -61,7 +63,7 @@ Reviewed against the acceptance section above, `docs/DESIGN.md` room names, `Ten
 | BLOCKER | 0 | |
 | MAJOR | 0 | |
 | MINOR | 1 | `signup-page-content.tsx` still has the pre-existing `react-hooks/set-state-in-effect` findings on slug sync. Behavior was not changed. |
-| NIT | 1 | The product-preview “Open” chips are sample chrome inside `aria-hidden`, not live counts. The caption says so. |
+| NIT | 0 | The earlier “Open” sample pills were replaced with the real category chips and empty-state captions. |
 
 ## Evidence
 

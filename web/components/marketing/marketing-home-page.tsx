@@ -64,7 +64,7 @@ export function MarketingHomePage() {
 
           <MarketingReveal immediate delayMs={120}>
             <h1 className="mt-3 text-balance font-[family-name:var(--font-fraunces)] text-[clamp(2.35rem,4.4vw,3.65rem)] font-medium leading-[1.08] tracking-[-0.04em] text-ink">
-              Registration, clients, and follow-up in one workspace
+              Know who registered, and who still needs a reply
             </h1>
           </MarketingReveal>
 

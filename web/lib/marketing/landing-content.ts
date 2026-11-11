@@ -43,7 +43,7 @@ export const LANDING_FEATURES: LandingFeature[] = [
     title: "Form Studio",
     plan: "Every plan · recipe limits differ",
     description:
-      "Compose the registration form on the activity. Basic saves 1 form recipe, Core saves 5, and Pro saves 25.",
+      "Compose the registration form on the activity. Basic saves 1 form, Core saves 5, and Pro saves 25.",
   },
   {
     icon: Users,
@@ -179,7 +179,7 @@ export const LANDING_FAQ: LandingFaqItem[] = [
   {
     question: "Which plans include Website Studio, Form Studio, and Campaigns?",
     answer:
-      "Form Studio is on every activity. Saved recipes are 1 on Basic, 5 on Core, and 25 on Pro. Website Studio requires Core or higher. Campaigns require Pro. Enterprise includes everything in Pro. A locked room stays visible and names the plan.",
+      "Form Studio is on every activity. Saved forms are 1 on Basic, 5 on Core, and 25 on Pro. Website Studio requires Core or higher. Campaigns require Pro. Enterprise includes everything in Pro. A locked room stays visible and names the plan.",
   },
   {
     question: "How does WhatsApp and Viber outreach work?",

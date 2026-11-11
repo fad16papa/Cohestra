@@ -1,5 +1,7 @@
 "use client";
 
+import { PersonAvatar } from "@/components/shared/person-avatar";
+import { FOLLOW_UP_CATEGORY_OPTIONS } from "@/lib/follow-up-category";
 import { cn } from "@/lib/utils";
 
 const ROOMS = [
@@ -13,18 +15,25 @@ const ROOMS = [
   { label: "Campaigns", mark: "Pro" as const },
 ] as const;
 
+/**
+ * Same row anatomy as Follow-up results: avatar, title, context caption, category chip.
+ * Titles are roles, not people. Captions are the product's own empty-state strings.
+ */
 const FOLLOW_UP_ROWS = [
   {
+    title: "New registration",
+    caption: "No outreach yet",
     category: "Due now",
-    detail: "New registration on a published activity",
   },
   {
+    title: "Returning client",
+    caption: "Next conversation not scheduled",
     category: "Opportunity",
-    detail: "Returned on a later activity",
   },
   {
+    title: "Known client",
+    caption: "No recorded outreach",
     category: "At risk",
-    detail: "Known client with no recent registration",
   },
 ] as const;
 
@@ -43,17 +52,14 @@ export function MarketingHeroProductStack({ className }: { className?: string })
       )}
       aria-labelledby="cohestra-product-preview-caption"
     >
-      <div
-        aria-hidden
-        className="overflow-hidden rounded-[24px] border border-line bg-paper shadow-[0_28px_60px_rgba(7,13,18,0.12)]"
-      >
-        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
+      <div className="overflow-hidden rounded-[24px] border border-border-warm bg-card shadow-[0_28px_60px_rgba(7,13,18,0.12)]">
+        <div className="flex items-center justify-between gap-3 border-b border-border-warm px-4 py-3 sm:px-5">
           <p className="text-label text-text-accent">Product preview</p>
-          <p className="text-xs text-muted-foreground">Sample workspace states</p>
+          <p className="text-xs text-text-muted-warm">Follow-up room</p>
         </div>
 
         <div className="grid sm:grid-cols-[9.5rem_minmax(0,1fr)]">
-          <ul className="hidden border-r border-line bg-paper-warm py-3 sm:block">
+          <ul className="hidden border-r border-border-warm bg-muted/30 py-3 sm:block">
             {ROOMS.map((room) => {
               const current = room.mark === "current";
               return (
@@ -62,13 +68,13 @@ export function MarketingHeroProductStack({ className }: { className?: string })
                     className={cn(
                       "flex items-center justify-between gap-2 px-3 py-2 text-[0.8125rem]",
                       current
-                        ? "border-l-2 border-lagoon bg-paper font-semibold text-ink"
-                        : "border-l-2 border-transparent text-muted-foreground"
+                        ? "border-l-2 border-lagoon bg-background font-semibold text-text-warm"
+                        : "border-l-2 border-transparent text-text-muted-warm"
                     )}
                   >
                     <span className="truncate">{room.label}</span>
                     {room.mark && room.mark !== "current" ? (
-                      <span className="shrink-0 rounded-sm bg-paper px-1.5 py-0.5 text-[0.625rem] font-semibold tracking-wide text-text-accent uppercase">
+                      <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[0.625rem] font-medium text-text-warm uppercase">
                         {room.mark}
                       </span>
                     ) : null}
@@ -86,8 +92,8 @@ export function MarketingHeroProductStack({ className }: { className?: string })
                   className={cn(
                     "rounded-full border px-2.5 py-1 text-[0.6875rem] font-medium",
                     room.mark === "current"
-                      ? "border-lagoon bg-lagoon/10 text-ink"
-                      : "border-line text-muted-foreground"
+                      ? "border-lagoon bg-lagoon/10 text-text-warm"
+                      : "border-border-warm text-text-muted-warm"
                   )}
                 >
                   {room.label}
@@ -96,22 +102,41 @@ export function MarketingHeroProductStack({ className }: { className?: string })
               ))}
             </ul>
 
-            <p className="font-[family-name:var(--font-fraunces)] text-[1.35rem] font-medium tracking-[-0.03em] text-ink">
+            <p className="font-[family-name:var(--font-fraunces)] text-[1.35rem] font-medium tracking-[-0.03em] text-text-warm">
               Follow-up
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Categories in the room, not a separate pipeline.
-            </p>
+            <div className="mt-3 flex min-w-0 flex-wrap gap-1.5" aria-hidden>
+              {FOLLOW_UP_CATEGORY_OPTIONS.map((option) => {
+                const selected = option.value === "due-now";
+                return (
+                  <span
+                    key={option.value}
+                    className={cn(
+                      "inline-flex items-center rounded-xl border px-2.5 py-1.5 text-xs font-medium",
+                      selected
+                        ? "border-border-warm bg-background text-text-warm shadow-sm"
+                        : "border-transparent bg-muted/40 text-text-muted-warm"
+                    )}
+                  >
+                    {option.label}
+                  </span>
+                );
+              })}
+            </div>
 
-            <ul className="mt-4 divide-y divide-line border-y border-line">
+            <ul className="mt-4 space-y-2">
               {FOLLOW_UP_ROWS.map((row) => (
-                <li key={row.category} className="flex items-start justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-ink">{row.category}</p>
-                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{row.detail}</p>
+                <li
+                  key={row.category}
+                  className="flex items-center gap-3 rounded-xl border border-border-warm bg-card/80 px-3 py-3"
+                >
+                  <PersonAvatar name={row.title} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-text-warm">{row.title}</p>
+                    <p className="truncate text-sm text-text-muted-warm">{row.caption}</p>
                   </div>
-                  <span className="shrink-0 rounded-sm bg-lagoon/10 px-2 py-0.5 text-[0.625rem] font-bold tracking-wide text-lagoon uppercase">
-                    Open
+                  <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-text-warm">
+                    {row.category}
                   </span>
                 </li>
               ))}
@@ -119,25 +144,26 @@ export function MarketingHeroProductStack({ className }: { className?: string })
           </div>
         </div>
 
-        <ul className="grid border-t border-line sm:grid-cols-3">
+        <ul className="grid border-t border-border-warm sm:grid-cols-3">
           {CONNECTED_STATES.map((state) => (
             <li
               key={state.label}
-              className="border-b border-line px-4 py-3 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0"
+              className="border-b border-border-warm px-4 py-3 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0"
             >
               <p className="text-label text-text-accent">{state.label}</p>
-              <p className="mt-1 text-sm font-semibold text-ink">{state.value}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{state.note}</p>
+              <p className="mt-1 text-sm font-semibold text-text-warm">{state.value}</p>
+              <p className="mt-0.5 text-xs text-text-muted-warm">{state.note}</p>
             </li>
           ))}
         </ul>
       </div>
       <figcaption
         id="cohestra-product-preview-caption"
-        className="mt-3 max-w-[62ch] text-xs leading-relaxed text-muted-foreground"
+        className="mt-3 max-w-[62ch] text-xs leading-relaxed text-text-muted-warm"
       >
-        Product preview of Follow-up, a published activity, and public registration. Website shows
-        the Core lock and Campaigns shows the Pro lock. Sample states, not a customer result.
+        Product preview of the Follow-up room, using the same category chips and row layout as the
+        workspace. Website shows the Core lock and Campaigns shows the Pro lock. Sample states, not
+        a customer result.
       </figcaption>
     </figure>
   );

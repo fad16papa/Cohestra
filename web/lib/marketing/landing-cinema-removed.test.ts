@@ -24,7 +24,7 @@ describe("landing Cinema section removal", () => {
     expect(home).toContain("id=\"features\"");
     expect(home).toContain("id=\"how-it-works\"");
     expect(home).toContain("id=\"pricing\"");
-    expect(home).toContain("Registration, clients, and follow-up in one workspace");
+    expect(home).toContain("Know who registered, and who still needs a reply");
     expect(home).not.toContain("Under 1 hr");
     expect(home).not.toContain("hero-community-sports");
   });
@@ -39,6 +39,11 @@ describe("landing Cinema section removal", () => {
     expect(hero).not.toContain("hero-community-sports");
     expect(hero).not.toContain("Elena");
     expect(hero).not.toContain("Sunday clinic");
+    expect(hero).toContain("No outreach yet");
+    expect(hero).toContain("Next conversation not scheduled");
+    expect(hero).toContain("No recorded outreach");
+    expect(hero).toContain("FOLLOW_UP_CATEGORY_OPTIONS");
+    expect(hero).not.toContain(">Open<");
 
     for (const room of [
       "Activities",
@@ -54,7 +59,7 @@ describe("landing Cinema section removal", () => {
       expect(content).toContain(room);
     }
 
-    expect(content).toContain("Basic saves 1 form recipe");
+    expect(content).toContain("Basic saves 1 form");
     expect(content).toContain("Campaigns require Pro");
     expect(content).toContain("Website Studio requires Core");
     expect(content).not.toMatch(/under an hour/i);

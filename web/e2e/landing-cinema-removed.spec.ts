@@ -17,7 +17,7 @@ test.describe("landing Cinema section removed", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: /registration, clients, and follow-up in one workspace/i,
+        name: /know who registered, and who still needs a reply/i,
       })
     ).toBeVisible();
     await expect(
