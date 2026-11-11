@@ -6,9 +6,12 @@ import { cn } from "@/lib/utils";
 export function MarketingAmbientScene({
   variant = "default",
   className,
+  discs = true,
 }: {
   variant?: "default" | "pricing" | "hero";
   className?: string;
+  /** Off when discs would sit on a headline or form. */
+  discs?: boolean;
 }) {
   return (
     <div
@@ -42,24 +45,21 @@ export function MarketingAmbientScene({
         />
       ) : null}
 
-      {/* Cookie discs — playful atelier motif */}
-      <MarketingCookieDisc
-        className="left-[8%] top-[18%] rotate-[-18deg] animate-marketing-float"
-        size={56}
-        chips={4}
-      />
-      <MarketingCookieDisc
-        className="right-[10%] top-[12%] rotate-[14deg] animate-marketing-float-delayed"
-        size={44}
-        chips={3}
-      />
-      {variant === "hero" ? (
-        <MarketingCookieDisc
-          className="right-[22%] bottom-[28%] rotate-[6deg] animate-marketing-float-slow"
-          size={36}
-          chips={2}
-        />
-      ) : null}
+      {/* Cookie discs stay off the hero so they do not cover the headline or product preview. */}
+      {variant === "hero" || !discs ? null : (
+        <>
+          <MarketingCookieDisc
+            className="left-[8%] top-[18%] rotate-[-18deg] animate-marketing-float"
+            size={56}
+            chips={4}
+          />
+          <MarketingCookieDisc
+            className="right-[10%] top-[12%] rotate-[14deg] animate-marketing-float-delayed"
+            size={44}
+            chips={3}
+          />
+        </>
+      )}
       {variant === "pricing" ? (
         <MarketingCookieDisc
           className="left-[42%] bottom-[8%] rotate-[-8deg] animate-marketing-float-slow opacity-60"

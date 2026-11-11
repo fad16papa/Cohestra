@@ -6,6 +6,7 @@ import { Check, Circle, X } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   countCompletedOnboardingSteps,
+  DASHBOARD_ONBOARDING_INTRO,
   dismissDashboardOnboarding,
   type DashboardOnboardingItem,
 } from "@/lib/dashboard-onboarding";
@@ -34,7 +35,7 @@ export function DashboardOnboardingChecklist({
         <div>
           <h3 className="text-section text-text-warm">Getting started</h3>
           <p className="mt-1 text-sm text-text-muted-warm">
-            Complete these steps to launch your first lead engine.
+            {DASHBOARD_ONBOARDING_INTRO}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

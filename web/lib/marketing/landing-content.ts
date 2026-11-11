@@ -1,10 +1,12 @@
 import {
   BarChart3,
-  CalendarCheck,
+  CalendarDays,
   Globe,
-  Mail,
-  MessageCircle,
+  ListTodo,
+  Megaphone,
   QrCode,
+  Sparkles,
+  SquarePen,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -13,50 +15,77 @@ export type LandingFeature = {
   icon: LucideIcon;
   title: string;
   description: string;
+  /** Plan truth. Do not imply a paid room is included on Basic. */
+  plan: string;
 };
 
+/**
+ * Connected product rooms. Plan notes match nav entitlements and
+ * TenantPlanLimits / FormTemplateSlotLimits — not a future roadmap.
+ */
 export const LANDING_FEATURES: LandingFeature[] = [
   {
-    icon: CalendarCheck,
+    icon: CalendarDays,
     title: "Activities",
+    plan: "Every plan",
     description:
-      "Create an activity, set the registration form, and publish. When a session is full, registration closes automatically.",
+      "Create an activity, set capacity when you need it, and publish. A full session stops taking registrations.",
   },
   {
     icon: QrCode,
-    title: "QR and public registration",
+    title: "Registration",
+    plan: "Every plan",
     description:
-      "Every activity gets a QR code and a public page. People scan, register, and show up in your client list. No paper forms.",
+      "Each published activity has a public page and a QR code. People register in the browser. They do not install an app.",
+  },
+  {
+    icon: SquarePen,
+    title: "Form Studio",
+    plan: "Every plan · recipe limits differ",
+    description:
+      "Compose the registration form on the activity. Basic saves 1 form recipe, Core saves 5, and Pro saves 25.",
   },
   {
     icon: Users,
-    title: "Client list with history",
+    title: "Clients",
+    plan: "Every plan",
     description:
-      "Registrations merge into one profile per person. You can see who joined, who came back, and who referred others across activities.",
+      "Registrations merge into one profile per person, with history across activities. Your team works from that list.",
   },
   {
-    icon: MessageCircle,
-    title: "WhatsApp and Viber",
+    icon: ListTodo,
+    title: "Follow-up",
+    plan: "Every plan",
     description:
-      "Open a chat from a client profile and log what you sent. Status flags help your team avoid messaging the same person twice.",
-  },
-  {
-    icon: Mail,
-    title: "Email campaigns",
-    description:
-      "Send email to segments by activity, status, or community. Each send is recorded on the client timeline.",
-  },
-  {
-    icon: BarChart3,
-    title: "Reports and dashboard",
-    description:
-      "See follow up coverage, activity counts, and filtered reports. Export to CSV when you need a spreadsheet.",
+      "Follow-up is its own room. Due now, Opportunity, and At risk are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
   },
   {
     icon: Globe,
-    title: "Public website",
+    title: "Website Studio",
+    plan: "Core or higher",
     description:
-      "Publish a homepage at your org subdomain with upcoming activities pulled from Cohestra. Draft, preview, then publish.",
+      "Core publishes a Site Page at your workspace address. Pro adds Studio sections such as carousel, FAQ, and video. Basic keeps a stub page with your name and activity links.",
+  },
+  {
+    icon: BarChart3,
+    title: "Analytics",
+    plan: "Every plan · depth differs",
+    description:
+      "Basic includes a registration report and CSV export. Core adds filters. Pro adds campaign analytics and saved views.",
+  },
+  {
+    icon: Megaphone,
+    title: "Campaigns",
+    plan: "Pro or Enterprise",
+    description:
+      "Send email to a segment by activity, status, or community. Each send is recorded on the client timeline.",
+  },
+  {
+    icon: Sparkles,
+    title: "Cohestra AI",
+    plan: "Every plan",
+    description:
+      "A room for the next useful action, with the count or date behind it. If the workspace does not have enough history, Cohestra AI says so.",
   },
 ];
 
@@ -71,19 +100,19 @@ export const LANDING_STEPS: LandingStep[] = [
     step: "01",
     title: "Publish an activity",
     description:
-      "Add the name, pick a form template, set capacity if you need it, and publish. The registration page and QR code are ready right away.",
+      "Name it, compose the form in Form Studio, and publish. The public registration page and QR code are part of that activity.",
   },
   {
     step: "02",
-    title: "Share the link or QR",
+    title: "Registration lands on one list",
     description:
-      "Post the link in your group chat, pin it in bio, or print the QR for the venue. Registrations go into one client list.",
+      "Share the link or QR. Each signup becomes a client profile. Returning people stay on the same profile across activities.",
   },
   {
     step: "03",
-    title: "Follow up from the list",
+    title: "Follow up from the workspace",
     description:
-      "Message people on WhatsApp or Viber from their profile, run email when you need it, and track who still needs a reply.",
+      "Open Follow-up for who needs a reply. Analytics reads the same list. Cohestra AI names a next step when there is enough history. Website Studio is on Core. Campaigns are on Pro.",
   },
 ];
 
@@ -107,22 +136,22 @@ export type LandingOutcome = {
   description: string;
 };
 
-/** Operator outcomes — no attributed quotes until real customer stories are collected. */
+/** Product outcomes. Not attributed quotes and not measured customer results. */
 export const LANDING_OUTCOMES: LandingOutcome[] = [
   {
-    headline: "One list instead of scattered forms",
+    headline: "One profile after every registration",
     description:
-      "Registrations from every activity merge into one client profile. Your team stops reconciling spreadsheets before every session.",
+      "The public page, the QR code, and later activities write the same client list. The team is not reconciling a separate spreadsheet to see who came back.",
   },
   {
     headline: "Follow-up the whole team can see",
     description:
-      "WhatsApp and Viber outreach is logged on each profile. Status flags show who still needs a reply — no more duplicate messages in the group chat.",
+      "WhatsApp and Viber open from the profile you already have, and the note stays on the timeline. Status on the profile shows who still needs a reply.",
   },
   {
-    headline: "Reports that answer “so what?”",
+    headline: "Analytics stay attached to the list",
     description:
-      "Living Reports highlight top activities, community share, and follow-up coverage — with CSV export when the board wants a spreadsheet.",
+      "Reports answer who registered and, on higher plans, let you filter and export. They do not become a second database.",
   },
 ];
 
@@ -133,33 +162,33 @@ export type LandingFaqItem = {
 
 export const LANDING_FAQ: LandingFaqItem[] = [
   {
-    question: "How fast can I get set up?",
+    question: "What do I do first?",
     answer:
-      "Most operators publish their first activity in under an hour. Sign up, pick a form template, share the QR, and you are ready for your next session.",
+      "Create the workspace, verify your email, publish an activity, and share its registration page or QR code. New signups appear in Clients. Follow-up is a room in the same workspace.",
   },
   {
     question: "Is Basic really free?",
     answer:
-      "Yes. Basic stays free with 1 community, 4 published activities, and 250 registrations per month. No credit card required.",
+      "Yes. Basic stays free with 1 operator seat, 1 community, 4 published activities, and 250 registrations per month. No credit card required.",
   },
   {
-    question: "Do my clients need an app?",
+    question: "Do people registering need an app?",
     answer:
-      "No. They register on a web page from any phone. Scan the QR or open your link. Only your team signs in to Cohestra.",
+      "No. They register on a web page from a phone browser. Only your team signs in to Cohestra.",
+  },
+  {
+    question: "Which plans include Website Studio, Form Studio, and Campaigns?",
+    answer:
+      "Form Studio is on every activity. Saved recipes are 1 on Basic, 5 on Core, and 25 on Pro. Website Studio requires Core or higher. Campaigns require Pro. Enterprise includes everything in Pro. A locked room stays visible and names the plan.",
   },
   {
     question: "How does WhatsApp and Viber outreach work?",
     answer:
-      "Cohestra opens a chat to the client number from their profile and saves a note on the timeline. You send from your own business WhatsApp or Viber account. No API setup.",
+      "Cohestra opens a chat to the number on the client profile and saves a note on the timeline. You send from your own WhatsApp or Viber account.",
   },
   {
     question: "Can my whole team use it?",
     answer:
-      "Core includes 3 seats. Pro includes 10. Invite by email so everyone works from the same client list and history.",
-  },
-  {
-    question: "What happens when I outgrow a plan?",
-    answer:
-      "Upgrade in the app. Your data, activities, and public pages stay. Core adds a branded site page. Pro adds the full website builder and campaigns.",
+      "Basic includes 1 seat. Core includes 3. Pro includes 10. Team invites on Core and Pro share the same client list. A first admin invited by the platform confirms an email code before the account is created.",
   },
 ];

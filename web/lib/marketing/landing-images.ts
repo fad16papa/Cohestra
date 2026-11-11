@@ -1,4 +1,7 @@
-/** Self hosted marketing photography. Replace files in /public/marketing/ with your own club photos. */
+/**
+ * Legacy marketing photography. The public landing hero no longer mounts these
+ * files. Tenant site pages still use their own hero assets.
+ */
 export const LANDING_IMAGES = {
   hero: {
     src: "/marketing/hero-community-sports.png",

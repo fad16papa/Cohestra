@@ -26,13 +26,13 @@ function emptyStateCopy(plan: string | null | undefined): { eyebrow: string; bod
 
   if (plan && isBasicPlan(plan)) {
     return {
-      eyebrow: "Open your atelier",
+      eyebrow: "Your Basic workspace is ready",
       body: "Basic is free forever — no card required. Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
     };
   }
 
   return {
-    eyebrow: "Open your atelier",
+    eyebrow: "Your workspace is ready",
     body: "Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
   };
 }

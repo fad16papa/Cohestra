@@ -1,77 +1,144 @@
 "use client";
 
-import Image from "next/image";
-
-import { LANDING_IMAGES } from "@/lib/marketing/landing-images";
 import { cn } from "@/lib/utils";
 
-const FLOAT_ROWS = [
-  { name: "Elena M.", meta: "Sunday clinic", pill: "New" },
-  { name: "Sam R.", meta: "Clinic, also board games", pill: "Returning" },
-  { name: "Jordan K.", meta: "Youth open play", pill: "New" },
+const ROOMS = [
+  { label: "Dashboard", mark: null },
+  { label: "Clients", mark: null },
+  { label: "Activities", mark: null },
+  { label: "Follow-up", mark: "current" as const },
+  { label: "Analytics", mark: null },
+  { label: "Cohestra AI", mark: null },
+  { label: "Website", mark: "Core" as const },
+  { label: "Campaigns", mark: "Pro" as const },
 ] as const;
 
-function HeroCommunityPhoto() {
-  return (
-    <figure className="relative aspect-[4/5] w-full max-h-[520px] overflow-hidden rounded-[24px] shadow-[0_40px_80px_rgba(7,13,18,0.16)] sm:max-h-[580px] lg:aspect-auto lg:h-full lg:max-h-none lg:min-h-0">
-      <Image
-        src={LANDING_IMAGES.hero.src}
-        alt={LANDING_IMAGES.hero.alt}
-        fill
-        priority
-        className="object-cover saturate-[0.92] contrast-[1.05]"
-        sizes="(max-width: 1024px) 100vw, 50vw"
-      />
-      <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-ink/[0.04] via-ink/15 to-ink/55" />
-      <figcaption className="absolute inset-x-6 bottom-6 z-[2] max-w-[18ch] text-paper">
-        <span className="text-section mb-2 block text-gold">Sunday clinic</span>
-        <span className="font-[family-name:var(--font-fraunces)] text-lg leading-snug tracking-[-0.02em]">
-          New and returning clients in one list.
-        </span>
-      </figcaption>
-    </figure>
-  );
-}
+const FOLLOW_UP_ROWS = [
+  {
+    category: "Due now",
+    detail: "New registration on a published activity",
+  },
+  {
+    category: "Opportunity",
+    detail: "Returned on a later activity",
+  },
+  {
+    category: "At risk",
+    detail: "Known client with no recent registration",
+  },
+] as const;
 
-function HeroClientsPreview() {
-  return (
-    <aside
-      aria-label="Live clients preview"
-      className={cn(
-        "absolute z-[3] w-[min(100%,320px)] rounded-[16px] border border-line bg-paper p-4 shadow-[0_28px_60px_rgba(7,13,18,0.2)]",
-        "right-0 bottom-[18%] max-lg:relative max-lg:mx-4 max-lg:-mt-12 max-lg:mb-0 max-lg:w-auto max-lg:max-w-none"
-      )}
-    >
-      <p className="text-label mb-3 text-gold">Tonight&apos;s clients</p>
-      {FLOAT_ROWS.map((row) => (
-        <div
-          key={row.name}
-          className="flex items-baseline justify-between border-t border-line py-2.5 first:border-t-0 first:pt-0"
-        >
-          <div>
-            <p className="text-sm font-semibold text-ink">{row.name}</p>
-            <p className="text-xs text-stone">{row.meta}</p>
-          </div>
-          <span className="rounded-sm bg-lagoon/10 px-2 py-0.5 text-[0.625rem] font-bold tracking-wide text-lagoon uppercase">
-            {row.pill}
-          </span>
-        </div>
-      ))}
-    </aside>
-  );
-}
+const CONNECTED_STATES = [
+  { label: "Activities", value: "Published", note: "Registration open" },
+  { label: "Registration", value: "Public page", note: "QR code included" },
+  { label: "Clients", value: "One profile", note: "History across activities" },
+] as const;
 
 export function MarketingHeroProductStack({ className }: { className?: string }) {
   return (
-    <div
+    <figure
       className={cn(
-        "marketing-product-lift relative mx-auto w-full max-w-[640px] lg:mx-0 lg:flex lg:h-full lg:min-h-0 lg:max-w-none lg:flex-col",
+        "marketing-product-lift relative mx-auto w-full max-w-[640px] lg:mx-0 lg:max-w-none",
         className
       )}
-      aria-label="Community photo with live clients preview"
+      aria-labelledby="cohestra-product-preview-caption"
     >
-      <HeroCommunityPhoto />
-      <HeroClientsPreview />
-    </div>
+      <div
+        aria-hidden
+        className="overflow-hidden rounded-[24px] border border-line bg-paper shadow-[0_28px_60px_rgba(7,13,18,0.12)]"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
+          <p className="text-label text-text-accent">Product preview</p>
+          <p className="text-xs text-muted-foreground">Sample workspace states</p>
+        </div>
+
+        <div className="grid sm:grid-cols-[9.5rem_minmax(0,1fr)]">
+          <ul className="hidden border-r border-line bg-paper-warm py-3 sm:block">
+            {ROOMS.map((room) => {
+              const current = room.mark === "current";
+              return (
+                <li key={room.label}>
+                  <div
+                    className={cn(
+                      "flex items-center justify-between gap-2 px-3 py-2 text-[0.8125rem]",
+                      current
+                        ? "border-l-2 border-lagoon bg-paper font-semibold text-ink"
+                        : "border-l-2 border-transparent text-muted-foreground"
+                    )}
+                  >
+                    <span className="truncate">{room.label}</span>
+                    {room.mark && room.mark !== "current" ? (
+                      <span className="shrink-0 rounded-sm bg-paper px-1.5 py-0.5 text-[0.625rem] font-semibold tracking-wide text-text-accent uppercase">
+                        {room.mark}
+                      </span>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="min-w-0 px-4 py-4 sm:px-5 sm:py-5">
+            <ul className="mb-4 flex flex-wrap gap-1.5 sm:hidden">
+              {ROOMS.map((room) => (
+                <li
+                  key={room.label}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[0.6875rem] font-medium",
+                    room.mark === "current"
+                      ? "border-lagoon bg-lagoon/10 text-ink"
+                      : "border-line text-muted-foreground"
+                  )}
+                >
+                  {room.label}
+                  {room.mark && room.mark !== "current" ? ` · ${room.mark}` : ""}
+                </li>
+              ))}
+            </ul>
+
+            <p className="font-[family-name:var(--font-fraunces)] text-[1.35rem] font-medium tracking-[-0.03em] text-ink">
+              Follow-up
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Categories in the room, not a separate pipeline.
+            </p>
+
+            <ul className="mt-4 divide-y divide-line border-y border-line">
+              {FOLLOW_UP_ROWS.map((row) => (
+                <li key={row.category} className="flex items-start justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-ink">{row.category}</p>
+                    <p className="mt-0.5 text-xs leading-snug text-muted-foreground">{row.detail}</p>
+                  </div>
+                  <span className="shrink-0 rounded-sm bg-lagoon/10 px-2 py-0.5 text-[0.625rem] font-bold tracking-wide text-lagoon uppercase">
+                    Open
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <ul className="grid border-t border-line sm:grid-cols-3">
+          {CONNECTED_STATES.map((state) => (
+            <li
+              key={state.label}
+              className="border-b border-line px-4 py-3 last:border-b-0 sm:border-r sm:border-b-0 sm:last:border-r-0"
+            >
+              <p className="text-label text-text-accent">{state.label}</p>
+              <p className="mt-1 text-sm font-semibold text-ink">{state.value}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{state.note}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <figcaption
+        id="cohestra-product-preview-caption"
+        className="mt-3 max-w-[62ch] text-xs leading-relaxed text-muted-foreground"
+      >
+        Product preview of Follow-up, a published activity, and public registration. Website shows
+        the Core lock and Campaigns shows the Pro lock. Sample states, not a customer result.
+      </figcaption>
+    </figure>
   );
 }

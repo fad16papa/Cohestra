@@ -11,7 +11,6 @@ import {
 } from "@/components/marketing/marketing-shell";
 import { MarketingReveal } from "@/components/marketing/marketing-reveal";
 import { useMarketingHeaderScroll } from "@/components/marketing/use-marketing-header-scroll";
-import { formatTrialDisclaimer } from "@/lib/billing/billing-api";
 import { createAuthSession, setAuthSession } from "@/lib/auth-storage";
 import {
   buildTenantDashboardUrl,
@@ -121,14 +120,14 @@ function SignupVerifyContent() {
   }
 
   return (
-    <MarketingShell scrolled={scrolled}>
+    <MarketingShell scrolled={scrolled} ambientDiscs={false}>
       <div ref={anchorRef} aria-hidden className="pointer-events-none absolute top-0 h-px w-full" />
 
       <section className="mx-auto max-w-xl flex-1 px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
         <MarketingReveal immediate delayMs={80}>
-          <p className="text-section text-gold">Verify email</p>
+          <p className="text-section text-text-accent">Verify email</p>
           <h1 className="text-marketing-section mt-4 text-ink">Check your inbox</h1>
-          <p className="text-marketing-lead mt-4 text-stone">
+          <p className="text-marketing-lead mt-4 text-muted-foreground">
             We sent a 6-digit code to <span className="font-medium text-ink">{email}</span> for workspace{" "}
             <span className="font-medium text-ink">{tenantSlug}</span>.
           </p>
@@ -146,7 +145,7 @@ function SignupVerifyContent() {
                 autoComplete="one-time-code"
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
-                className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm tracking-widest text-ink"
+                className="min-h-11 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm tracking-widest text-ink"
                 disabled={submitting}
               />
             </div>
@@ -186,7 +185,7 @@ function SignupVerifyContent() {
             </div>
           </form>
 
-          <p className="mt-6 text-sm text-stone">
+          <p className="mt-6 text-sm text-muted-foreground">
             Wrong details?{" "}
             <Link href="/signup" className="text-lagoon hover:text-ink">
               Start over
