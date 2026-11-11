@@ -41,7 +41,7 @@ export const LANDING_FEATURES: LandingFeature[] = [
   {
     icon: SquarePen,
     title: "Form Studio",
-    plan: "Every plan · recipe limits differ",
+    plan: "Every plan · saved-form limits differ",
     description:
       "Compose the registration form on the activity. Basic saves 1 form, Core saves 5, and Pro saves 25.",
   },
@@ -57,7 +57,7 @@ export const LANDING_FEATURES: LandingFeature[] = [
     title: "Follow-up",
     plan: "Every plan",
     description:
-      "Follow-up is its own room. Due now, Opportunity, and At risk are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
+      "Follow-up is its own room. Due now, At risk, Opportunity, and Healthy are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
   },
   {
     icon: Globe,
@@ -144,7 +144,7 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
     title: "Follow-up",
     plan: "Every plan",
     description:
-      "Follow-up is its own room. Due now, Opportunity, and At risk are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
+      "Follow-up is its own room. Due now, At risk, Opportunity, and Healthy are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
   },
   {
     id: "website-studio",
@@ -156,7 +156,7 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
   {
     id: "form-studio",
     title: "Form Studio",
-    plan: "Every plan · recipe limits differ",
+    plan: "Every plan · saved-form limits differ",
     description:
       "Compose the registration form on the activity. Basic saves 1 form, Core saves 5, and Pro saves 25.",
   },
