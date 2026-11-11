@@ -69,13 +69,21 @@ const MARKETING_NAV_LINKS = [
 export function MarketingShell({
   children,
   scrolled = false,
+  showAmbient = true,
+  ambientDiscs = true,
 }: {
   children: ReactNode;
   scrolled?: boolean;
+  /** Landing hero supplies its own scene so discs do not sit on the headline. */
+  showAmbient?: boolean;
+  /** Keep the wash, hide discs when they cover copy. */
+  ambientDiscs?: boolean;
 }) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-x-clip bg-paper text-ink">
-      <MarketingAmbientScene variant="default" className="opacity-70" />
+      {showAmbient ? (
+        <MarketingAmbientScene variant="default" discs={ambientDiscs} className="opacity-70" />
+      ) : null}
       <header
         className={cn(
           "sticky top-0 z-30 flex items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-10",
@@ -89,18 +97,18 @@ export function MarketingShell({
             <Link
               key={link.href}
               href={link.href}
-              className="hidden text-sm font-medium text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2 lg:inline"
+              className="hidden text-sm font-medium text-muted-foreground hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2 lg:inline"
             >
               {link.label}
             </Link>
           ))}
           <Link
             href="/pricing"
-            className="text-sm font-medium text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2 lg:hidden"
+            className="text-sm font-medium text-muted-foreground hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2 lg:hidden"
           >
             Pricing
           </Link>
-          <Link href="/login" className="text-sm font-medium text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2">
+          <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2">
             Sign in
           </Link>
         </nav>
@@ -148,18 +156,18 @@ export function MarketingFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:px-8 lg:grid-cols-[1.2fr_repeat(3,minmax(0,1fr))] lg:px-10 lg:py-16">
         <div>
           <MarketingWordmark className="text-[1.3rem]" />
-          <p className="mt-3 max-w-[30ch] text-sm leading-relaxed text-stone">
-            Software for clubs, workshops, and groups. Registration by QR, client list, WhatsApp and
-            Viber outreach, and a public site on one platform.
+          <p className="mt-3 max-w-[34ch] text-sm leading-relaxed text-muted-foreground">
+            Activities, registration, clients, and follow-up in one workspace. Website Studio on
+            Core. Campaigns on Pro.
           </p>
         </div>
         {FOOTER_COLUMNS.map((column) => (
           <nav key={column.heading} aria-label={column.heading}>
-            <p className="text-section text-gold">{column.heading}</p>
+            <p className="text-section text-text-accent">{column.heading}</p>
             <ul className="mt-4 space-y-2.5">
               {column.links.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-sm text-stone hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2">
+                  <Link href={link.href} className="text-sm text-muted-foreground hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2">
                     {link.label}
                   </Link>
                 </li>
@@ -169,11 +177,11 @@ export function MarketingFooter() {
         ))}
       </div>
       <div className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-stone sm:px-8 lg:px-10">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-5 text-xs text-muted-foreground sm:px-8 lg:px-10">
           <p>
             © {new Date().getFullYear()}{" "}
             <PlatformByline
-              linkClassName="text-stone hover:text-ink"
+              linkClassName="text-muted-foreground hover:text-ink"
             />
             . All rights reserved.
           </p>

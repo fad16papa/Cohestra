@@ -10,6 +10,11 @@ const shell = readFileSync(
   resolve(import.meta.dirname, "../../components/marketing/marketing-shell.tsx"),
   "utf8"
 );
+const hero = readFileSync(
+  resolve(import.meta.dirname, "../../components/marketing/marketing-hero-product-stack.tsx"),
+  "utf8"
+);
+const content = readFileSync(resolve(import.meta.dirname, "./landing-content.ts"), "utf8");
 
 describe("landing Cinema section removal", () => {
   it("does not mount the house-tour carousel on marketing home", () => {
@@ -19,6 +24,46 @@ describe("landing Cinema section removal", () => {
     expect(home).toContain("id=\"features\"");
     expect(home).toContain("id=\"how-it-works\"");
     expect(home).toContain("id=\"pricing\"");
+    expect(home).toContain("Know who registered, and who still needs a reply");
+    expect(home).not.toContain("Under 1 hr");
+    expect(home).not.toContain("hero-community-sports");
+  });
+
+  it("shows a product preview and verified plan gates, not a sports photo or fake metrics", () => {
+    expect(hero).toContain("Product preview");
+    expect(hero).toContain("Follow-up");
+    expect(hero).toContain("Website");
+    expect(hero).toContain("Campaigns");
+    expect(hero).toContain("Core");
+    expect(hero).toContain("Pro");
+    expect(hero).not.toContain("hero-community-sports");
+    expect(hero).not.toContain("Elena");
+    expect(hero).not.toContain("Sunday clinic");
+    expect(hero).toContain("No outreach yet");
+    expect(hero).toContain("Next conversation not scheduled");
+    expect(hero).toContain("No recorded outreach");
+    expect(hero).toContain("FOLLOW_UP_CATEGORY_OPTIONS");
+    expect(hero).not.toContain(">Open<");
+
+    for (const room of [
+      "Activities",
+      "Registration",
+      "Clients",
+      "Follow-up",
+      "Form Studio",
+      "Website Studio",
+      "Analytics",
+      "Campaigns",
+      "Cohestra AI",
+    ]) {
+      expect(content).toContain(room);
+    }
+
+    expect(content).toContain("Basic saves 1 form");
+    expect(content).toContain("Campaigns require Pro");
+    expect(content).toContain("Website Studio requires Core");
+    expect(content).not.toMatch(/under an hour/i);
+    expect(content).not.toMatch(/testimonial/i);
   });
 
   it("removes exclusive Cinema hash navigation", () => {
