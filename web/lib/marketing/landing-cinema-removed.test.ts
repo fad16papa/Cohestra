@@ -27,6 +27,15 @@ describe("landing Cinema section removal", () => {
     expect(home).not.toContain("#crm");
     expect(home).toContain("MarketingCapabilityChapters");
     expect(capabilityChapters).toContain("id=\"capabilities\"");
+    expect(capabilityChapters).toContain("Sample state, not a customer result.");
+    expect(capabilityChapters).toContain("Published");
+    expect(capabilityChapters).toContain("History across activities");
+    expect(capabilityChapters).toContain("No outreach yet");
+    expect(capabilityChapters).toContain("Website Studio");
+    expect(capabilityChapters).toContain("Form Studio");
+    expect(capabilityChapters).toContain("Registration report");
+    expect(capabilityChapters).toContain("motion-reduce:transition-none");
+    expect(capabilityChapters).not.toContain("opacity-0");
     expect(home).toContain("id=\"pricing\"");
     expect(home).toContain("id=\"faq\"");
     expect(home).toContain("Know who registered, and who still needs a reply");
