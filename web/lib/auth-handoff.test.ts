@@ -26,7 +26,7 @@ describe("exchangeAuthHandoffOnce", () => {
   });
 
   it("deduplicates concurrent exchanges for the same code", async () => {
-    vi.mocked(fetch).mockImplementation(() => handoffResponse());
+    vi.mocked(fetch).mockImplementation(() => Promise.resolve(handoffResponse()));
 
     const { exchangeAuthHandoffOnce } = await import("@/lib/auth-handoff");
 
@@ -44,7 +44,7 @@ describe("exchangeAuthHandoffOnce", () => {
   });
 
   it("posts again for a different handoff code", async () => {
-    vi.mocked(fetch).mockImplementation(() => handoffResponse());
+    vi.mocked(fetch).mockImplementation(() => Promise.resolve(handoffResponse()));
 
     const { exchangeAuthHandoffOnce } = await import("@/lib/auth-handoff");
 
