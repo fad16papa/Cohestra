@@ -43,33 +43,36 @@ export function AdminTopBar() {
 
   const pageTitle = pageMeta?.title ?? currentLabel;
 
+  const showTrail = breadcrumbs.length > 1;
+
   return (
-    <header className="sticky top-0 z-20 flex min-h-14 shrink-0 items-center gap-3 border-b border-border-warm bg-card/80 px-4 py-2 backdrop-blur-md md:h-14 md:py-0 md:px-6">
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
-        {breadcrumbs.length > 1 ? (
-          <AdminBreadcrumbs items={breadcrumbs} className="flex min-w-0" />
+    <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border-warm bg-card/80 px-4 backdrop-blur-md md:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        {showTrail ? (
+          <AdminBreadcrumbs items={breadcrumbs} className="min-w-0 flex-1" />
+        ) : (
+          <p className="truncate text-[1.25rem] font-semibold leading-none tracking-[-0.02em] text-text-warm">
+            {pageTitle}
+          </p>
+        )}
+        {shell ? (
+          <div className="flex min-w-0 items-center gap-1.5">
+            <PlanBadge plan={shell.plan} />
+            {shell.billingStatus && shell.billingStatus !== "Free" ? (
+              <span className="hidden text-xs text-text-muted-warm sm:inline">
+                {shell.billingStatus}
+              </span>
+            ) : null}
+            {shell.isComplimentary ? <SponsoredBadge /> : null}
+          </div>
         ) : null}
-        <div className="flex min-w-0 items-center gap-3">
-          <p className="truncate text-section text-text-warm">{pageTitle}</p>
-          {shell ? (
-            <div className="flex min-w-0 items-center gap-1.5">
-              <PlanBadge plan={shell.plan} />
-              {shell.billingStatus && shell.billingStatus !== "Free" ? (
-                <span className="hidden text-xs text-text-muted-warm sm:inline">
-                  {shell.billingStatus}
-                </span>
-              ) : null}
-              {shell.isComplimentary ? <SponsoredBadge /> : null}
-            </div>
-          ) : null}
-          <UpdatedTime />
-        </div>
+        <UpdatedTime />
       </div>
       <Button
         type="button"
         variant="outline"
         size="sm"
-        className="hidden h-9 gap-2 border-border-warm bg-background/60 text-text-muted-warm hover:text-text-warm sm:inline-flex"
+        className="hidden h-10 gap-2 border-border-warm bg-background/60 text-[0.8125rem] font-medium text-text-muted-warm hover:text-text-warm sm:inline-flex"
         onClick={openCommandPalette}
         aria-label="Open command palette"
       >
@@ -83,7 +86,7 @@ export function AdminTopBar() {
         type="button"
         variant="ghost"
         size="icon"
-        className="sm:hidden"
+        className="size-11 sm:hidden"
         onClick={openCommandPalette}
         aria-label="Open command palette"
       >
