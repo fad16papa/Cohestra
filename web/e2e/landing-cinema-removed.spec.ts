@@ -21,11 +21,13 @@ test.describe("landing Cinema section removed", () => {
       })
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Nine parts of one workspace", exact: true })
+      page.getByRole("heading", {
+        name: /one workspace from registration to analytics/i,
+      })
     ).toBeVisible();
-    await expect(
-      page.getByRole("heading", { name: /publish, register, then follow up/i })
-    ).toBeVisible();
+    await expect(page.locator("#registration")).toBeAttached();
+    await expect(page.locator("#follow-up")).toBeAttached();
+    await expect(page.locator("#capabilities")).toBeAttached();
     await expect(page.getByText("Product preview").first()).toBeVisible();
     await expect(page.locator('img[src*="hero-community-sports"]')).toHaveCount(0);
     await expect(page.getByText(/under 1 hr/i)).toHaveCount(0);

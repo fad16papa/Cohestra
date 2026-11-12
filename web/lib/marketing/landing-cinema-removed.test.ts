@@ -14,6 +14,10 @@ const hero = readFileSync(
   resolve(import.meta.dirname, "../../components/marketing/marketing-hero-product-stack.tsx"),
   "utf8"
 );
+const capabilityChapters = readFileSync(
+  resolve(import.meta.dirname, "../../components/marketing/marketing-capability-chapters.tsx"),
+  "utf8"
+);
 const content = readFileSync(resolve(import.meta.dirname, "./landing-content.ts"), "utf8");
 
 describe("landing Cinema section removal", () => {
@@ -21,10 +25,24 @@ describe("landing Cinema section removal", () => {
     expect(home).not.toContain("MarketingProductCarousel");
     expect(home).not.toContain("Walk the club before you sign up");
     expect(home).not.toContain("#crm");
-    expect(home).toContain("id=\"features\"");
-    expect(home).toContain("id=\"how-it-works\"");
+    expect(home).toContain("MarketingCapabilityChapters");
+    expect(capabilityChapters).toContain("id=\"capabilities\"");
+    expect(capabilityChapters).toContain("Sample state, not a customer result.");
+    expect(capabilityChapters).toContain("Published");
+    expect(capabilityChapters).toContain("History across activities");
+    expect(capabilityChapters).toContain("No outreach yet");
+    expect(capabilityChapters).toContain("Website Studio");
+    expect(capabilityChapters).toContain("Form Studio");
+    expect(capabilityChapters).toContain("Registration report");
+    expect(capabilityChapters).toContain("motion-reduce:transition-none");
+    expect(capabilityChapters).not.toContain("opacity-0");
     expect(home).toContain("id=\"pricing\"");
+    expect(home).toContain("id=\"faq\"");
     expect(home).toContain("Know who registered, and who still needs a reply");
+    expect(home).toContain("Public registration, client profiles, follow-up, and analytics");
+    expect(home).toContain("LANDING_CAPABILITY_CHAPTERS");
+    expect(home).not.toContain("id=\"how-it-works\"");
+    expect(home).not.toContain("LANDING_OUTCOMES");
     expect(home).not.toContain("Under 1 hr");
     expect(home).not.toContain("hero-community-sports");
   });
@@ -45,17 +63,18 @@ describe("landing Cinema section removal", () => {
     expect(hero).toContain("FOLLOW_UP_CATEGORY_OPTIONS");
     expect(hero).not.toContain(">Open<");
 
+    expect(content).toContain("LANDING_CAPABILITY_CHAPTERS");
     for (const room of [
-      "Activities",
       "Registration",
       "Clients",
       "Follow-up",
       "Form Studio",
       "Website Studio",
       "Analytics",
-      "Campaigns",
-      "Cohestra AI",
     ]) {
+      expect(content).toContain(room);
+    }
+    for (const room of ["Campaigns", "Cohestra AI", "Activities"]) {
       expect(content).toContain(room);
     }
 
@@ -69,7 +88,9 @@ describe("landing Cinema section removal", () => {
   it("removes exclusive Cinema hash navigation", () => {
     expect(shell).not.toContain("/#crm");
     expect(shell).not.toContain("#crm");
-    expect(shell).toContain("/#features");
-    expect(shell).toContain("/#how-it-works");
+    expect(shell).toContain("/#capabilities");
+    expect(shell).toContain('href="/signup"');
+    expect(shell).toContain("Start free");
+    expect(shell).not.toContain("/#how-it-works");
   });
 });

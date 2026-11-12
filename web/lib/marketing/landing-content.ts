@@ -41,7 +41,7 @@ export const LANDING_FEATURES: LandingFeature[] = [
   {
     icon: SquarePen,
     title: "Form Studio",
-    plan: "Every plan · recipe limits differ",
+    plan: "Every plan · saved-form limits differ",
     description:
       "Compose the registration form on the activity. Basic saves 1 form, Core saves 5, and Pro saves 25.",
   },
@@ -57,7 +57,7 @@ export const LANDING_FEATURES: LandingFeature[] = [
     title: "Follow-up",
     plan: "Every plan",
     description:
-      "Follow-up is its own room. Due now, Opportunity, and At risk are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
+      "Follow-up is its own room. Due now, At risk, Opportunity, and Healthy are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
   },
   {
     icon: Globe,
@@ -113,6 +113,59 @@ export const LANDING_STEPS: LandingStep[] = [
     title: "Follow up from the workspace",
     description:
       "Open Follow-up for who needs a reply. Analytics reads the same list. Cohestra AI names a next step when there is enough history. Website Studio is on Core. Campaigns are on Pro.",
+  },
+];
+
+/** Anchored marketing chapters — shipped behavior only (PR B). */
+export type LandingCapabilityChapter = {
+  id: string;
+  title: string;
+  description: string;
+  plan: string;
+};
+
+export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
+  {
+    id: "registration",
+    title: "Registration",
+    plan: "Every plan",
+    description:
+      "Each published activity has a public page and a QR code. People register in the browser. They do not install an app.",
+  },
+  {
+    id: "clients",
+    title: "Clients",
+    plan: "Every plan",
+    description:
+      "Registrations merge into one profile per person, with history across activities. Your team works from that list.",
+  },
+  {
+    id: "follow-up",
+    title: "Follow-up",
+    plan: "Every plan",
+    description:
+      "Follow-up is its own room. Due now, At risk, Opportunity, and Healthy are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
+  },
+  {
+    id: "website-studio",
+    title: "Website Studio",
+    plan: "Core or higher",
+    description:
+      "Core publishes a Site Page at your workspace address. Pro adds Studio sections such as carousel, FAQ, and video. Basic keeps a stub page with your name and activity links.",
+  },
+  {
+    id: "form-studio",
+    title: "Form Studio",
+    plan: "Every plan · saved-form limits differ",
+    description:
+      "Compose the registration form on the activity. Basic saves 1 form, Core saves 5, and Pro saves 25.",
+  },
+  {
+    id: "analytics",
+    title: "Analytics",
+    plan: "Every plan · depth differs",
+    description:
+      "Basic includes a registration report and CSV export. Core adds filters. Pro adds campaign analytics and saved views.",
   },
 ];
 

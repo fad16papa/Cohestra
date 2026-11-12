@@ -59,9 +59,8 @@ export function MarketingWordmark({ className }: { className?: string }) {
 }
 
 const MARKETING_NAV_LINKS = [
-  { label: "Features", href: "/#features" },
+  { label: "Capabilities", href: "/#capabilities" },
   { label: "Document", href: "/docs" },
-  { label: "How it works", href: "/#how-it-works" },
   { label: "Pricing", href: "/pricing" },
   { label: "FAQ", href: "/#faq" },
 ] as const;
@@ -111,6 +110,12 @@ export function MarketingShell({
           <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2">
             Sign in
           </Link>
+          <Link
+            href="/signup"
+            className={cn(marketingAtelierButtonClass("lagoon", "sm"), "min-h-11 shrink-0")}
+          >
+            Start free
+          </Link>
         </nav>
       </header>
       <MarketingCookieConsent />
@@ -123,9 +128,8 @@ const FOOTER_COLUMNS = [
   {
     heading: "Product",
     links: [
-      { label: "Features", href: "/#features" },
+      { label: "Capabilities", href: "/#capabilities" },
       { label: "Document", href: "/docs" },
-      { label: "How it works", href: "/#how-it-works" },
       { label: "Pricing", href: "/pricing" },
       { label: "FAQ", href: "/#faq" },
     ],
