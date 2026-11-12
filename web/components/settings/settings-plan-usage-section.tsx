@@ -20,7 +20,7 @@ export function SettingsPlanUsageSection({ embedded = false }: { embedded?: bool
     <section className="space-y-4">
       {!embedded ? (
         <div>
-          <h2 className="text-section text-text-warm">Plan usage</h2>
+          <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">Plan usage</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             Headroom for published activities and monthly registrations on your{" "}
             <span className="font-medium text-text-warm">{shell.plan}</span> plan.
@@ -32,14 +32,14 @@ export function SettingsPlanUsageSection({ embedded = false }: { embedded?: bool
         className={
           embedded
             ? "grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
-            : "rounded-xl border border-border-warm bg-muted/20 p-4 sm:max-w-md"
+            : "rounded-[16px] border border-border-warm bg-muted/20 p-4 sm:max-w-md"
         }
       >
         {embedded ? (
           usageDials.map((dial) => (
             <div
               key={dial.key}
-              className="rounded-xl border border-border-warm/80 bg-muted/20 p-4"
+              className="rounded-[16px] border border-border-warm/80 bg-muted/20 p-4"
             >
               <LimitMeter dials={[dial]} />
             </div>

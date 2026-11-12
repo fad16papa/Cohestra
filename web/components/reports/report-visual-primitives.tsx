@@ -25,7 +25,7 @@ export function ReportDepthCard({
   return (
     <div
       className={cn(
-        "report-depth-card rounded-xl border border-border-warm bg-card/95 backdrop-blur-sm",
+        "report-depth-card rounded-[16px] border border-border-warm bg-card/95 backdrop-blur-sm",
         "border-t-2 shadow-[0_18px_40px_rgba(7,13,18,0.07)]",
         "transition-[transform,box-shadow] duration-200 motion-safe:hover:-translate-y-0.5",
         "motion-safe:hover:shadow-[0_24px_48px_rgba(7,13,18,0.11)]",
@@ -48,7 +48,7 @@ export function ReportPanelHeader({ title, description, aside }: ReportPanelHead
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-warm/70 px-4 py-3.5 sm:px-5">
       <div className="min-w-0">
-        <h3 className="text-section text-text-warm">{title}</h3>
+        <h3 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">{title}</h3>
         <p className="mt-1 text-sm text-text-muted-warm">{description}</p>
       </div>
       {aside ? <div className="shrink-0">{aside}</div> : null}

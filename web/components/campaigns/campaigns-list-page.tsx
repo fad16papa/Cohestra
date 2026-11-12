@@ -99,6 +99,7 @@ export function CampaignsListPage() {
     >
       <div className="space-y-6">
         <PageHeader
+          variant="room"
           title="Campaigns"
           description="Email outreach history and campaign results."
           actions={
@@ -134,7 +135,7 @@ export function CampaignsListPage() {
         ) : null}
 
         {!error && campaigns.length > 0 ? (
-          <div className="overflow-hidden rounded-xl border border-border-warm bg-card">
+          <div className="overflow-hidden rounded-[16px] border border-border-warm bg-card">
             <div className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,1fr)] gap-4 border-b border-border-warm bg-muted/30 px-4 py-3 text-xs font-medium uppercase tracking-wide text-text-warm sm:grid">
               <span>Subject</span>
               <span>Sent</span>
@@ -188,7 +189,7 @@ function CampaignListRow({ campaign }: { campaign: CampaignListItem }) {
   return (
     <Link
       href={`/campaigns/${campaign.id}`}
-      className="grid gap-2 border-b border-border-warm px-4 py-4 text-sm motion-press last:border-b-0 hover:bg-muted/40 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,1fr)] sm:items-center sm:gap-4"
+      className="grid min-h-[52px] gap-2 border-b border-border-warm px-4 py-4 text-sm motion-press last:border-b-0 hover:bg-muted/40 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.8fr)_minmax(0,0.7fr)_minmax(0,1fr)] sm:items-center sm:gap-4"
     >
       <span className="truncate font-medium text-text-warm">{campaign.subject}</span>
       <span className="text-text-warm">{formatCampaignSentAt(campaign.sentAt)}</span>

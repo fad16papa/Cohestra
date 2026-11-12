@@ -40,7 +40,7 @@ export function ReportTrustBar({ report, filters, className }: ReportTrustBarPro
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 rounded-xl border border-border-warm bg-muted/15 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between",
+        "flex flex-col gap-3 rounded-[16px] border border-border-warm bg-muted/15 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between",
         className
       )}
     >

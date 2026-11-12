@@ -65,7 +65,7 @@ function SettingsBillingBody() {
       {checkoutSuccess ? (
         <p
           role="status"
-          className="rounded-xl border border-border-warm bg-card px-4 py-3 text-sm text-text-warm"
+          className="rounded-[16px] border border-border-warm bg-card px-4 py-3 text-sm text-text-warm"
         >
           Checkout finished. Refresh billing status if the plan below still looks out of date.
         </p>
@@ -74,7 +74,7 @@ function SettingsBillingBody() {
       {incompleteNotice && !isPaidTenantPlan(shell?.plan) ? (
         <p
           role="status"
-          className="rounded-xl border border-gold/40 bg-gold/5 px-4 py-3 text-sm text-text-warm"
+          className="rounded-[16px] border border-gold/40 bg-gold/5 px-4 py-3 text-sm text-text-warm"
         >
           {CHECKOUT_INCOMPLETE_COPY}
           {isPaddleTransactionId(checkoutSessionId) ? (

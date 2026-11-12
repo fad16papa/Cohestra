@@ -155,7 +155,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             aria-live={isError ? "assertive" : "polite"}
             className={cn(
               BUILDER_PRESENCE_ENTER_CLASS,
-              "pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-l-4 bg-card/95 px-4 py-3 text-sm text-foreground shadow-lg backdrop-blur-md",
+              "pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-[16px] border border-l-4 bg-card/95 px-4 py-3 text-sm text-foreground backdrop-blur-md",
               isError && "border-danger/30 border-l-danger bg-surface-danger",
               isSuccess && "border-success/30 border-l-success bg-surface-success",
               !isError &&
@@ -205,7 +205,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             ) : null}
             <button
               type="button"
-              className="shrink-0 rounded-md p-1 text-text-muted motion-press hover:bg-muted hover:text-foreground"
+              className="shrink-0 min-h-11 min-w-11 rounded-md p-1 text-text-muted motion-press hover:bg-muted hover:text-foreground"
               aria-label="Dismiss notification"
               onClick={() => dismissToast(toast.id)}
             >
