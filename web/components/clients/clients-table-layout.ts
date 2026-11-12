@@ -48,7 +48,7 @@ export const clientsTableHeaderButtonClassName =
   "inline-flex min-h-11 min-w-11 items-center p-0 text-left text-xs font-medium uppercase tracking-wide text-text-muted-warm motion-press hover:text-text-warm";
 
 export const clientsTableCellClassName =
-  "border-b border-border-warm px-3 py-1.5 align-middle";
+  "min-h-[52px] border-b border-border-warm px-3 py-1.5 align-middle";
 
 export const clientsTableHeaderCellClassName =
   "border-b border-border-warm bg-muted/30 px-3 py-1 text-xs font-medium uppercase tracking-wide text-text-muted-warm";

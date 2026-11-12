@@ -146,7 +146,7 @@ export function DashboardFollowUpQueue() {
         className="rounded-xl border border-border-warm bg-card/80 p-5"
       >
         <div className="mb-3 flex items-start justify-between gap-3">
-          <h2 id="follow-up-queue-heading" className="text-section text-text-warm">
+          <h2 id="follow-up-queue-heading" className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
             Needs follow-up
           </h2>
           <Link
@@ -187,7 +187,7 @@ export function DashboardFollowUpQueue() {
               <UserRound className="size-5" aria-hidden />
             </span>
             <div>
-              <h2 id="follow-up-queue-heading" className="text-section text-text-warm">
+              <h2 id="follow-up-queue-heading" className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
                 Needs follow-up
               </h2>
               <p className="mt-1 text-sm text-text-muted-warm">
@@ -213,7 +213,7 @@ export function DashboardFollowUpQueue() {
     >
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 id="follow-up-queue-heading" className="text-section text-text-warm">
+          <h2 id="follow-up-queue-heading" className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
             Needs follow-up
           </h2>
           <p className="mt-1 text-sm text-text-muted-warm">{subtitle}</p>

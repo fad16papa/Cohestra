@@ -463,6 +463,7 @@ export function ActivitiesListPage() {
   return (
     <div className="space-y-6" data-activities-list-state={listState}>
       <PageHeader
+        variant="room"
         title="Activities"
         description="Launch and manage your lead engines."
         actions={
