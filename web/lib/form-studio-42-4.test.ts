@@ -71,7 +71,7 @@ describe("Story 42.4 — remaining Creation Studio continuity", () => {
     expect(composition).toContain("studioActive");
     expect(composition).toContain("setSheetOpen(false)");
     expect(composition).toContain("setPaletteOpen(false)");
-    expect(composition).toContain(">Form builder</h2>");
+    expect(composition).toMatch(/>\s*Form builder\s*<\/h2>/);
   });
 
   it("reverts unsaved Form draft locally without a publish API", () => {

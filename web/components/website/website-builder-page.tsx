@@ -1118,7 +1118,7 @@ export function WebsiteBuilderPage() {
   if (access.kind === "shell-error") {
     return (
       <div className="space-y-6">
-        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <PageHeader variant="room" title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
         <p className="text-sm text-destructive">{access.message}</p>
         <Button type="button" onClick={() => void refreshShell()}>
           Try again
@@ -1130,11 +1130,11 @@ export function WebsiteBuilderPage() {
   if (access.kind === "loading") {
     return (
       <div className="space-y-6">
-        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <PageHeader variant="room" title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
         <p role="status" className="sr-only">
           Loading Website Studio
         </p>
-        <div className="h-96 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30" />
+        <div className="h-96 motion-safe:animate-pulse rounded-[16px] border border-border-warm bg-muted/30" />
       </div>
     );
   }
@@ -1142,7 +1142,7 @@ export function WebsiteBuilderPage() {
   if (access.kind === "pending") {
     return (
       <div className="space-y-6">
-        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <PageHeader variant="room" title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
         <p role="status" className="text-sm text-text-muted-warm">
           Checking Website Studio access… Workspace plan is still being confirmed.
           Checkout is not offered until the plan is known.
@@ -1154,7 +1154,7 @@ export function WebsiteBuilderPage() {
   if (access.kind === "locked" || planLocked) {
     return (
       <div className="space-y-6">
-        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <PageHeader variant="room" title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
         <UpgradePanel
           title="Unlock a branded public homepage"
           description="Basic includes a simple stub listing. Upgrade to Core for Website Studio with Essentials sections, or Pro for Studio sections."
@@ -1170,7 +1170,7 @@ export function WebsiteBuilderPage() {
   if (accessDenied) {
     return (
       <div className="space-y-6">
-        <PageHeader title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
+        <PageHeader variant="room" title={WEBSITE_STUDIO_TITLE} description="Customize your public homepage" />
         <ProductErrorState
           title="You don’t have access to Website Studio"
           message={loadError ?? "Your role cannot open Website Studio."}
@@ -1185,6 +1185,7 @@ export function WebsiteBuilderPage() {
     return (
       <div className="space-y-6">
         <PageHeader
+          variant="room"
           title={WEBSITE_STUDIO_TITLE}
           description="Customize your public homepage"
         />
@@ -1192,8 +1193,8 @@ export function WebsiteBuilderPage() {
           Loading Website Studio
         </p>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-          <div className="h-72 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
-          <div className="h-72 motion-safe:animate-pulse rounded-xl border border-border-warm bg-muted/30 sm:h-96" />
+          <div className="h-72 motion-safe:animate-pulse rounded-[16px] border border-border-warm bg-muted/30 sm:h-96" />
+          <div className="h-72 motion-safe:animate-pulse rounded-[16px] border border-border-warm bg-muted/30 sm:h-96" />
         </div>
       </div>
     );
@@ -1203,6 +1204,7 @@ export function WebsiteBuilderPage() {
     return (
       <div className="space-y-4">
         <PageHeader
+          variant="room"
           title={WEBSITE_STUDIO_TITLE}
           description="Customize your public homepage"
         />
@@ -1240,7 +1242,7 @@ export function WebsiteBuilderPage() {
       className="flex min-h-0 flex-col gap-2"
       style={studioHeight ? { height: studioHeight } : undefined}
     >
-      <PageHeader title={WEBSITE_STUDIO_TITLE} />
+      <PageHeader variant="room" title={WEBSITE_STUDIO_TITLE} />
       <WebsiteBuilderToolbar
         siteUrl={publicSiteUrl}
         siteDisplayUrl={publicSiteDisplayUrl}
@@ -1341,9 +1343,11 @@ export function WebsiteBuilderPage() {
             </>
           }
           sectionsPanel={
-            <section className="space-y-3 rounded-xl border border-border-warm bg-card p-3 sm:p-4">
+            <section className="space-y-3 rounded-[16px] border border-border-warm bg-card p-3 sm:p-4">
               <div>
-                <h2 className="text-section text-text-warm">Homepage sections</h2>
+                <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
+                  Homepage sections
+                </h2>
                 <p className="mt-0.5 text-xs text-text-muted-warm">
                   Enable, reorder, and edit sections on your homepage.
                 </p>

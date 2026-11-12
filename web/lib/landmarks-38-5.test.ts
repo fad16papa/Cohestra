@@ -71,7 +71,9 @@ describe("Story 38.5 landmark source contract (supplement)", () => {
   });
 
   it("keeps Form Studio builder headings under the Form builder h2", () => {
-    expect(FORM_BUILDER_SOURCE).toContain('<h2 className="text-section text-text-warm">Form builder</h2>');
+    expect(FORM_BUILDER_SOURCE).toMatch(
+      /<h2 className="text-xs font-semibold tracking-\[0\.04em\] text-text-muted-warm">\s*Form builder\s*<\/h2>/
+    );
     expect(FORM_BUILDER_SOURCE).toContain("Block palette");
     expect(FORM_BUILDER_SOURCE).toContain('id="form-block-palette-heading"');
     expect(FORM_BUILDER_SOURCE).not.toMatch(/<h4[^>]*>\s*Block palette/);
