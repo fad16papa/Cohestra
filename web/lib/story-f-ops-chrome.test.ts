@@ -56,4 +56,11 @@ describe("Story F ops chrome", () => {
     expect(toast).toContain("min-h-11 min-w-11");
     expect(toast).toContain("rounded-[16px]");
   });
+
+  it("analytics narrative hero avoids Fraunces display typography", () => {
+    const hero = source("components/reports/report-narrative-hero.tsx");
+
+    expect(hero).not.toContain("font-fraunces");
+    expect(hero).not.toContain("--font-fraunces");
+  });
 });

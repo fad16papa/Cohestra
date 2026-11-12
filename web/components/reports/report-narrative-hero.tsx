@@ -46,7 +46,7 @@ export function ReportNarrativeHero({ report }: ReportNarrativeHeroProps) {
         </span>
         <div className="min-w-0">
           <p className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">Your report at a glance</p>
-          <h3 className="mt-2 font-[family-name:var(--font-fraunces)] text-xl font-medium tracking-[-0.02em] text-text-warm sm:text-2xl">
+          <h3 className="mt-2 text-xl font-semibold tracking-[-0.02em] text-text-warm sm:text-2xl">
             {heroInsight?.headline ?? "Report ready"}
           </h3>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-text-muted-warm">
