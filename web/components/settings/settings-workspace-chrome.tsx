@@ -166,8 +166,8 @@ function SettingsWorkspaceChromeBody({ children }: SettingsWorkspaceChromeProps)
 
       <div
         className={cn(
-          "flex min-h-[28rem] w-full overflow-hidden rounded-2xl border border-border-warm/80",
-          "bg-card/40 shadow-sm"
+          "flex min-h-[28rem] w-full overflow-hidden rounded-[16px] border border-border-warm/80",
+          "bg-card/40"
         )}
       >
         <SettingsLeftRail

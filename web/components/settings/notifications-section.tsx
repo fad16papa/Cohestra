@@ -65,7 +65,7 @@ export function NotificationsSection({ embedded = false }: { embedded?: boolean 
     <section className="space-y-4">
       {!embedded ? (
         <div>
-          <h2 className="text-section text-text-warm">Notifications</h2>
+          <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">Notifications</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             Control operator email alerts from public registration and website contact forms.
           </p>

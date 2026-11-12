@@ -86,7 +86,7 @@ function PlanStatusCard({
         : undefined;
 
   return (
-    <div className="rounded-2xl border border-border-warm bg-muted/20 p-4 text-sm text-text-muted-warm">
+    <div className="rounded-[16px] border border-border-warm bg-muted/20 p-4 text-sm text-text-muted-warm">
       <p>
         Plan: <span className="font-medium text-text-warm">{plan}</span>
         {" · "}
@@ -137,8 +137,8 @@ function BillingSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border-warm bg-card p-5 sm:p-6">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
+    <section className="rounded-[16px] border border-border-warm bg-card p-5 sm:p-6">
+      <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
         {title}
       </h2>
       <div className="mt-4">{children}</div>

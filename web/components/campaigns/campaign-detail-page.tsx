@@ -156,7 +156,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
           >
             Back to campaigns
           </Link>
-          <PageHeader title="Campaign" />
+          <PageHeader variant="room" title="Campaign" />
           <ProductErrorState
             title="Could not load campaign"
             message={error}
@@ -169,7 +169,7 @@ export function CampaignDetailPage({ id }: CampaignDetailPageProps) {
 
       {!error && !campaign ? (
         <div className="space-y-4">
-          <PageHeader title="Campaign" description="Loading campaign…" />
+          <PageHeader variant="room" title="Campaign" description="Loading campaign…" />
         </div>
       ) : null}
 
@@ -188,6 +188,7 @@ function CampaignDetailBody({ campaign }: { campaign: CampaignDetail }) {
     <div className="space-y-6">
       <div>
         <PageHeader
+          variant="room"
           eyebrow={
             <Link
               href="/campaigns"
@@ -206,7 +207,7 @@ function CampaignDetailBody({ campaign }: { campaign: CampaignDetail }) {
       </p>
 
       <div className="space-y-6">
-        <div className="min-w-0 rounded-xl border border-border-warm bg-card p-4">
+        <div className="min-w-0 rounded-[16px] border border-border-warm bg-card p-4">
           <h2 className="text-sm font-semibold text-text-warm">Message</h2>
           {campaign.bodyFormat === "html" ? (
             <div
@@ -218,7 +219,7 @@ function CampaignDetailBody({ campaign }: { campaign: CampaignDetail }) {
           )}
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-border-warm bg-card">
+        <div className="overflow-hidden rounded-[16px] border border-border-warm bg-card">
           <div className="border-b border-border-warm bg-muted/20 px-4 py-3">
             <h2 className="text-sm font-semibold text-text-warm">Recipients</h2>
             <p className="mt-1 text-xs text-text-muted-warm">

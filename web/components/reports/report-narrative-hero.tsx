@@ -39,13 +39,13 @@ export function ReportNarrativeHero({ report }: ReportNarrativeHeroProps) {
   const heroInsight = insights[0];
 
   return (
-    <section className="rounded-2xl border border-border-warm bg-card/90 p-5 sm:p-6">
+    <section className="rounded-[16px] border border-border-warm bg-card/90 p-5 sm:p-6">
       <div className="flex items-start gap-3">
         <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-lagoon/10 text-text-link">
           <Sparkles className="size-5" aria-hidden />
         </span>
         <div className="min-w-0">
-          <p className="text-section text-text-accent">Your report at a glance</p>
+          <p className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">Your report at a glance</p>
           <h3 className="mt-2 font-[family-name:var(--font-fraunces)] text-xl font-medium tracking-[-0.02em] text-text-warm sm:text-2xl">
             {heroInsight?.headline ?? "Report ready"}
           </h3>
@@ -64,7 +64,7 @@ export function ReportNarrativeHero({ report }: ReportNarrativeHeroProps) {
             <li
               key={insight.id}
               className={cn(
-                "rounded-xl border px-4 py-3",
+                "rounded-[16px] border px-4 py-3",
                 toneStyles[insight.tone]
               )}
             >
