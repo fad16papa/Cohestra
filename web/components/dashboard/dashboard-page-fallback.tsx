@@ -6,7 +6,7 @@ import { MetricSkeletonGrid } from "@/components/shared/list-skeleton";
 
 export function DashboardFallback() {
   return (
-    <div className="mx-auto w-full min-w-0 max-w-6xl space-y-8">
+    <div className="mx-auto w-full min-w-0 max-w-6xl space-y-6">
       <DashboardGreetingHeader />
       <DashboardViewSwitcher value="overview" onChange={() => {}} />
       <div

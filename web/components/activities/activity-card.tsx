@@ -84,7 +84,7 @@ export function ActivityCard({
       data-activity-id={activity.id}
       data-activity-status={activity.status}
       className={cn(
-        "h-full border-border-warm transition-shadow hover:shadow-md",
+        "h-full rounded-[16px] border-border-warm",
         hasConflict && "border-amber-200/80 dark:border-amber-900/50",
         className
       )}
@@ -92,7 +92,13 @@ export function ActivityCard({
       <Link href={href ?? `/activities/${activity.id}`} className="flex flex-1 flex-col">
         <CardHeader className="gap-3">
           <div className="flex items-start justify-between gap-3">
-            <CardTitle className="text-section text-text-warm">
+            <CardTitle
+              className="text-base font-semibold normal-case tracking-[-0.02em] text-text-warm"
+              style={{
+                fontFamily:
+                  "var(--font-jakarta), ui-sans-serif, system-ui, sans-serif",
+              }}
+            >
               {activity.name}
             </CardTitle>
             <div className="flex flex-wrap items-center justify-end gap-1.5">

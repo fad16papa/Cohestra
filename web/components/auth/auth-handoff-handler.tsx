@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { useAuth } from "@/components/auth/auth-provider";
-import { exchangeAuthHandoff } from "@/lib/auth-handoff";
+import { exchangeAuthHandoffOnce } from "@/lib/auth-handoff";
 import { fetchSessionProfile } from "@/lib/auth-api";
 import { setAuthSession } from "@/lib/auth-storage";
 
@@ -28,7 +28,7 @@ function AuthHandoffHandlerContent({ children }: { children: ReactNode }) {
 
     void (async () => {
       try {
-        const session = await exchangeAuthHandoff(handoffCode);
+        const session = await exchangeAuthHandoffOnce(handoffCode);
         if (cancelled) {
           return;
         }

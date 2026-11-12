@@ -40,7 +40,7 @@ export function DashboardQuickActions() {
             href={action.href}
             className={cn(
               "group relative overflow-hidden rounded-xl border border-border-warm bg-card/80 p-4 motion-press",
-              "hover:-translate-y-px hover:border-primary/30 hover:shadow-md",
+              "hover:border-primary/30",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             )}
           >

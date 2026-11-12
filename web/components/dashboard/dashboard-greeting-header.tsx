@@ -31,6 +31,7 @@ export function DashboardGreetingHeader() {
 
   return (
     <PageHeader
+      variant="room"
       title="Dashboard"
       description={
         <>

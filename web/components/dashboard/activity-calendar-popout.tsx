@@ -278,7 +278,9 @@ export function ActivityCalendarPopout({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <CalendarDays className="size-4 shrink-0 text-text-link" aria-hidden />
-              <h2 className="text-section text-text-warm">Activity calendar</h2>
+              <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
+                Activity calendar
+              </h2>
             </div>
             <p className="mt-0.5 text-xs text-text-muted-warm">
               Draft, published, and archived — click an activity to open its form.

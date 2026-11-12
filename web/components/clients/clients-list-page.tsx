@@ -671,6 +671,7 @@ export function ClientsListPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
+        variant="room"
         title="Clients"
         description="One row per contact — repeat sign-ups merge by phone or email."
         actions={

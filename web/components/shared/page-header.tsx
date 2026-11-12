@@ -8,6 +8,7 @@ export type PageHeaderProps = {
   description?: ReactNode;
   actions?: ReactNode;
   className?: string;
+  variant?: "display" | "room";
 };
 
 export function PageHeader({
@@ -16,6 +17,7 @@ export function PageHeader({
   description,
   actions,
   className,
+  variant = "display",
 }: PageHeaderProps) {
   return (
     <header
@@ -27,14 +29,30 @@ export function PageHeader({
       <div className="min-w-0">
         {eyebrow ? (
           typeof eyebrow === "string" ? (
-            <p className="mb-1 text-xs font-medium uppercase tracking-[0.14em] text-text-muted-warm">
+            <p
+              className={cn(
+                "mb-1 text-xs text-text-muted-warm",
+                variant === "room"
+                  ? "font-semibold tracking-[0.04em]"
+                  : "font-medium uppercase tracking-[0.14em]"
+              )}
+            >
               {eyebrow}
             </p>
           ) : (
             <div className="mb-1">{eyebrow}</div>
           )
         ) : null}
-        <h1 className="break-words text-display-sm text-text-warm">{title}</h1>
+        <h1
+          className={cn(
+            "break-words text-text-warm",
+            variant === "room"
+              ? "text-[1.25rem] font-semibold leading-tight tracking-[-0.02em]"
+              : "text-display-sm"
+          )}
+        >
+          {title}
+        </h1>
         {description ? (
           typeof description === "string" ? (
             <p className="mt-1 max-w-2xl text-sm text-text-muted-warm">{description}</p>

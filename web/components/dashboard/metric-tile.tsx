@@ -74,14 +74,13 @@ export function MetricTile({
       href={href}
       aria-label={ariaLabel}
       className={cn(
-        "motion-press group block rounded-xl border border-border-warm bg-card/90 px-5 py-6 backdrop-blur-sm",
-        "border-t-2 border-t-primary/30 hover:-translate-y-px hover:border-primary/30 hover:shadow-md",
+        "motion-press group block rounded-[16px] border border-border-warm bg-card px-5 py-5",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isRefreshing && "motion-safe:animate-pulse"
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-display-sm text-text-warm group-hover:text-text-link">
+        <p className="text-[1.75rem] font-semibold tabular-nums leading-none tracking-[-0.02em] text-text-warm group-hover:text-text-link">
           {value}
         </p>
         {delta ? <DeltaChip delta={delta} /> : null}
