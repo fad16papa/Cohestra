@@ -29,7 +29,14 @@ export function PageHeader({
       <div className="min-w-0">
         {eyebrow ? (
           typeof eyebrow === "string" ? (
-            <p className="mb-1 text-xs font-medium uppercase tracking-[0.14em] text-text-muted-warm">
+            <p
+              className={cn(
+                "mb-1 text-xs text-text-muted-warm",
+                variant === "room"
+                  ? "font-semibold tracking-[0.04em]"
+                  : "font-medium uppercase tracking-[0.14em]"
+              )}
+            >
               {eyebrow}
             </p>
           ) : (

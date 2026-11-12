@@ -17,6 +17,7 @@ describe("Story D room density", () => {
     );
     expect(pageHeader).toContain("text-display-sm");
     expect(pageHeader).toContain('variant?: "display" | "room"');
+    expect(pageHeader).toContain("tracking-[0.04em]");
   });
 
   it("room pages pass variant=room on PageHeader", () => {
@@ -46,12 +47,27 @@ describe("Story D room density", () => {
 
     expect(activityCard).not.toMatch(/CardTitle className="[^"]*text-section/);
     expect(activityCard).not.toContain("hover:shadow-md");
+    expect(activityCard).toContain("var(--font-jakarta)");
+    expect(activityCard).toContain("rounded-[16px]");
   });
 
-  it("clients table cells meet 52px row minimum", () => {
+  it("clients table rows meet 52px height", () => {
+    const clientRow = source("components/clients/client-row.tsx");
     const layout = source("components/clients/clients-table-layout.ts");
 
+    expect(clientRow).toContain("h-[52px]");
     expect(layout).toContain("min-h-[52px]");
+  });
+
+  it("activities no-match heading avoids text-section", () => {
+    const listPage = source("components/activities/activities-list-page.tsx");
+
+    expect(listPage).toContain(
+      "text-base font-semibold tracking-[-0.02em] text-text-warm"
+    );
+    expect(listPage).not.toMatch(
+      /No activities match your current filters[\s\S]{0,120}text-section/
+    );
   });
 
   it("dashboard page client uses 24px section gaps", () => {
