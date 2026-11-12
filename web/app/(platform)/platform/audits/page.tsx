@@ -174,13 +174,10 @@ function PlatformAuditsPage() {
   return (
     <div className="space-y-6">
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--plat-stone)]">
+        <p className="text-xs font-semibold tracking-[0.04em] text-[var(--plat-stone)]">
           Platform
         </p>
-        <h1
-          className="text-3xl tracking-tight text-[var(--plat-ink)] sm:text-4xl"
-          style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
-        >
+        <h1 className="text-[1.25rem] font-semibold leading-tight tracking-[-0.02em] text-[var(--plat-ink)]">
           Audits
         </h1>
         <p className="max-w-2xl text-sm leading-relaxed text-[var(--plat-stone)]">
