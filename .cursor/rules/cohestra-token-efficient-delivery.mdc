@@ -1,0 +1,28 @@
+---
+description: "Cohestra model routing, token-efficient investigation, BMAD reviews, and release boundaries"
+alwaysApply: true
+---
+
+# Cohestra: cost-aware Cursor + BMAD delivery
+
+This is an efficiency rule, not a shortcut around the mandatory review loop in `AGENTS.md` and `_bmad/custom/mandatory-code-review-loop.md`. All existing authorization, tenant isolation, security, test, owner release, and exact-HEAD requirements still apply.
+
+## Route each separate agent run
+- **Grok 4.7 High, Fast OFF (standard)**: architecture, high-risk privacy/security design, release decisions, and final independent BMAD/CAT-SEC review.
+- **Composer 2.5, Fast OFF (standard)**: bounded implementation, bug fixes, unit/integration regression tests, and focused refactoring.
+- One Cursor run uses its selected model. Do not pretend to change models during a run. At task handoff, state the recommended model/settings; the owner or agent launcher must select them explicitly. If standard speed is unavailable, disclose the actual mode.
+- Avoid paid third-party models unless specifically authorized. Keep on-demand usage disabled unless owner explicitly changes that preference.
+
+## Work efficiently, with evidence
+1. Start with a one-paragraph objective, current SHA, changed files, mandatory acceptance criteria, and smallest relevant test set. Prefer a fresh, scoped run to a huge accumulated conversation.
+2. Inspect the actual diff and affected callers/data flows first. Expand to the whole repository only for a demonstrated cross-cutting risk. Do not repeatedly re-read unchanged files or duplicate independent investigations.
+3. TDD: reproduce each verified defect with a failing test, implement the smallest safe fix, then run targeted tests. Existing GitHub Actions runs are the source of truth for full exact-SHA CI; never substitute unverified local claims.
+4. Preserve mandatory BMAD code review and required independent review layers. Focus each layer on distinct risks and the changed HEAD. After **any** code change, rerun applicable tests/review on the new HEAD; passing old-SHA evidence is stale.
+5. Launch additional subagents only for necessary, distinct, parallelizable scopes. Avoid multiple agents editing the same files, speculative feature additions, repeated review passes without new evidence, and broad documentation churn.
+6. Compact handoffs: objective | exact SHA | tests/checks with links | verified BLOCKER/MAJOR and reproduction | next action. Summarize logs; do not paste full logs or files unless needed to investigate.
+7. Stop when the applicable code-review/product-acceptance gates pass or there is a proven blocking dependency. Missing, skipped, canceled, timed-out, neutral-required, or failed mandatory checks are **not** PASS.
+
+## Current beta boundaries
+- Cohestra invite-only beta only; attendance check-in and live billing are out of scope.
+- Keep release candidate PR #561 DRAFT until separately owner-approved. Do not merge, deploy, change UAT variables/secrets, or touch live data as a side effect of this rule.
+- Production remains NO-GO. Autonomous-delivery development remains paused.
