@@ -5,6 +5,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MarketingReveal, marketingRevealDelay } from "@/components/marketing/marketing-reveal";
 import { MarketingCapabilityStage } from "@/components/marketing/marketing-capability-stage";
 import type { LandingCapabilityChapter } from "@/lib/marketing/landing-content";
+import {
+  activeWhileLocked,
+  chooseChapterId,
+  stepChapter,
+} from "@/lib/marketing/capability-scroll";
 import { cn } from "@/lib/utils";
 
 /** Preserved for landing source tests; scenes render these in {@link MarketingCapabilityStage}. */
@@ -151,8 +156,9 @@ export function MarketingCapabilityChapters({
 }) {
   const [activeId, setActiveId] = useState(chapters[0]?.id ?? "registration");
   const chapterIds = chapters.map((chapter) => chapter.id);
-  const observerRef = useRef<IntersectionObserver | null>(null);
   const scrollLock = useRef<string | null>(null);
+  const scrollLockTimer = useRef<number | null>(null);
+  const measureRaf = useRef<number | null>(null);
 
   const shownId = chapters.some((chapter) => chapter.id === activeId)
     ? activeId
@@ -165,81 +171,119 @@ export function MarketingCapabilityChapters({
 
   const activeChapter = chapters[activeIndex] ?? chapters[0];
 
-  const scrollToChapter = useCallback((id: string) => {
-    const node = document.getElementById(id);
-    if (!node) {
-      return;
+  const clearScrollLock = useCallback(() => {
+    scrollLock.current = null;
+    if (scrollLockTimer.current !== null) {
+      window.clearTimeout(scrollLockTimer.current);
+      scrollLockTimer.current = null;
     }
-    scrollLock.current = id;
-    setActiveId(id);
-    node.scrollIntoView({
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
-      block: "start",
-    });
-    window.setTimeout(() => {
-      if (scrollLock.current === id) {
-        scrollLock.current = null;
-      }
-    }, prefersReducedMotion() ? 80 : 900);
   }, []);
 
-  useEffect(() => {
-    const nodes = chapters
-      .map((chapter) => document.getElementById(chapter.id))
-      .filter((node): node is HTMLElement => node !== null);
-
-    if (nodes.length === 0) {
-      return;
-    }
-
-    observerRef.current?.disconnect();
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        const top = visible[0];
-        if (!top?.target.id) {
-          return;
-        }
-        if (scrollLock.current) {
-          if (top.target.id === scrollLock.current) {
-            scrollLock.current = null;
-          }
-          return;
-        }
-        setActiveId(top.target.id);
-      },
-      {
-        root: null,
-        rootMargin: "-12% 0px -70% 0px",
-        threshold: [0, 0.25, 0.5, 0.75, 1],
+  const armScrollLock = useCallback(
+    (id: string) => {
+      scrollLock.current = id;
+      if (scrollLockTimer.current !== null) {
+        window.clearTimeout(scrollLockTimer.current);
       }
-    );
+      scrollLockTimer.current = window.setTimeout(() => {
+        if (scrollLock.current === id) {
+          clearScrollLock();
+        }
+      }, 1200);
+    },
+    [clearScrollLock]
+  );
 
-    for (const node of nodes) {
-      observer.observe(node);
+  const scrollToChapter = useCallback(
+    (id: string) => {
+      const node = document.getElementById(id);
+      if (!node) {
+        return;
+      }
+      armScrollLock(id);
+      setActiveId(id);
+      node.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "start",
+      });
+    },
+    [armScrollLock]
+  );
+
+  const measureChapters = useCallback(() => {
+    const viewportHeight = window.innerHeight;
+    const sentinels = chapters
+      .map((chapter) => {
+        const node = document.getElementById(chapter.id);
+        if (!node) {
+          return null;
+        }
+        const rect = node.getBoundingClientRect();
+        return {
+          id: chapter.id,
+          top: rect.top,
+          bottom: rect.bottom,
+        };
+      })
+      .filter((entry): entry is { id: string; top: number; bottom: number } => entry !== null);
+
+    const measured = chooseChapterId(sentinels, viewportHeight);
+    const next = activeWhileLocked(scrollLock.current, measured);
+    if (next) {
+      setActiveId(next);
     }
-    observerRef.current = observer;
-
-    return () => {
-      observer.disconnect();
-    };
   }, [chapters]);
 
-  const goPrevious = () => {
-    if (activeIndex <= 0) {
+  const scheduleMeasure = useCallback(() => {
+    if (measureRaf.current !== null) {
       return;
     }
-    scrollToChapter(chapters[activeIndex - 1].id);
+    measureRaf.current = window.requestAnimationFrame(() => {
+      measureRaf.current = null;
+      measureChapters();
+    });
+  }, [measureChapters]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      scheduleMeasure();
+    };
+    const onScrollEnd = () => {
+      clearScrollLock();
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scrollend", onScrollEnd);
+    scheduleMeasure();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scrollend", onScrollEnd);
+      if (measureRaf.current !== null) {
+        window.cancelAnimationFrame(measureRaf.current);
+        measureRaf.current = null;
+      }
+      if (scrollLockTimer.current !== null) {
+        window.clearTimeout(scrollLockTimer.current);
+        scrollLockTimer.current = null;
+      }
+    };
+  }, [scheduleMeasure, clearScrollLock]);
+
+  const goPrevious = () => {
+    const nextIndex = stepChapter(activeIndex, -1, chapters.length);
+    if (nextIndex === activeIndex) {
+      return;
+    }
+    scrollToChapter(chapters[nextIndex].id);
   };
 
   const goNext = () => {
-    if (activeIndex >= chapters.length - 1) {
+    const nextIndex = stepChapter(activeIndex, 1, chapters.length);
+    if (nextIndex === activeIndex) {
       return;
     }
-    scrollToChapter(chapters[activeIndex + 1].id);
+    scrollToChapter(chapters[nextIndex].id);
   };
 
   return (

@@ -89,7 +89,7 @@ function WorkspaceShell({
   return (
     <div
       aria-hidden
-      className="flex h-auto overflow-hidden rounded-2xl border border-border-warm bg-card shadow-[0_24px_60px_rgba(7,13,18,0.14)]"
+      className="flex h-auto overflow-hidden rounded-2xl border border-border-warm bg-card shadow-[0_24px_60px_rgba(7,13,18,0.14)] lg:h-[34rem]"
     >
       <WorkspaceRail activeLabel={activeLabel} />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -132,7 +132,7 @@ function RegistrationStage() {
       title="Published activity"
       badge="Published"
     >
-      <div className="relative min-h-0 md:min-h-[28rem]">
+      <div className="relative min-h-0">
         <div className="space-y-4 md:pr-[52%]">
           <p className="text-sm text-text-muted-warm">Public page</p>
           <div>
@@ -411,7 +411,7 @@ export function MarketingCapabilityStage({
 }) {
   return (
     <figure className={cn("min-w-0", className)}>
-      <div className="relative">
+      <div className="relative overflow-hidden lg:h-[34rem]">
         {chapterIds.map((id) => {
           const isActive = id === activeId;
           return (
