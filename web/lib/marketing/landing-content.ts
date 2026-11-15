@@ -71,7 +71,7 @@ export const LANDING_FEATURES: LandingFeature[] = [
     title: "Analytics",
     plan: "Every plan · depth differs",
     description:
-      "Basic includes a registration report and CSV export. Core adds filters. Pro adds campaign analytics and saved views.",
+      "Basic includes a registration report and CSV export. Core adds filters. Pro adds campaign analytics.",
   },
   {
     icon: Megaphone,
@@ -191,11 +191,11 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
     title: "Analytics",
     plan: "Every plan · depth differs",
     description:
-      "Basic includes a registration report and CSV export. Core adds filters. Pro adds campaign analytics and saved views.",
+      "Basic includes a registration report and CSV export. Core adds filters. Pro adds campaign analytics.",
     benefits: [
       "Registration report and CSV export on Basic",
       "Filter by date, activity, and community on Core",
-      "Saved views and campaign analytics on Pro",
+      "Campaign analytics on Pro",
     ],
   },
 ];

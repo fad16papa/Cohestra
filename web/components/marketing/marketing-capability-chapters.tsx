@@ -188,6 +188,7 @@ export function MarketingCapabilityChapters({
   const [activeId, setActiveId] = useState(chapters[0]?.id ?? "registration");
   const chapterIds = chapters.map((chapter) => chapter.id);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const scrollLock = useRef<string | null>(null);
 
   const shownId = chapters.some((chapter) => chapter.id === activeId)
     ? activeId
@@ -205,11 +206,17 @@ export function MarketingCapabilityChapters({
     if (!node) {
       return;
     }
+    scrollLock.current = id;
     setActiveId(id);
     node.scrollIntoView({
       behavior: prefersReducedMotion() ? "auto" : "smooth",
       block: "start",
     });
+    window.setTimeout(() => {
+      if (scrollLock.current === id) {
+        scrollLock.current = null;
+      }
+    }, prefersReducedMotion() ? 80 : 900);
   }, []);
 
   useEffect(() => {
@@ -229,9 +236,16 @@ export function MarketingCapabilityChapters({
           .filter((entry) => entry.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
         const top = visible[0];
-        if (top?.target.id) {
-          setActiveId(top.target.id);
+        if (!top?.target.id) {
+          return;
         }
+        if (scrollLock.current) {
+          if (top.target.id === scrollLock.current) {
+            scrollLock.current = null;
+          }
+          return;
+        }
+        setActiveId(top.target.id);
       },
       {
         root: null,
@@ -271,7 +285,7 @@ export function MarketingCapabilityChapters({
       aria-label="Product capabilities"
     >
       <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
-        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2">
+        <div className="lg:sticky lg:top-16 lg:z-10 lg:max-h-[calc(100vh-4.5rem)] lg:overflow-y-auto lg:bg-paper-warm lg:pb-2">
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="max-w-2xl">
           <p className="text-section text-text-accent">Capabilities</p>
           <h2 className="text-marketing-section mt-3 max-w-[22ch] font-[family-name:var(--font-fraunces)] text-ink">
