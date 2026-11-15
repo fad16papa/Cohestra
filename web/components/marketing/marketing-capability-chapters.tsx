@@ -284,8 +284,8 @@ export function MarketingCapabilityChapters({
       className="scroll-mt-24 border-t border-line bg-paper-warm"
       aria-label="Product capabilities"
     >
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
-        <div className="lg:sticky lg:top-16 lg:z-10 lg:max-h-[calc(100vh-4.5rem)] lg:overflow-y-auto lg:bg-paper-warm lg:pb-2">
+      <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2">
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="max-w-2xl">
           <p className="text-section text-text-accent">Capabilities</p>
           <h2 className="text-marketing-section mt-3 max-w-[22ch] font-[family-name:var(--font-fraunces)] text-ink">
@@ -298,7 +298,7 @@ export function MarketingCapabilityChapters({
         </MarketingReveal>
 
         <div className="mt-8 hidden bg-paper-warm lg:block">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.38fr)_minmax(0,0.62fr)] lg:items-start lg:gap-12">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:items-start lg:gap-10">
             <div className="min-w-0">
               <ChapterNav chapters={chapters} shownId={shownId} scrollToChapter={scrollToChapter} />
               {activeChapter ? (
