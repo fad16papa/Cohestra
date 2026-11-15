@@ -122,6 +122,7 @@ export type LandingCapabilityChapter = {
   title: string;
   description: string;
   plan: string;
+  benefits: string[];
 };
 
 export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
@@ -131,6 +132,11 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
     plan: "Every plan",
     description:
       "Each published activity has a public page and a QR code. People register in the browser. They do not install an app.",
+    benefits: [
+      "Public page and share kit stay on the activity",
+      "Registrants use the browser — no app install",
+      "QR code is part of the published activity",
+    ],
   },
   {
     id: "clients",
@@ -138,6 +144,11 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
     plan: "Every plan",
     description:
       "Registrations merge into one profile per person, with history across activities. Your team works from that list.",
+    benefits: [
+      "Returning people land on one profile",
+      "Activity history stays with the person",
+      "The directory is the team's shared list",
+    ],
   },
   {
     id: "follow-up",
@@ -145,6 +156,11 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
     plan: "Every plan",
     description:
       "Follow-up is its own room. Due now, At risk, Opportunity, and Healthy are categories there — not separate products. WhatsApp and Viber notes stay on the profile.",
+    benefits: [
+      "Categories match the Follow-up room",
+      "Outreach notes stay on the client profile",
+      "See who needs a reply without a side spreadsheet",
+    ],
   },
   {
     id: "website-studio",
@@ -152,6 +168,11 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
     plan: "Core or higher",
     description:
       "Core publishes a Site Page at your workspace address. Pro adds Studio sections such as carousel, FAQ, and video. Basic keeps a stub page with your name and activity links.",
+    benefits: [
+      "Site Page at your workspace address on Core",
+      "Studio sections such as FAQ and video on Pro",
+      "Basic keeps a stub with your name and activity links",
+    ],
   },
   {
     id: "form-studio",
@@ -159,6 +180,11 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
     plan: "Every plan · saved-form limits differ",
     description:
       "Compose the registration form on the activity. Basic saves 1 form, Core saves 5, and Pro saves 25.",
+    benefits: [
+      "Build the form on the activity you publish",
+      "Saved-form slots follow your plan",
+      "The public page uses the same fields",
+    ],
   },
   {
     id: "analytics",
@@ -166,6 +192,11 @@ export const LANDING_CAPABILITY_CHAPTERS: LandingCapabilityChapter[] = [
     plan: "Every plan · depth differs",
     description:
       "Basic includes a registration report and CSV export. Core adds filters. Pro adds campaign analytics and saved views.",
+    benefits: [
+      "Registration report and CSV export on Basic",
+      "Filter by date, activity, and community on Core",
+      "Saved views and campaign analytics on Pro",
+    ],
   },
 ];
 
