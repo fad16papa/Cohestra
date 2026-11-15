@@ -1,113 +1,151 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { PersonAvatar } from "@/components/shared/person-avatar";
 import { MarketingReveal, marketingRevealDelay } from "@/components/marketing/marketing-reveal";
-import { FOLLOW_UP_CATEGORY_OPTIONS } from "@/lib/follow-up-category";
+import { MarketingCapabilityStage } from "@/components/marketing/marketing-capability-stage";
 import type { LandingCapabilityChapter } from "@/lib/marketing/landing-content";
+import {
+  activeWhileLocked,
+  chooseChapterId,
+  stepChapter,
+} from "@/lib/marketing/capability-scroll";
 import { cn } from "@/lib/utils";
 
-const FRAME_CAPTION = "Sample state, not a customer result.";
+/** Preserved for landing source tests; scenes render these in {@link MarketingCapabilityStage}. */
+const CAPABILITY_STAGE_LABELS = [
+  "Published",
+  "History across activities",
+  "No outreach yet",
+  "Website Studio",
+  "Form Studio",
+  "Registration report",
+  "Sample state, not a customer result.",
+] as const;
+void CAPABILITY_STAGE_LABELS;
 
-function ChapterFrame({ id }: { id: string }) {
+function formatChapterProgress(index: number, total: number): string {
+  const current = String(index + 1).padStart(2, "0");
+  const last = String(total).padStart(2, "0");
+  return `${current} / ${last}`;
+}
+
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function ChapterCopy({ chapter }: { chapter: LandingCapabilityChapter }) {
   return (
-    <figure className="overflow-hidden rounded-[16px] border border-border-warm bg-card">
-      <div className="border-b border-border-warm px-4 py-3">
-        <p className="text-label text-text-accent">Product preview</p>
-      </div>
-      <div className="px-4 py-4">
-        {id === "registration" ? (
-          <div>
-            <p className="text-label text-text-accent">Activity</p>
-            <p className="mt-1 text-sm font-semibold text-text-warm">Published</p>
-            <p className="mt-0.5 text-xs text-text-muted-warm">Public page</p>
-            <p className="mt-3 text-xs text-text-muted-warm">QR code included</p>
-          </div>
-        ) : null}
-        {id === "clients" ? (
-          <div className="flex items-center gap-3">
-            <PersonAvatar name="Returning client" size="sm" />
-            <div className="min-w-0">
-              <p className="truncate font-medium text-text-warm">Returning client</p>
-              <p className="truncate text-sm text-text-muted-warm">History across activities</p>
-            </div>
-          </div>
-        ) : null}
-        {id === "follow-up" ? (
-          <div>
-            <div className="flex flex-wrap gap-1.5">
-              {FOLLOW_UP_CATEGORY_OPTIONS.map((option) => {
-                const selected = option.value === "due-now";
-                return (
-                  <span
-                    key={option.value}
-                    className={cn(
-                      "inline-flex items-center rounded-xl border px-2.5 py-1.5 text-xs font-medium",
-                      selected
-                        ? "border-border-warm bg-background text-text-warm shadow-sm"
-                        : "border-transparent bg-muted/40 text-text-muted-warm"
-                    )}
-                  >
-                    {option.label}
-                  </span>
-                );
-              })}
-            </div>
-            <div className="mt-3 flex items-center gap-3 rounded-xl border border-border-warm px-3 py-3">
-              <PersonAvatar name="New registration" size="sm" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-text-warm">New registration</p>
-                <p className="truncate text-sm text-text-muted-warm">No outreach yet</p>
-              </div>
-              <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-text-warm">
-                Due now
+    <>
+      <p className="text-section text-text-accent">{chapter.plan}</p>
+      <h3 className="mt-2 font-[family-name:var(--font-fraunces)] text-[1.5rem] font-medium tracking-[-0.025em] text-ink">
+        {chapter.title}
+      </h3>
+      <p className="mt-3 max-w-[46ch] text-[0.95rem] leading-relaxed text-muted-foreground">
+        {chapter.description}
+      </p>
+      {chapter.benefits.length > 0 ? (
+        <ul className="mt-4 max-w-[46ch] space-y-2 text-sm text-ink">
+          {chapter.benefits.map((benefit) => (
+            <li key={benefit} className="flex gap-2">
+              <span className="text-text-accent" aria-hidden>
+                ·
               </span>
-            </div>
-          </div>
-        ) : null}
-        {id === "website-studio" ? (
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <p className="font-medium text-text-warm">Website Studio</p>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[0.625rem] font-medium uppercase text-text-warm">
-                Core
-              </span>
-            </div>
-            <p className="mt-2 text-sm text-text-muted-warm">Site Page</p>
-            <p className="mt-3 text-xs text-text-muted-warm">Preview</p>
-          </div>
-        ) : null}
-        {id === "form-studio" ? (
-          <div>
-            <p className="font-medium text-text-warm">Form Studio</p>
-            <ul className="mt-3 space-y-2">
-              {["Name", "Email", "Phone"].map((field) => (
-                <li
-                  key={field}
-                  className="rounded-xl border border-border-warm px-3 py-2 text-sm text-text-warm"
-                >
-                  {field}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        {id === "analytics" ? (
-          <div>
-            <p className="font-medium text-text-warm">Registration report</p>
-            <p className="mt-2 text-sm text-text-muted-warm">CSV export</p>
-            <p className="mt-3 text-xs text-text-muted-warm">
-              Core adds filters. Pro adds saved views.
-            </p>
-          </div>
-        ) : null}
+              <span>{benefit}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </>
+  );
+}
+
+function ChapterNav({
+  chapters,
+  shownId,
+  scrollToChapter,
+}: {
+  chapters: LandingCapabilityChapter[];
+  shownId: string;
+  scrollToChapter: (id: string) => void;
+}) {
+  return (
+    <nav aria-label="Capability chapters">
+      <ul className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:border-l lg:border-line lg:pb-0">
+        {chapters.map((chapter) => {
+          const current = chapter.id === shownId;
+          return (
+            <li key={chapter.id} className="shrink-0 lg:shrink">
+              <button
+                type="button"
+                onClick={() => scrollToChapter(chapter.id)}
+                aria-current={current ? "true" : undefined}
+                className={cn(
+                  "block w-full rounded-xl px-3 py-2 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
+                  "min-h-11 lg:min-h-0 lg:rounded-none lg:border-l-2 lg:px-4",
+                  current
+                    ? "border-lagoon bg-background text-ink lg:bg-transparent"
+                    : "border-transparent text-muted-foreground hover:text-ink"
+                )}
+              >
+                {chapter.title}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+function ChapterControls({
+  activeIndex,
+  chapterCount,
+  goPrevious,
+  goNext,
+}: {
+  activeIndex: number;
+  chapterCount: number;
+  goPrevious: () => void;
+  goNext: () => void;
+}) {
+  return (
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={goPrevious}
+            disabled={activeIndex <= 0}
+            className={cn(
+              "min-h-11 rounded-xl border border-border-warm px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
+              activeIndex <= 0
+                ? "cursor-not-allowed text-muted-foreground opacity-60"
+                : "text-ink hover:bg-background"
+            )}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={activeIndex >= chapterCount - 1}
+            className={cn(
+              "min-h-11 rounded-xl border border-border-warm px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
+              activeIndex >= chapterCount - 1
+                ? "cursor-not-allowed text-muted-foreground opacity-60"
+                : "text-ink hover:bg-background"
+            )}
+          >
+            Next
+          </button>
+        </div>
+        <p className="text-sm font-medium text-muted-foreground" aria-live="polite">
+          {formatChapterProgress(activeIndex, chapterCount)}
+        </p>
       </div>
-      <figcaption className="border-t border-border-warm px-4 py-3 text-xs leading-relaxed text-text-muted-warm">
-        {FRAME_CAPTION}
-      </figcaption>
-    </figure>
   );
 }
 
@@ -117,35 +155,176 @@ export function MarketingCapabilityChapters({
   chapters: LandingCapabilityChapter[];
 }) {
   const [activeId, setActiveId] = useState(chapters[0]?.id ?? "registration");
-
-  useEffect(() => {
-    const update = () => {
-      const line = window.innerHeight * 0.35;
-      let nextId = chapters[0]?.id ?? "registration";
-      for (const chapter of chapters) {
-        const node = document.getElementById(chapter.id);
-        if (!node) {
-          continue;
-        }
-        if (node.getBoundingClientRect().top <= line) {
-          nextId = chapter.id;
-        }
-      }
-      setActiveId(nextId);
-    };
-
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [chapters]);
+  const chapterIds = chapters.map((chapter) => chapter.id);
+  const scrollLock = useRef<string | null>(null);
+  const intendedIdRef = useRef(chapters[0]?.id ?? "registration");
+  const scrollLockTimer = useRef<number | null>(null);
+  const measureRaf = useRef<number | null>(null);
+  const releaseScrollLockRef = useRef<() => void>(() => {});
+  const releasingScrollLock = useRef(false);
 
   const shownId = chapters.some((chapter) => chapter.id === activeId)
     ? activeId
     : (chapters[0]?.id ?? "registration");
+
+  const activeIndex = Math.max(
+    0,
+    chapters.findIndex((chapter) => chapter.id === shownId)
+  );
+
+  const activeChapter = chapters[activeIndex] ?? chapters[0];
+
+  const clearScrollLock = useCallback(() => {
+    scrollLock.current = null;
+    if (scrollLockTimer.current !== null) {
+      window.clearTimeout(scrollLockTimer.current);
+      scrollLockTimer.current = null;
+    }
+  }, []);
+
+  const armScrollLock = useCallback(
+    (id: string) => {
+      scrollLock.current = id;
+      if (scrollLockTimer.current !== null) {
+        window.clearTimeout(scrollLockTimer.current);
+      }
+      scrollLockTimer.current = window.setTimeout(() => {
+        if (scrollLock.current === id) {
+          releaseScrollLockRef.current();
+        }
+      }, 1200);
+    },
+    [clearScrollLock]
+  );
+
+  const scrollToChapter = useCallback(
+    (id: string) => {
+      const node = document.getElementById(id);
+      if (!node) {
+        return;
+      }
+      armScrollLock(id);
+      intendedIdRef.current = id;
+      setActiveId(id);
+      node.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "start",
+      });
+    },
+    [armScrollLock]
+  );
+
+  const measureChapters = useCallback(() => {
+    const viewportHeight = window.innerHeight;
+    const sentinels = chapters
+      .map((chapter) => {
+        const node = document.getElementById(chapter.id);
+        if (!node) {
+          return null;
+        }
+        const rect = node.getBoundingClientRect();
+        return {
+          id: chapter.id,
+          top: rect.top,
+          bottom: rect.bottom,
+        };
+      })
+      .filter((entry): entry is { id: string; top: number; bottom: number } => entry !== null);
+
+    const measured = chooseChapterId(sentinels, viewportHeight);
+    const next = activeWhileLocked(scrollLock.current, measured);
+    if (next) {
+      if (!scrollLock.current) {
+        intendedIdRef.current = next;
+      }
+      setActiveId(next);
+    }
+  }, [chapters]);
+
+  releaseScrollLockRef.current = () => {
+    if (releasingScrollLock.current) {
+      return;
+    }
+    const locked = scrollLock.current;
+    if (!locked) {
+      return;
+    }
+    releasingScrollLock.current = true;
+    const viewportHeight = window.innerHeight;
+    const sentinels = chapters
+      .map((chapter) => {
+        const node = document.getElementById(chapter.id);
+        if (!node) {
+          return null;
+        }
+        const rect = node.getBoundingClientRect();
+        return { id: chapter.id, top: rect.top, bottom: rect.bottom };
+      })
+      .filter((entry): entry is { id: string; top: number; bottom: number } => entry !== null);
+    const measured = chooseChapterId(sentinels, viewportHeight);
+    if (measured !== locked) {
+      document.getElementById(locked)?.scrollIntoView({ behavior: "auto", block: "start" });
+      setActiveId(locked);
+    }
+    clearScrollLock();
+    releasingScrollLock.current = false;
+  };
+
+  const scheduleMeasure = useCallback(() => {
+    if (measureRaf.current !== null) {
+      return;
+    }
+    measureRaf.current = window.requestAnimationFrame(() => {
+      measureRaf.current = null;
+      measureChapters();
+    });
+  }, [measureChapters]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      scheduleMeasure();
+    };
+    const onScrollEnd = () => {
+      releaseScrollLockRef.current();
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("scrollend", onScrollEnd);
+    scheduleMeasure();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scrollend", onScrollEnd);
+      if (measureRaf.current !== null) {
+        window.cancelAnimationFrame(measureRaf.current);
+        measureRaf.current = null;
+      }
+      if (scrollLockTimer.current !== null) {
+        window.clearTimeout(scrollLockTimer.current);
+        scrollLockTimer.current = null;
+      }
+    };
+  }, [scheduleMeasure, clearScrollLock]);
+
+  const stepTo = (delta: number) => {
+    const index = Math.max(
+      0,
+      chapters.findIndex((chapter) => chapter.id === intendedIdRef.current)
+    );
+    const nextIndex = stepChapter(index, delta, chapters.length);
+    if (nextIndex === index) {
+      return;
+    }
+    scrollToChapter(chapters[nextIndex].id);
+  };
+
+  const goPrevious = () => {
+    stepTo(-1);
+  };
+
+  const goNext = () => {
+    stepTo(1);
+  };
 
   return (
     <section
@@ -153,71 +332,71 @@ export function MarketingCapabilityChapters({
       className="scroll-mt-24 border-t border-line bg-paper-warm"
       aria-label="Product capabilities"
     >
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
+      <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10 lg:py-12">
+        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2 lg:[overflow-anchor:none]">
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="max-w-2xl">
           <p className="text-section text-text-accent">Capabilities</p>
-          <h2 className="text-marketing-section mt-4 max-w-[22ch] text-ink">
+          <h2 className="mt-3 max-w-[36rem] font-[family-name:var(--font-fraunces)] text-[1.65rem] font-medium tracking-[-0.025em] text-ink lg:text-[1.85rem]">
             One workspace from registration to analytics
           </h2>
-          <p className="text-marketing-lead mt-4 text-muted-foreground">
-            Each capability below is a room in the same operator workspace. Copy stays inside what
-            ships today.
+          <p className="mt-3 max-w-[50ch] text-[0.95rem] leading-relaxed text-muted-foreground">
+            Registration, clients, follow-up, your site, the form, and the report live in one
+            workspace.
           </p>
         </MarketingReveal>
 
-        <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start lg:gap-16">
-          <div className="min-w-0">
-            <nav aria-label="Capability chapters">
-              <ul className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:border-l lg:border-line lg:pb-0">
-                {chapters.map((chapter) => {
-                  const current = chapter.id === shownId;
-                  return (
-                    <li key={chapter.id} className="shrink-0 lg:shrink">
-                      <Link
-                        href={`#${chapter.id}`}
-                        aria-current={current ? "true" : undefined}
-                        className={cn(
-                          "block rounded-xl px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
-                          "lg:rounded-none lg:border-l-2 lg:px-4",
-                          current
-                            ? "border-lagoon bg-background text-ink lg:bg-transparent"
-                            : "border-transparent text-muted-foreground hover:text-ink"
-                        )}
-                      >
-                        {chapter.title}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-
-            <ol className="mt-8 min-w-0 space-y-10 lg:space-y-16">
-              {chapters.map((chapter, index) => (
-                <MarketingReveal
-                  key={chapter.id}
-                  as="li"
-                  delayMs={marketingRevealDelay(index + 1)}
-                  id={chapter.id}
-                  className="scroll-mt-28 border-t border-line pt-8 first:border-t-0 first:pt-0"
-                >
-                  <p className="text-section text-text-accent">{chapter.plan}</p>
-                  <h3 className="mt-2 font-[family-name:var(--font-fraunces)] text-[1.5rem] font-medium tracking-[-0.025em] text-ink">
-                    {chapter.title}
-                  </h3>
-                  <p className="mt-3 max-w-[46ch] text-[0.95rem] leading-relaxed text-muted-foreground">
-                    {chapter.description}
-                  </p>
-                  <div className="mt-5 lg:hidden">
-                    <ChapterFrame id={chapter.id} />
-                  </div>
-                </MarketingReveal>
-              ))}
-            </ol>
+        <div className="mt-8 hidden bg-paper-warm lg:block">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:items-start lg:gap-10">
+            <div className="min-w-0">
+              <ChapterNav chapters={chapters} shownId={shownId} scrollToChapter={scrollToChapter} />
+              {activeChapter ? (
+                <div className="mt-6 min-w-0" aria-live="polite">
+                  <ChapterCopy chapter={activeChapter} />
+                </div>
+              ) : null}
+              <div className="mt-6">
+                <ChapterControls
+                  activeIndex={activeIndex}
+                  chapterCount={chapters.length}
+                  goPrevious={goPrevious}
+                  goNext={goNext}
+                />
+              </div>
+            </div>
+            <div className="min-w-0 motion-reduce:transition-none">
+              <MarketingCapabilityStage activeId={shownId} chapterIds={chapterIds} />
+            </div>
           </div>
+        </div>
+        </div>
 
-          <div className="sticky top-28 hidden motion-reduce:transition-none lg:block">
-            <ChapterFrame id={shownId} />
+        {chapters.map((chapter, index) => (
+          <div
+            key={chapter.id}
+            id={chapter.id}
+            className="h-auto scroll-mt-28 lg:h-[28vh] lg:invisible lg:pointer-events-none"
+          >
+            <MarketingReveal
+              delayMs={marketingRevealDelay(index + 1)}
+              className="border-t border-line pt-10 lg:hidden"
+            >
+              <ChapterCopy chapter={chapter} />
+              <div className="mt-6">
+                <MarketingCapabilityStage activeId={chapter.id} chapterIds={[chapter.id]} />
+              </div>
+            </MarketingReveal>
+          </div>
+        ))}
+
+        <div className="mt-10 border-t border-line pt-8 lg:hidden">
+          <ChapterNav chapters={chapters} shownId={shownId} scrollToChapter={scrollToChapter} />
+          <div className="mt-6">
+            <ChapterControls
+              activeIndex={activeIndex}
+              chapterCount={chapters.length}
+              goPrevious={goPrevious}
+              goNext={goNext}
+            />
           </div>
         </div>
       </div>
