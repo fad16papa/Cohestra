@@ -7,6 +7,7 @@ import {
   Globe,
   LayoutDashboard,
   ListTodo,
+  Lock,
   Megaphone,
   Sparkles,
   Users,
@@ -74,6 +75,8 @@ function WorkspaceRail({ activeLabel }: { activeLabel: string }) {
         <ul className="space-y-0.5">
           {NAV_ITEMS.map(({ label, icon: Icon }) => {
             const active = label === activeLabel;
+            const locked =
+              label === "Campaigns" || (label === "Website" && activeLabel !== "Website");
             return (
               <li key={label}>
                 <div
@@ -85,7 +88,8 @@ function WorkspaceRail({ activeLabel }: { activeLabel: string }) {
                   )}
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />
-                  <span className="truncate">{label}</span>
+                  <span className="min-w-0 flex-1 truncate">{label}</span>
+                  {locked ? <Lock className="size-3.5 shrink-0" aria-hidden /> : null}
                 </div>
               </li>
             );
@@ -186,12 +190,11 @@ function RegistrationStage() {
 
 
 function ClientsStage() {
-  const rows = [
-    { role: "Returning client", meta: "History across activities" },
-    { role: "New registration", meta: "Latest activity" },
-    { role: "Returning client", meta: "History across activities" },
-    { role: "New registration", meta: "Latest activity" },
-  ] as const;
+  const rows = Array.from({ length: 8 }, (_, index) =>
+    index % 2 === 0
+      ? { role: "Returning client", meta: "History across activities" }
+      : { role: "New registration", meta: "Latest activity" }
+  );
   return (
     <WorkspaceShell activeLabel="Clients" title="Clients">
       <div className="grid h-full gap-4 lg:grid-cols-[minmax(0,1fr)_13.5rem]">
@@ -215,10 +218,17 @@ function ClientsStage() {
             ))}
           </ul>
         </div>
-        <aside className="rounded-xl border border-border-warm bg-muted/15 p-3">
+        <aside className="flex h-full flex-col rounded-xl border border-border-warm bg-muted/15 p-3">
           <p className="text-label text-text-accent">Profile</p>
-          <p className="mt-2 text-sm font-medium text-text-warm">Returning client</p>
+          <p className="mt-3 text-sm font-medium text-text-warm">Returning client</p>
           <p className="mt-1 text-xs text-text-muted-warm">History across activities</p>
+          <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
+            Registration history
+          </p>
+          <ul className="mt-2 space-y-2 text-sm text-text-warm">
+            <li className="rounded-lg border border-border-warm bg-background px-2.5 py-2">Latest activity</li>
+            <li className="rounded-lg border border-border-warm bg-background px-2.5 py-2">Earlier activity</li>
+          </ul>
         </aside>
       </div>
     </WorkspaceShell>
@@ -228,8 +238,12 @@ function ClientsStage() {
 function FollowUpStage() {
   const rows = [
     ["New registration", "No outreach yet", "Due now"],
+    ["Returning client", "History across activities", "Due now"],
     ["Returning client", "History across activities", "At risk"],
+    ["New registration", "No outreach yet", "At risk"],
     ["Returning client", "History across activities", "Opportunity"],
+    ["New registration", "No outreach yet", "Opportunity"],
+    ["Returning client", "History across activities", "Healthy"],
     ["New registration", "No outreach yet", "Healthy"],
   ] as const;
   return (
@@ -272,8 +286,12 @@ function FollowUpStage() {
             ))}
           </ul>
         </div>
-        <aside className="self-start rounded-xl border border-border-warm bg-muted/15 p-3 text-xs leading-relaxed text-text-muted-warm">
-          Note stays on the profile
+        <aside className="flex h-full flex-col rounded-xl border border-border-warm bg-muted/15 p-3">
+          <p className="text-label text-text-accent">Profile note</p>
+          <p className="mt-3 text-sm leading-relaxed text-text-warm">Note stays on the profile</p>
+          <p className="mt-3 text-xs leading-relaxed text-text-muted-warm">
+            WhatsApp and Viber open from the profile. The note stays on the timeline.
+          </p>
         </aside>
       </div>
     </WorkspaceShell>
@@ -284,8 +302,13 @@ function WebsiteStudioStage() {
   return (
     <WorkspaceShell activeLabel="Website" title="Website Studio" badge="Core">
       <div className="grid h-full gap-4 md:grid-cols-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted-warm">Sections</p>
+        <div className="flex h-full flex-col">
+          <div className="flex gap-2 text-xs font-medium">
+            <span className="rounded-full bg-ink px-2.5 py-1 text-white">Sections</span>
+            <span className="rounded-full px-2.5 py-1 text-text-muted-warm">Design</span>
+            <span className="rounded-full px-2.5 py-1 text-text-muted-warm">Templates</span>
+          </div>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-text-muted-warm">Sections</p>
           <ul className="mt-2 space-y-2">
             {["Hero", "Contact"].map((section) => (
               <li
@@ -332,7 +355,7 @@ function FormStudioStage() {
             </li>
           ))}
         </ul>
-        <div className="rounded-xl border border-border-warm bg-muted/15 p-4">
+        <div className="flex h-full flex-col rounded-xl border border-border-warm bg-muted/15 p-4">
           <p className="text-label text-text-accent">Preview</p>
           <div className="mt-3 space-y-3">
             {fields.map((field) => (
@@ -372,7 +395,7 @@ function AnalyticsStage() {
             <p className="px-3 py-2">Status</p>
           </div>
           <ul className="divide-y divide-border-warm text-xs text-text-muted-warm">
-            {Array.from({ length: 4 }).map((_, index) => (
+            {Array.from({ length: 8 }).map((_, index) => (
               <li key={index} className="grid h-10 grid-cols-2 items-center">
                 <span className="px-3">Sample row</span>
                 <span className="px-3">Sample row</span>
