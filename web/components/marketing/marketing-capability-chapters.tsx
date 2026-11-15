@@ -157,8 +157,11 @@ export function MarketingCapabilityChapters({
   const [activeId, setActiveId] = useState(chapters[0]?.id ?? "registration");
   const chapterIds = chapters.map((chapter) => chapter.id);
   const scrollLock = useRef<string | null>(null);
+  const intendedIdRef = useRef(chapters[0]?.id ?? "registration");
   const scrollLockTimer = useRef<number | null>(null);
   const measureRaf = useRef<number | null>(null);
+  const releaseScrollLockRef = useRef<() => void>(() => {});
+  const releasingScrollLock = useRef(false);
 
   const shownId = chapters.some((chapter) => chapter.id === activeId)
     ? activeId
@@ -187,7 +190,7 @@ export function MarketingCapabilityChapters({
       }
       scrollLockTimer.current = window.setTimeout(() => {
         if (scrollLock.current === id) {
-          clearScrollLock();
+          releaseScrollLockRef.current();
         }
       }, 1200);
     },
@@ -201,6 +204,7 @@ export function MarketingCapabilityChapters({
         return;
       }
       armScrollLock(id);
+      intendedIdRef.current = id;
       setActiveId(id);
       node.scrollIntoView({
         behavior: prefersReducedMotion() ? "auto" : "smooth",
@@ -230,9 +234,41 @@ export function MarketingCapabilityChapters({
     const measured = chooseChapterId(sentinels, viewportHeight);
     const next = activeWhileLocked(scrollLock.current, measured);
     if (next) {
+      if (!scrollLock.current) {
+        intendedIdRef.current = next;
+      }
       setActiveId(next);
     }
   }, [chapters]);
+
+  releaseScrollLockRef.current = () => {
+    if (releasingScrollLock.current) {
+      return;
+    }
+    const locked = scrollLock.current;
+    if (!locked) {
+      return;
+    }
+    releasingScrollLock.current = true;
+    const viewportHeight = window.innerHeight;
+    const sentinels = chapters
+      .map((chapter) => {
+        const node = document.getElementById(chapter.id);
+        if (!node) {
+          return null;
+        }
+        const rect = node.getBoundingClientRect();
+        return { id: chapter.id, top: rect.top, bottom: rect.bottom };
+      })
+      .filter((entry): entry is { id: string; top: number; bottom: number } => entry !== null);
+    const measured = chooseChapterId(sentinels, viewportHeight);
+    if (measured !== locked) {
+      document.getElementById(locked)?.scrollIntoView({ behavior: "auto", block: "start" });
+      setActiveId(locked);
+    }
+    clearScrollLock();
+    releasingScrollLock.current = false;
+  };
 
   const scheduleMeasure = useCallback(() => {
     if (measureRaf.current !== null) {
@@ -249,7 +285,7 @@ export function MarketingCapabilityChapters({
       scheduleMeasure();
     };
     const onScrollEnd = () => {
-      clearScrollLock();
+      releaseScrollLockRef.current();
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -270,20 +306,24 @@ export function MarketingCapabilityChapters({
     };
   }, [scheduleMeasure, clearScrollLock]);
 
-  const goPrevious = () => {
-    const nextIndex = stepChapter(activeIndex, -1, chapters.length);
-    if (nextIndex === activeIndex) {
+  const stepTo = (delta: number) => {
+    const index = Math.max(
+      0,
+      chapters.findIndex((chapter) => chapter.id === intendedIdRef.current)
+    );
+    const nextIndex = stepChapter(index, delta, chapters.length);
+    if (nextIndex === index) {
       return;
     }
     scrollToChapter(chapters[nextIndex].id);
   };
 
+  const goPrevious = () => {
+    stepTo(-1);
+  };
+
   const goNext = () => {
-    const nextIndex = stepChapter(activeIndex, 1, chapters.length);
-    if (nextIndex === activeIndex) {
-      return;
-    }
-    scrollToChapter(chapters[nextIndex].id);
+    stepTo(1);
   };
 
   return (
@@ -293,7 +333,7 @@ export function MarketingCapabilityChapters({
       aria-label="Product capabilities"
     >
       <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10 lg:py-12">
-        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2">
+        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2 lg:[overflow-anchor:none]">
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="max-w-2xl">
           <p className="text-section text-text-accent">Capabilities</p>
           <h2 className="mt-3 max-w-[36rem] font-[family-name:var(--font-fraunces)] text-[1.65rem] font-medium tracking-[-0.025em] text-ink lg:text-[1.85rem]">
