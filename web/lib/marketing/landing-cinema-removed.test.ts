@@ -69,7 +69,13 @@ describe("landing Cinema section removal", () => {
     expect(hero).not.toContain("Elena");
     expect(hero).not.toContain("Sunday clinic");
     expect(hero).toContain("DashboardRegistrationsTrendChart");
+    expect(hero).toContain("cssResponsive");
+    expect(hero).toContain("animate={false}");
     expect(hero).toContain("HERO_DASHBOARD_TREND_POINTS");
+    expect(trendChart).toMatch(/responsive:\s*true/);
+    expect(trendChart).not.toContain("animate = true");
+    expect(trendChart).not.toMatch(/isAnimationActive=\{animate\}/);
+    expect(trendChart).toContain('typeof animate === "boolean"');
     expect(hero).not.toContain("areaPath");
     expect(hero).not.toContain("chartPoint");
     expect(hero).not.toContain("TREND_MAX");
