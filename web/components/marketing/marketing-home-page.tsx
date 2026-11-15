@@ -94,8 +94,10 @@ export function MarketingHomePage() {
           </MarketingReveal>
 
           <MarketingReveal immediate delayMs={360}>
-            <p className="mx-auto mt-4 max-w-[48ch] text-sm text-muted-foreground">
-              Basic is free. No credit card. Website Studio is on Core. Campaigns are on Pro.
+            <p className="mx-auto mt-4 max-w-[48ch] text-pretty text-sm text-muted-foreground sm:max-w-[52ch] md:max-w-[62ch]">
+              Basic is free. No credit card.{" "}
+              <span className="whitespace-nowrap">Website Studio is on Core.</span>{" "}
+              <span className="whitespace-nowrap">Campaigns are on Pro.</span>
             </p>
           </MarketingReveal>
 
@@ -125,14 +127,28 @@ export function MarketingHomePage() {
         <div className="relative z-[1]">
           <MarketingReveal delayMs={marketingRevealDelay(0)}>
             <p className="text-section text-text-accent">Pricing</p>
-            <h2 className="text-marketing-section mt-4 max-w-[18ch] text-ink">
+            <h2 className="text-marketing-section mt-4 max-w-[22ch] text-balance text-ink sm:max-w-[26ch] md:max-w-[32ch]">
               Start free. Upgrade when you grow.
             </h2>
-            <p className="text-marketing-lead mt-4 max-w-2xl text-muted-foreground">
-              Basic is free. Core and Pro include a 30-day trial. You are not charged until the
-              trial ends.
+            <p className="text-marketing-lead mt-4 max-w-2xl text-pretty text-muted-foreground">
+              Basic is free. Core and Pro include a 30-day trial.
+              <br className="hidden md:block" /> You are not charged until the trial ends.
             </p>
-            <p className="mt-3 max-w-2xl text-sm font-medium text-lagoon">{PRICING_POSITIONING_LINE}</p>
+            <p className="mt-3 max-w-2xl text-pretty text-sm font-medium text-lagoon">
+              {PRICING_POSITIONING_LINE.includes(" — ") ? (
+                <>
+                  {PRICING_POSITIONING_LINE.slice(0, PRICING_POSITIONING_LINE.indexOf(" — "))} —
+                  <br className="hidden lg:block" />{" "}
+                  {PRICING_POSITIONING_LINE.slice(PRICING_POSITIONING_LINE.indexOf(" — ") + 3).replace(
+                    /never use\.$/,
+                    "",
+                  )}
+                  <span className="whitespace-nowrap">never use.</span>
+                </>
+              ) : (
+                PRICING_POSITIONING_LINE
+              )}
+            </p>
           </MarketingReveal>
 
           <MarketingReveal delayMs={140} className="mt-8">

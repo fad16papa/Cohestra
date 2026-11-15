@@ -399,6 +399,7 @@ export function MarketingCapabilityChapters({
             />
           </div>
         </div>
+        <div aria-hidden className="hidden lg:block lg:h-64" />
       </div>
     </section>
   );
