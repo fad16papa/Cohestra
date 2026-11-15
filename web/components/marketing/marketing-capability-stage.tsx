@@ -189,11 +189,6 @@ function RegistrationStage() {
       activeLabel="Activities"
       title="Spring community signup"
       badge="Published"
-      headerEnd={
-        <span className="rounded-full bg-lagoon/10 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-lagoon">
-          Public page live
-        </span>
-      }
     >
       <div className="relative min-h-0">
         <div className="space-y-3 md:pr-[48%]">
@@ -248,7 +243,7 @@ function RegistrationStage() {
                 aria-hidden
                 className="mt-0.5 size-4 shrink-0 rounded border border-border-warm bg-background"
               />
-              <span>I agree to be contacted about this activity and related updates.</span>
+              <span>I agree to be contacted about this activity.</span>
             </li>
           </ul>
           <span className="mt-4 flex h-11 w-full items-center justify-center rounded-lg bg-lagoon text-sm font-medium text-white">
@@ -348,7 +343,7 @@ function ClientsStage() {
               </div>
               <div>
                 <dt className="text-text-muted-warm">Last outreach</dt>
-                <dd className="text-text-warm">No outreach yet</dd>
+                <dd className="text-text-warm">Never</dd>
               </div>
             </dl>
           </div>
@@ -384,7 +379,7 @@ function FollowUpStage() {
   };
   const rows = [
     { id: "a", role: "New registration", meta: "No outreach yet", category: "Due now" },
-    { id: "b", role: "Returning client", meta: "History across activities", category: "At risk" },
+    { id: "b", role: "Returning client", meta: "No recorded outreach", category: "At risk" },
     { id: "c", role: "Guest", meta: "Earlier activity", category: "Opportunity" },
     { id: "d", role: "New registration", meta: "Latest activity", category: "Healthy" },
     { id: "e", role: "Guest", meta: "No outreach yet", category: "Due now" },
@@ -604,7 +599,7 @@ function FormStudioStage() {
                 aria-hidden
                 className="mt-0.5 size-4 shrink-0 rounded border border-border-warm"
               />
-              <span>Consent to be contacted about this activity.</span>
+              <span>I agree to be contacted about this activity.</span>
             </div>
             <span className="flex h-10 w-full items-center justify-center rounded-lg bg-lagoon text-sm font-medium text-white">
               Register
