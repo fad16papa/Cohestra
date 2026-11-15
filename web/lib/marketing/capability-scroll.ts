@@ -6,13 +6,14 @@ export type ChapterSentinel = {
 
 export function chooseChapterId(
   sentinels: ChapterSentinel[],
-  viewportHeight: number
+  viewportHeight: number,
+  readingLine?: number
 ): string | null {
   if (sentinels.length === 0) {
     return null;
   }
 
-  const line = viewportHeight * 0.22;
+  const line = readingLine ?? viewportHeight * 0.22;
 
   const containing = sentinels.filter((s) => s.top <= line && s.bottom >= line);
   if (containing.length > 0) {
@@ -57,6 +58,39 @@ export function activeWhileLocked(
     return lockedId;
   }
   return measuredId;
+}
+
+export type DesktopFrame = {
+  height: number;
+  scale: number;
+  storyTop: number;
+  readingLine: number;
+};
+
+/**
+ * Largest preview that can stay fully on screen for both the first story
+ * and the last. Short viewports scale the existing frame down; they do not
+ * add empty scroll distance.
+ */
+export function computeDesktopFrame(
+  naturalHeight: number,
+  lastStoryHeight: number,
+  viewportHeight: number
+): DesktopFrame {
+  const sticky = 96;
+  const margin = 20;
+  const fitted = Math.floor((viewportHeight - margin - sticky - 8 + lastStoryHeight) / 2);
+  const height = Math.min(naturalHeight, Math.max(280, fitted));
+  const scale = naturalHeight > 0 ? height / naturalHeight : 1;
+  const aMax = viewportHeight - margin - height;
+  const aMin = sticky + height + 8 - lastStoryHeight;
+  const storyTop = Math.round(Math.min(aMax, Math.max(sticky, aMin)));
+  return {
+    height,
+    scale,
+    storyTop,
+    readingLine: storyTop + 16,
+  };
 }
 
 export function stepChapter(index: number, delta: number, count: number): number {

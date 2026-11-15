@@ -6,9 +6,10 @@ import { MarketingReveal, marketingRevealDelay } from "@/components/marketing/ma
 import { MarketingCapabilityStage } from "@/components/marketing/marketing-capability-stage";
 import type { LandingCapabilityChapter } from "@/lib/marketing/landing-content";
 import {
-  activeWhileLocked,
   chooseChapterId,
+  computeDesktopFrame,
   stepChapter,
+  type DesktopFrame,
 } from "@/lib/marketing/capability-scroll";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,20 @@ const CAPABILITY_STAGE_LABELS = [
 ] as const;
 void CAPABILITY_STAGE_LABELS;
 
+/**
+ * Desktop stories are shorter than the product frame. The frame stays fully
+ * visible only while a story still sits low enough to hold it, so the reading
+ * line lives inside the frame instead of under the header. Mobile stories
+ * include their own frame, so they use a line just below the header.
+ */
+const MOBILE_READING_LINE = 136;
+const MOBILE_STORY_TOP = 112;
+const FALLBACK_FRAME: DesktopFrame = computeDesktopFrame(576, 279, 900);
+
+function desktopLayout(): boolean {
+  return window.matchMedia("(min-width: 1024px)").matches;
+}
+
 function formatChapterProgress(index: number, total: number): string {
   const current = String(index + 1).padStart(2, "0");
   const last = String(total).padStart(2, "0");
@@ -37,19 +52,30 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-function ChapterCopy({ chapter }: { chapter: LandingCapabilityChapter }) {
+function ChapterCopy({
+  chapter,
+  index,
+}: {
+  chapter: LandingCapabilityChapter;
+  index: number;
+}) {
+  const benefits = chapter.benefits.slice(0, 2);
   return (
     <>
-      <p className="text-section text-text-accent">{chapter.plan}</p>
+      <p className="text-sm font-medium tabular-nums text-text-accent">
+        {String(index + 1).padStart(2, "0")}
+        <span className="sr-only"> {chapter.title}</span>
+      </p>
+      <p className="mt-2 text-section text-text-accent">{chapter.plan}</p>
       <h3 className="mt-2 font-[family-name:var(--font-fraunces)] text-[1.5rem] font-medium tracking-[-0.025em] text-ink">
         {chapter.title}
       </h3>
-      <p className="mt-3 max-w-[46ch] text-[0.95rem] leading-relaxed text-muted-foreground">
+      <p className="mt-3 max-w-[42ch] text-[0.95rem] leading-relaxed text-muted-foreground">
         {chapter.description}
       </p>
-      {chapter.benefits.length > 0 ? (
-        <ul className="mt-4 max-w-[46ch] space-y-2 text-sm text-ink">
-          {chapter.benefits.map((benefit) => (
+      {benefits.length > 0 ? (
+        <ul className="mt-4 max-w-[42ch] space-y-2 text-sm text-ink">
+          {benefits.map((benefit) => (
             <li key={benefit} className="flex gap-2">
               <span className="text-text-accent" aria-hidden>
                 ·
@@ -74,20 +100,19 @@ function ChapterNav({
 }) {
   return (
     <nav aria-label="Capability chapters">
-      <ul className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:border-l lg:border-line lg:pb-0">
+      <ul className="flex gap-2 overflow-x-auto pb-1">
         {chapters.map((chapter) => {
           const current = chapter.id === shownId;
           return (
-            <li key={chapter.id} className="shrink-0 lg:shrink">
+            <li key={chapter.id} className="shrink-0">
               <button
                 type="button"
                 onClick={() => scrollToChapter(chapter.id)}
                 aria-current={current ? "true" : undefined}
                 className={cn(
-                  "block w-full rounded-xl px-3 py-2 text-left text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
-                  "min-h-11 lg:min-h-0 lg:rounded-none lg:border-l-2 lg:px-4",
+                  "min-h-11 rounded-full border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
                   current
-                    ? "border-lagoon bg-background text-ink lg:bg-transparent"
+                    ? "border-lagoon bg-background text-ink"
                     : "border-transparent text-muted-foreground hover:text-ink"
                 )}
               >
@@ -113,39 +138,39 @@ function ChapterControls({
   goNext: () => void;
 }) {
   return (
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={goPrevious}
-            disabled={activeIndex <= 0}
-            className={cn(
-              "min-h-11 rounded-xl border border-border-warm px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
-              activeIndex <= 0
-                ? "cursor-not-allowed text-muted-foreground opacity-60"
-                : "text-ink hover:bg-background"
-            )}
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            onClick={goNext}
-            disabled={activeIndex >= chapterCount - 1}
-            className={cn(
-              "min-h-11 rounded-xl border border-border-warm px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
-              activeIndex >= chapterCount - 1
-                ? "cursor-not-allowed text-muted-foreground opacity-60"
-                : "text-ink hover:bg-background"
-            )}
-          >
-            Next
-          </button>
-        </div>
-        <p className="text-sm font-medium text-muted-foreground" aria-live="polite">
-          {formatChapterProgress(activeIndex, chapterCount)}
-        </p>
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={goPrevious}
+          disabled={activeIndex <= 0}
+          className={cn(
+            "min-h-11 rounded-xl border border-border-warm px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
+            activeIndex <= 0
+              ? "cursor-not-allowed text-muted-foreground opacity-60"
+              : "text-ink hover:bg-background"
+          )}
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          onClick={goNext}
+          disabled={activeIndex >= chapterCount - 1}
+          className={cn(
+            "min-h-11 rounded-xl border border-border-warm px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
+            activeIndex >= chapterCount - 1
+              ? "cursor-not-allowed text-muted-foreground opacity-60"
+              : "text-ink hover:bg-background"
+          )}
+        >
+          Next
+        </button>
       </div>
+      <p className="text-sm font-medium text-muted-foreground" aria-live="polite">
+        {formatChapterProgress(activeIndex, chapterCount)}
+      </p>
+    </div>
   );
 }
 
@@ -156,12 +181,13 @@ export function MarketingCapabilityChapters({
 }) {
   const [activeId, setActiveId] = useState(chapters[0]?.id ?? "registration");
   const chapterIds = chapters.map((chapter) => chapter.id);
-  const scrollLock = useRef<string | null>(null);
   const intendedIdRef = useRef(chapters[0]?.id ?? "registration");
-  const scrollLockTimer = useRef<number | null>(null);
+  const programmaticScroll = useRef(false);
+  const scrollGeneration = useRef(0);
   const measureRaf = useRef<number | null>(null);
-  const releaseScrollLockRef = useRef<() => void>(() => {});
-  const releasingScrollLock = useRef(false);
+  const frameRef = useRef<DesktopFrame>(FALLBACK_FRAME);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [frame, setFrame] = useState<DesktopFrame>(FALLBACK_FRAME);
 
   const shownId = chapters.some((chapter) => chapter.id === activeId)
     ? activeId
@@ -172,86 +198,11 @@ export function MarketingCapabilityChapters({
     chapters.findIndex((chapter) => chapter.id === shownId)
   );
 
-  const activeChapter = chapters[activeIndex] ?? chapters[0];
-
-  const clearScrollLock = useCallback(() => {
-    scrollLock.current = null;
-    if (scrollLockTimer.current !== null) {
-      window.clearTimeout(scrollLockTimer.current);
-      scrollLockTimer.current = null;
-    }
-  }, []);
-
-  const armScrollLock = useCallback(
-    (id: string) => {
-      scrollLock.current = id;
-      if (scrollLockTimer.current !== null) {
-        window.clearTimeout(scrollLockTimer.current);
-      }
-      scrollLockTimer.current = window.setTimeout(() => {
-        if (scrollLock.current === id) {
-          releaseScrollLockRef.current();
-        }
-      }, 1200);
-    },
-    [clearScrollLock]
-  );
-
-  const scrollToChapter = useCallback(
-    (id: string) => {
-      const node = document.getElementById(id);
-      if (!node) {
-        return;
-      }
-      armScrollLock(id);
-      intendedIdRef.current = id;
-      setActiveId(id);
-      node.scrollIntoView({
-        behavior: prefersReducedMotion() ? "auto" : "smooth",
-        block: "start",
-      });
-    },
-    [armScrollLock]
-  );
-
   const measureChapters = useCallback(() => {
-    const viewportHeight = window.innerHeight;
-    const sentinels = chapters
-      .map((chapter) => {
-        const node = document.getElementById(chapter.id);
-        if (!node) {
-          return null;
-        }
-        const rect = node.getBoundingClientRect();
-        return {
-          id: chapter.id,
-          top: rect.top,
-          bottom: rect.bottom,
-        };
-      })
-      .filter((entry): entry is { id: string; top: number; bottom: number } => entry !== null);
-
-    const measured = chooseChapterId(sentinels, viewportHeight);
-    const next = activeWhileLocked(scrollLock.current, measured);
-    if (next) {
-      if (!scrollLock.current) {
-        intendedIdRef.current = next;
-      }
-      setActiveId(next);
-    }
-  }, [chapters]);
-
-  releaseScrollLockRef.current = () => {
-    if (releasingScrollLock.current) {
+    if (programmaticScroll.current) {
       return;
     }
-    const locked = scrollLock.current;
-    if (!locked) {
-      return;
-    }
-    releasingScrollLock.current = true;
-    const viewportHeight = window.innerHeight;
-    const sentinels = chapters
+    const stories = chapters
       .map((chapter) => {
         const node = document.getElementById(chapter.id);
         if (!node) {
@@ -261,14 +212,17 @@ export function MarketingCapabilityChapters({
         return { id: chapter.id, top: rect.top, bottom: rect.bottom };
       })
       .filter((entry): entry is { id: string; top: number; bottom: number } => entry !== null);
-    const measured = chooseChapterId(sentinels, viewportHeight);
-    if (measured !== locked) {
-      document.getElementById(locked)?.scrollIntoView({ behavior: "auto", block: "start" });
-      setActiveId(locked);
+
+    const next = chooseChapterId(
+      stories,
+      window.innerHeight,
+      desktopLayout() ? frameRef.current.readingLine : MOBILE_READING_LINE
+    );
+    if (next) {
+      intendedIdRef.current = next;
+      setActiveId(next);
     }
-    clearScrollLock();
-    releasingScrollLock.current = false;
-  };
+  }, [chapters]);
 
   const scheduleMeasure = useCallback(() => {
     if (measureRaf.current !== null) {
@@ -280,31 +234,74 @@ export function MarketingCapabilityChapters({
     });
   }, [measureChapters]);
 
+  const scrollToChapter = useCallback(
+    (id: string) => {
+      const node = document.getElementById(id);
+      if (!node) {
+        return;
+      }
+      const generation = ++scrollGeneration.current;
+      programmaticScroll.current = true;
+      intendedIdRef.current = id;
+      setActiveId(id);
+      const finish = () => {
+        if (scrollGeneration.current !== generation) {
+          return;
+        }
+        programmaticScroll.current = false;
+        scheduleMeasure();
+      };
+      window.addEventListener("scrollend", finish, { once: true });
+      const offset = desktopLayout() ? frameRef.current.storyTop : MOBILE_STORY_TOP;
+      const top = node.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({
+        top,
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+      });
+    },
+    [scheduleMeasure]
+  );
+
   useEffect(() => {
     const onScroll = () => {
       scheduleMeasure();
     };
-    const onScrollEnd = () => {
-      releaseScrollLockRef.current();
-    };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("scrollend", onScrollEnd);
+    const fitFrame = () => {
+      const stage = stageRef.current;
+      const lastStory = document.getElementById(chapters[chapters.length - 1]?.id ?? "");
+      if (!stage || !lastStory || !desktopLayout()) {
+        return;
+      }
+      const natural = stage.offsetHeight || 576;
+      const next = computeDesktopFrame(
+        natural,
+        lastStory.getBoundingClientRect().height,
+        window.innerHeight
+      );
+      frameRef.current = next;
+      setFrame((current) =>
+        current.height === next.height &&
+        current.storyTop === next.storyTop &&
+        current.readingLine === next.readingLine
+          ? current
+          : next
+      );
+    };
+    fitFrame();
     scheduleMeasure();
+    window.addEventListener("resize", fitFrame);
 
     return () => {
+      window.removeEventListener("resize", fitFrame);
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("scrollend", onScrollEnd);
       if (measureRaf.current !== null) {
         window.cancelAnimationFrame(measureRaf.current);
         measureRaf.current = null;
       }
-      if (scrollLockTimer.current !== null) {
-        window.clearTimeout(scrollLockTimer.current);
-        scrollLockTimer.current = null;
-      }
     };
-  }, [scheduleMeasure, clearScrollLock]);
+  }, [scheduleMeasure]);
 
   const stepTo = (delta: number) => {
     const index = Math.max(
@@ -318,22 +315,13 @@ export function MarketingCapabilityChapters({
     scrollToChapter(chapters[nextIndex].id);
   };
 
-  const goPrevious = () => {
-    stepTo(-1);
-  };
-
-  const goNext = () => {
-    stepTo(1);
-  };
-
   return (
     <section
       id="capabilities"
       className="scroll-mt-24 border-t border-line bg-paper-warm"
       aria-label="Product capabilities"
     >
-      <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10 lg:py-12">
-        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2 lg:[overflow-anchor:none]">
+      <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10 lg:py-16">
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="max-w-2xl">
           <p className="text-section text-text-accent">Capabilities</p>
           <h2 className="mt-3 max-w-[36rem] font-[family-name:var(--font-fraunces)] text-[1.65rem] font-medium tracking-[-0.025em] text-ink lg:text-[1.85rem]">
@@ -345,58 +333,60 @@ export function MarketingCapabilityChapters({
           </p>
         </MarketingReveal>
 
-        <div className="mt-8 hidden bg-paper-warm lg:block">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)] lg:items-start lg:gap-10">
-            <div className="min-w-0">
-              <ChapterNav chapters={chapters} shownId={shownId} scrollToChapter={scrollToChapter} />
-              {activeChapter ? (
-                <div className="mt-6 min-w-0" aria-live="polite">
-                  <ChapterCopy chapter={activeChapter} />
-                </div>
-              ) : null}
-              <div className="mt-6">
-                <ChapterControls
-                  activeIndex={activeIndex}
-                  chapterCount={chapters.length}
-                  goPrevious={goPrevious}
-                  goNext={goNext}
-                />
-              </div>
-            </div>
-            <div className="min-w-0 motion-reduce:transition-none">
-              <MarketingCapabilityStage activeId={shownId} chapterIds={chapterIds} />
-            </div>
-          </div>
-        </div>
-        </div>
-
-        {chapters.map((chapter, index) => (
-          <div
-            key={chapter.id}
-            id={chapter.id}
-            className="h-auto scroll-mt-28 lg:h-[28vh] lg:invisible lg:pointer-events-none"
-          >
-            <MarketingReveal
-              delayMs={marketingRevealDelay(index + 1)}
-              className="border-t border-line pt-10 lg:hidden"
-            >
-              <ChapterCopy chapter={chapter} />
-              <div className="mt-6">
-                <MarketingCapabilityStage activeId={chapter.id} chapterIds={[chapter.id]} />
-              </div>
-            </MarketingReveal>
-          </div>
-        ))}
-
-        <div className="mt-10 border-t border-line pt-8 lg:hidden">
+        <div className="mt-8">
           <ChapterNav chapters={chapters} shownId={shownId} scrollToChapter={scrollToChapter} />
-          <div className="mt-6">
+          <div className="mt-4">
             <ChapterControls
               activeIndex={activeIndex}
               chapterCount={chapters.length}
-              goPrevious={goPrevious}
-              goNext={goNext}
+              goPrevious={() => stepTo(-1)}
+              goNext={() => stepTo(1)}
             />
+          </div>
+        </div>
+
+        <div className="mt-8 lg:grid lg:grid-cols-[minmax(16rem,0.82fr)_minmax(0,1.18fr)] lg:gap-10 xl:gap-14">
+          <div className="min-w-0">
+            {chapters.map((chapter, index) => {
+              const current = chapter.id === shownId;
+              return (
+                <article
+                  key={chapter.id}
+                  id={chapter.id}
+                  aria-current={current ? "true" : undefined}
+                  className="relative scroll-mt-28 border-t border-line py-8 pl-5 motion-reduce:transition-none"
+                >
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute inset-y-8 left-0 w-0.5",
+                      current ? "bg-lagoon" : "bg-transparent"
+                    )}
+                  />
+                  <ChapterCopy chapter={chapter} index={index} />
+                  <div className="mt-6 lg:hidden">
+                    <MarketingCapabilityStage activeId={chapter.id} chapterIds={[chapter.id]} />
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div className="hidden min-w-0 lg:block">
+            <div
+              className="lg:sticky lg:top-24"
+              style={{ height: frame.height, overflow: "hidden" }}
+            >
+              <div
+                ref={stageRef}
+                style={{
+                  transform: frame.scale < 0.995 ? `scale(${frame.scale})` : undefined,
+                  transformOrigin: "top left",
+                  width: frame.scale < 0.995 ? `${100 / frame.scale}%` : undefined,
+                }}
+              >
+                <MarketingCapabilityStage activeId={shownId} chapterIds={chapterIds} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
