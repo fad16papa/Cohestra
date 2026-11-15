@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import {
   activeWhileLocked,
   chooseChapterId,
+  computeDesktopFrame,
   stepChapter,
   type ChapterSentinel,
 } from "./capability-scroll";
@@ -102,6 +103,55 @@ describe("chooseChapterId", () => {
     expect(chooseChapterId(shifted, viewportHeight)).toBe("06");
   });
 
+  it("desktop-height stories at the in-frame reading line advance in order", () => {
+    const height = 279;
+    const line = 424;
+    const origin = line + 40;
+    const stories = CHAPTER_IDS.map((id, index) => ({
+      id,
+      top: origin + index * height,
+      bottom: origin + (index + 1) * height,
+    }));
+    const steps: string[] = [];
+    for (let y = 0; y <= stories[stories.length - 1].bottom; y += 8) {
+      const shifted = stories.map((story) => ({
+        ...story,
+        top: story.top - y,
+        bottom: story.bottom - y,
+      }));
+      const id = chooseChapterId(shifted, 900, line);
+      if (id) {
+        steps.push(id);
+      }
+    }
+    const compact = steps.filter((id, index) => index === 0 || id !== steps[index - 1]);
+    expect(compact).toEqual([...CHAPTER_IDS]);
+  });
+
+  it("short visible stories at a fixed reading line advance in order", () => {
+    const height = 220;
+    const line = 136;
+    const stories = CHAPTER_IDS.map((id, index) => ({
+      id,
+      top: index * height,
+      bottom: (index + 1) * height,
+    }));
+    const steps: string[] = [];
+    for (let y = 0; y <= stories[stories.length - 1].bottom; y += 8) {
+      const shifted = stories.map((story) => ({
+        ...story,
+        top: story.top - y,
+        bottom: story.bottom - y,
+      }));
+      const id = chooseChapterId(shifted, 900, line);
+      if (id) {
+        steps.push(id);
+      }
+    }
+    const compact = steps.filter((id, index) => index === 0 || id !== steps[index - 1]);
+    expect(compact).toEqual([...CHAPTER_IDS]);
+  });
+
   it("reduced motion: identical rects yield the same id when called twice", () => {
     const sentinels = vhSentinels(viewportHeight, 0.28);
     const shifted = sentinels.map((s) => ({
@@ -122,6 +172,20 @@ describe("chooseChapterId", () => {
     );
     expect(source).toContain("prefers-reduced-motion: reduce");
     expect(source).toContain('behavior: prefersReducedMotion() ? "auto" : "smooth"');
+  });
+});
+
+describe("computeDesktopFrame", () => {
+  it("keeps the full frame on tall viewports and fits it on short ones", () => {
+    const tall = computeDesktopFrame(576, 279, 1080);
+    expect(tall.scale).toBe(1);
+    expect(tall.storyTop + tall.height).toBeLessThanOrEqual(1080 - 20);
+    expect(tall.storyTop + 279).toBeGreaterThanOrEqual(96 + tall.height);
+
+    const short = computeDesktopFrame(576, 279, 800);
+    expect(short.height).toBeLessThan(576);
+    expect(short.storyTop + short.height).toBeLessThanOrEqual(800 - 20);
+    expect(short.storyTop + 279).toBeGreaterThanOrEqual(96 + short.height);
   });
 });
 
