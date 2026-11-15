@@ -96,24 +96,17 @@ function ChapterNav({
   );
 }
 
-function ChapterControls({
+function ChapterThumbnails({
   chapters,
   shownId,
-  activeIndex,
   scrollToChapter,
-  goPrevious,
-  goNext,
 }: {
   chapters: LandingCapabilityChapter[];
   shownId: string;
-  activeIndex: number;
   scrollToChapter: (id: string) => void;
-  goPrevious: () => void;
-  goNext: () => void;
 }) {
   return (
-    <>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {chapters.map((chapter, index) => {
           const current = chapter.id === shownId;
           return (
@@ -136,7 +129,22 @@ function ChapterControls({
           );
         })}
       </div>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
+  );
+}
+
+function ChapterControls({
+  activeIndex,
+  chapterCount,
+  goPrevious,
+  goNext,
+}: {
+  activeIndex: number;
+  chapterCount: number;
+  goPrevious: () => void;
+  goNext: () => void;
+}) {
+  return (
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex gap-2">
           <button
             type="button"
@@ -154,10 +162,10 @@ function ChapterControls({
           <button
             type="button"
             onClick={goNext}
-            disabled={activeIndex >= chapters.length - 1}
+            disabled={activeIndex >= chapterCount - 1}
             className={cn(
               "min-h-11 rounded-xl border border-border-warm px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
-              activeIndex >= chapters.length - 1
+              activeIndex >= chapterCount - 1
                 ? "cursor-not-allowed text-muted-foreground opacity-60"
                 : "text-ink hover:bg-background"
             )}
@@ -166,10 +174,9 @@ function ChapterControls({
           </button>
         </div>
         <p className="text-sm font-medium text-muted-foreground" aria-live="polite">
-          {formatChapterProgress(activeIndex, chapters.length)}
+          {formatChapterProgress(activeIndex, chapterCount)}
         </p>
       </div>
-    </>
   );
 }
 
@@ -228,7 +235,7 @@ export function MarketingCapabilityChapters({
       },
       {
         root: null,
-        rootMargin: "-35% 0px -45% 0px",
+        rootMargin: "-12% 0px -70% 0px",
         threshold: [0, 0.25, 0.5, 0.75, 1],
       }
     );
@@ -263,42 +270,49 @@ export function MarketingCapabilityChapters({
       className="scroll-mt-24 border-t border-line bg-paper-warm"
       aria-label="Product capabilities"
     >
-      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-24">
+      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+        <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2">
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="max-w-2xl">
           <p className="text-section text-text-accent">Capabilities</p>
-          <h2 className="text-marketing-section mt-4 max-w-[22ch] font-[family-name:var(--font-fraunces)] text-ink">
+          <h2 className="text-marketing-section mt-3 max-w-[22ch] font-[family-name:var(--font-fraunces)] text-ink">
             One workspace from registration to analytics
           </h2>
-          <p className="text-marketing-lead mt-4 max-w-[50ch] text-muted-foreground">
+          <p className="text-marketing-lead mt-3 max-w-[50ch] text-muted-foreground">
             Registration, clients, follow-up, your site, the form, and the report live in one
             workspace.
           </p>
         </MarketingReveal>
 
-        <div className="sticky top-20 z-10 mt-14 hidden bg-paper-warm pb-4 lg:block">
+        <div className="mt-8 hidden bg-paper-warm lg:block">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,0.38fr)_minmax(0,0.62fr)] lg:items-start lg:gap-12">
             <div className="min-w-0">
               <ChapterNav chapters={chapters} shownId={shownId} scrollToChapter={scrollToChapter} />
               {activeChapter ? (
-                <div className="mt-8 min-w-0" aria-live="polite">
+                <div className="mt-6 min-w-0" aria-live="polite">
                   <ChapterCopy chapter={activeChapter} />
                 </div>
               ) : null}
+              <div className="mt-6">
+                <ChapterControls
+                  activeIndex={activeIndex}
+                  chapterCount={chapters.length}
+                  goPrevious={goPrevious}
+                  goNext={goNext}
+                />
+              </div>
             </div>
             <div className="min-w-0 motion-reduce:transition-none">
               <MarketingCapabilityStage activeId={shownId} chapterIds={chapterIds} />
+              <div className="mt-4">
+                <ChapterThumbnails
+                  chapters={chapters}
+                  shownId={shownId}
+                  scrollToChapter={scrollToChapter}
+                />
+              </div>
             </div>
           </div>
-          <div className="mt-8 border-t border-line pt-8">
-            <ChapterControls
-              chapters={chapters}
-              shownId={shownId}
-              activeIndex={activeIndex}
-              scrollToChapter={scrollToChapter}
-              goPrevious={goPrevious}
-              goNext={goNext}
-            />
-          </div>
+        </div>
         </div>
 
         {chapters.map((chapter, index) => (
@@ -320,14 +334,19 @@ export function MarketingCapabilityChapters({
         ))}
 
         <div className="mt-10 border-t border-line pt-8 lg:hidden">
-          <ChapterControls
+          <ChapterThumbnails
             chapters={chapters}
             shownId={shownId}
-            activeIndex={activeIndex}
             scrollToChapter={scrollToChapter}
-            goPrevious={goPrevious}
-            goNext={goNext}
           />
+          <div className="mt-6">
+            <ChapterControls
+              activeIndex={activeIndex}
+              chapterCount={chapters.length}
+              goPrevious={goPrevious}
+              goNext={goNext}
+            />
+          </div>
         </div>
       </div>
     </section>

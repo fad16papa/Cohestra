@@ -70,7 +70,7 @@ function WorkspaceFrame({
   return (
     <div
       aria-hidden
-      className="flex h-[30rem] overflow-hidden rounded-xl border border-border-warm bg-card lg:h-[34rem]"
+      className="flex h-[24rem] overflow-hidden rounded-xl border border-border-warm bg-card lg:h-[22rem]"
     >
       <WorkspaceRail highlight={highlightRoom} />
       <div className="relative flex min-w-0 flex-1 flex-col">
@@ -202,26 +202,26 @@ function FollowUpStage() {
         })}
       </div>
       <ul className="mt-3 space-y-2">
-        <li className="flex items-center gap-3 rounded-xl border border-border-warm px-3 py-2">
-          <PersonAvatar name="New registration" size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-text-warm">New registration</p>
-            <p className="truncate text-xs text-text-muted-warm">No outreach yet</p>
-          </div>
-          <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium text-text-warm">
-            Due now
-          </span>
-        </li>
-        <li className="flex items-center gap-3 rounded-xl border border-border-warm bg-muted/20 px-3 py-2">
-          <PersonAvatar name="Returning client" size="sm" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-text-warm">Returning client</p>
-            <p className="truncate text-xs text-text-muted-warm">History across activities</p>
-          </div>
-          <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium text-text-warm">
-            Opportunity
-          </span>
-        </li>
+        {[
+          ["New registration", "No outreach yet", "Due now"],
+          ["Returning client", "History across activities", "At risk"],
+          ["Returning client", "History across activities", "Opportunity"],
+          ["New registration", "No outreach yet", "Healthy"],
+        ].map(([role, meta, category]) => (
+          <li
+            key={category}
+            className="flex items-center gap-3 rounded-xl border border-border-warm px-3 py-2"
+          >
+            <PersonAvatar name={role} size="sm" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-text-warm">{role}</p>
+              <p className="truncate text-xs text-text-muted-warm">{meta}</p>
+            </div>
+            <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-medium text-text-warm">
+              {category}
+            </span>
+          </li>
+        ))}
       </ul>
     </WorkspaceFrame>
   );
@@ -229,32 +229,36 @@ function FollowUpStage() {
 
 function WebsiteStudioStage() {
   return (
-    <WorkspaceFrame
-      highlightRoom="Website"
-      headerTitle="Website Studio"
-      badge="Core"
-      secondary={
-        <SecondaryCard title="Preview">
-          <p className="mt-1 font-[family-name:var(--font-fraunces)] text-sm text-text-warm">
-            Community activities
-          </p>
-        </SecondaryCard>
-      }
-    >
-      <p className="text-xs font-medium text-text-muted-warm">Sections</p>
-      <ul className="mt-2 space-y-2">
-        {["Hero", "Contact"].map((section) => (
-          <li
-            key={section}
-            className="rounded-lg border border-border-warm px-3 py-2 text-sm text-text-warm"
-          >
-            {section}
-          </li>
-        ))}
-      </ul>
-      <span className="mt-3 inline-flex rounded-lg border border-border-warm px-3 py-1.5 text-xs font-medium text-text-muted-warm">
-        Publish
-      </span>
+    <WorkspaceFrame highlightRoom="Website" headerTitle="Website Studio" badge="Core">
+      <div className="grid h-full gap-3 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+        <div className="min-h-0">
+          <p className="text-xs font-medium text-text-muted-warm">Sections</p>
+          <ul className="mt-2 space-y-2">
+            {["Hero", "Contact"].map((section) => (
+              <li
+                key={section}
+                className="rounded-lg border border-border-warm px-3 py-2 text-sm text-text-warm"
+              >
+                {section}
+              </li>
+            ))}
+          </ul>
+          <span className="mt-3 inline-flex rounded-lg border border-border-warm px-3 py-1.5 text-xs font-medium text-text-muted-warm">
+            Publish
+          </span>
+        </div>
+        <div className="flex min-h-0 flex-col rounded-lg border border-border-warm bg-muted/20 p-3">
+          <p className="text-label text-text-accent">Preview</p>
+          <div className="mt-3 flex flex-1 flex-col justify-center rounded-lg border border-border-warm bg-background px-3 py-4">
+            <p className="font-[family-name:var(--font-fraunces)] text-lg leading-tight text-text-warm">
+              Community activities
+            </p>
+            <span className="mt-3 inline-flex w-fit rounded-full bg-lagoon px-3 py-1.5 text-xs font-medium text-white">
+              Browse activities
+            </span>
+          </div>
+        </div>
+      </div>
     </WorkspaceFrame>
   );
 }
@@ -263,7 +267,7 @@ function FormStudioStage() {
   const fields = ["Name", "Email", "Phone"];
   return (
     <WorkspaceFrame highlightRoom="Activities" headerTitle="Form Studio">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid h-full gap-3 sm:grid-cols-2">
         <ul className="space-y-2">
           {fields.map((field) => (
             <li
@@ -274,7 +278,7 @@ function FormStudioStage() {
             </li>
           ))}
         </ul>
-        <div>
+        <div className="flex h-full min-h-0 flex-col rounded-lg border border-border-warm bg-muted/20 p-3">
           <p className="text-label text-text-accent">Preview</p>
           <div className="mt-2 space-y-2">
             {fields.map((field) => (
