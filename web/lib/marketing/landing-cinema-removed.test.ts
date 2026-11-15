@@ -38,8 +38,12 @@ describe("landing Cinema section removal", () => {
     expect(capabilityChapters).not.toContain("opacity-0");
     expect(home).toContain("id=\"pricing\"");
     expect(home).toContain("id=\"faq\"");
-    expect(home).toContain("Know who registered, and who still needs a reply");
-    expect(home).toContain("Public registration, client profiles, follow-up, and analytics");
+    expect(home).toContain("Every activity. Every connection. One workspace.");
+    expect(home).toContain(
+      "Publish activities, welcome participants, manage clients, and follow up from one connected platform."
+    );
+    expect(home).toContain('href="#capabilities"');
+    expect(home).toContain("Explore capabilities");
     expect(home).toContain("LANDING_CAPABILITY_CHAPTERS");
     expect(home).not.toContain("id=\"how-it-works\"");
     expect(home).not.toContain("LANDING_OUTCOMES");

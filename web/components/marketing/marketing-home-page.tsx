@@ -32,8 +32,8 @@ import { PRICING_POSITIONING_LINE } from "@/lib/marketing/pricing-plans";
 import { resolvePostLoginPath } from "@/lib/auth-api";
 import { cn } from "@/lib/utils";
 
-const HERO_VALUE_LINE =
-  "Public registration, client profiles, follow-up, and analytics stay on one operator list.";
+const HERO_SUPPORTING =
+  "Publish activities, welcome participants, manage clients, and follow up from one connected platform.";
 
 export function MarketingHomePage() {
   const { status, profile } = useAuth();
@@ -52,50 +52,57 @@ export function MarketingHomePage() {
 
       <section
         aria-labelledby="marketing-hero-heading"
-        className="mx-auto max-w-6xl px-5 pb-10 pt-4 text-center sm:px-8 lg:px-10 lg:pb-12 lg:pt-6"
+        className="relative mx-auto max-w-6xl px-5 pb-10 pt-6 text-center sm:px-8 lg:px-10 lg:pb-12 lg:pt-8"
       >
-        <MarketingReveal immediate delayMs={50}>
-          <p className="text-section text-text-accent">Community operations</p>
-        </MarketingReveal>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-0 z-0 h-[min(28rem,55vw)] w-[min(52rem,120%)] -translate-x-1/2 bg-[radial-gradient(ellipse_at_center,rgba(21,154,144,0.16)_0%,transparent_68%)]"
+        />
 
-        <MarketingReveal immediate delayMs={120}>
-          <h1
-            id="marketing-hero-heading"
-            className="mx-auto mt-3 max-w-[20ch] text-balance font-[family-name:var(--font-fraunces)] text-[clamp(2.5rem,5vw,4.25rem)] font-medium leading-[1.08] tracking-[-0.04em] text-ink"
-          >
-            Know who registered, and who still needs a reply
-          </h1>
-        </MarketingReveal>
+        <div className="relative z-[1]">
+          <MarketingReveal immediate delayMs={50}>
+            <div
+              aria-hidden
+              className="mx-auto h-[2px] w-[2.5rem] rounded-full bg-[#d4a359]"
+            />
+          </MarketingReveal>
 
-        <MarketingReveal immediate delayMs={220}>
-          <p className="text-marketing-lead mx-auto mt-4 max-w-[48ch] text-muted-foreground">
-            {HERO_VALUE_LINE}
-          </p>
-        </MarketingReveal>
+          <MarketingReveal immediate delayMs={120}>
+            <h1
+              id="marketing-hero-heading"
+              className="mx-auto mt-4 max-w-[24ch] text-balance font-[family-name:var(--font-fraunces)] text-[clamp(2.5rem,5vw,4.25rem)] font-medium leading-[1.08] tracking-[-0.04em] text-ink"
+            >
+              Every activity. Every connection. One workspace.
+            </h1>
+          </MarketingReveal>
 
-        <MarketingReveal immediate delayMs={300}>
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
-              Start free
-            </Link>
-            <Link href="#pricing" className={marketingAtelierButtonClass("ghost")}>
-              See pricing
-            </Link>
-          </div>
-        </MarketingReveal>
+          <MarketingReveal immediate delayMs={220}>
+            <p className="text-marketing-lead mx-auto mt-4 max-w-[48ch] text-muted-foreground">
+              {HERO_SUPPORTING}
+            </p>
+          </MarketingReveal>
 
-        <MarketingReveal immediate delayMs={360}>
-          <p className="mx-auto mt-4 max-w-[48ch] text-sm text-muted-foreground">
-            Basic is free. No credit card. Website Studio is on Core. Campaigns are on Pro.
-          </p>
-        </MarketingReveal>
-      </section>
+          <MarketingReveal immediate delayMs={300}>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
+                Start free
+              </Link>
+              <Link href="#capabilities" className={marketingAtelierButtonClass("ghost")}>
+                Explore capabilities
+              </Link>
+            </div>
+          </MarketingReveal>
 
-      <section
-        aria-label="Product preview"
-        className="mx-auto max-w-6xl px-5 pb-12 sm:px-8 lg:px-10 lg:pb-16"
-      >
-        <MarketingHeroProductStack className="mx-auto max-w-3xl" />
+          <MarketingReveal immediate delayMs={360}>
+            <p className="mx-auto mt-4 max-w-[48ch] text-sm text-muted-foreground">
+              Basic is free. No credit card. Website Studio is on Core. Campaigns are on Pro.
+            </p>
+          </MarketingReveal>
+
+          <MarketingReveal immediate delayMs={420}>
+            <MarketingHeroProductStack className="mx-auto mt-8 w-full max-w-[1120px] lg:min-h-[28rem]" />
+          </MarketingReveal>
+        </div>
       </section>
 
       <section aria-label="Who Cohestra is for" className="border-y border-line bg-paper-warm">

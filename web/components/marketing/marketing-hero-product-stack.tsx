@@ -46,10 +46,7 @@ const CONNECTED_STATES = [
 export function MarketingHeroProductStack({ className }: { className?: string }) {
   return (
     <figure
-      className={cn(
-        "marketing-product-lift relative mx-auto w-full max-w-[640px] lg:mx-0 lg:max-w-none",
-        className
-      )}
+      className={cn("marketing-product-lift relative mx-auto w-full", className)}
       aria-labelledby="cohestra-product-preview-caption"
     >
       <div className="overflow-hidden rounded-[24px] border border-border-warm bg-card shadow-[0_28px_60px_rgba(7,13,18,0.12)]">
