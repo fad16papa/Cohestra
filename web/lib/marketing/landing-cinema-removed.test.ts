@@ -14,6 +14,13 @@ const hero = readFileSync(
   resolve(import.meta.dirname, "../../components/marketing/marketing-hero-product-stack.tsx"),
   "utf8"
 );
+const trendChart = readFileSync(
+  resolve(
+    import.meta.dirname,
+    "../../components/dashboard/dashboard-registrations-trend-chart.tsx"
+  ),
+  "utf8"
+);
 const capabilityChapters = readFileSync(
   resolve(import.meta.dirname, "../../components/marketing/marketing-capability-chapters.tsx"),
   "utf8"
@@ -53,7 +60,7 @@ describe("landing Cinema section removal", () => {
 
   it("shows a product preview and verified plan gates, not a sports photo or fake metrics", () => {
     expect(hero).toContain("Product preview");
-    expect(hero).toContain("Follow-up");
+    expect(hero).toContain("Dashboard");
     expect(hero).toContain("Website");
     expect(hero).toContain("Campaigns");
     expect(hero).toContain("Core");
@@ -61,13 +68,27 @@ describe("landing Cinema section removal", () => {
     expect(hero).not.toContain("hero-community-sports");
     expect(hero).not.toContain("Elena");
     expect(hero).not.toContain("Sunday clinic");
-    expect(hero).toContain("No outreach yet");
-    expect(hero).toContain("Next conversation not scheduled");
-    expect(hero).toContain("No recorded outreach");
-    expect(hero).toContain("FOLLOW_UP_CATEGORY_OPTIONS");
+    expect(hero).toContain("DashboardRegistrationsTrendChart");
+    expect(hero).toContain("cssResponsive");
+    expect(hero).toContain("animate={false}");
+    expect(hero).toContain("HERO_DASHBOARD_TREND_POINTS");
+    expect(trendChart).toMatch(/responsive:\s*true/);
+    expect(trendChart).not.toContain("animate = true");
+    expect(trendChart).not.toMatch(/isAnimationActive=\{animate\}/);
+    expect(trendChart).toContain('typeof animate === "boolean"');
+    expect(hero).not.toContain("areaPath");
+    expect(hero).not.toContain("chartPoint");
+    expect(hero).not.toContain("TREND_MAX");
+    expect(hero).not.toMatch(/<svg[\s\S]*viewBox=/);
+    expect(trendChart).toContain("Registrations trend");
+    expect(hero).toContain("Total leads");
+    expect(hero).toContain("Follow-up coverage");
+    expect(hero).toContain("Golden Hour Run");
+    expect(hero).toContain("Sample state, not a customer result.");
+    expect(hero).not.toContain("FOLLOW_UP_CATEGORY_OPTIONS");
     expect(hero).not.toContain(">Open<");
-    expect(hero).not.toContain("Product preview of the Follow-up room, using the same");
-    expect(hero).toContain('aria-label="Product preview of the Follow-up room"');
+    expect(hero).not.toContain("Product preview of the Follow-up room");
+    expect(hero).toContain('aria-label="Product preview of the Dashboard"');
 
     const heroHeadingIndex = home.indexOf("marketing-hero-heading");
     const capabilityChaptersIndex = home.indexOf("<MarketingCapabilityChapters");
