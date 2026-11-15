@@ -17,9 +17,18 @@ test.describe("landing Cinema section removed", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: /know who registered, and who still needs a reply/i,
+        name: /every activity\. every connection\. one workspace\./i,
       })
     ).toBeVisible();
+    await expect(
+      page.getByRole("heading", {
+        name: /one workspace from registration to analytics/i,
+      })
+    ).toBeVisible();
+    await expect(
+      page.getByText("Product preview of the Follow-up room, using the same")
+    ).toHaveCount(0);
+    await page.getByRole("link", { name: "Explore capabilities" }).first().click();
     await expect(
       page.getByRole("heading", {
         name: /one workspace from registration to analytics/i,

@@ -38,8 +38,12 @@ describe("landing Cinema section removal", () => {
     expect(capabilityChapters).not.toContain("opacity-0");
     expect(home).toContain("id=\"pricing\"");
     expect(home).toContain("id=\"faq\"");
-    expect(home).toContain("Know who registered, and who still needs a reply");
-    expect(home).toContain("Public registration, client profiles, follow-up, and analytics");
+    expect(home).toContain("Every activity. Every connection. One workspace.");
+    expect(home).toContain(
+      "Publish activities, welcome participants, manage clients, and follow up from one connected platform."
+    );
+    expect(home).toContain('href="#capabilities"');
+    expect(home).toContain("Explore capabilities");
     expect(home).toContain("LANDING_CAPABILITY_CHAPTERS");
     expect(home).not.toContain("id=\"how-it-works\"");
     expect(home).not.toContain("LANDING_OUTCOMES");
@@ -62,6 +66,14 @@ describe("landing Cinema section removal", () => {
     expect(hero).toContain("No recorded outreach");
     expect(hero).toContain("FOLLOW_UP_CATEGORY_OPTIONS");
     expect(hero).not.toContain(">Open<");
+    expect(hero).not.toContain("Product preview of the Follow-up room, using the same");
+    expect(hero).toContain('aria-label="Product preview of the Follow-up room"');
+
+    const heroHeadingIndex = home.indexOf("marketing-hero-heading");
+    const capabilityChaptersIndex = home.indexOf("<MarketingCapabilityChapters");
+    const whoIndex = home.indexOf('aria-label="Who Cohestra is for"');
+    expect(capabilityChaptersIndex).toBeGreaterThan(heroHeadingIndex);
+    expect(capabilityChaptersIndex).toBeLessThan(whoIndex);
 
     expect(content).toContain("LANDING_CAPABILITY_CHAPTERS");
     for (const room of [
