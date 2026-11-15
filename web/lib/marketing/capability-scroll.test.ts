@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -111,6 +113,15 @@ describe("chooseChapterId", () => {
     const b = chooseChapterId(shifted, viewportHeight);
     expect(a).toBe(b);
     expect(a).not.toBeNull();
+  });
+
+  it("reduced motion: chapter scroll uses auto behavior when the user prefers less motion", () => {
+    const source = readFileSync(
+      resolve(import.meta.dirname, "../../components/marketing/marketing-capability-chapters.tsx"),
+      "utf8"
+    );
+    expect(source).toContain("prefers-reduced-motion: reduce");
+    expect(source).toContain('behavior: prefersReducedMotion() ? "auto" : "smooth"');
   });
 });
 
