@@ -32,33 +32,6 @@ const NAV_ITEMS: { label: string; icon: LucideIcon }[] = [
   { label: "Campaigns", icon: Megaphone },
 ];
 
-function DecorativeSharePattern() {
-  const pattern = [
-    [1, 1, 1, 0, 1, 0, 1],
-    [1, 0, 1, 0, 0, 1, 1],
-    [1, 0, 1, 1, 0, 0, 1],
-    [0, 1, 0, 1, 1, 0, 0],
-    [1, 0, 1, 0, 1, 1, 1],
-    [0, 1, 0, 1, 0, 1, 0],
-    [1, 1, 0, 0, 1, 0, 1],
-  ];
-  return (
-    <div className="grid grid-cols-7 gap-0.5">
-      {pattern.flatMap((row, rowIndex) =>
-        row.map((cell, colIndex) => (
-          <span
-            key={`${rowIndex}-${colIndex}`}
-            className={cn(
-              "size-2 rounded-sm",
-              cell ? "bg-ink" : "bg-paper-warm"
-            )}
-          />
-        ))
-      )}
-    </div>
-  );
-}
-
 function WorkspaceRail({ activeLabel }: { activeLabel: string }) {
   return (
     <div className="hidden w-52 shrink-0 flex-col border-r border-border-warm bg-card md:flex">
@@ -154,26 +127,26 @@ function EmptyField({ label }: { label: string }) {
 function RegistrationStage() {
   const fields = ["Name", "Email", "Phone"] as const;
   return (
-    <WorkspaceShell activeLabel="Activities" title="Activity">
-      <div className="grid h-full gap-4 md:grid-cols-2">
-        <div className="space-y-4 rounded-xl border border-border-warm bg-muted/15 p-4">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-label text-text-accent">Status</p>
-            <span className="rounded-full border border-border-warm bg-background px-2.5 py-1 text-xs font-semibold text-text-warm">
-              Published
-            </span>
-          </div>
+    <WorkspaceShell
+      activeLabel="Activities"
+      title="Published activity"
+      badge="Published"
+    >
+      <div className="relative min-h-0 md:min-h-[20rem]">
+        <div className="space-y-4 md:pr-[52%]">
           <p className="text-sm text-text-muted-warm">Public page</p>
           <div>
             <p className="text-sm font-medium text-text-warm">Share kit</p>
-            <div className="mt-3 inline-block rounded-lg border border-border-warm bg-background p-2">
-              <DecorativeSharePattern />
+            <div className="mt-3 rounded-lg border border-border-warm bg-background p-3">
+              <p className="text-xs font-medium text-text-warm">QR code</p>
+              <p className="mt-1 text-xs text-text-muted-warm">QR preview unavailable</p>
             </div>
-            <p className="mt-2 text-xs text-text-muted-warm">QR on the share kit</p>
           </div>
         </div>
-        <div className="rounded-xl border border-border-warm bg-background p-4">
-          <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-text-warm">Register</p>
+        <div className="mt-4 rounded-xl border border-border-warm bg-card p-4 shadow-xl md:absolute md:bottom-4 md:right-4 md:top-8 md:mt-0 md:w-[48%]">
+          <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-text-warm">
+            Register
+          </p>
           <div className="mt-4 space-y-3">
             {fields.map((field) => (
               <EmptyField key={field} label={field} />
@@ -190,11 +163,11 @@ function RegistrationStage() {
 
 
 function ClientsStage() {
-  const rows = Array.from({ length: 8 }, (_, index) =>
-    index % 2 === 0
-      ? { role: "Returning client", meta: "History across activities" }
-      : { role: "New registration", meta: "Latest activity" }
-  );
+  const rows = [
+    { role: "Returning client", meta: "History across activities", selected: true },
+    { role: "New registration", meta: "Latest activity", selected: false },
+    { role: "Guest", meta: "Earlier activity", selected: false },
+  ] as const;
   return (
     <WorkspaceShell activeLabel="Clients" title="Clients">
       <div className="grid h-full gap-4 lg:grid-cols-[minmax(0,1fr)_13.5rem]">
@@ -204,10 +177,13 @@ function ClientsStage() {
             <span>History</span>
           </div>
           <ul>
-            {rows.map((row, index) => (
+            {rows.map((row) => (
               <li
-                key={`${row.role}-${index}`}
-                className="grid h-12 grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] items-center gap-2 border-b border-border-warm px-3 text-sm last:border-b-0"
+                key={row.role}
+                className={cn(
+                  "grid h-12 grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] items-center gap-2 border-b border-border-warm px-3 text-sm last:border-b-0",
+                  row.selected && "border-l-2 border-l-lagoon bg-primary/5"
+                )}
               >
                 <span className="flex min-w-0 items-center gap-2">
                   <PersonAvatar name={row.role} size="sm" />
@@ -237,14 +213,10 @@ function ClientsStage() {
 
 function FollowUpStage() {
   const rows = [
-    ["New registration", "No outreach yet", "Due now"],
-    ["Returning client", "History across activities", "Due now"],
-    ["Returning client", "History across activities", "At risk"],
-    ["New registration", "No outreach yet", "At risk"],
-    ["Returning client", "History across activities", "Opportunity"],
-    ["New registration", "No outreach yet", "Opportunity"],
-    ["Returning client", "History across activities", "Healthy"],
-    ["New registration", "No outreach yet", "Healthy"],
+    { role: "New registration", meta: "No outreach yet", category: "Due now" },
+    { role: "Returning client", meta: "History across activities", category: "At risk" },
+    { role: "Guest", meta: "Earlier activity", category: "Opportunity" },
+    { role: "New registration", meta: "Latest activity", category: "Healthy" },
   ] as const;
   return (
     <WorkspaceShell activeLabel="Follow-up" title="Follow-up">
@@ -269,18 +241,18 @@ function FollowUpStage() {
             })}
           </div>
           <ul className="mt-3 space-y-1">
-            {rows.map(([role, meta, category], index) => (
+            {rows.map((row) => (
               <li
-                key={`${category}-${index}`}
+                key={row.category}
                 className="flex h-12 items-center gap-2 rounded-lg border border-border-warm px-2.5 text-sm"
               >
-                <PersonAvatar name={role} size="sm" />
+                <PersonAvatar name={row.role} size="sm" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium text-text-warm">{role}</span>
-                  <span className="block truncate text-xs text-text-muted-warm">{meta}</span>
+                  <span className="block truncate font-medium text-text-warm">{row.role}</span>
+                  <span className="block truncate text-xs text-text-muted-warm">{row.meta}</span>
                 </span>
                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-text-warm">
-                  {category}
+                  {row.category}
                 </span>
               </li>
             ))}

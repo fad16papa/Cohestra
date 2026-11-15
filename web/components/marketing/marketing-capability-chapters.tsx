@@ -96,42 +96,6 @@ function ChapterNav({
   );
 }
 
-function ChapterThumbnails({
-  chapters,
-  shownId,
-  scrollToChapter,
-}: {
-  chapters: LandingCapabilityChapter[];
-  shownId: string;
-  scrollToChapter: (id: string) => void;
-}) {
-  return (
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {chapters.map((chapter, index) => {
-          const current = chapter.id === shownId;
-          return (
-            <button
-              key={chapter.id}
-              type="button"
-              onClick={() => scrollToChapter(chapter.id)}
-              className={cn(
-                "min-h-11 rounded-xl border px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lagoon focus-visible:ring-offset-2",
-                current
-                  ? "border-lagoon bg-background text-ink"
-                  : "border-border-warm text-muted-foreground hover:text-ink"
-              )}
-            >
-              <span className="block text-[0.65rem] font-medium uppercase tracking-wide text-text-accent">
-                {formatChapterProgress(index, chapters.length)}
-              </span>
-              <span className="font-medium">{chapter.title}</span>
-            </button>
-          );
-        })}
-      </div>
-  );
-}
-
 function ChapterControls({
   activeIndex,
   chapterCount,
@@ -284,14 +248,14 @@ export function MarketingCapabilityChapters({
       className="scroll-mt-24 border-t border-line bg-paper-warm"
       aria-label="Product capabilities"
     >
-      <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10 lg:py-20">
+      <div className="mx-auto max-w-[90rem] px-5 py-16 sm:px-8 lg:px-10 lg:py-12">
         <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2">
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="max-w-2xl">
           <p className="text-section text-text-accent">Capabilities</p>
-          <h2 className="text-marketing-section mt-3 max-w-[22ch] font-[family-name:var(--font-fraunces)] text-ink">
+          <h2 className="mt-3 max-w-[28ch] font-[family-name:var(--font-fraunces)] text-[1.75rem] font-medium tracking-[-0.025em] text-ink lg:text-[2rem]">
             One workspace from registration to analytics
           </h2>
-          <p className="text-marketing-lead mt-3 max-w-[50ch] text-muted-foreground">
+          <p className="mt-3 max-w-[50ch] text-[0.95rem] leading-relaxed text-muted-foreground">
             Registration, clients, follow-up, your site, the form, and the report live in one
             workspace.
           </p>
@@ -317,13 +281,6 @@ export function MarketingCapabilityChapters({
             </div>
             <div className="min-w-0 motion-reduce:transition-none">
               <MarketingCapabilityStage activeId={shownId} chapterIds={chapterIds} />
-              <div className="mt-4">
-                <ChapterThumbnails
-                  chapters={chapters}
-                  shownId={shownId}
-                  scrollToChapter={scrollToChapter}
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -333,7 +290,7 @@ export function MarketingCapabilityChapters({
           <div
             key={chapter.id}
             id={chapter.id}
-            className="h-auto scroll-mt-28 lg:h-[70vh] lg:invisible lg:pointer-events-none"
+            className="h-auto scroll-mt-28 lg:h-[28vh] lg:invisible lg:pointer-events-none"
           >
             <MarketingReveal
               delayMs={marketingRevealDelay(index + 1)}
@@ -348,11 +305,7 @@ export function MarketingCapabilityChapters({
         ))}
 
         <div className="mt-10 border-t border-line pt-8 lg:hidden">
-          <ChapterThumbnails
-            chapters={chapters}
-            shownId={shownId}
-            scrollToChapter={scrollToChapter}
-          />
+          <ChapterNav chapters={chapters} shownId={shownId} scrollToChapter={scrollToChapter} />
           <div className="mt-6">
             <ChapterControls
               activeIndex={activeIndex}
