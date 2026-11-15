@@ -263,16 +263,11 @@ export function MarketingCapabilityChapters({
   );
 
   useEffect(() => {
-    const releaseToUser = () => {
-      programmaticScroll.current = false;
-    };
     const onScroll = () => {
       scheduleMeasure();
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("wheel", releaseToUser, { passive: true });
-    window.addEventListener("touchmove", releaseToUser, { passive: true });
     const fitFrame = () => {
       const stage = stageRef.current;
       const lastStory = document.getElementById(chapters[chapters.length - 1]?.id ?? "");
@@ -301,8 +296,6 @@ export function MarketingCapabilityChapters({
     return () => {
       window.removeEventListener("resize", fitFrame);
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("wheel", releaseToUser);
-      window.removeEventListener("touchmove", releaseToUser);
       if (measureRaf.current !== null) {
         window.cancelAnimationFrame(measureRaf.current);
         measureRaf.current = null;
