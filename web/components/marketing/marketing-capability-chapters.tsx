@@ -374,7 +374,7 @@ export function MarketingCapabilityChapters({
           <div
             key={chapter.id}
             id={chapter.id}
-            className="h-auto scroll-mt-28 lg:h-[28vh] lg:invisible lg:pointer-events-none"
+            className="h-auto scroll-mt-28 lg:h-[min(28vh,14rem)] lg:invisible lg:pointer-events-none"
           >
             <MarketingReveal
               delayMs={marketingRevealDelay(index + 1)}
@@ -399,7 +399,11 @@ export function MarketingCapabilityChapters({
             />
           </div>
         </div>
-        <div aria-hidden className="hidden lg:block lg:h-64" />
+        {/* Tail shrinks on tall screens so Built for sits under the stage without clipping Analytics. */}
+        <div
+          aria-hidden
+          className="hidden lg:block lg:h-[calc(18.375rem-(100vh-50rem)*0.22)]"
+        />
       </div>
     </section>
   );
