@@ -53,7 +53,7 @@ describe("landing Cinema section removal", () => {
 
   it("shows a product preview and verified plan gates, not a sports photo or fake metrics", () => {
     expect(hero).toContain("Product preview");
-    expect(hero).toContain("Follow-up");
+    expect(hero).toContain("Dashboard");
     expect(hero).toContain("Website");
     expect(hero).toContain("Campaigns");
     expect(hero).toContain("Core");
@@ -61,13 +61,15 @@ describe("landing Cinema section removal", () => {
     expect(hero).not.toContain("hero-community-sports");
     expect(hero).not.toContain("Elena");
     expect(hero).not.toContain("Sunday clinic");
-    expect(hero).toContain("No outreach yet");
-    expect(hero).toContain("Next conversation not scheduled");
-    expect(hero).toContain("No recorded outreach");
-    expect(hero).toContain("FOLLOW_UP_CATEGORY_OPTIONS");
+    expect(hero).toContain("Registrations trend");
+    expect(hero).toContain("Total leads");
+    expect(hero).toContain("Follow-up coverage");
+    expect(hero).toContain("Golden Hour Run");
+    expect(hero).toContain("Sample state, not a customer result.");
+    expect(hero).not.toContain("FOLLOW_UP_CATEGORY_OPTIONS");
     expect(hero).not.toContain(">Open<");
-    expect(hero).not.toContain("Product preview of the Follow-up room, using the same");
-    expect(hero).toContain('aria-label="Product preview of the Follow-up room"');
+    expect(hero).not.toContain("Product preview of the Follow-up room");
+    expect(hero).toContain('aria-label="Product preview of the Dashboard"');
 
     const heroHeadingIndex = home.indexOf("marketing-hero-heading");
     const capabilityChaptersIndex = home.indexOf("<MarketingCapabilityChapters");
