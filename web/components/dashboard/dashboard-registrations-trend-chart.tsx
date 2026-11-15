@@ -28,6 +28,11 @@ type DashboardRegistrationsTrendChartProps = {
   compact?: boolean;
   /** Override default “(UTC)” range copy — e.g. cinema Asia/Singapore world. */
   rangeTimeZoneLabel?: string;
+  headingId?: string;
+  /** When true, render AreaChart at width/height 100% without ResponsiveContainer (first-paint SSR). */
+  cssResponsive?: boolean;
+  /** Pass through to recharts Area series isAnimationActive (default true). */
+  animate?: boolean;
 };
 
 type TrendTooltipProps = {
@@ -69,6 +74,9 @@ export function DashboardRegistrationsTrendChart({
   className,
   compact = false,
   rangeTimeZoneLabel = "UTC",
+  headingId = "dashboard-registrations-trend-heading",
+  cssResponsive = false,
+  animate = true,
 }: DashboardRegistrationsTrendChartProps) {
   const gradientIdBase = useId().replace(/:/g, "");
   const registrationsGradientId = `${gradientIdBase}-registrations`;
@@ -92,9 +100,76 @@ export function DashboardRegistrationsTrendChart({
 
   const rangeLabel = trendDays > 0 ? `last ${trendDays} days` : "recent period";
 
+  const chartHeight = compact ? 200 : 260;
+  const areaChart = (
+    <AreaChart
+      data={points}
+      margin={{ top: 8, right: 8, bottom: 0, left: -18 }}
+      width={cssResponsive ? "100%" : undefined}
+      height={cssResponsive ? "100%" : undefined}
+    >
+      <defs>
+        <linearGradient id={registrationsGradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={REGISTRATIONS_COLOR} stopOpacity={0.28} />
+          <stop offset="100%" stopColor={REGISTRATIONS_COLOR} stopOpacity={0.02} />
+        </linearGradient>
+        <linearGradient id={clientsGradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={NEW_CLIENTS_COLOR} stopOpacity={0.22} />
+          <stop offset="100%" stopColor={NEW_CLIENTS_COLOR} stopOpacity={0.02} />
+        </linearGradient>
+      </defs>
+      <CartesianGrid
+        stroke="var(--border-warm)"
+        strokeDasharray="4 4"
+        vertical={false}
+      />
+      <XAxis
+        dataKey="date"
+        tickFormatter={formatChartDate}
+        tick={{ fill: "var(--text-muted-warm)", fontSize: 11 }}
+        tickLine={false}
+        axisLine={{ stroke: "var(--border-warm)" }}
+        minTickGap={28}
+      />
+      <YAxis
+        allowDecimals={false}
+        tick={{ fill: "var(--text-muted-warm)", fontSize: 11 }}
+        tickLine={false}
+        axisLine={false}
+        width={42}
+      />
+      <Tooltip
+        content={<TrendTooltip />}
+        cursor={{ stroke: "var(--border-warm)", strokeWidth: 1 }}
+      />
+      <Area
+        type="monotone"
+        dataKey="registrations"
+        name="Registrations"
+        stroke={REGISTRATIONS_COLOR}
+        strokeWidth={2}
+        fill={`url(#${registrationsGradientId})`}
+        dot={false}
+        activeDot={{ r: 4, strokeWidth: 0 }}
+        isAnimationActive={animate}
+      />
+      <Area
+        type="monotone"
+        dataKey="newClients"
+        name="New clients"
+        stroke={NEW_CLIENTS_COLOR}
+        strokeWidth={2}
+        fill={`url(#${clientsGradientId})`}
+        dot={false}
+        activeDot={{ r: 4, strokeWidth: 0 }}
+        isAnimationActive={animate}
+      />
+    </AreaChart>
+  );
+
   return (
     <DashboardChartCard
-      headingId="dashboard-registrations-trend-heading"
+      headingId={headingId}
       title="Registrations trend"
       description={`Daily registrations and first-time clients, ${rangeLabel} (${rangeTimeZoneLabel}).`}
       className={className}
@@ -124,68 +199,14 @@ export function DashboardRegistrationsTrendChart({
           No registrations in the {rangeLabel} yet. New sign-ups will chart here daily.
         </p>
       ) : (
-        <div className="w-full min-w-0 overflow-hidden" style={{ height: compact ? 200 : 260 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
-              data={points}
-              margin={{ top: 8, right: 8, bottom: 0, left: -18 }}
-            >
-              <defs>
-                <linearGradient id={registrationsGradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={REGISTRATIONS_COLOR} stopOpacity={0.28} />
-                  <stop offset="100%" stopColor={REGISTRATIONS_COLOR} stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id={clientsGradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={NEW_CLIENTS_COLOR} stopOpacity={0.22} />
-                  <stop offset="100%" stopColor={NEW_CLIENTS_COLOR} stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                stroke="var(--border-warm)"
-                strokeDasharray="4 4"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="date"
-                tickFormatter={formatChartDate}
-                tick={{ fill: "var(--text-muted-warm)", fontSize: 11 }}
-                tickLine={false}
-                axisLine={{ stroke: "var(--border-warm)" }}
-                minTickGap={28}
-              />
-              <YAxis
-                allowDecimals={false}
-                tick={{ fill: "var(--text-muted-warm)", fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                width={42}
-              />
-              <Tooltip
-                content={<TrendTooltip />}
-                cursor={{ stroke: "var(--border-warm)", strokeWidth: 1 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="registrations"
-                name="Registrations"
-                stroke={REGISTRATIONS_COLOR}
-                strokeWidth={2}
-                fill={`url(#${registrationsGradientId})`}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 0 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="newClients"
-                name="New clients"
-                stroke={NEW_CLIENTS_COLOR}
-                strokeWidth={2}
-                fill={`url(#${clientsGradientId})`}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 0 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+        <div className="w-full min-w-0 overflow-hidden" style={{ height: chartHeight }}>
+          {cssResponsive ? (
+            areaChart
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              {areaChart}
+            </ResponsiveContainer>
+          )}
         </div>
       )}
 

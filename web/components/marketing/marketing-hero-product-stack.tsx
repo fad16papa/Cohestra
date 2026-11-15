@@ -1,3 +1,10 @@
+import { DashboardRegistrationsTrendChart } from "@/components/dashboard/dashboard-registrations-trend-chart";
+import {
+  HERO_DASHBOARD_TREND_DAYS,
+  HERO_DASHBOARD_TREND_POINTS,
+  heroRegistrationsThisWeek,
+  heroWeeklyRegistrationsDeltaPercent,
+} from "@/lib/marketing/hero-dashboard-trend";
 import { cn } from "@/lib/utils";
 
 const ROOMS = [
@@ -21,22 +28,23 @@ const VIEWS = [
  * DemoClub dashboard sample (Harbourline), the same deterministic state used by
  * the marketing demo mounts. Not a customer result.
  */
-const KPI_TILES = [
-  { label: "Total leads", value: "248", hint: "All captured contacts" },
-  { label: "Registrations this week", value: "48", hint: "+33% vs previous 7 days" },
-  { label: "Active activities", value: "3", hint: "Live registration forms" },
-  { label: "Follow-up coverage", value: "79%", hint: "Leads contacted vs new" },
-] as const;
+function buildKpiTiles() {
+  const weekRegistrations = heroRegistrationsThisWeek(HERO_DASHBOARD_TREND_POINTS);
+  const weekDelta = heroWeeklyRegistrationsDeltaPercent(HERO_DASHBOARD_TREND_POINTS);
+  const deltaLabel =
+    weekDelta >= 0 ? `+${weekDelta}% vs previous 7 days` : `${weekDelta}% vs previous 7 days`;
 
-const TREND = [
-  { label: "1 Sep", registrations: 5, newClients: 2 },
-  { label: "2 Sep", registrations: 4, newClients: 1 },
-  { label: "3 Sep", registrations: 6, newClients: 2 },
-  { label: "4 Sep", registrations: 12, newClients: 4 },
-  { label: "5 Sep", registrations: 7, newClients: 3 },
-  { label: "6 Sep", registrations: 9, newClients: 4 },
-  { label: "7 Sep", registrations: 5, newClients: 2 },
-] as const;
+  return [
+    { label: "Total leads", value: "248", hint: "All captured contacts" },
+    {
+      label: "Registrations this week",
+      value: String(weekRegistrations),
+      hint: deltaLabel,
+    },
+    { label: "Active activities", value: "3", hint: "Live registration forms" },
+    { label: "Follow-up coverage", value: "79%", hint: "Leads contacted vs new" },
+  ] as const;
+}
 
 const ACTIVITIES = [
   { name: "Golden Hour Run", count: 34 },
@@ -44,28 +52,8 @@ const ACTIVITIES = [
   { name: "Sunday Pickleball", count: 8 },
 ] as const;
 
-const TREND_MAX = 12;
-const CHART_WIDTH = 280;
-const CHART_HEIGHT = 72;
-
-function chartPoint(index: number, value: number): [number, number] {
-  const x = (index / (TREND.length - 1)) * CHART_WIDTH;
-  const y = CHART_HEIGHT - (value / TREND_MAX) * (CHART_HEIGHT - 6) - 2;
-  return [x, y];
-}
-
-function areaPath(key: "registrations" | "newClients"): { line: string; area: string } {
-  const points = TREND.map((point, index) => chartPoint(index, point[key]));
-  const line = points
-    .map(([x, y], index) => `${index === 0 ? "M" : "L"}${x.toFixed(1)} ${y.toFixed(1)}`)
-    .join(" ");
-  const area = `${line} L${CHART_WIDTH} ${CHART_HEIGHT} L0 ${CHART_HEIGHT} Z`;
-  return { line, area };
-}
-
 export function MarketingHeroProductStack({ className }: { className?: string }) {
-  const registrations = areaPath("registrations");
-  const newClients = areaPath("newClients");
+  const kpiTiles = buildKpiTiles();
 
   return (
     <figure
@@ -144,7 +132,7 @@ export function MarketingHeroProductStack({ className }: { className?: string })
             </div>
 
             <ul className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
-              {KPI_TILES.map((tile) => (
+              {kpiTiles.map((tile) => (
                 <li
                   key={tile.label}
                   className="min-w-0 rounded-[16px] border border-border-warm bg-card px-3 py-3"
@@ -158,59 +146,16 @@ export function MarketingHeroProductStack({ className }: { className?: string })
               ))}
             </ul>
 
-            <section className="mt-3 overflow-hidden rounded-xl border border-border-warm bg-card/90" aria-hidden>
-              <div className="flex flex-wrap items-start justify-between gap-2 border-b border-border-warm/70 px-3 py-2.5">
-                <div className="min-w-0">
-                  <h3 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
-                    Registrations trend
-                  </h3>
-                  <p className="mt-0.5 text-[0.6875rem] text-text-muted-warm">
-                    Daily registrations and first-time clients, last 7 days.
-                  </p>
-                </div>
-                <p className="flex shrink-0 items-center gap-3 text-[0.625rem] font-medium text-text-muted-warm">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2 rounded-full bg-[var(--chart-1)]" />
-                    Registrations
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <span className="size-2 rounded-full bg-[var(--chart-4)]" />
-                    New clients
-                  </span>
-                </p>
-              </div>
-              <div className="px-3 py-3">
-                <svg
-                  viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-                  className="h-20 w-full sm:h-24"
-                  role="img"
-                >
-                  <title>Registrations trend for the last 7 days</title>
-                  <path d={registrations.area} fill="var(--chart-1)" opacity="0.18" />
-                  <path d={newClients.area} fill="var(--chart-4)" opacity="0.22" />
-                  <path
-                    d={registrations.line}
-                    fill="none"
-                    stroke="var(--chart-1)"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d={newClients.line}
-                    fill="none"
-                    stroke="var(--chart-4)"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div className="mt-1 flex justify-between text-[0.625rem] text-text-muted-warm">
-                  <span>{TREND[0].label}</span>
-                  <span>{TREND[TREND.length - 1].label}</span>
-                </div>
-              </div>
-            </section>
+            <DashboardRegistrationsTrendChart
+              points={HERO_DASHBOARD_TREND_POINTS}
+              trendDays={HERO_DASHBOARD_TREND_DAYS}
+              compact
+              cssResponsive
+              animate={false}
+              rangeTimeZoneLabel="Asia/Singapore"
+              headingId="marketing-hero-registrations-trend"
+              className="mt-3"
+            />
 
             <section className="mt-3" aria-hidden>
               <h3 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">

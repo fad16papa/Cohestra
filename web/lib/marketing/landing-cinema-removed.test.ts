@@ -14,6 +14,13 @@ const hero = readFileSync(
   resolve(import.meta.dirname, "../../components/marketing/marketing-hero-product-stack.tsx"),
   "utf8"
 );
+const trendChart = readFileSync(
+  resolve(
+    import.meta.dirname,
+    "../../components/dashboard/dashboard-registrations-trend-chart.tsx"
+  ),
+  "utf8"
+);
 const capabilityChapters = readFileSync(
   resolve(import.meta.dirname, "../../components/marketing/marketing-capability-chapters.tsx"),
   "utf8"
@@ -61,7 +68,13 @@ describe("landing Cinema section removal", () => {
     expect(hero).not.toContain("hero-community-sports");
     expect(hero).not.toContain("Elena");
     expect(hero).not.toContain("Sunday clinic");
-    expect(hero).toContain("Registrations trend");
+    expect(hero).toContain("DashboardRegistrationsTrendChart");
+    expect(hero).toContain("HERO_DASHBOARD_TREND_POINTS");
+    expect(hero).not.toContain("areaPath");
+    expect(hero).not.toContain("chartPoint");
+    expect(hero).not.toContain("TREND_MAX");
+    expect(hero).not.toMatch(/<svg[\s\S]*viewBox=/);
+    expect(trendChart).toContain("Registrations trend");
     expect(hero).toContain("Total leads");
     expect(hero).toContain("Follow-up coverage");
     expect(hero).toContain("Golden Hour Run");
