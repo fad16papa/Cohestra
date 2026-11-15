@@ -52,7 +52,7 @@ export function MarketingHomePage() {
 
       <section
         aria-labelledby="marketing-hero-heading"
-        className="relative mx-auto max-w-6xl px-5 pb-10 pt-6 text-center sm:px-8 lg:px-10 lg:pb-12 lg:pt-8"
+        className="relative mx-auto max-w-6xl px-5 pb-4 pt-6 text-center sm:px-8 lg:px-10 lg:pb-6 lg:pt-8"
       >
         <div
           aria-hidden
@@ -105,6 +105,8 @@ export function MarketingHomePage() {
         </div>
       </section>
 
+      <MarketingCapabilityChapters chapters={LANDING_CAPABILITY_CHAPTERS} />
+
       <section aria-label="Who Cohestra is for" className="border-y border-line bg-paper-warm">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-8 gap-y-3 px-5 py-6 sm:px-8 lg:px-10">
           <p className="text-section text-text-accent">Built for</p>
@@ -115,8 +117,6 @@ export function MarketingHomePage() {
           ))}
         </div>
       </section>
-
-      <MarketingCapabilityChapters chapters={LANDING_CAPABILITY_CHAPTERS} />
 
       <section
         id="pricing"

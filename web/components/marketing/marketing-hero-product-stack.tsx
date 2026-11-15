@@ -47,7 +47,7 @@ export function MarketingHeroProductStack({ className }: { className?: string })
   return (
     <figure
       className={cn("marketing-product-lift relative mx-auto w-full", className)}
-      aria-labelledby="cohestra-product-preview-caption"
+      aria-label="Product preview of the Follow-up room"
     >
       <div className="overflow-hidden rounded-[24px] border border-border-warm bg-card shadow-[0_28px_60px_rgba(7,13,18,0.12)]">
         <div className="flex items-center justify-between gap-3 border-b border-border-warm px-4 py-3 sm:px-5">
@@ -154,14 +154,6 @@ export function MarketingHeroProductStack({ className }: { className?: string })
           ))}
         </ul>
       </div>
-      <figcaption
-        id="cohestra-product-preview-caption"
-        className="mt-3 max-w-[62ch] text-xs leading-relaxed text-text-muted-warm"
-      >
-        Product preview of the Follow-up room, using the same category chips and row layout as the
-        workspace. Website shows the Core lock and Campaigns shows the Pro lock. Sample states, not
-        a customer result.
-      </figcaption>
     </figure>
   );
 }

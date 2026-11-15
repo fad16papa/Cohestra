@@ -66,6 +66,14 @@ describe("landing Cinema section removal", () => {
     expect(hero).toContain("No recorded outreach");
     expect(hero).toContain("FOLLOW_UP_CATEGORY_OPTIONS");
     expect(hero).not.toContain(">Open<");
+    expect(hero).not.toContain("Product preview of the Follow-up room, using the same");
+    expect(hero).toContain('aria-label="Product preview of the Follow-up room"');
+
+    const heroHeadingIndex = home.indexOf("marketing-hero-heading");
+    const capabilityChaptersIndex = home.indexOf("<MarketingCapabilityChapters");
+    const whoIndex = home.indexOf('aria-label="Who Cohestra is for"');
+    expect(capabilityChaptersIndex).toBeGreaterThan(heroHeadingIndex);
+    expect(capabilityChaptersIndex).toBeLessThan(whoIndex);
 
     expect(content).toContain("LANDING_CAPABILITY_CHAPTERS");
     for (const room of [
