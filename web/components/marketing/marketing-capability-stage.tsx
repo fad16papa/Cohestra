@@ -89,7 +89,7 @@ function WorkspaceShell({
   return (
     <div
       aria-hidden
-      className="flex h-auto overflow-hidden rounded-2xl border border-border-warm bg-card shadow-[0_24px_60px_rgba(7,13,18,0.14)] lg:h-[34rem]"
+      className="flex h-auto overflow-hidden rounded-2xl border border-border-warm bg-card shadow-[0_24px_60px_rgba(7,13,18,0.14)]"
     >
       <WorkspaceRail activeLabel={activeLabel} />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -132,7 +132,7 @@ function RegistrationStage() {
       title="Published activity"
       badge="Published"
     >
-      <div className="relative min-h-0 md:min-h-[20rem]">
+      <div className="relative min-h-0 md:min-h-[28rem]">
         <div className="space-y-4 md:pr-[52%]">
           <p className="text-sm text-text-muted-warm">Public page</p>
           <div>
@@ -143,7 +143,7 @@ function RegistrationStage() {
             </div>
           </div>
         </div>
-        <div className="mt-4 rounded-xl border border-border-warm bg-card p-4 shadow-xl md:absolute md:bottom-4 md:right-4 md:top-8 md:mt-0 md:w-[48%]">
+        <div className="mt-4 rounded-xl border border-border-warm bg-card p-4 shadow-xl md:absolute md:right-4 md:top-4 md:mt-0 md:w-[46%]">
           <p className="font-[family-name:var(--font-fraunces)] text-lg font-medium text-text-warm">
             Register
           </p>
@@ -170,7 +170,7 @@ function ClientsStage() {
   ] as const;
   return (
     <WorkspaceShell activeLabel="Clients" title="Clients">
-      <div className="grid h-full gap-4 lg:grid-cols-[minmax(0,1fr)_13.5rem]">
+      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_13.5rem]">
         <div className="overflow-hidden rounded-xl border border-border-warm">
           <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] border-b border-border-warm bg-muted/30 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
             <span>Client</span>
@@ -194,7 +194,7 @@ function ClientsStage() {
             ))}
           </ul>
         </div>
-        <aside className="flex h-full flex-col rounded-xl border border-border-warm bg-muted/15 p-3">
+        <aside className="rounded-xl border border-border-warm bg-muted/15 p-3">
           <p className="text-label text-text-accent">Profile</p>
           <p className="mt-3 text-sm font-medium text-text-warm">Returning client</p>
           <p className="mt-1 text-xs text-text-muted-warm">History across activities</p>
@@ -411,7 +411,7 @@ export function MarketingCapabilityStage({
 }) {
   return (
     <figure className={cn("min-w-0", className)}>
-      <div className="relative lg:h-[34rem]">
+      <div className="relative">
         {chapterIds.map((id) => {
           const isActive = id === activeId;
           return (

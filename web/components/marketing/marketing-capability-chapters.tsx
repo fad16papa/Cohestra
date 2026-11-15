@@ -252,7 +252,7 @@ export function MarketingCapabilityChapters({
         <div className="lg:sticky lg:top-16 lg:z-10 lg:bg-paper-warm lg:pb-2">
         <MarketingReveal delayMs={marketingRevealDelay(0)} className="max-w-2xl">
           <p className="text-section text-text-accent">Capabilities</p>
-          <h2 className="mt-3 max-w-[28ch] font-[family-name:var(--font-fraunces)] text-[1.75rem] font-medium tracking-[-0.025em] text-ink lg:text-[2rem]">
+          <h2 className="mt-3 max-w-[36rem] font-[family-name:var(--font-fraunces)] text-[1.65rem] font-medium tracking-[-0.025em] text-ink lg:text-[1.85rem]">
             One workspace from registration to analytics
           </h2>
           <p className="mt-3 max-w-[50ch] text-[0.95rem] leading-relaxed text-muted-foreground">
