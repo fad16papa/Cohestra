@@ -134,7 +134,7 @@ export function MarketingCapabilityChapters({
 
         <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,0.38fr)_minmax(0,0.62fr)] lg:items-start lg:gap-12">
           <div className="min-w-0">
-            <nav aria-label="Capability chapters" className="lg:sticky lg:top-24 lg:z-10">
+            <nav aria-label="Capability chapters">
               <ul className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:border-l lg:border-line lg:pb-0">
                 {chapters.map((chapter) => {
                   const current = chapter.id === shownId;
