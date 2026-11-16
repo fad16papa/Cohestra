@@ -364,7 +364,7 @@ export function MarketingCapabilityChapters({
                     )}
                   />
                   <ChapterCopy chapter={chapter} index={index} />
-                  <div className="mt-6 lg:hidden">
+                  <div className="mt-6 rounded-[20px] bg-[#ECEFF1] p-2.5 sm:p-3 lg:hidden">
                     <MarketingCapabilityStage activeId={chapter.id} chapterIds={[chapter.id]} />
                   </div>
                 </article>
@@ -372,19 +372,25 @@ export function MarketingCapabilityChapters({
             })}
           </div>
           <div className="hidden min-w-0 lg:block">
-            <div
-              className="lg:sticky lg:top-24"
-              style={{ height: frame.height, overflow: "hidden" }}
-            >
+            <div className="relative lg:sticky lg:top-24">
               <div
-                ref={stageRef}
-                style={{
-                  transform: frame.scale < 0.995 ? `scale(${frame.scale})` : undefined,
-                  transformOrigin: "top left",
-                  width: frame.scale < 0.995 ? `${100 / frame.scale}%` : undefined,
-                }}
+                aria-hidden
+                className="pointer-events-none absolute -inset-3 rounded-[28px] bg-[#ECEFF1] xl:-inset-4"
+              />
+              <div
+                className="relative"
+                style={{ height: frame.height, overflow: "hidden" }}
               >
-                <MarketingCapabilityStage activeId={shownId} chapterIds={chapterIds} />
+                <div
+                  ref={stageRef}
+                  style={{
+                    transform: frame.scale < 0.995 ? `scale(${frame.scale})` : undefined,
+                    transformOrigin: "top left",
+                    width: frame.scale < 0.995 ? `${100 / frame.scale}%` : undefined,
+                  }}
+                >
+                  <MarketingCapabilityStage activeId={shownId} chapterIds={chapterIds} />
+                </div>
               </div>
             </div>
           </div>

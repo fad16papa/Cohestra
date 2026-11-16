@@ -173,6 +173,16 @@ describe("chooseChapterId", () => {
     expect(source).toContain("prefers-reduced-motion: reduce");
     expect(source).toContain('behavior: prefersReducedMotion() ? "auto" : "smooth"');
   });
+
+  it("capability previews use light-gray backdrop (#ECEFF1) on desktop and mobile wrappers", () => {
+    const source = readFileSync(
+      resolve(import.meta.dirname, "../../components/marketing/marketing-capability-chapters.tsx"),
+      "utf8"
+    );
+    expect(source).toContain("bg-[#ECEFF1]");
+    expect(source).toContain("pointer-events-none");
+    expect(source).toContain("rounded-[20px] bg-[#ECEFF1]");
+  });
 });
 
 describe("computeDesktopFrame", () => {
