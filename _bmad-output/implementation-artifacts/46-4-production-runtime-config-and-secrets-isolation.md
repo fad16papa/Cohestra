@@ -5,7 +5,7 @@ title: Production runtime, config, and secrets isolation
 status: review
 epic: 46
 created: 2026-10-24
-baseline_commit: e962c8c3eead953a1f56f2b397b3e9d4fc669041
+baseline_commit: ff84b2b2979081a4c53ce2f5b68b479155331ed7
 depends_on:
   - 46.1
   - 46.2
@@ -235,6 +235,7 @@ Cursor Grok 4.6
 
 ### Change Log
 
+- 2026-11-18: Rebased branch onto main `ff84b2b2979081a4c53ce2f5b68b479155331ed7` (conflict-free with UAT promotion merge). Production NO-GO unchanged.
 - 2026-10-24: Implemented repository-side Story 46.4 fail-closed Production runtime, CORS, Redis auth, SendGrid independence, and owner-controlled classified secret isolation. Live owner secret gate pending. Production NO-GO.
 - 2026-10-24: Addressed code review findings — 5 items resolved (1 BLOCKER, 4 MAJOR). UAT PlatformAdmin one-shot preserved. Classified compare requires names. Redis loopback scans all endpoints. PUBLIC_BASE_URL is apex-only.
 - 2026-10-24: Review 4 of `1308a60d` PASS (BLOCKER=0, MAJOR=0). Exact-HEAD CI 40106674234 SUCCESS. Owner secret gate still PENDING. Production NO-GO.
