@@ -2,6 +2,19 @@ import type { AuthSession } from "@/lib/auth-storage";
 import { getPublicApiBaseUrl } from "@/lib/api";
 import { buildTenantDashboardUrl } from "@/lib/signup/signup-api";
 
+const exchangeInFlightByCode = new Map<string, Promise<AuthSession | null>>();
+
+export function exchangeAuthHandoffOnce(code: string): Promise<AuthSession | null> {
+  const existing = exchangeInFlightByCode.get(code);
+  if (existing) {
+    return existing;
+  }
+
+  const promise = exchangeAuthHandoff(code);
+  exchangeInFlightByCode.set(code, promise);
+  return promise;
+}
+
 export async function exchangeAuthHandoff(code: string): Promise<AuthSession | null> {
   const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/auth/handoff/exchange`, {
     method: "POST",

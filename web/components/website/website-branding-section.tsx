@@ -212,10 +212,12 @@ export const WebsiteBrandingSection = forwardRef<
   return (
     <section
       id="website-branding-section"
-      className="space-y-3 rounded-xl border border-border-warm bg-card p-3 sm:p-4"
+      className="space-y-3 rounded-[16px] border border-border-warm bg-card p-3 sm:p-4"
     >
       <div>
-        <h2 className="text-section text-text-warm">Site identity</h2>
+        <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
+          Site identity
+        </h2>
         <p className="mt-1 text-sm text-text-muted-warm">
           Name, logo, and accent appear on your public homepage after you publish.
         </p>

@@ -226,10 +226,7 @@ export default function PlatformTenantDetailPage() {
         >
           Directory
         </Link>
-        <h1
-          className="mt-3 text-3xl tracking-tight"
-          style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
-        >
+        <h1 className="mt-3 text-[1.25rem] font-semibold leading-tight tracking-[-0.02em] text-[var(--plat-ink)]">
           {tenant.slug}
         </h1>
         <p className="mt-2 text-sm text-[var(--plat-stone)]">
@@ -275,10 +272,7 @@ export default function PlatformTenantDetailPage() {
       />
 
       <section className="space-y-4">
-        <h2
-          className="text-lg tracking-tight"
-          style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
-        >
+        <h2 className="text-base font-semibold leading-tight tracking-[-0.02em] text-[var(--plat-ink)]">
           Lifecycle
         </h2>
         <p className="max-w-2xl text-sm leading-relaxed text-[var(--plat-stone)]">
@@ -497,10 +491,7 @@ export default function PlatformTenantDetailPage() {
       </section>
 
       <section className="space-y-4">
-        <h2
-          className="text-lg tracking-tight"
-          style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
-        >
+        <h2 className="text-base font-semibold leading-tight tracking-[-0.02em] text-[var(--plat-ink)]">
           Complimentary
         </h2>
         <p className="max-w-2xl text-sm leading-relaxed text-[var(--plat-stone)]">
@@ -625,10 +616,7 @@ export default function PlatformTenantDetailPage() {
       <PlatformTenantTimeline tenantId={tenant.id} authFetch={authFetch} />
 
       <section className="space-y-4">
-        <h2
-          className="text-lg tracking-tight"
-          style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
-        >
+        <h2 className="text-base font-semibold leading-tight tracking-[-0.02em] text-[var(--plat-ink)]">
           Recent audit
         </h2>
         <div className="overflow-x-auto border-y border-[var(--plat-line)]">

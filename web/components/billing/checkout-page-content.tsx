@@ -843,7 +843,7 @@ function CheckoutContent() {
         </p>
       ) : null}
 
-      <section className="space-y-6 rounded-2xl border border-border-warm bg-card p-5 shadow-sm sm:p-8 lg:p-10">
+      <section className="space-y-6 rounded-[16px] border border-border-warm bg-card p-5 sm:p-8 lg:p-10">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm font-medium text-text-warm">Billing interval</p>
           <div

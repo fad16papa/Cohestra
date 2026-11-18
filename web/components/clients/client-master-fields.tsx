@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-import { PhoneCountrySelect } from "@/components/activities/phone-country-select";
 import { ClientPhoneDisplay } from "@/components/clients/client-phone-display";
+import { ContactNumberField } from "@/components/clients/contact-number-field";
+import { NationalityField } from "@/components/clients/nationality-field";
 import {
   clientProfileCardClassName,
   clientProfileFieldRowClassName,
@@ -25,8 +26,6 @@ import {
   type ClientDetail,
 } from "@/lib/clients-api";
 import {
-  getPhonePlaceholder,
-  getPhonePrefixLabel,
   parsePhoneForEdit,
   validatePhoneLocalNumber,
 } from "@/lib/phone-countries";
@@ -250,52 +249,24 @@ export function ClientMasterFields({
               />
             </div>
 
-            <div className="space-y-2 sm:col-span-2">
-              <PhoneCountrySelect
-                id="master-phone-country"
-                value={form.phoneCountry}
-                disabled={isSaving}
-                label="Mobile country"
-                helperText="Local number is validated for the selected country."
-                onChange={(value) =>
-                  setForm((current) => ({ ...current, phoneCountry: value }))
-                }
-              />
-            </div>
+            <ContactNumberField
+              countryId="master-phone-country"
+              numberId="master-phone-local"
+              countryCode={form.phoneCountry}
+              localNumber={form.phoneLocal}
+              disabled={isSaving}
+              error={phoneError}
+              onCountryChange={(phoneCountry) => {
+                setPhoneError(null);
+                setForm((current) => ({ ...current, phoneCountry }));
+              }}
+              onLocalNumberChange={(phoneLocal) => {
+                setPhoneError(null);
+                setForm((current) => ({ ...current, phoneLocal }));
+              }}
+            />
 
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="master-phone-local">Contact number</Label>
-              <div className="flex overflow-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring">
-                <span className="flex min-h-9 items-center border-r border-input bg-muted/40 px-3 text-sm text-text-muted-warm">
-                  {getPhonePrefixLabel(form.phoneCountry)}
-                </span>
-                <Input
-                  id="master-phone-local"
-                  type="tel"
-                  autoComplete="tel-national"
-                  className="border-0 shadow-none focus-visible:ring-0"
-                  placeholder={getPhonePlaceholder(form.phoneCountry)}
-                  value={form.phoneLocal}
-                  disabled={isSaving}
-                  aria-invalid={phoneError ? true : undefined}
-                  aria-describedby={phoneError ? "master-phone-error" : undefined}
-                  onChange={(event) => {
-                    setPhoneError(null);
-                    setForm((current) => ({
-                      ...current,
-                      phoneLocal: event.target.value,
-                    }));
-                  }}
-                />
-              </div>
-              {phoneError ? (
-                <p id="master-phone-error" className="text-xs text-destructive">
-                  {phoneError}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="master-email">Email / social</Label>
               <Input
                 id="master-email"
@@ -308,7 +279,7 @@ export function ClientMasterFields({
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="master-profession">Profession</Label>
               <Input
                 id="master-profession"
@@ -323,22 +294,17 @@ export function ClientMasterFields({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="master-nationality">Nationality</Label>
-              <Input
-                id="master-nationality"
-                value={form.nationality}
-                disabled={isSaving}
-                onChange={(event) =>
-                  setForm((current) => ({
-                    ...current,
-                    nationality: event.target.value,
-                  }))
-                }
-              />
-            </div>
+            <NationalityField
+              id="master-nationality"
+              value={form.nationality}
+              savedValue={client.nationality ?? ""}
+              disabled={isSaving}
+              onChange={(nationality) =>
+                setForm((current) => ({ ...current, nationality }))
+              }
+            />
 
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="master-residency">Residency</Label>
               <Input
                 id="master-residency"

@@ -16,14 +16,30 @@ test.describe("landing Cinema section removed", () => {
     await expect(page.locator("#crm")).toHaveCount(0);
 
     await expect(
-      page.getByRole("heading", { name: /registrations, client list, and follow up/i })
+      page.getByRole("heading", {
+        name: /every activity\. every connection\. one workspace\./i,
+      })
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Built for clubs, workshops, and groups", exact: true })
+      page.getByRole("heading", {
+        name: /one workspace from registration to analytics/i,
+      })
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: /set up before your next event/i })
+      page.getByText("Product preview of the Follow-up room, using the same")
+    ).toHaveCount(0);
+    await page.getByRole("link", { name: "Explore capabilities" }).first().click();
+    await expect(
+      page.getByRole("heading", {
+        name: /one workspace from registration to analytics/i,
+      })
     ).toBeVisible();
+    await expect(page.locator("#registration")).toBeAttached();
+    await expect(page.locator("#follow-up")).toBeAttached();
+    await expect(page.locator("#capabilities")).toBeAttached();
+    await expect(page.getByText("Product preview").first()).toBeVisible();
+    await expect(page.locator('img[src*="hero-community-sports"]')).toHaveCount(0);
+    await expect(page.getByText(/under 1 hr/i)).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Start free" }).first()).toBeVisible();
 
     await page.setViewportSize({ width: 768, height: 1024 });

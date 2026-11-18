@@ -45,7 +45,10 @@ TENANT_HOST=default.localhost:8088 bash deploy/verify-security-headers.sh http:/
 echo "== Playwright smoke =="
 cd web
 npm ci
-npx playwright install --with-deps chromium
+if ! npx playwright install --with-deps chromium; then
+  echo "System browser packages unavailable. Installing Chromium without apt."
+  npx playwright install chromium
+fi
 PUBLIC_BASE_URL=http://localhost:8088 npm run test:e2e
 
 echo "== Epic 35 Form Experience browser matrix =="

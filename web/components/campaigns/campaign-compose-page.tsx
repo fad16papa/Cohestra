@@ -476,6 +476,7 @@ export function CampaignComposePage() {
       <div className="space-y-6">
         <div>
           <PageHeader
+            variant="room"
             eyebrow={
               <Link
                 href="/campaigns"
@@ -512,7 +513,7 @@ export function CampaignComposePage() {
         />
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)]">
-          <div className="min-w-0 space-y-4 rounded-xl border border-border-warm bg-card p-4">
+          <div className="min-w-0 space-y-4 rounded-[16px] border border-border-warm bg-card p-4">
             <div className="space-y-2">
               <Label htmlFor="campaign-subject">Subject</Label>
               <Input
@@ -591,7 +592,7 @@ export function CampaignComposePage() {
             </div>
           </div>
 
-          <div className="min-w-0 space-y-4 rounded-xl border border-border-warm bg-card p-4">
+          <div className="min-w-0 space-y-4 rounded-[16px] border border-border-warm bg-card p-4">
             <div>
               <h2 className="text-sm font-semibold text-text-warm">Templates</h2>
               <p className="mt-1 text-sm text-text-muted-warm">
@@ -677,7 +678,7 @@ export function CampaignComposePage() {
         </div>
 
         {sendResult ? (
-          <div className="rounded-xl border border-border-warm bg-card p-4">
+          <div className="rounded-[16px] border border-border-warm bg-card p-4">
             <h2 className="text-sm font-semibold text-text-warm">Send results</h2>
             <p className="mt-2 text-sm text-text-muted-warm" role="status">
               {campaignResultSummary(sendResult)}

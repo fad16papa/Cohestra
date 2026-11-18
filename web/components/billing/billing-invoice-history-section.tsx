@@ -43,10 +43,10 @@ export function BillingInvoiceHistorySection({
     invoices.length === 1 ? "1 invoice" : `${invoices.length} invoices`;
 
   return (
-    <section className="rounded-2xl border border-border-warm bg-card p-5 sm:p-6">
+    <section className="rounded-[16px] border border-border-warm bg-card p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-text-muted-warm">
+          <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
             Invoice history
           </h2>
           <p className="mt-1 text-sm text-text-muted-warm">

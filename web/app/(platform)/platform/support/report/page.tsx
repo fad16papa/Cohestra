@@ -134,10 +134,7 @@ export default function PlatformSupportReportPage() {
           >
             ← Back to inbox
           </Link>
-          <h1
-            className="mt-4 text-3xl tracking-tight text-[var(--plat-ink)]"
-            style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
-          >
+          <h1 className="mt-4 text-[1.25rem] font-semibold leading-tight tracking-[-0.02em] text-[var(--plat-ink)]">
             Support volume
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--plat-stone)]">

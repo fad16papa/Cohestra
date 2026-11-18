@@ -92,10 +92,7 @@ export default function PlatformSupportInboxPage() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1
-            className="text-3xl tracking-tight text-[var(--plat-ink)]"
-            style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
-          >
+          <h1 className="text-[1.25rem] font-semibold leading-tight tracking-[-0.02em] text-[var(--plat-ink)]">
             Support inbox
           </h1>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--plat-stone)]">

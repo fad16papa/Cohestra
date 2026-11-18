@@ -224,7 +224,7 @@ export function ReportsPageClient() {
   if (status === "loading" || !searchParams.toString() || !pageReady) {
     return (
       <div className="space-y-2">
-        <PageHeader title="Analytics" description="Loading report…" />
+        <PageHeader variant="room" title="Analytics" description="Loading report…" />
       </div>
     );
   }
@@ -232,7 +232,7 @@ export function ReportsPageClient() {
   if (errorStatus === 403) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Analytics" />
+        <PageHeader variant="room" title="Analytics" />
         <ProductErrorState
           title="You don’t have access to Analytics"
           message={error ?? "Your role cannot open Analytics."}
@@ -246,7 +246,7 @@ export function ReportsPageClient() {
   if (shell && isBasicPlan(shell.plan) && isAdvancedReportFilters(filters)) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Analytics" />
+        <PageHeader variant="room" title="Analytics" />
         <p className="text-sm text-text-muted-warm">
           Weekly reporting stays available on Basic.{" "}
           <button
@@ -271,6 +271,7 @@ export function ReportsPageClient() {
   return (
     <div className="space-y-6">
       <PageHeader
+        variant="room"
         title="Analytics"
         description="Understand what happened, why it matters, and export the same numbers your team trusts."
         actions={

@@ -59,8 +59,7 @@ export function PlatformTenantTimeline({ tenantId, authFetch }: PlatformTenantTi
     <section className="space-y-4" aria-labelledby="tenant-timeline-heading">
       <h2
         id="tenant-timeline-heading"
-        className="text-lg tracking-tight"
-        style={{ fontFamily: "var(--font-plat-display), Georgia, serif" }}
+        className="text-base font-semibold leading-tight tracking-[-0.02em] text-[var(--plat-ink)]"
       >
         Timeline
       </h2>

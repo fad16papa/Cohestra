@@ -15,7 +15,10 @@ import {
 } from "@/lib/continuity-context";
 import { commandPaletteItems, filterCommandPaletteItems } from "@/lib/command-palette-items";
 import { adminRouteTransitionKey } from "@/lib/admin-route-motion";
-import { DASHBOARD_ONBOARDING_STEPS } from "@/lib/dashboard-onboarding";
+import {
+  DASHBOARD_ONBOARDING_INTRO,
+  DASHBOARD_ONBOARDING_STEPS,
+} from "@/lib/dashboard-onboarding";
 
 describe("parseContinuityContext", () => {
   it("parses dashboard, follow-up, clients, activities, and activity tokens", () => {
@@ -204,6 +207,9 @@ describe("onboarding canonical rooms", () => {
   it("points first follow-up at Follow-up, not a Clients filter", () => {
     const step = DASHBOARD_ONBOARDING_STEPS.find((item) => item.id === "first-follow-up");
     expect(step?.href).toBe("/follow-up");
+    expect(step?.detail).toMatch(/client/i);
+    expect(step?.detail).not.toMatch(/\blead\b/i);
+    expect(DASHBOARD_ONBOARDING_INTRO).not.toMatch(/lead engine/i);
     expect(DASHBOARD_ONBOARDING_STEPS.every((item) => item.href !== "/reports")).toBe(true);
   });
 });

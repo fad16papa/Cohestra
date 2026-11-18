@@ -240,7 +240,7 @@ export function AdminCommandPalette({
                         router.push(item.href);
                       }}
                       className={cn(
-                        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm motion-press outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                        "flex h-9 w-full items-center gap-3 rounded-md px-3 text-left text-[0.8125rem] font-medium motion-press outline-none focus-visible:ring-2 focus-visible:ring-ring",
                         isActive
                           ? "bg-primary/10 text-text-warm"
                           : "text-foreground hover:bg-muted/60"

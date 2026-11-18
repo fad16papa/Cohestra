@@ -175,18 +175,24 @@ export function SignupPageContent() {
   }
 
   return (
-    <MarketingShell scrolled={scrolled}>
+    <MarketingShell scrolled={scrolled} ambientDiscs={false}>
       <div ref={anchorRef} aria-hidden className="pointer-events-none absolute top-0 h-px w-full" />
 
       <section className="mx-auto max-w-xl flex-1 px-5 py-12 sm:px-8 lg:px-10 lg:py-16">
         <MarketingReveal immediate delayMs={80}>
-          <p className="text-section text-gold">Start free</p>
-          <h1 className="text-marketing-section mt-4 text-ink">Open your atelier</h1>
-          <p className="text-marketing-lead mt-4 text-stone">
-            Basic is free forever — no card required. Verify your email before opening the dashboard.
+          <p className="text-section text-text-accent">Start free</p>
+          <h1 className="text-marketing-section mt-4 text-ink">Create your workspace</h1>
+          <p className="text-marketing-lead mt-4 text-muted-foreground">
+            Basic is free. No card. Verify your email before the dashboard opens. Captcha, when it
+            is enabled, and acceptance of the terms stay required.
           </p>
+          <ol className="mt-4 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-muted-foreground">
+            <li>Create the workspace and accept the terms.</li>
+            <li>Verify the email we send before the dashboard opens.</li>
+            <li>Publish an activity and share its registration page or QR code.</li>
+          </ol>
           {isPaidPlanHint ? (
-            <div className="mt-3 space-y-2 text-sm text-stone">
+            <div className="mt-3 space-y-2 text-sm text-muted-foreground">
               <p>
                 You chose <span className="font-medium text-ink">{plan}</span> ({billingInterval}).
                 After email verification you&apos;ll continue to checkout for a 30-day trial.
@@ -205,7 +211,7 @@ export function SignupPageContent() {
               id="orgName"
               value={orgName}
               onChange={(event) => setOrgName(event.target.value)}
-              className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
+              className="min-h-11 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
               autoComplete="organization"
               disabled={submitting}
             />
@@ -213,7 +219,7 @@ export function SignupPageContent() {
 
           <div className="space-y-2">
             <label htmlFor="slug" className="text-sm font-medium text-ink">
-              Workspace slug
+              Workspace address
             </label>
             <input
               id="slug"
@@ -222,14 +228,14 @@ export function SignupPageContent() {
                 setSlugTouched(true);
                 setSlug(event.target.value.toLowerCase());
               }}
-              className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
+              className="min-h-11 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
               autoComplete="off"
               disabled={submitting}
             />
-            <p className="text-xs text-stone">
+            <p className="text-xs text-muted-foreground">
               Your workspace: <span className="font-medium">{slug || "your-org"}.cohestra.app</span>
             </p>
-            {slugChecking ? <p className="text-xs text-stone">Checking availability…</p> : null}
+            {slugChecking ? <p className="text-xs text-muted-foreground">Checking availability…</p> : null}
             {slugStatus && !slugStatus.available ? (
               <p role="alert" className="text-xs text-destructive">
                 {slugStatus.validationError}
@@ -252,7 +258,7 @@ export function SignupPageContent() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
+              className="min-h-11 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
               autoComplete="email"
               disabled={submitting}
             />
@@ -267,11 +273,11 @@ export function SignupPageContent() {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
+              className="min-h-11 w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink"
               autoComplete="new-password"
               disabled={submitting}
             />
-            <p className="text-xs text-stone">At least 8 characters with upper, lower, and a number.</p>
+            <p className="text-xs text-muted-foreground">At least 8 characters with upper, lower, and a number.</p>
           </div>
 
           <TosCheckbox checked={accepted} onCheckedChange={setAccepted} disabled={submitting} />
@@ -279,7 +285,7 @@ export function SignupPageContent() {
           <RecaptchaCheckbox onTokenChange={handleCaptchaChange} disabled={submitting} />
 
           {versions ? (
-            <p className="text-xs text-stone">
+            <p className="text-xs text-muted-foreground">
               Current versions: Terms {versions.termsVersion} · Privacy {versions.privacyVersion}
             </p>
           ) : null}

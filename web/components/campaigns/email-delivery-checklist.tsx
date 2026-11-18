@@ -146,7 +146,7 @@ export function EmailDeliveryChecklist({
     return (
       <section className="space-y-4">
         <div>
-          <h2 className="text-section text-text-warm">Email delivery</h2>
+          <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">Email delivery</h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             SendGrid setup for campaign delivery. Secrets stay on the server — only
             checklist status is shown here.

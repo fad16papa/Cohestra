@@ -176,11 +176,12 @@ export function ClientProfileHeader({
   }
 
   return (
-    <section className="rounded-2xl border border-border-warm bg-card p-5 shadow-sm sm:p-6">
+    <section className="rounded-[16px] border border-border-warm bg-card p-5 sm:p-6">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 flex-1 items-start gap-4">
           <PersonAvatar name={client.fullName} size="lg" />
           <PageHeader
+            variant="room"
             className="min-w-0 flex-1"
             eyebrow="Client"
             title={client.fullName}

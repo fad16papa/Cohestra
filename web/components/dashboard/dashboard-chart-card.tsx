@@ -34,7 +34,10 @@ export function DashboardChartCard({
     >
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-warm/70 px-4 py-3.5 sm:px-5">
         <div className="min-w-0">
-          <h3 id={headingId} className="text-section text-text-warm">
+          <h3
+            id={headingId}
+            className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm"
+          >
             {title}
           </h3>
           <p className="mt-1 text-sm text-text-muted-warm">{description}</p>

@@ -15,6 +15,7 @@ export function SettingsRouteHeader({ route }: SettingsRouteHeaderProps) {
 
   return (
     <PageHeader
+      variant="room"
       eyebrow="Settings"
       title={route.label}
       description={

@@ -60,7 +60,7 @@ export function ReportResults({ report, filters }: ReportResultsProps) {
     return (
       <div className="space-y-6">
         <ReportTrustBar report={report} filters={filters} />
-        <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center">
+        <div className="rounded-[16px] border border-dashed border-border-warm px-6 py-10 text-center">
           <p className="text-sm text-text-warm">No registrations in this period.</p>
           <p className="mt-2 text-sm text-text-muted-warm">
             Adjust your date range or filters to widen the report.

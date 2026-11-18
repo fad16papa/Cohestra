@@ -84,7 +84,7 @@ type FormCompositionBuilderProps = {
 };
 
 const panelShell =
-  "flex min-h-[20rem] min-w-0 flex-col rounded-xl border border-border-warm bg-card lg:min-h-[28rem]";
+  "flex min-h-[20rem] min-w-0 flex-col rounded-[16px] border border-border-warm bg-card lg:min-h-[28rem]";
 
 function useLayoutSyncMedia(query: string): boolean {
   const [matches, setMatches] = useState(false);
@@ -631,7 +631,9 @@ export function FormCompositionBuilder({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <h2 className="text-section text-text-warm">Form builder</h2>
+          <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
+            Form builder
+          </h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             Add blocks, arrange structure, and configure fields. Preview updates as
             you edit — save when ready.

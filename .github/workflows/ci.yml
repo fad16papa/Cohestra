@@ -115,7 +115,40 @@ jobs:
         run: dotnet build Cohestra.sln --no-restore -c Release
 
       - name: Install PostgreSQL client
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+        run: |
+          set -euo pipefail
+          if command -v psql >/dev/null && command -v pg_dump >/dev/null && command -v pg_isready >/dev/null && command -v dropdb >/dev/null && command -v createdb >/dev/null; then
+            echo "Host PostgreSQL client tools already exist"
+            exit 0
+          fi
+          installed=0
+          for attempt in 1 2 3; do
+            if sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client; then
+              installed=1
+              break
+            fi
+            echo "apt postgresql-client attempt ${attempt} failed"
+            sleep $((attempt * 10))
+          done
+          if [[ "$installed" -eq 1 ]]; then
+            exit 0
+          fi
+          echo "Ubuntu archives unreachable. Using the already pulled postgres:16-alpine client."
+          docker image inspect postgres:16-alpine >/dev/null
+          bindir="${HOME}/.local/bin"
+          mkdir -p "$bindir"
+          for tool in psql pg_dump pg_restore pg_isready dropdb createdb; do
+            printf '%s\n' \
+              '#!/bin/sh' \
+              "exec docker run --rm -i --network host -v /tmp:/tmp -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16-alpine ${tool} \"\$@\"" \
+              > "${bindir}/${tool}"
+            chmod +x "${bindir}/${tool}"
+          done
+          echo "$bindir" >> "$GITHUB_PATH"
+          export PATH="${bindir}:${PATH}"
+          command -v psql
+          command -v pg_dump
+          command -v pg_isready
 
       - name: Disposable backup restore rehearsal
         run: bash deploy/disposable-backup-restore.test.sh
