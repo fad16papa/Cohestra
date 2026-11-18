@@ -233,6 +233,7 @@ Cursor Grok 4.6
 - Central `TelemetryRedactor` + activity/log processors. High-cardinality URL/body/email labels stripped. SendGrid/NullEmail never log recipient or raw body.
 - `/ready` still exactly `postgres`, `redis`, `default-tenant`.
 - Draft PR #503. No merge. Production NO-GO.
+- 2026-11-18: merged current main `a784ddf70ad5c8e6059d2c50496fadb72cdd7f98` into this branch. Review evidence on `d6596101` is stale. Status stays review. Grok BMAD code review of this HEAD was not run in the implementation wave. Local recheck: Infrastructure.Tests `Category!=Integration` 1337 passed. Stories 46.7 and 46.8 were not started.
 
 ### File List
 
