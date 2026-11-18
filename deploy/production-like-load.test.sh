@@ -11,7 +11,8 @@ fail() { echo "FAIL: $1"; exit 1; }
 [[ -f "$SCRIPT" ]] || fail "production-like-load.sh missing"
 chmod +x "$SCRIPT" 2>/dev/null || true
 
-if ! env -u BASE_URL -u REPORT_PATH bash "$SCRIPT" 2>/dev/null | grep -q 'RESULT=SELF_CHECK'; then
+self_check_out="$(env -u BASE_URL -u REPORT_PATH bash "$SCRIPT" 2>/dev/null || true)"
+if [[ "$self_check_out" != *'RESULT=SELF_CHECK'* ]]; then
   fail "missing BASE_URL must run self-check"
 fi
 pass "absent BASE_URL runs self-check without network"
