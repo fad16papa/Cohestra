@@ -1,4 +1,5 @@
 using Cohestra.Application.Outbox;
+using Cohestra.Infrastructure.Observability;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -27,9 +28,13 @@ public sealed class OutboxDispatcherHostedService(
         {
             try
             {
-                await using var scope = scopeFactory.CreateAsyncScope();
-                var processor = scope.ServiceProvider.GetRequiredService<IOutboxProcessor>();
-                var processed = await processor.ProcessBatchAsync(stoppingToken);
+                var processed = 0;
+                await CohestraTelemetry.TraceJobAsync("outbox-dispatcher", async () =>
+                {
+                    await using var scope = scopeFactory.CreateAsyncScope();
+                    var processor = scope.ServiceProvider.GetRequiredService<IOutboxProcessor>();
+                    processed = await processor.ProcessBatchAsync(stoppingToken);
+                });
 
                 if (processed == 0)
                 {

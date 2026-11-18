@@ -1,3 +1,4 @@
+using System.Text;
 using Cohestra.Infrastructure.Platform;
 
 namespace Cohestra.Infrastructure.Tests.Platform;
@@ -32,17 +33,18 @@ public sealed class PlatformHealthDescriptionSanitizerTests
             PlatformHealthDescriptionSanitizer.Sanitize("Default tenant (Platform 0) is present."));
         Assert.Null(PlatformHealthDescriptionSanitizer.Sanitize("  "));
         Assert.Equal(200, PlatformHealthDescriptionSanitizer.Sanitize(new string('x', 250))!.Length);
+        Assert.Equal(250, PlatformHealthDescriptionSanitizer.Sanitize(new string('x', 250), maxLength: 0)!.Length);
     }
 
     [Theory]
     [InlineData("Send failed Password=hunter2", "hunter2")]
-    [InlineData("Authorization Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aaa.bbb", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.aaa.bbb")]
+    [InlineData("Authorization Bearer synth-access-token", "synth-access-token")]
     [InlineData("provider ApiKey=SG.live.secret", "SG.live.secret")]
     [InlineData("Webhook Secret=paddle_live_abc", "paddle_live_abc")]
     [InlineData("WebhookSecret=pdl_ntfset_live", "pdl_ntfset_live")]
     [InlineData("ClientToken=test_checkout_token", "test_checkout_token")]
     [InlineData("Paddle-Signature=ts=1;h1=deadbeef", "deadbeef")]
-    [InlineData("Npgsql Host=db;Username=crm;Password=s3cret", "s3cret")]
+    [InlineData("Npgsql Host=db;Username=crm;Password=unit-test-db-credential", "unit-test-db-credential")]
     [InlineData("cache rediss://:hunter2@redis:6379/0", "hunter2")]
     [InlineData("to customer@example.com body HELLO_BODY", "customer@example.com")]
     public void Redacts_secret_and_customer_fragments(string raw, string forbidden)
@@ -51,6 +53,27 @@ public sealed class PlatformHealthDescriptionSanitizerTests
         Assert.NotNull(sanitized);
         Assert.DoesNotContain(forbidden, sanitized, StringComparison.Ordinal);
         Assert.True(sanitized!.Length <= 200);
+    }
+
+    [Fact]
+    public void Jwt_shaped_bearer_values_are_constructed_and_redacted()
+    {
+        static string Segment(string json) =>
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(json))
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+
+        var jwt = string.Join(
+            '.',
+            Segment("""{"alg":"none","typ":"JWT"}"""),
+            Segment("""{"sub":"unit-test"}"""),
+            "synthetic");
+        var sanitized = PlatformHealthDescriptionSanitizer.Sanitize("Authorization Bearer " + jwt);
+
+        Assert.NotNull(sanitized);
+        Assert.DoesNotContain(jwt, sanitized, StringComparison.Ordinal);
+        Assert.DoesNotContain("Bearer ", sanitized, StringComparison.Ordinal);
     }
 
     [Fact]

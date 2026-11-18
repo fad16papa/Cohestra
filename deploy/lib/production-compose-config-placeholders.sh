@@ -16,6 +16,8 @@ PRODUCTION_COMPOSE_CONFIG_PLACEHOLDER_NAMES=(
   PUBLIC_BASE_URL
   SendGrid__ApiKey
   SendGrid__FromEmail
+  SelfServeSignup__RegistrationClosed
+  SelfServeSignup__Recaptcha__Enabled
 )
 
 production_compose_repo_root() {
@@ -61,6 +63,12 @@ production_compose_config_placeholder_value() {
       ;;
     SendGrid__FromEmail)
       printf '%s' 'bootstrap-config-check@example.invalid'
+      ;;
+    SelfServeSignup__RegistrationClosed)
+      printf '%s' 'true'
+      ;;
+    SelfServeSignup__Recaptcha__Enabled)
+      printf '%s' 'false'
       ;;
     *)
       return 1

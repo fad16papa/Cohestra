@@ -1,0 +1,6 @@
+# Story 46.9 — Production live-Paddle CSP (sandbox hosts omitted).
+# Shared nginx (app.conf / app-ssl.conf.template) still includes sandbox origins
+# until Story 46.10 live cutover. This snippet is the launch-target policy:
+# live Paddle + reCAPTCHA are allowed; sandbox Paddle is not required.
+#
+# default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://cdn.paddle.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://images.unsplash.com https://cdn.paddle.com; object-src 'none'; base-uri 'self'; form-action 'self' https://buy.paddle.com; frame-ancestors 'none'; frame-src https://www.google.com https://www.recaptcha.net https://www.youtube-nocookie.com https://player.vimeo.com https://buy.paddle.com; connect-src 'self' https://nominatim.openstreetmap.org https://api.paddle.com https://cdn.paddle.com

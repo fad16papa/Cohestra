@@ -813,6 +813,14 @@ HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolve
 - Complimentary tenants are not guarded inside `TenantBillingPlanSync` mutators — jobs already skip complimentary for delinquency; webhook/service callers reject complimentary money paths
 - Operator still needs live Paddle sandbox keys + webhook tunnel to record 29.7 screenshot evidence (automated process tests cover the adapter)
 
+## Deferred from: code review of 46-4-production-runtime-config-and-secrets-isolation.md (2026-10-24)
+
+Review 4 of `1308a60d` PASS. Residual MINORs only; no product, architecture, or security risk. Production remains NO-GO.
+
+- Redis `password=` with no endpoint, or exotic loopback aliases (`::1:6379`, `.localhost`), are not rejected. Compose always sets `redis:6379,password=...`.
+- `git diff` failure after `origin/main` exists would take the freeze-check `else` PASS branch. Missing `origin/main` still fails closed. CI 40106674234 passed the freeze step.
+- Host `--check-names` uses `urlparse().hostname`; runtime uses `Uri.IdnHost`. API start remains fail-closed.
+
 ## Deferred from: code review of 38-1-billing-sync-environment-and-error-behavior.md (2026-09-22)
 
 - Configured Paddle live checkout cannot be exercised in this environment — covered by helper + `PaddleBillingServiceTests` with FakePaddle
@@ -826,3 +834,12 @@ HEAD `58cfb4e2` (implementation `799d1173`). Independent re-review. No unresolve
 ## Deferred from: code review of 39-2-mobile-navigation.md (2026-10-02)
 
 - Calendar popout remains a named 38.6 custom-dialog exception; 43.5 owns rename/trap. 39.2 only hides the FAB and relocates the opener
+
+## Deferred from: code review of 46-6-production-observability-instrumentation.md (2026-10-24)
+
+- ASP.NET `http.route` is usually absent at sample time; paddle HTTP parent always-on branch is ineffective. Custom `paddle.webhook` span remains always-on.
+- Console/file `ILogger` sinks bypass `TelemetryRedactingLogProcessor`. SendGrid/NullEmail are source-fixed; remaining sites belong to 46.9.
+- `AddRedisInstrumentation` resolves `IConnectionMultiplexer` at TracerProvider build. Pre-existing Redis `Connect` singleton; 46.4 owns runtime.
+- Nested `answers` JSON regex is first-`}` best-effort. Keys `answers` / `form_answer` are fully redacted.
+- Empty outbox polls emit always-on `job.run`. Volume, not cardinality; 46.7 dashboards.
+- Collector-outage integration host uses the simple export processor. Production default is batch.

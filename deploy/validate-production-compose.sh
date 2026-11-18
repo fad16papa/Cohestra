@@ -194,6 +194,13 @@ else
   fail "API must lock ASPNETCORE_ENVIRONMENT=Production"
 fi
 
+if grep -qE 'Cohestra__DeploymentPlane:[[:space:]]*Production[[:space:]]*$' "$COMPOSE" \
+  && ! grep -qE 'Cohestra__DeploymentPlane:.*\$' "$COMPOSE"; then
+  pass "API Cohestra__DeploymentPlane is locked Production"
+else
+  fail "API must lock Cohestra__DeploymentPlane=Production (not interpolatable)"
+fi
+
 for seed in OperatorSeed__Enabled PlatformAdminSeed__Enabled DemoDataSeed__Enabled LoadTestSeed__Enabled FollowUpDigest__Enabled; do
   if grep -qE "${seed}:[[:space:]]*\"false\"" "$COMPOSE"; then
     pass "${seed} locked false"
@@ -221,10 +228,21 @@ else
   fail "Paddle__Environment must be locked sandbox until 46.10 (not interpolatable)"
 fi
 
-if grep -q 'TestBypassToken\|NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN\|test-captcha-pass' "$COMPOSE"; then
-  fail "Production compose must not inject recaptcha test bypass"
+if grep -qE 'SelfServeSignup__RegistrationClosed:.*\$\{SelfServeSignup__RegistrationClosed\:\?' "$COMPOSE" \
+  && grep -qE 'SelfServeSignup__Recaptcha__Enabled:.*\$\{SelfServeSignup__Recaptcha__Enabled\:\?' "$COMPOSE" \
+  && ! grep -qE 'SelfServeSignup__RegistrationClosed:.*:-false' "$COMPOSE" \
+  && ! grep -qE 'SelfServeSignup__Recaptcha__Enabled:.*:-false' "$COMPOSE"; then
+  pass "RegistrationClosed and Recaptcha.Enabled require explicit owner values"
 else
-  pass "No recaptcha test bypass in Production compose"
+  fail "Production compose must not default RegistrationClosed/Recaptcha.Enabled to false"
+fi
+
+if grep -qE 'SelfServeSignup__Recaptcha__TestBypassToken:[[:space:]]*""' "$COMPOSE" \
+  && ! grep -qE 'SelfServeSignup__Recaptcha__TestBypassToken:.*\$' "$COMPOSE" \
+  && ! grep -q 'NEXT_PUBLIC_RECAPTCHA_TEST_TOKEN\|test-captcha-pass' "$COMPOSE"; then
+  pass "Recaptcha test bypass is compose-locked empty"
+else
+  fail "Production compose must lock Recaptcha TestBypassToken to empty (no interpolation)"
 fi
 
 if [[ -f "$COLLECTOR" ]] && grep -q 'otlp:' "$COLLECTOR" \
@@ -252,7 +270,7 @@ fi
 
 if [[ -f "$ENV_EXAMPLE" ]]; then
   pass ".env.production.example exists"
-  for name in POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY SendGrid__ApiKey PUBLIC_BASE_URL GIT_SHA OTEL_EXPORTER_OTLP_ENDPOINT Paddle__AllowLive; do
+  for name in POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY SendGrid__ApiKey PUBLIC_BASE_URL GIT_SHA OTEL_EXPORTER_OTLP_ENDPOINT Paddle__AllowLive Cohestra__DeploymentPlane; do
     if grep -q "$name" "$ENV_EXAMPLE"; then
       pass "env example names ${name}"
     else
@@ -440,11 +458,13 @@ if command -v docker >/dev/null 2>&1; then
   export PUBLIC_BASE_URL=http://example.invalid
   export SendGrid__ApiKey=ci-contract-sendgrid
   export SendGrid__FromEmail=noreply@example.invalid
+  export SelfServeSignup__RegistrationClosed=true
+  export SelfServeSignup__Recaptcha__Enabled=false
   docker compose -f "$COMPOSE" --project-name cohestra-production config >"$cfg" 2>"${cfg}.err"
   yaml_rc=$?
   docker compose -f "$COMPOSE" --project-name cohestra-production config --format json >"$cfg_json" 2>>"${cfg}.err"
   json_rc=$?
-  unset POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail
+  unset POSTGRES_PASSWORD REDIS_PASSWORD JWT_SIGNING_KEY PUBLIC_BASE_URL SendGrid__ApiKey SendGrid__FromEmail SelfServeSignup__RegistrationClosed SelfServeSignup__Recaptcha__Enabled
   set -e
   if [[ "$yaml_rc" -ne 0 ]]; then
     fail "docker compose config failed (stderr suppressed to avoid secret leakage)"
