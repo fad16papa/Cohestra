@@ -110,8 +110,8 @@ services:
       SiteLanding__AccentColor: "#2563eb"
       LegalCompliance__TermsVersion: "2026-07-21"
       LegalCompliance__PrivacyVersion: "2026-07-21"
-      SelfServeSignup__RegistrationClosed: ${SelfServeSignup__RegistrationClosed:-false}
-      SelfServeSignup__Recaptcha__Enabled: ${SelfServeSignup__Recaptcha__Enabled:-false}
+      SelfServeSignup__RegistrationClosed: ${SelfServeSignup__RegistrationClosed:-true}
+      SelfServeSignup__Recaptcha__Enabled: ${SelfServeSignup__Recaptcha__Enabled:-true}
       SelfServeSignup__Recaptcha__SecretKey: ${SelfServeSignup__Recaptcha__SecretKey:-}
       PublicSignupRateLimit__MaxSuccessfulPerHour: ${PublicSignupRateLimit__MaxSuccessfulPerHour:-5}
       PublicSignupRateLimit__MaxSuccessfulPerDay: ${PublicSignupRateLimit__MaxSuccessfulPerDay:-20}
@@ -152,7 +152,7 @@ services:
         NEXT_PUBLIC_LANDING_DESCRIPTION: ${LANDING_DESCRIPTION:-Discover events, register in seconds, and stay connected with the communities you care about.}
         NEXT_PUBLIC_LANDING_EYEBROW: ${LANDING_EYEBROW:-Community events platform}
         NEXT_PUBLIC_LANDING_OPERATOR_CTA: ${LANDING_OPERATOR_CTA:-Operator sign in}
-        NEXT_PUBLIC_RECAPTCHA_ENABLED: ${NEXT_PUBLIC_RECAPTCHA_ENABLED:-false}
+        NEXT_PUBLIC_RECAPTCHA_ENABLED: ${NEXT_PUBLIC_RECAPTCHA_ENABLED:-true}
         NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY:-}
         NEXT_PUBLIC_PADDLE_RETURN_ORIGIN: ${NEXT_PUBLIC_PADDLE_RETURN_ORIGIN:-}
     restart: unless-stopped

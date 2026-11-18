@@ -101,6 +101,7 @@ public sealed class ProductionSecurityValidatorTests
                 ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
                 ["ConnectionStrings:DefaultConnection"] =
                     "Host=localhost;Port=5432;Database=cohestra;Username=crm;Password=crm",
+                ["ConnectionStrings:Redis"] = "redis:6379,password=production-redis-secret",
             })
             .Build();
 
@@ -1000,6 +1001,7 @@ public sealed class ProductionSecurityValidatorTests
         {
             ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
             ["ConnectionStrings:DefaultConnection"] = connectionString,
+            ["ConnectionStrings:Redis"] = "redis:6379,password=production-redis-secret",
         };
         if (publicBaseUrl is not null)
         {

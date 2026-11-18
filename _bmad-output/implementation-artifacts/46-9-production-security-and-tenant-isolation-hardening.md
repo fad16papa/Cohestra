@@ -112,6 +112,7 @@ Cursor Grok 4.6
 - Hardened ProductionSecurityValidator and Redis-backed auth stores without editing 46.4/46.6 files.
 - Added TenantIsolation negatives, CSP live-only contract, secret-name inventory, and CI contracts.
 - PRODUCTION=NO-GO.
+- **GitGuardian (reCAPTCHA denylist):** `GoogleRecaptchaTestKeys` literals stay in `ProductionSecurityValidator` and tests so Production cannot accept Google’s published always-pass keys. No in-repo GitGuardian ignore was added. The owner must resolve the existing GitGuardian incident in the GitGuardian dashboard so the App check can conclude success. Status stays **review**; Production **NO-GO**.
 
 ### File List
 
