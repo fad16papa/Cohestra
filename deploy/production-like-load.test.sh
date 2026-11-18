@@ -11,7 +11,7 @@ fail() { echo "FAIL: $1"; exit 1; }
 [[ -f "$SCRIPT" ]] || fail "production-like-load.sh missing"
 chmod +x "$SCRIPT" 2>/dev/null || true
 
-if ! bash "$SCRIPT" 2>/dev/null | grep -q 'RESULT=SELF_CHECK'; then
+if ! env -u BASE_URL -u REPORT_PATH bash "$SCRIPT" 2>/dev/null | grep -q 'RESULT=SELF_CHECK'; then
   fail "missing BASE_URL must run self-check"
 fi
 pass "absent BASE_URL runs self-check without network"
@@ -22,16 +22,16 @@ for url in \
   "http://uat.cohestra.app/health" \
   "http://159.223.55.242/health" \
   "http://129.212.235.2/health"; do
-  if BASE_URL="$url" bash "$SCRIPT" 2>/dev/null; then
+  if env -u BASE_URL -u REPORT_PATH BASE_URL="$url" bash "$SCRIPT" 2>/dev/null; then
     fail "must refuse ${url}"
   fi
 done
 pass "forbidden URLs are refused"
 
-if ! BASE_URL="http://localhost:8080" bash -c "source '$SCRIPT' && _try_validate_base_url 'http://localhost:8080/health'"; then
+if ! env -u BASE_URL -u REPORT_PATH BASE_URL="http://localhost:8080" bash -c "source '$SCRIPT' && _try_validate_base_url 'http://localhost:8080/health'"; then
   fail "localhost guard must accept"
 fi
-if ! BASE_URL="http://127.0.0.1:9999" bash -c "source '$SCRIPT' && _try_validate_base_url 'http://127.0.0.1:9999/health'"; then
+if ! env -u BASE_URL -u REPORT_PATH BASE_URL="http://127.0.0.1:9999" bash -c "source '$SCRIPT' && _try_validate_base_url 'http://127.0.0.1:9999/health'"; then
   fail "127.0.0.1 guard must accept"
 fi
 pass "loopback hosts accepted by guard"
