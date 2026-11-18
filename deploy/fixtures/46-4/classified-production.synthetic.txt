@@ -1,0 +1,9 @@
+# Synthetic classified Production inventory — names and 4-character suffixes only.
+# Not live secrets. Do not replace with real suffixes in git.
+JWT_SIGNING_KEY	pr01
+POSTGRES_PASSWORD	pr02
+REDIS_PASSWORD	pr07
+SendGrid__ApiKey	pr03
+Paddle__ApiKey	pr04
+Paddle__WebhookSecret	pr05
+Paddle__ClientToken	pr06

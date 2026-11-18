@@ -140,4 +140,61 @@ public class SendGridSettingsValidatorTests
             UseSandbox = false,
         });
     }
+
+    [Fact]
+    public void ValidateForDedicatedProduction_RejectsPlaceholderKey()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            SendGridSettingsValidator.ValidateForDedicatedProduction(new SendGridSettings
+            {
+                ApiKey = "SG.test-key",
+                FromEmail = "noreply@cohestra.app",
+                UseSandbox = false,
+            }));
+
+        Assert.Contains("SendGrid:ApiKey", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("SG.test-key", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForDedicatedProduction_RejectsUatSender()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            SendGridSettingsValidator.ValidateForDedicatedProduction(new SendGridSettings
+            {
+                ApiKey = "SG.syntheticIndependentProdKey",
+                FromEmail = "ops@mail.uat.cohestra.app",
+                UseSandbox = false,
+            }));
+
+        Assert.Contains("SendGrid:FromEmail", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("ops@", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForDedicatedProduction_RejectsPlaceholderFromEmail()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            SendGridSettingsValidator.ValidateForDedicatedProduction(new SendGridSettings
+            {
+                ApiKey = "SG.syntheticIndependentProdKey",
+                FromEmail = "changeme@cohestra.app",
+                UseSandbox = false,
+            }));
+
+        Assert.Contains("SendGrid:FromEmail", exception.Message, StringComparison.Ordinal);
+        Assert.DoesNotContain("changeme@", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ValidateForDedicatedProduction_AllowsIndependentProductionSender()
+    {
+        SendGridSettingsValidator.ValidateForDedicatedProduction(new SendGridSettings
+        {
+            ApiKey = "SG.syntheticIndependentProdKey",
+            FromEmail = "noreply@cohestra.app",
+            RegistrationFromEmail = "hello@cohestra.app",
+            UseSandbox = false,
+        });
+    }
 }
