@@ -148,14 +148,11 @@ jobs:
           fi
           echo "Selecting PostgreSQL 16 client (pg_dump=${dump_major:-missing}, pg_restore=${restore_major:-missing}, psql=${psql_major:-missing})"
           installed=0
-          for attempt in 1 2 3; do
-            if sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16; then
-              installed=1
-              break
-            fi
-            echo "apt postgresql-client-16 attempt ${attempt} failed"
-            sleep $((attempt * 10))
-          done
+          if sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16; then
+            installed=1
+          else
+            echo "apt postgresql-client-16 is not available; using the postgres:16-alpine client"
+          fi
           if [[ "$installed" -eq 1 ]] && [[ -d /usr/lib/postgresql/16/bin ]]; then
             apt_dump="$(/usr/lib/postgresql/16/bin/pg_dump --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1 | cut -d. -f1 || true)"
             apt_restore="$(/usr/lib/postgresql/16/bin/pg_restore --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1 | cut -d. -f1 || true)"
@@ -171,10 +168,13 @@ jobs:
           bindir="${HOME}/.local/bin"
           mkdir -p "$bindir"
           for tool in psql pg_dump pg_restore pg_isready dropdb createdb; do
-            printf '%s\n' \
-              '#!/bin/sh' \
-              "exec docker run --rm -i --network host -v /tmp:/tmp -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16-alpine ${tool} \"\$@\"" \
-              > "${bindir}/${tool}"
+            cat > "${bindir}/${tool}" <<EOF
+#!/bin/sh
+# Run as the invoking user so dump files under /tmp stay readable and writable.
+exec docker run --rm -i --network host --user "\$(id -u):\$(id -g)" -e HOME=/tmp \\
+  -v /tmp:/tmp -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE \\
+  postgres:16-alpine ${tool} "\$@"
+EOF
             chmod +x "${bindir}/${tool}"
           done
           echo "$bindir" >> "$GITHUB_PATH"
