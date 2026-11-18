@@ -85,7 +85,7 @@ Repository fixtures under `deploy/fixtures/46-4/` are **synthetic**. Passing tho
 
 ## Production state
 
-Cutover authorization: **GRANTED** (does not waive this gate).
+Cutover authorization: **NOT GRANTED** (does not waive this gate).
 
 Owner secret gate: **PENDING**.
 
