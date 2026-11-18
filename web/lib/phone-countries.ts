@@ -261,6 +261,62 @@ export function parsePhoneForEdit(phone: string | null | undefined): {
   };
 }
 
+/**
+ * Drops a repeated calling prefix from the local-number box.
+ * National digits are left untouched, including while the person is still typing.
+ * A prefix is removed only when it matches the selected country and the value is
+ * clearly international (`+` / `00`) or long enough to include that prefix plus
+ * a national number.
+ */
+export function normalizeLocalPhoneInput(
+  countryCode: string | null | undefined,
+  value: string
+): string {
+  if (!value.trim()) {
+    return "";
+  }
+
+  const callingCode = getPhoneCallingCode(countryCode);
+  let digits = extractDigits(value);
+  const markedInternational = value.includes("+") || digits.startsWith("00");
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+
+  const matched = digits.startsWith(callingCode) && digits.length > callingCode.length;
+  const longEnough = digits.length >= callingCode.length + 8;
+  if (!matched || (!markedInternational && !longEnough)) {
+    return value;
+  }
+
+  let local = digits.slice(callingCode.length);
+  if (local.startsWith("0")) {
+    local = local.replace(/^0+/, "");
+  }
+
+  return local;
+}
+
+export type PhoneCountrySelectChoice = {
+  value: string;
+  label: string;
+  keywords: string;
+  flag: string;
+  callingCode: string;
+  name: string;
+};
+
+/** ISO-keyed choices. Countries that share a calling code stay separate options. */
+export const phoneCountrySelectChoices: PhoneCountrySelectChoice[] =
+  phoneCountryOptions.map((option) => ({
+    value: option.code,
+    label: `${option.name} (+${option.callingCode})`,
+    keywords: `${option.name} ${option.code} +${option.callingCode} ${option.callingCode}`,
+    flag: isoToFlagEmoji(option.code),
+    callingCode: option.callingCode,
+    name: option.name,
+  }));
+
 export function validatePhoneLocalNumber(
   countryCode: string | null | undefined,
   value: unknown,
