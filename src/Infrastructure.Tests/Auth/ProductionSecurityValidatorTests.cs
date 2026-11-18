@@ -382,6 +382,54 @@ public sealed class ProductionSecurityValidatorTests
     }
 
     [Fact]
+    public void Validate_dedicated_production_rejects_redis_uri_loopback_127()
+    {
+        var configuration = DedicatedProductionConfig(
+            redis: "redis://127.0.0.1:6379,password=synthetic-redis-password-32chars");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("localhost", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_rejects_rediss_uri_loopback_127()
+    {
+        var configuration = DedicatedProductionConfig(
+            redis: "rediss://127.0.0.1:6379,password=synthetic-redis-password-32chars");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("localhost", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_rejects_redis_uri_localhost()
+    {
+        var configuration = DedicatedProductionConfig(
+            redis: "redis://localhost:6379,password=synthetic-redis-password-32chars");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("localhost", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_allows_redis_uri_non_loopback_host()
+    {
+        var configuration = DedicatedProductionConfig(
+            redis: "redis://redis:6379,password=synthetic-redis-password-32chars");
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
     public void Validate_dedicated_production_rejects_option_first_loopback_redis()
     {
         var configuration = DedicatedProductionConfig(

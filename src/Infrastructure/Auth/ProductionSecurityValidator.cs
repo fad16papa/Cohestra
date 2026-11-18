@@ -252,6 +252,21 @@ public static class ProductionSecurityValidator
     private static bool RedisEndpointIsLoopback(string endpoint)
     {
         var host = endpoint.Trim();
+        if (host.StartsWith("redis://", StringComparison.OrdinalIgnoreCase))
+        {
+            host = host[8..];
+        }
+        else if (host.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase))
+        {
+            host = host[9..];
+        }
+
+        var at = host.LastIndexOf('@');
+        if (at >= 0)
+        {
+            host = host[(at + 1)..];
+        }
+
         if (host.StartsWith('[') && host.Contains(']', StringComparison.Ordinal))
         {
             host = host[1..host.IndexOf(']')];

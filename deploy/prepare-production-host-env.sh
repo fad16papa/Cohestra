@@ -63,7 +63,7 @@ Production host application secrets — owner procedure
 6. Never paste values into git, chat, Docker layers, PRs, or evidence.
 7. This script will not write .env for you inside the repository.
 
-PRODUCTION=NO-GO until later Epic 46 stories and PRODUCTION CUTOVER: AUTHORIZED.
+PRODUCTION=NO-GO. This procedure does not authorize public cutover; the owner phrase PRODUCTION CUTOVER: AUTHORIZED is absent here and is not claimed as granted.
 EOF
     exit 0
     ;;
