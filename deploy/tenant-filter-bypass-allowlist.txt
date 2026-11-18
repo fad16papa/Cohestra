@@ -17,3 +17,6 @@ src/Infrastructure/Platform/PlatformTenantOpsService.cs
 src/Infrastructure/Platform/PlatformTenantService.cs
 src/Infrastructure/Platform/PlatformTenantTimelineService.cs
 src/Infrastructure/PublicDoor/PublicDoorService.cs
+# Tenant-scoped workspace erasure: caller tenantId + client load re-checks TenantId;
+# related deletes also constrain TenantId == tenantId (not Platform Admin cross-tenant).
+src/Infrastructure/Clients/ClientErasureService.cs

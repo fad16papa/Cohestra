@@ -104,6 +104,7 @@ Cursor Grok 4.6
 - Baseline `e962c8c3eead953a1f56f2b397b3e9d4fc669041`
 - In-repo validators + unit/integration negatives added in this story
 - Live Production probes: not run (prohibited)
+- **2026-11-18** — Merged `main` (`a784ddf`) onto branch; `ClientErasureService` tenant-scoped erasure bypass added to `deploy/tenant-filter-bypass-allowlist.txt`. Status remains **review**. October review SHAs/evidence are **stale** relative to this HEAD; re-run BMAD review on merge HEAD before DONE. Production **NO-GO**.
 
 ### Completion Notes List
 
@@ -180,3 +181,4 @@ Story stays **review**. Not DONE: GitHub CI on this HEAD, owner live gates, 46.4
 
 - 2026-10-24 — Story 46.9 implementation: security audit, fail-closed hardening, negative tests, evidence matrix. Production NO-GO.
 - 2026-10-24 — Code review: reject UAT CORS on Production apex; record exact-HEAD review. Status → review.
+- 2026-11-18 — Post-merge `main` fix: allowlist `ClientErasureService` (tenant-scoped workspace erasure with explicit `TenantId` re-checks). Status stays **review**; prior October review SHAs stale. Production NO-GO.
