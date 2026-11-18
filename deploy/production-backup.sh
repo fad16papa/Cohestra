@@ -156,6 +156,14 @@ sha256_file() {
   sha256sum "$1" | awk '{print $1}'
 }
 
+pg_tool_major() {
+  local tool="$1"
+  local ver
+  ver="$("$tool" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1)" || return 1
+  [[ -n "$ver" ]] || return 1
+  echo "${ver%%.*}"
+}
+
 write_manifest() {
   local path="$1"
   local status="$2"
@@ -358,9 +366,21 @@ case "$command" in
       fail "gpg decryption failed"
     fi
 
+    server_version_num="$(psql --host="$host" --dbname=postgres --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
+      -c "SHOW server_version_num;" 2>/dev/null | tr -d '[:space:]')" || server_version_num=""
+    if [[ ! "$server_version_num" =~ ^[0-9]+$ ]]; then
+      fail "could not read PostgreSQL server major version"
+    fi
+    server_major=$((server_version_num / 10000))
+    dump_major="$(pg_tool_major pg_dump)" || dump_major=""
+    restore_major="$(pg_tool_major pg_restore)" || restore_major=""
+    if [[ -z "$dump_major" || -z "$restore_major" || "$dump_major" != "$server_major" || "$restore_major" != "$server_major" ]]; then
+      fail "PostgreSQL client/server major mismatch (server=${server_major}, pg_dump=${dump_major:-unknown}, pg_restore=${restore_major:-unknown})"
+    fi
+
     dropdb --host="$host" --if-exists --force "$database"
     createdb --host="$host" "$database"
-    pg_restore --host="$host" --dbname="$database" --no-owner --no-privileges "$plain_dump"
+    pg_restore --host="$host" --dbname="$database" --no-owner --no-privileges "$plain_dump" || fail "pg_restore failed"
     rm -f "$plain_dump"
 
     current_db="$(psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 -c "SELECT current_database();")"

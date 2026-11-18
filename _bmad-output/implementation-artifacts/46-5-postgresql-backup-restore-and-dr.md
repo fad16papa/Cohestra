@@ -75,6 +75,7 @@ So that **a droplet loss is a 4-hour problem, not a company-ending one**.
 - Source database `cohestra` can be dumped only with `BACKUP_SOURCE_PLANE=dedicated-local` on a local host. Restore cannot target it.
 - A failed backup, verify, or restore rewrites a configured attestation to `status=failed`. The restore command does not delete the operator `GNUPGHOME`.
 - Dedicated Production migrations fail closed without verified attestation; synthetic CI roundtrip does **not** set `production_recovery_proven`.
+- CI and `restore-isolated` require PostgreSQL **16** client majors to match the server (`transaction_timeout` and similar PG17+ dump settings otherwise break `pg_restore` on PG16).
 - **PRODUCTION_RECOVERY_PROVEN=NO**; cutover **NOT_GRANTED**; Production **NO-GO**.
 
 ### Debug Log
@@ -85,10 +86,10 @@ So that **a droplet loss is a 4-hour problem, not a company-ending one**.
 
 ```text
 PGPASSWORD=crm bash deploy/production-backup.test.sh
-→ all refusal PASS, including dedicated-local `cohestra` dump, sha mismatch without a database client, failed attestation invalidation, and synthetic gpg backup roundtrip PASS (source row preserved; operator GNUPGHOME preserved)
+→ exit 0; all refusal PASS; rehearsal client major matches server (16); forced pg_restore failure PASS; synthetic gpg backup roundtrip PASS
 
 PGPASSWORD=crm bash deploy/disposable-backup-restore.test.sh
-→ all refusal PASS; representative restore PASS
+→ exit 0; all refusal PASS; representative restore PASS
 
 dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --filter ProductionBackupGateTests
 → Passed: 10, Failed: 0
@@ -113,3 +114,4 @@ dotnet test Cohestra.sln --filter "Category!=Integration"
 
 - 2026-11-18: Story 46.5 implementation — encrypted off-host backup script, migration gate, tests, operator DR doc. Status review. Production NO-GO; recovery not proven.
 - 2026-11-18: Safety fix — allow dedicated-local dump of `cohestra`, require manifest SHA-256 before restore, invalidate attestation on failure, and keep the operator keyring.
+- 2026-11-18: PG16 client alignment — CI `Install PostgreSQL client` pins major-16 `pg_dump`/`pg_restore`/`psql` (apt `postgresql-client-16` or `postgres:16-alpine` wrappers); `restore-isolated` refuses client/server major mismatch and treats `pg_restore` non-zero as failure; rehearsal tests assert client major and a forced `pg_restore` failure. Status remains review; Production NO-GO; recovery not proven.

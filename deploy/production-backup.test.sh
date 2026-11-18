@@ -243,6 +243,25 @@ if [[ -z "${PGPASSWORD:-}" ]]; then
   export PGPASSWORD=crm
 fi
 
+pg_tool_major() {
+  local tool="$1"
+  local ver
+  ver="$("$tool" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1)" || return 1
+  [[ -n "$ver" ]] || return 1
+  echo "${ver%%.*}"
+}
+
+server_version_num="$(psql --host=localhost --dbname=postgres --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
+  -c "SHOW server_version_num;" 2>/dev/null | tr -d '[:space:]')" || server_version_num=""
+[[ "$server_version_num" =~ ^[0-9]+$ ]] || fail "could not read PostgreSQL server major for client regression check"
+server_major=$((server_version_num / 10000))
+dump_major="$(pg_tool_major pg_dump)" || dump_major=""
+restore_major="$(pg_tool_major pg_restore)" || restore_major=""
+if [[ -z "$dump_major" || -z "$restore_major" || "$dump_major" != "$server_major" || "$restore_major" != "$server_major" ]]; then
+  fail "PostgreSQL client/server major mismatch in rehearsal (server=${server_major}, pg_dump=${dump_major:-unknown}, pg_restore=${restore_major:-unknown})"
+fi
+pass "rehearsal client major matches server (${server_major})"
+
 SRC="rehearsal_src"
 DST="rehearsal_dst_disposable"
 dropdb --if-exists --force "$SRC" >/dev/null 2>&1 || true
@@ -257,6 +276,35 @@ ART="rehearsal-roundtrip.dump.gpg"
 ATTEST="$TMP/attestation.json"
 export BACKUP_GPG_PUBLIC_KEY_FILE="$PUBLIC_KEY"
 "$SCRIPT" backup --database "$SRC" --artifact-basename "$ART"
+
+FORCED_STUB_BIN="$TMP/forced-restore-stub-bin"
+mkdir -p "$FORCED_STUB_BIN"
+cat >"$FORCED_STUB_BIN/pg_restore" <<'EOF'
+#!/bin/sh
+if [ "$1" = "--version" ]; then
+  echo "pg_restore (PostgreSQL) 16.0"
+  exit 0
+fi
+echo "forced restore failure" >&2
+exit 1
+EOF
+chmod +x "$FORCED_STUB_BIN/pg_restore"
+FORCED_ATTEST="$TMP/forced-fail-attestation.json"
+: >"$FORCED_ATTEST"
+if PATH="$FORCED_STUB_BIN:$PATH" "$SCRIPT" restore-isolated --database "$DST" \
+  --artifact-basename "$ART" --attestation-path "$FORCED_ATTEST" >"$TMP/out" 2>"$TMP/err"; then
+  fail "forced pg_restore failure was treated as success"
+fi
+if ! grep -qE 'pg_restore failed|forced restore failure' "$TMP/err"; then
+  cat "$TMP/err" >&2
+  fail "forced pg_restore failure missing expected stderr"
+fi
+forced_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status"))' "$FORCED_ATTEST")"
+[[ "$forced_status" == "failed" ]] || fail "forced pg_restore failure did not invalidate attestation"
+src_count_after_forced="$(psql --dbname="$SRC" --tuples-only --no-align --set=ON_ERROR_STOP=1 -c 'SELECT count(*) FROM rehearsal_marker;')"
+[[ "$src_count_after_forced" == "1" ]] || fail "forced restore failure mutated source rehearsal row"
+pass "forced pg_restore failure leaves attestation failed and source intact"
+
 "$SCRIPT" verify-artifact --artifact-basename "$ART"
 "$SCRIPT" restore-isolated --database "$DST" --artifact-basename "$ART" --attestation-path "$ATTEST"
 
