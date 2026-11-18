@@ -403,7 +403,11 @@ jobs:
 
       - name: Production runtime secrets isolation
         run: |
-          git fetch --no-tags --depth=1 origin main
+          if [[ -f "$(git rev-parse --git-path shallow)" ]]; then
+            git fetch --no-tags --depth=1 origin main
+          else
+            git fetch --no-tags origin main
+          fi
           bash deploy/validate-production-runtime-secrets.test.sh
 
       - name: Production host UFW fail-closed contract
