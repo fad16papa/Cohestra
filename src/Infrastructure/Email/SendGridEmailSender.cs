@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Cohestra.Application.Email;
+using Cohestra.Infrastructure.Observability;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SendGrid;
@@ -9,6 +11,7 @@ namespace Cohestra.Infrastructure.Email;
 
 public sealed class SendGridEmailSender(
     IOptions<SendGridSettings> options,
+    IHostEnvironment environment,
     ILogger<SendGridEmailSender> logger) : IEmailSender
 {
     public async Task<EmailSendResult> SendAsync(
@@ -104,20 +107,30 @@ public sealed class SendGridEmailSender(
             }
 
             var failureReason = FormatSendGridFailure((int)response.StatusCode, responseBody);
-
-            logger.LogWarning(
-                "SendGrid send failed for {ToEmail} with status {StatusCode}: {Body}",
-                message.ToEmail,
-                (int)response.StatusCode,
-                responseBody);
-
+            CohestraTelemetry.RecordEmailSendFailure();
+            LogSendFailure(logger, environment, (int)response.StatusCode);
             return new EmailSendResult(false, null, failureReason);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            logger.LogError(ex, "SendGrid send failed for {ToEmail}", message.ToEmail);
+            CohestraTelemetry.RecordEmailSendFailure();
+            LogSendException(logger, environment, ex);
             return new EmailSendResult(false, null, ex.Message);
         }
+    }
+
+    internal static void LogSendFailure(ILogger logger, IHostEnvironment environment, int statusCode)
+    {
+        // Production must never log recipient email or the raw provider body (Epic 46 / AD-9).
+        // Non-Production also omits both so console/filelog cannot leak PII during local or CI runs.
+        logger.LogWarning("SendGrid send failed with status {StatusCode}", statusCode);
+        _ = environment;
+    }
+
+    internal static void LogSendException(ILogger logger, IHostEnvironment environment, Exception exception)
+    {
+        logger.LogError("SendGrid send failed ({ExceptionType})", exception.GetType().Name);
+        _ = environment;
     }
 
     internal static string FormatSendGridFailure(int statusCode, string responseBody)
