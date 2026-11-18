@@ -246,7 +246,7 @@ export function SegmentPicker({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border-warm bg-card">
+    <div className="overflow-hidden rounded-[16px] border border-border-warm bg-card">
       <div className="border-b border-border-warm bg-muted/20 px-5 py-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

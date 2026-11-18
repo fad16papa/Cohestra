@@ -30,11 +30,11 @@ export function PricingPageContent() {
         <MarketingAmbientScene variant="pricing" className="opacity-55" />
         <div className="relative z-[1]">
         <MarketingReveal immediate delayMs={80}>
-          <p className="text-section text-gold">Pricing</p>
+          <p className="text-section text-text-accent">Pricing</p>
           <h1 className="text-marketing-section mt-4 max-w-[18ch] text-ink">
             Plans for clubs, workshops, and groups
           </h1>
-          <p className="text-marketing-lead mt-4 max-w-2xl text-stone">
+          <p className="text-marketing-lead mt-4 max-w-2xl text-muted-foreground">
             Start free on Basic. Upgrade when you need a public homepage, richer reports, a team,
             or Pro marketing tools.
           </p>
@@ -74,9 +74,9 @@ export function PricingPageContent() {
                   <th scope="row" className="px-4 py-3 font-medium text-ink">
                     {row.feature}
                   </th>
-                  <td className="px-4 py-3 text-stone">{row.basic}</td>
-                  <td className="px-4 py-3 text-stone">{row.core}</td>
-                  <td className="px-4 py-3 text-stone">{row.pro}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{row.basic}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{row.core}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{row.pro}</td>
                 </tr>
               ))}
             </tbody>
@@ -94,7 +94,7 @@ export function PricingPageContent() {
             <MarketingReveal key={item.question} delayMs={marketingRevealDelay(index + 2)}>
               <div className="border-t border-line pt-6 first:border-t-0 first:pt-0">
                 <dt className="font-semibold text-ink">{item.question}</dt>
-                <dd className="mt-2 text-sm leading-relaxed text-stone">{item.answer}</dd>
+                <dd className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.answer}</dd>
               </div>
             </MarketingReveal>
           ))}
@@ -104,7 +104,7 @@ export function PricingPageContent() {
           <Link href="/signup" className={marketingAtelierButtonClass("lagoon")}>
             Start free on Basic
           </Link>
-          <p className="text-xs text-stone">
+          <p className="text-xs text-muted-foreground">
             Prices are in USD. Paddle collects and remits applicable taxes as merchant of record.
             Checkout may show a local currency estimate based on your location.
           </p>

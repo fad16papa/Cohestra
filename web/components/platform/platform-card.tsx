@@ -11,7 +11,7 @@ export function PlatformCard({ children, className }: PlatformCardProps) {
   return (
     <div
       className={cn(
-        "rounded-[10px] border border-[var(--plat-line)] bg-white/80 shadow-sm",
+        "rounded-[16px] border border-[var(--plat-line)] bg-white/80 shadow-sm",
         className
       )}
     >

@@ -88,7 +88,7 @@ function VersionDetails({ version }: { version: PlatformOpsVersion }) {
   const sha = version.gitSha;
   const shortSha = sha.value ? sha.value.slice(0, 12) : null;
   return (
-    <div className="space-y-3 rounded-[10px] border border-[var(--plat-line)] bg-white/70 p-4 sm:p-5">
+    <div className="space-y-3 rounded-[16px] border border-[var(--plat-line)] bg-white/70 p-4 sm:p-5">
       <dl className="space-y-3 text-sm">
         <div>
           <dt className="text-[var(--plat-stone)]">Git SHA</dt>

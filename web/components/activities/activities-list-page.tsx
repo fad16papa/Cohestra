@@ -463,6 +463,7 @@ export function ActivitiesListPage() {
   return (
     <div className="space-y-6" data-activities-list-state={listState}>
       <PageHeader
+        variant="room"
         title="Activities"
         description="Launch and manage your lead engines."
         actions={
@@ -676,7 +677,7 @@ export function ActivitiesListPage() {
         <div ref={activityGridRef}>
           {listState === "no-match" ? (
             <div className="rounded-xl border border-dashed border-border-warm px-6 py-10 text-center">
-              <h2 className="text-section text-text-warm">
+              <h2 className="text-base font-semibold tracking-[-0.02em] text-text-warm">
                 No activities match your current filters.
               </h2>
               <p className="mt-2 text-sm text-text-muted-warm">

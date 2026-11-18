@@ -48,7 +48,7 @@ export function PricingIntervalToggle({
             onClick={() => onChange(value)}
             className={cn(
               "rounded-[10px] px-4 py-2 text-sm font-semibold transition-colors",
-              active ? "bg-paper text-ink shadow-sm" : "text-stone hover:text-ink"
+              active ? "bg-paper text-ink shadow-sm" : "text-muted-foreground hover:text-ink"
             )}
           >
             {value === "monthly" ? "Monthly" : "Yearly"}
@@ -96,7 +96,7 @@ export function PricingPlanGrid({ interval }: { interval: PricingInterval }) {
               <h3 className="font-[family-name:var(--font-fraunces)] text-2xl font-medium tracking-[-0.03em] text-ink">
                 {plan.name}
               </h3>
-              <p className="mt-2 min-h-[2.75rem] text-sm leading-relaxed text-stone">{plan.headline}</p>
+              <p className="mt-2 min-h-[2.75rem] text-sm leading-relaxed text-muted-foreground">{plan.headline}</p>
             </div>
 
             <div className="mt-4 min-h-[7.25rem]">
@@ -105,9 +105,9 @@ export function PricingPlanGrid({ interval }: { interval: PricingInterval }) {
                   {pricePrimary}
                 </p>
               ) : null}
-              {priceSecondary ? <p className="mt-1 text-sm text-stone">{priceSecondary}</p> : null}
+              {priceSecondary ? <p className="mt-1 text-sm text-muted-foreground">{priceSecondary}</p> : null}
               {plan.trialNote ? (
-                <p className="mt-3 text-xs leading-relaxed text-stone">{plan.trialNote}</p>
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{plan.trialNote}</p>
               ) : (
                 <p className="mt-3 text-xs leading-relaxed text-transparent select-none" aria-hidden>
                   &nbsp;
@@ -115,7 +115,7 @@ export function PricingPlanGrid({ interval }: { interval: PricingInterval }) {
               )}
             </div>
 
-            <ul className="mt-6 space-y-2 text-sm leading-relaxed text-stone">
+            <ul className="mt-6 space-y-2 text-sm leading-relaxed text-muted-foreground">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex gap-2">
                   <span aria-hidden className="mt-0.5 shrink-0 text-lagoon">

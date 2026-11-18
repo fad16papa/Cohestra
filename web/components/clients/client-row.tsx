@@ -237,7 +237,12 @@ export function ClientRow({
 
   if (variant === "row") {
     return (
-      <tr className={cn("group motion-local hover:bg-muted/20", selected && "bg-primary/5")}>
+      <tr
+        className={cn(
+          "group h-[52px] motion-local hover:bg-muted/20",
+          selected && "bg-primary/5"
+        )}
+      >
         <td className={clientsTableCellClassName}>
           {selectable ? (
             <div className={clientsSemanticTableCheckboxClassName}>

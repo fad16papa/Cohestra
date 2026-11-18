@@ -69,7 +69,7 @@ export function WebsiteBuilderToolbar({
   const isReady = !hasBlockers && !hasWarnings;
 
   return (
-    <header className="shrink-0 space-y-2 rounded-xl border border-border-warm bg-card p-3 shadow-sm sm:p-4">
+    <header className="shrink-0 space-y-2 rounded-[16px] border border-border-warm bg-card p-3 sm:p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 space-y-1">
           <div className="flex flex-wrap items-center gap-2">

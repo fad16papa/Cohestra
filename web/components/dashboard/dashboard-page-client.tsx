@@ -196,7 +196,7 @@ export function DashboardPageClient() {
   if (status === "loading" || !initialized) {
     return (
       <div
-        className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
+        className="mx-auto w-full min-w-0 max-w-6xl space-y-6"
         data-testid="dashboard-session"
         data-dashboard-session={sessionId}
       >
@@ -215,7 +215,7 @@ export function DashboardPageClient() {
   if (error) {
     return (
       <div
-        className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
+        className="mx-auto w-full min-w-0 max-w-6xl space-y-6"
         data-testid="dashboard-session"
         data-dashboard-session={sessionId}
       >
@@ -246,7 +246,7 @@ export function DashboardPageClient() {
 
   return (
     <div
-      className="mx-auto w-full min-w-0 max-w-6xl space-y-8"
+      className="mx-auto w-full min-w-0 max-w-6xl space-y-6"
       data-testid="dashboard-session"
       data-dashboard-session={sessionId}
     >
@@ -258,7 +258,7 @@ export function DashboardPageClient() {
         id="dashboard-view-panel"
         role="tabpanel"
         aria-labelledby={`dashboard-view-${viewMode}`}
-        className="space-y-8"
+        className="space-y-6"
       >
         {hasActivities === false ? <DashboardEmptyState /> : null}
 

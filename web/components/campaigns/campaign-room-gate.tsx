@@ -33,7 +33,7 @@ export function CampaignRoomChrome({
   if (access.kind === "loading") {
     return (
       <div className="space-y-6">
-        <PageHeader title={title} description={description ?? "Loading campaigns…"} />
+        <PageHeader variant="room" title={title} description={description ?? "Loading campaigns…"} />
         <ListSkeleton rows={4} />
       </div>
     );
@@ -42,7 +42,7 @@ export function CampaignRoomChrome({
   if (access.kind === "pending") {
     return (
       <div className="space-y-6">
-        <PageHeader title={title} description={description} />
+        <PageHeader variant="room" title={title} description={description} />
         <p role="status" className="text-sm text-text-muted-warm">
           Checking campaign access… Workspace plan is still being confirmed. Checkout is
           not offered until the plan is known.
@@ -56,7 +56,7 @@ export function CampaignRoomChrome({
       access.kind === "locked" ? access.isTenantAdmin : isTenantAdmin;
     return (
       <div className="space-y-6">
-        <PageHeader title={title} description={description} />
+        <PageHeader variant="room" title={title} description={description} />
         <UpgradePanel
           title={LOCK_TITLE}
           description={LOCK_DESCRIPTION}
@@ -70,7 +70,7 @@ export function CampaignRoomChrome({
   if (denied) {
     return (
       <div className="space-y-6">
-        <PageHeader title={title} description={description} />
+        <PageHeader variant="room" title={title} description={description} />
         <ProductErrorState
           title="You don’t have access to Campaigns"
           message={deniedMessage ?? "Your role cannot open Campaigns."}

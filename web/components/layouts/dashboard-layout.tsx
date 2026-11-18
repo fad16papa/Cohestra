@@ -149,7 +149,7 @@ function DashboardShellBody({ children }: DashboardLayoutProps) {
           <main
             id={MAIN_CONTENT_ID}
             tabIndex={-1}
-            className="mx-auto w-full max-w-7xl min-w-0 flex-1 scroll-mt-16 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] outline-none focus:outline-2 focus:outline-offset-2 focus:outline-ring sm:p-6 md:pb-6"
+            className="mx-auto w-full max-w-7xl min-w-0 flex-1 scroll-mt-16 p-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] outline-none focus:outline-2 focus:outline-offset-2 focus:outline-ring md:p-6 md:pb-6"
           >
             <AdminRouteTransition key={adminRouteTransitionKey(pathname)}>
               {children}

@@ -26,13 +26,13 @@ function emptyStateCopy(plan: string | null | undefined): { eyebrow: string; bod
 
   if (plan && isBasicPlan(plan)) {
     return {
-      eyebrow: "Open your atelier",
+      eyebrow: "Your Basic workspace is ready",
       body: "Basic is free forever — no card required. Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
     };
   }
 
   return {
-    eyebrow: "Open your atelier",
+    eyebrow: "Your workspace is ready",
     body: "Create a community to organize your work, publish an activity, and share a registration link or QR at your next event.",
   };
 }
@@ -52,7 +52,7 @@ export function DashboardEmptyState() {
           <Sparkles className="size-4" aria-hidden />
           {copy.eyebrow}
         </p>
-        <h2 className="relative mt-3 text-display-sm text-text-warm">
+        <h2 className="relative mt-3 text-xl font-semibold tracking-[-0.02em] text-text-warm">
           Start with one community, then your first activity
         </h2>
         <p className="relative mt-2 max-w-xl text-sm leading-relaxed text-text-muted-warm">

@@ -224,10 +224,10 @@ export function ReportFilterBar({ activities }: ReportFilterBarProps) {
     filters.to;
 
   return (
-    <div className="space-y-4 rounded-xl border border-border-warm bg-card p-4">
+    <div className="space-y-4 rounded-[16px] border border-border-warm bg-card p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-section text-text-warm">Filters</h2>
+          <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">Filters</h2>
           <p className="text-sm text-text-muted-warm">
             Combine filters with AND semantics.
           </p>

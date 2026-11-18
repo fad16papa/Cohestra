@@ -18,6 +18,9 @@ export type DashboardOnboardingStep = {
   href: string;
 };
 
+export const DASHBOARD_ONBOARDING_INTRO =
+  "Complete these steps to publish an activity and follow up from one client list.";
+
 export const DASHBOARD_ONBOARDING_STEPS: DashboardOnboardingStep[] = [
   {
     id: "create-activity",
@@ -40,7 +43,7 @@ export const DASHBOARD_ONBOARDING_STEPS: DashboardOnboardingStep[] = [
   {
     id: "first-follow-up",
     label: "Log your first follow-up",
-    detail: "Mark a lead as contacted or send a WhatsApp / Viber message.",
+    detail: "Open Follow-up and mark a client as contacted, or send a WhatsApp or Viber message.",
     href: "/follow-up",
   },
 ];

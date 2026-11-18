@@ -126,7 +126,7 @@ export function PlatformOmniSearch({
 
 function SearchGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[12px] border border-[var(--plat-line)] bg-white/50 p-4">
+    <div className="rounded-[16px] border border-[var(--plat-line)] bg-white/50 p-4">
       <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--plat-stone)]">
         {title}
       </h3>

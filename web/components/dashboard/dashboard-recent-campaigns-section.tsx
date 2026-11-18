@@ -71,7 +71,10 @@ export function DashboardRecentCampaignsSection() {
     <section aria-labelledby="recent-campaigns-heading" className="space-y-4">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h3 id="recent-campaigns-heading" className="text-section text-text-warm">
+          <h3
+            id="recent-campaigns-heading"
+            className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm"
+          >
             Recent campaigns
           </h3>
           <p className="mt-1 text-sm text-text-muted-warm">

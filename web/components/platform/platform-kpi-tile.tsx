@@ -20,7 +20,7 @@ export function PlatformKpiTile({
 }: PlatformKpiTileProps) {
   const freshnessText = freshnessLabel(freshness);
   return (
-    <section className="rounded-[10px] border border-[var(--plat-line)] bg-white/70 p-4 sm:p-5">
+    <section className="rounded-[16px] border border-[var(--plat-line)] bg-white/70 p-4 sm:p-5">
       <h2 className="text-sm font-semibold tracking-tight text-[var(--plat-ink)]">{title}</h2>
       <div className="mt-3 text-[var(--plat-ink)]">{children}</div>
       <p className="mt-4 min-w-0 break-words text-xs leading-relaxed text-[var(--plat-stone)]">

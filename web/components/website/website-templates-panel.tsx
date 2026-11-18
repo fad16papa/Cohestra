@@ -180,7 +180,9 @@ export function WebsiteTemplatesPanel({
     return (
       <section className="space-y-4" data-tour="website-builder-templates-panel">
         <div>
-          <h2 className="text-section text-text-warm">Templates &amp; recovery</h2>
+          <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
+            Templates &amp; recovery
+          </h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             Built-in layouts, saved templates, and revert options.
           </p>
@@ -191,7 +193,7 @@ export function WebsiteTemplatesPanel({
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-border-warm bg-card">
+    <section className="overflow-hidden rounded-[16px] border border-border-warm bg-card">
       <button
         type="button"
         className="flex w-full items-start justify-between gap-3 px-4 py-4 text-left sm:px-5"
@@ -199,7 +201,9 @@ export function WebsiteTemplatesPanel({
         onClick={() => setOpen((current) => !current)}
       >
         <div>
-          <h2 className="text-section text-text-warm">Templates &amp; recovery</h2>
+          <h2 className="text-xs font-semibold tracking-[0.04em] text-text-muted-warm">
+            Templates &amp; recovery
+          </h2>
           <p className="mt-1 text-sm text-text-muted-warm">
             {isOpen
               ? "Built-in layouts, saved templates, and revert options"
