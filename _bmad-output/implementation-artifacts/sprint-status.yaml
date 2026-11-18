@@ -508,7 +508,7 @@ development_status:
   46-9-production-security-and-tenant-isolation-hardening: backlog
   46-10-paddle-live-readiness: backlog
   46-11-sendgrid-and-email-production-readiness: backlog
-  46-12-performance-capacity-and-load-acceptance: backlog
+  46-12-performance-capacity-and-load-acceptance: review
   46-13-production-dns-tls-and-readiness-smoke: backlog
   46-14-final-production-release-acceptance: backlog
   46-15-production-cutover: backlog

@@ -368,6 +368,9 @@ jobs:
       - name: Production compose contract
         run: bash deploy/validate-production-compose.sh
 
+      - name: Production-like load guard contract (46.12)
+        run: bash deploy/production-like-load.test.sh
+
       - name: Production host UFW fail-closed contract
         run: bash deploy/harden-production-host.test.sh
 

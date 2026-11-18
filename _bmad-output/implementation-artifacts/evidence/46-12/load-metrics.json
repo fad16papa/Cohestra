@@ -1,0 +1,19 @@
+{
+  "recordedAt": "2026-11-18T09:31:21.1582719+00:00",
+  "requestCount": 320,
+  "concurrency": 4,
+  "successful": 320,
+  "errors": 0,
+  "errorRate": 0,
+  "latencyMs": {
+    "p50": 1.182,
+    "p95": 1.979,
+    "p99": 9.483,
+    "max": 10.716
+  },
+  "path": "/health",
+  "loadTestSeedEnabled": false,
+  "customerDnsUsed": false,
+  "productionDropletContacted": false,
+  "future46_7LatencyWarningMs": 3.958
+}
