@@ -53,6 +53,15 @@ public sealed class TenantMembershipService(CohestraDbContext dbContext) : ITena
             m => m.UserId == userId && m.TenantId == tenantId,
             cancellationToken);
 
+    public Task<TenantStatus?> GetTenantStatusAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default) =>
+        dbContext.Tenants
+            .AsNoTracking()
+            .Where(tenant => tenant.Id == tenantId)
+            .Select(tenant => (TenantStatus?)tenant.Status)
+            .FirstOrDefaultAsync(cancellationToken);
+
     public async Task<string?> GetPendingVerificationTenantSlugAsync(
         Guid userId,
         CancellationToken cancellationToken = default)

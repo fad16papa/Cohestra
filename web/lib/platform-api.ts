@@ -1174,6 +1174,40 @@ export async function archivePlatformTenant(
   return parseTenant(asRecord(await response.json()));
 }
 
+export type BootstrapFirstAdminResult = {
+  tenantId: string;
+  inviteId: string;
+  email: string;
+  expiresAt: string;
+};
+
+export async function bootstrapFirstAdmin(
+  authFetch: AuthFetch,
+  tenantId: string,
+  email: string
+): Promise<BootstrapFirstAdminResult> {
+  const response = await authFetch(
+    `${getPublicApiBaseUrl()}/api/v1/platform/tenants/${tenantId}/bootstrap-admin`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(await parseProblemDetail(response));
+  }
+  const raw = asRecord(await response.json());
+  const tenantIdOut = pickString(raw, "tenantId", "TenantId");
+  const inviteId = pickString(raw, "inviteId", "InviteId");
+  const emailOut = pickString(raw, "email", "Email");
+  const expiresAt = pickString(raw, "expiresAt", "ExpiresAt");
+  if (!tenantIdOut || !inviteId || !emailOut || !expiresAt) {
+    throw new Error("Invalid bootstrap admin response");
+  }
+  return { tenantId: tenantIdOut, inviteId, email: emailOut, expiresAt };
+}
+
 export async function setPlatformTenantComplimentary(
   authFetch: AuthFetch,
   tenantId: string,

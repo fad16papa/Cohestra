@@ -21,7 +21,11 @@ grep -q '390' "$CFG" && grep -q '844' "$CFG" || fail "mobile viewport 390x844 re
 grep -q 'thesocialcollectivesg.com' "$CFG" || fail "config must refuse the shared CRM host"
 grep -q 'retain-on-failure' "$CFG" || fail "failure artifacts (trace/screenshot) required"
 grep -q 'https://uat.cohestra.app' "$CFG" && fail "do not hardcode the UAT host in the Playwright config"
-grep -q 'test.skip' "$AUTH" || fail "authenticated flow must skip without dedicated secrets"
+grep -q 'authenticated coverage cannot skip' "$AUTH" \
+  || fail "authenticated login must fail closed without dedicated secrets"
+grep -q '45.5 OTP mailbox' "$AUTH" || fail "OTP suite must remain classified"
+grep -q 'dedicated UAT OTP mailbox secrets are not configured' "$AUTH" \
+  || fail "OTP coverage may skip; Basic/Pro may not"
 grep -q 'UAT_AUTO_BASIC_EMAIL' "$AUTH" || fail "authenticated flow must use dedicated automation env names"
 LAYER_A="$ROOT_DIR/web/e2e-uat/recaptcha-layer-a.spec.ts"
 [[ -f "$LAYER_A" ]] || fail "missing Layer A recaptcha spec"
@@ -38,8 +42,14 @@ CORE="$ROOT_DIR/web/e2e-uat/operator-core-flows.spec.ts"
 [[ -f "$CORE" ]] || fail "missing 19.5 operator core-flow spec"
 grep -q 'UAT_AUTO_BASIC_EMAIL' "$CORE" || fail "19.5 must use Basic automation env names"
 grep -q 'UAT_AUTO_PRO_EMAIL' "$CORE" || fail "19.5 must use Pro automation env names"
-grep -q 'UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped' "$CORE" || fail "19.5 must skip until Basic aliases are mapped"
-grep -q 'UAT_AUTO_PRO_EMAIL/PASSWORD are not mapped' "$CORE" || fail "19.5 must skip until Pro aliases are mapped"
+grep -q 'UAT_AUTO_BASIC_EMAIL/PASSWORD are required' "$CORE" \
+  || fail "19.5 must fail closed until Basic aliases are mapped"
+grep -q 'UAT_AUTO_PRO_EMAIL/PASSWORD are required' "$CORE" \
+  || fail "19.5 must fail closed until Pro aliases are mapped"
+grep -q 'UAT_AUTO_BASIC_EMAIL/PASSWORD are not mapped' "$CORE" \
+  && fail "19.5 must not skip mandatory Basic coverage"
+grep -q 'UAT_AUTO_PRO_EMAIL/PASSWORD are not mapped' "$CORE" \
+  && fail "19.5 must not skip mandatory Pro coverage"
 grep -q 'otp-mailbox' "$CORE" && fail "19.5 must not import the OTP mailbox helper"
 grep -q 'UAT_OTP_MAILBOX' "$CORE" && fail "19.5 must not require OTP mailbox secrets"
 grep -q 'workspaceOrigin' "$CORE" || fail "19.5 must log in on the tenant host, not marketing apex"

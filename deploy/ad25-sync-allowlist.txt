@@ -1,0 +1,30 @@
+# AD-25 owner sync allowlist. Paths relative to repo root.
+# Exclusive control-plane + the PR-D workflow/test files that
+# postmerge-isolation and release/uat CI actually execute.
+# Exact-tree: dest blob SHA == PR-D-on-main for every path below,
+# and dest-vs-parent changed paths must be a subset of this list.
+# Forbidden: application trees (src/, web/), Production workflows,
+# secrets, retired ADCP, #505. A seven-path subset is N39 REFUSE.
+# Baseline-retained (not listed): validate-deploy-production-workflow.sh
+# and other unchanged isolation scripts stay on the PR-C bootstrap tree.
+.github/workflows/ci.yml
+.github/workflows/deploy.yml
+deploy/ad25-sync-allowlist.txt
+deploy/commission-uat-hold.sh
+deploy/commission-uat-hold.test.sh
+deploy/fetch-origin-main.test.sh
+deploy/fetch-origin-uat.sh
+deploy/fetch-origin-uat.test.sh
+deploy/lib/ad25_sync_allowlist.py
+deploy/lib/uat-predeploy-gate.py
+deploy/reproduce-ad25-seven-path-gap.sh
+deploy/simulate-merge-token-trigger.py
+deploy/validate-ad25-sync-fixture.test.sh
+deploy/validate-ad25-sync-procedure.sh
+deploy/validate-deploy-uat-workflow.sh
+deploy/validate-inline-suppression.test.sh
+deploy/validate-prd-ad23.test.sh
+deploy/validate-uat-predeploy-gate.sh
+deploy/validate-uat-predeploy-gate.test.sh
+deploy/write-uat-deploy-provenance.sh
+deploy/write-uat-deploy-provenance.test.sh

@@ -25,6 +25,12 @@ public sealed class TenantInvite : ITenantScoped
 
     public DateTimeOffset CreatedAt { get; set; }
 
+    /// <summary>
+    /// First-admin bootstrap invites must be activated with an invitation-scoped email code.
+    /// Ordinary team invites leave this false and keep the existing accept path.
+    /// </summary>
+    public bool RequiresActivationOtp { get; set; }
+
     public bool IsPending(DateTimeOffset now) =>
         RevokedAt is null && AcceptedAt is null && ExpiresAt > now;
 }

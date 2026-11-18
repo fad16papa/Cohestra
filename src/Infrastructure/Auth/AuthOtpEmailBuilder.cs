@@ -15,6 +15,7 @@ public static class AuthOtpEmailBuilder
 {
     private const string EmailVerificationLabel = "Email Verification";
     private const string PasswordResetLabel = "Password Reset";
+    private const string InviteActivationLabel = "Invitation code";
 
     public static AuthOtpEmailContent BuildEmailVerification(string nickname, string code, int expiryMinutes)
     {
@@ -72,6 +73,33 @@ public static class AuthOtpEmailBuilder
 
         return new AuthOtpEmailContent(
             "Reset your Cohestra password",
+            plainText,
+            html,
+            inlineAttachment is null ? null : [inlineAttachment]);
+    }
+
+    public static AuthOtpEmailContent BuildInviteActivation(string code, int expiryMinutes)
+    {
+        var (logoUrl, inlineAttachment) = EmailBrandHeaderTemplate.ResolveInlineLogo();
+        var year = DateTime.UtcNow.Year;
+        var plainText = BuildPlainText(
+            InviteActivationLabel,
+            greeting: null,
+            $"Your invitation code is: {code}",
+            expiryMinutes,
+            "This code only finishes the workspace invitation it was sent for. If you did not expect it, you can ignore this email.");
+        var html = BuildHtml(
+            logoUrl,
+            InviteActivationLabel,
+            "Finish accepting your invitation",
+            "Enter this code to activate the invited account. It is proof you can read this mailbox, not a separate sign-in factor.",
+            "Invitation code",
+            code,
+            expiryMinutes,
+            "If you did not expect this invitation, ignore this email.",
+            year);
+        return new AuthOtpEmailContent(
+            "Your Cohestra invitation code",
             plainText,
             html,
             inlineAttachment is null ? null : [inlineAttachment]);

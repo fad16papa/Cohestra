@@ -216,6 +216,7 @@ public static class DependencyInjection
         services.AddScoped<ICommunityService, CommunityService>();
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IClientService, ClientService>();
+        services.AddScoped<IClientErasureService, ClientErasureService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.Configure<IntelligenceOptions>(configuration.GetSection(IntelligenceOptions.SectionName));
         services.AddScoped<IntelligenceBriefService>();

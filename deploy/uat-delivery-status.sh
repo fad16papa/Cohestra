@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# Predeploy-phase status only. Never claims a final deploy outcome.
+# Never prints tokens, secrets, or match bodies. Does not deploy.
+
+set -euo pipefail
+
+ROOT_DIR="${COHESTRA_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+OUT_DIR="${UAT_DELIVERY_STATUS_DIR:-${UAT_GATE_EVIDENCE_DIR:-$ROOT_DIR/artifacts}}"
+OUT_FILE="$OUT_DIR/uat-delivery-status.json"
+
+CANDIDATE_SHA="${CANDIDATE_SHA:-${DEPLOY_SHA:-}}"
+CANDIDATE_SHA="${CANDIDATE_SHA,,}"
+GATE_RESULT="${GATE_RESULT:-${UAT_GATE_RESULT:-UNKNOWN}}"
+GATE_REASON="${GATE_REASON:-${HOLD_REASON:-${REFUSE_REASON:-}}}"
+GITHUB_REPOSITORY="${GITHUB_REPOSITORY:-fad16papa/Cohestra}"
+GITHUB_RUN_ID="${GITHUB_RUN_ID:-}"
+FAILED_TEST="${FAILED_TEST:-}"
+
+mkdir -p "$OUT_DIR"
+
+python3 - "$OUT_FILE" "$CANDIDATE_SHA" "$GATE_RESULT" "$GATE_REASON" \
+  "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$FAILED_TEST" <<'PY'
+import json, sys
+
+path, sha, result, reason, repo, run_id, failed_test = sys.argv[1:8]
+result_n = (result or "UNKNOWN").strip().upper()
+reason_n = (reason or "").strip()
+
+if result_n == "HOLD":
+    failed_stage = "predeploy-gate"
+    outcome = "HELD"
+    deployed = False
+elif result_n == "REFUSE":
+    failed_stage = "predeploy-gate"
+    outcome = "REFUSED"
+    deployed = False
+elif result_n == "PASS":
+    failed_stage = "none"
+    outcome = "NOT_STARTED"
+    deployed = None
+else:
+    failed_stage = "unknown"
+    outcome = "UNKNOWN"
+    deployed = None
+
+run_links = {}
+if run_id.isdigit() and repo:
+    run_links["actions_run"] = f"https://github.com/{repo}/actions/runs/{run_id}"
+
+payload = {
+    "phase": "predeploy",
+    "candidate_sha": sha if sha and len(sha) == 40 else sha,
+    "failed_stage": failed_stage,
+    "failed_test": failed_test or reason_n,
+    "security_gate": result_n,
+    "eligibility": result_n,
+    "deployment_phase": "NOT_STARTED",
+    "uat_deployment_outcome": outcome,
+    "ssh_executed": False,
+    "uat_deployed": deployed,
+    "diagnostics": reason_n,
+    "run_links": run_links,
+    "agent_policy": (
+        "Investigate and prepare fixes on a development branch only. "
+        "Do not autonomously merge, change release controls, or retry indefinitely."
+    ),
+}
+with open(path, "w", encoding="utf-8") as fh:
+    json.dump(payload, fh, indent=2)
+    fh.write("\n")
+print(f"UAT_DELIVERY_STATUS={path}")
+PY

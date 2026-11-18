@@ -1226,6 +1226,11 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<Guid>("InvitedByUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("RequiresActivationOtp")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<DateTimeOffset?>("RevokedAt")
                         .HasColumnType("timestamp with time zone");
 

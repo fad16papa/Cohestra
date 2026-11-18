@@ -416,14 +416,7 @@ public sealed class AuthService(
 
         if (user.EmailConfirmed)
         {
-            var session = await ResolveSessionBindingAsync(user, host, preferredTenantId: null, cancellationToken);
-            if (session.ErrorCode is not null)
-            {
-                return (null, session.ErrorMessage, null);
-            }
-
-            await otpVerifyRateLimiter.ClearFailuresAsync(email, clientIp, cancellationToken);
-            return (await IssueTokensAsync(user, session.TenantId, session.MembershipRole, cancellationToken), null, null);
+            return (null, "This email is already verified. Sign in instead.", null);
         }
 
         // Another confirmed TenantAdmin already closed bootstrap — do not confirm a second admin.
@@ -695,11 +688,30 @@ public sealed class AuthService(
             return SessionBinding.Fail("no_tenant_membership", HostMembershipMessage);
         }
 
+        var unavailable = await RejectIfWorkspaceUnavailableAsync(membership.TenantId, cancellationToken);
+        if (unavailable is not null)
+        {
+            return unavailable;
+        }
+
         return SessionBinding.ForTenant(
             membership.TenantId,
             membership.Role,
             resolvedTenantSlug,
             requiresTenantHandoff);
+    }
+
+    private async Task<SessionBinding?> RejectIfWorkspaceUnavailableAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken)
+    {
+        var status = await tenantMembershipService.GetTenantStatusAsync(tenantId, cancellationToken);
+        if (status is TenantStatus.Active)
+        {
+            return null;
+        }
+
+        return SessionBinding.Fail("workspace_unavailable", "This workspace is not available.");
     }
 
     /// <summary>
@@ -744,6 +756,12 @@ public sealed class AuthService(
         var requiresTenantHandoff = !hostResolution.Succeeded
             || hostResolution.TenantId is null
             || hostResolution.TenantId.Value != primaryMembership.TenantId;
+
+        var unavailable = await RejectIfWorkspaceUnavailableAsync(primaryMembership.TenantId, cancellationToken);
+        if (unavailable is not null)
+        {
+            return unavailable;
+        }
 
         return SessionBinding.ForTenant(
             primaryMembership.TenantId,

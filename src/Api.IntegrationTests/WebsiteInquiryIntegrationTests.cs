@@ -9,6 +9,7 @@ using Cohestra.Domain.Outbox;
 using Cohestra.Domain.Tenants;
 using Cohestra.Infrastructure.Persistence;
 using Cohestra.Infrastructure.Tenancy;
+using Cohestra.Infrastructure.WebsiteInquiries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -68,6 +69,94 @@ public sealed class WebsiteInquiryIntegrationTests(IntegrationTestFixture fixtur
 
         Assert.True(await dbContext.OutboxMessages.AnyAsync(item =>
             item.MessageType == OutboxMessageTypes.WebsiteInquiryOperatorNotify));
+    }
+
+    [SkippableFact]
+    public async Task SubmitWebsiteInquiry_WaitsForErasureLock_AndDoesNotStorePayloadAfterClientIsGone()
+    {
+        IntegrationTestHelpers.SkipIfUnavailable(Factory);
+
+        var slug = $"contact-lock-{Guid.NewGuid():N}";
+        await IntegrationTestHelpers.SeedPublishedActivityAsync(Factory.Services, slug);
+        await PublishSiteWithContactSectionAsync(slug);
+
+        var email = $"lock-{Guid.NewGuid():N}@example.com";
+        const string secret = "ERASURE_RACE_SECRET";
+
+        using var http = Factory.CreateClient();
+        var first = await http.PostAsJsonAsync(
+            "/api/v1/public/website-inquiries",
+            new SubmitWebsiteInquiryRequest("Lock First", email, null, "First message", false),
+            IntegrationTestHelpers.JsonOptions);
+        first.EnsureSuccessStatusCode();
+        var created = await first.Content.ReadFromJsonAsync<SubmitWebsiteInquiryResponse>(
+            IntegrationTestHelpers.JsonOptions);
+        Assert.NotNull(created);
+
+        await using var scope = Factory.Services.CreateAsyncScope();
+        IntegrationTestHelpers.BindDefaultTenant(scope.ServiceProvider);
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var client = await db.IgnoreTenantFilters<Client>().SingleAsync(row => row.Id == created!.ClientId);
+        var connection = db.Database.GetDbConnection();
+        await connection.OpenAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
+        await db.Database.UseTransactionAsync(transaction);
+        await WebsiteInquiryOutboxIdentity.LockDispatchAsync(
+            db.Database,
+            client.TenantId,
+            client.Id,
+            CancellationToken.None);
+
+        var second = http.PostAsJsonAsync(
+            "/api/v1/public/website-inquiries",
+            new SubmitWebsiteInquiryRequest("Lock Second", email, null, secret, false),
+            IntegrationTestHelpers.JsonOptions);
+
+        var sawWaiter = false;
+        for (var attempt = 0; attempt < 40 && !second.IsCompleted; attempt++)
+        {
+            if (await CountAdvisoryWaitersAsync() > 0)
+            {
+                sawWaiter = true;
+                break;
+            }
+
+            await Task.Delay(100);
+        }
+
+        Assert.True(sawWaiter, "inquiry submit did not wait for the erasure dispatch lock");
+
+        db.Remove(client);
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        using var response = await second.WaitAsync(TimeSpan.FromSeconds(20));
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+
+        await using var check = Factory.Services.CreateAsyncScope();
+        var checkDb = check.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var payloads = await checkDb.OutboxMessages
+            .Where(row => row.MessageType == OutboxMessageTypes.WebsiteInquiryOperatorNotify)
+            .Select(row => row.PayloadJson)
+            .ToListAsync();
+        Assert.DoesNotContain(payloads, payload => payload.Contains(secret, StringComparison.Ordinal));
+    }
+
+    private async Task<long> CountAdvisoryWaitersAsync()
+    {
+        await using var scope = Factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
+        var connection = db.Database.GetDbConnection();
+        await connection.OpenAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND wait_event = 'advisory'";
+        var raw = await command.ExecuteScalarAsync();
+        return raw switch
+        {
+            long count => count,
+            int count => count,
+            _ => Convert.ToInt64(raw),
+        };
     }
 
     [SkippableFact]

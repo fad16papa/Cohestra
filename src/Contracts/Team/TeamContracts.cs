@@ -34,7 +34,21 @@ public sealed record InvitePreviewResponse(
     string TenantSlug,
     string Email,
     string Role,
-    DateTimeOffset ExpiresAt);
+    DateTimeOffset ExpiresAt,
+    bool RequiresActivationOtp = false);
+
+public sealed record StartInviteActivationRequest(string Token, string? Nickname);
+
+public sealed record StartInviteActivationResponse(
+    bool CodeSent,
+    string MaskedEmail,
+    int ExpiresInSeconds);
+
+public sealed record CompleteInviteActivationRequest(
+    string Token,
+    string Password,
+    string? Nickname,
+    string Code);
 
 public sealed record AcceptTeamInviteRequest(
     string Token,

@@ -11,4 +11,6 @@ public sealed class AuthOtpSettings
     public int MaxSendAttemptsPerWindow { get; set; } = 3;
 
     public int SendWindowMinutes { get; set; } = 15;
+
+    public int MaxFailedVerificationAttempts { get; set; } = 5;
 }

@@ -38,6 +38,10 @@ public interface ITenantMembershipService
         Guid tenantId,
         CancellationToken cancellationToken = default);
 
+    Task<TenantStatus?> GetTenantStatusAsync(
+        Guid tenantId,
+        CancellationToken cancellationToken = default);
+
     /// <summary>
     /// For an unverified user, returns the self-serve tenant slug when pending verification
     /// belongs to a non-default workspace; otherwise null (bootstrap /register verify flow).

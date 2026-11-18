@@ -1,0 +1,290 @@
+name: UAT rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      rollback_sha:
+        description: Previous 40-character hexadecimal SHA that is an ancestor of origin/main
+        required: true
+        type: string
+      confirm:
+        description: "Type exactly: UAT ROLLBACK: AUTHORIZED"
+        required: true
+        type: string
+      execute:
+        description: Mutate the UAT host (default dry-run)
+        required: false
+        type: boolean
+        default: false
+      backup_attested:
+        description: Owner attests a current UAT pg_dump exists (names/status only)
+        required: true
+        type: boolean
+        default: false
+      compat_reviewed:
+        description: Owner attests previous-SHA schema compatibility was reviewed
+        required: true
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - ".github/workflows/deploy-uat-rollback.yml"
+      - "deploy/uat-rollback.sh"
+      - "deploy/uat-rollback.test.sh"
+      - "deploy/validate-uat-rollback-workflow.sh"
+      - "deploy/uat-host-mutation-lock.sh"
+      - "deploy/uat-host-mutation-lock.test.sh"
+  push:
+    paths:
+      - ".github/workflows/deploy-uat-rollback.yml"
+      - "deploy/uat-rollback.sh"
+      - "deploy/uat-rollback.test.sh"
+      - "deploy/validate-uat-rollback-workflow.sh"
+      - "deploy/uat-host-mutation-lock.sh"
+      - "deploy/uat-host-mutation-lock.test.sh"
+
+permissions:
+  contents: read
+  actions: read
+  checks: read
+
+jobs:
+  dispatch-readiness:
+    name: Prove rollback dispatch registration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Workflow contract and host-lock contract
+        run: |
+          set -euo pipefail
+          bash deploy/validate-uat-rollback-workflow.sh
+          bash deploy/uat-host-mutation-lock.test.sh
+
+      - name: Record dispatch-ready without live dispatch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python3 - .github/workflows/deploy-uat-rollback.yml <<'PY'
+          from pathlib import Path
+          import sys
+          text = Path(sys.argv[1]).read_text()
+          required = (
+              "workflow_dispatch:",
+              "rollback_sha:",
+              "UAT ROLLBACK: AUTHORIZED",
+              "backup_attested:",
+              "compat_reviewed:",
+              "default: false",
+              "environment: uat",
+          )
+          missing = [item for item in required if item not in text]
+          if missing:
+              raise SystemExit("dispatch contract missing: " + ",".join(missing))
+          PY
+          echo "LIVE_DISPATCH=false"
+          echo "WORKFLOW_DISPATCH_DEFINED=true"
+          if command -v gh >/dev/null 2>&1; then
+            if gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy-uat-rollback.yml" \
+              --jq '"WORKFLOW_STATE=" + (.state // "unknown")'; then
+              echo "WORKFLOW_REGISTRATION=queried"
+            else
+              echo "WORKFLOW_STATE=UNVERIFIED_UNTIL_DEFAULT_BRANCH"
+              echo "WORKFLOW_REGISTRATION=query_failed"
+            fi
+          else
+            echo "WORKFLOW_STATE=UNVERIFIED_NO_GH"
+          fi
+          echo "ZERO_JOB_PUSH_RUN=41297290896"
+          echo "ZERO_JOB_CAUSE=workflow_dispatch-only jobs skipped on push; readiness job now registers a succeeding job"
+
+  validate:
+    name: Validate UAT rollback request
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    concurrency:
+      group: deploy-uat
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    outputs:
+      rollback_sha: ${{ steps.gate.outputs.rollback_sha }}
+    steps:
+      - name: Require refs/heads/main
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "REFUSE: UAT rollback must be dispatched from main"
+            exit 1
+          fi
+
+      - name: Checkout dispatch SHA on main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Dry-run previous-SHA recovery
+        id: gate
+        env:
+          ROLLBACK_SHA: ${{ inputs.rollback_sha }}
+          UAT_ROLLBACK_AUTHORIZED: true
+          UAT_ROLLBACK_CONFIRM: ${{ inputs.confirm }}
+          UAT_ROLLBACK_EXECUTE: "false"
+          ORIGIN_MAIN_REF: origin/main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          bash deploy/fetch-origin-main.sh
+          bash deploy/uat-rollback.sh
+          echo "rollback_sha=${ROLLBACK_SHA,,}" >>"$GITHUB_OUTPUT"
+
+  refuse-unattested-execute:
+    name: Refuse execute without backup and compatibility attestation
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.execute && (!inputs.backup_attested || !inputs.compat_reviewed) }}
+    concurrency:
+      group: deploy-uat
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail closed
+        run: |
+          echo "REFUSE: backup_attested and compat_reviewed are required before execute"
+          echo "DB_RESTORE_NOT_ATTEMPTED=true"
+          echo "DB_MIGRATION_EFFECT=UNVERIFIED"
+          echo "RECOVERY_RESTORE_READY=false"
+          exit 1
+
+  rollback:
+    name: Execute UAT host rollback
+    needs: validate
+    if: "${{ github.event_name == 'workflow_dispatch' && inputs.execute && inputs.confirm == 'UAT ROLLBACK: AUTHORIZED' && inputs.backup_attested && inputs.compat_reviewed }}"
+    concurrency:
+      group: deploy-uat
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    environment: uat
+    steps:
+      - name: Checkout dispatch SHA for runner helpers
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fail closed if UAT secrets are missing
+        env:
+          DROPLET_HOST: ${{ secrets.DROPLET_HOST }}
+          DROPLET_USER: ${{ secrets.DROPLET_USER }}
+          DROPLET_SSH_KEY: ${{ secrets.DROPLET_SSH_KEY }}
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+        run: bash deploy/fail-closed-uat-secrets.sh
+
+      - name: Refuse if another UAT host mutator is active
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash deploy/uat-host-mutation-lock.sh actions
+
+      - name: Rollback previous SHA over SSH
+        uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f # v1.2.2
+        env:
+          DROPLET_DEPLOY_PATH: ${{ secrets.DROPLET_DEPLOY_PATH }}
+          ROLLBACK_SHA: ${{ needs.validate.outputs.rollback_sha }}
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          port: 22
+          command_timeout: 60m
+          envs: DROPLET_DEPLOY_PATH,ROLLBACK_SHA
+          script: |
+            set -euo pipefail
+            if [[ ! "${ROLLBACK_SHA:-}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              echo "REFUSE: ROLLBACK_SHA must be a 40-character hexadecimal Git SHA"
+              exit 1
+            fi
+            ROLLBACK_SHA="${ROLLBACK_SHA,,}"
+            DEPLOY_PATH="${DROPLET_DEPLOY_PATH:-/home/deploy/cohestra}"
+            cd "$DEPLOY_PATH"
+            LOCK_FILE="/tmp/cohestra-uat-host-mutation.lock"
+            exec 9>"$LOCK_FILE"
+            if ! flock -n 9; then
+              echo "REFUSE: UAT host mutation lock file is held"
+              exit 1
+            fi
+            export GIT_TERMINAL_PROMPT=0
+            fetch_ok=0
+            for attempt in 1 2 3 4 5 6; do
+              if git fetch origin main; then
+                fetch_ok=1
+                break
+              fi
+              echo "WARN: git fetch origin/main attempt ${attempt} failed"
+              sleep 20
+            done
+            if [[ "$fetch_ok" != 1 ]]; then
+              echo "REFUSE: git fetch origin/main failed after retries"
+              exit 1
+            fi
+            TIP_SHA="$(git rev-parse --verify origin/main)"
+            TIP_SHA="${TIP_SHA,,}"
+            if [[ "$ROLLBACK_SHA" == "$TIP_SHA" ]]; then
+              echo "REFUSE: current origin/main tip must use Deploy UAT, not rollback"
+              exit 1
+            fi
+            if ! git merge-base --is-ancestor "$ROLLBACK_SHA" origin/main; then
+              echo "REFUSE: ROLLBACK_SHA is not an ancestor of origin/main"
+              exit 1
+            fi
+            git reset --hard "$ROLLBACK_SHA"
+            ACTUAL="$(git rev-parse HEAD)"
+            if [[ "${ACTUAL,,}" != "$ROLLBACK_SHA" ]]; then
+              echo "REFUSE: DEPLOYED_SHA does not match ROLLBACK_SHA"
+              exit 1
+            fi
+            echo "EXPECTED_SHA=${ROLLBACK_SHA}"
+            echo "DEPLOYED_SHA=${ACTUAL,,}"
+            if [[ ! -f deploy/uat-compose.sh ]]; then
+              echo "REFUSE: isolated UAT compose helper is missing on this SHA"
+              exit 1
+            fi
+            GIT_SHA="${ROLLBACK_SHA}"
+            export GIT_SHA
+            echo "GIT_SHA=${GIT_SHA}"
+            bash deploy/uat-compose.sh build api
+            bash deploy/uat-compose.sh build web
+            bash deploy/uat-compose.sh up -d --no-build
+            echo "DB_RESTORE_NOT_ATTEMPTED=true"
+            echo "DB_MIGRATION_EFFECT=UNVERIFIED"
+            echo "RECOVERY_RESTORE_READY=false"
+            echo "OWNER_ATTESTATION_REQUIRED=true"
+            NGINX_PORT="${NGINX_HOST_PORT:-8180}"
+            ready=0
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              if curl -fsS --connect-timeout 3 "http://127.0.0.1:${NGINX_PORT}/ready" | grep -q '"status":"Healthy"'; then
+                ready=1
+                break
+              fi
+              echo "WARN: post-rollback /ready attempt ${attempt} failed"
+              sleep 5
+            done
+            if [[ "$ready" != 1 ]]; then
+              echo "REFUSE: post-rollback /ready is not Healthy"
+              exit 1
+            fi
+            API_SHA="$(bash deploy/uat-compose.sh exec -T api printenv GIT_SHA || true)"
+            API_SHA="${API_SHA,,}"
+            if [[ ! "${API_SHA}" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "REFUSE: post-rollback API GIT_SHA is missing"
+              exit 1
+            fi
+            if [[ "${API_SHA}" != "${ROLLBACK_SHA}" ]]; then
+              echo "REFUSE: post-rollback API GIT_SHA does not match ROLLBACK_SHA"
+              exit 1
+            fi
+            echo "POST_ROLLBACK_ACCEPTANCE=pass"
+            echo "POST_ROLLBACK_SHA_MATCH=true"

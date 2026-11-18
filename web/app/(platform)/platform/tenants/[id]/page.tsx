@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   archivePlatformTenant,
+  bootstrapFirstAdmin,
   getPlatformTenant,
   reactivatePlatformTenant,
   setPlatformTenantComplimentary,
   suspendPlatformTenant,
+  type BootstrapFirstAdminResult,
   type PlatformAuditEntry,
   type TenantResponse,
 } from "@/lib/platform-api";
@@ -50,6 +52,9 @@ export default function PlatformTenantDetailPage() {
   const [suspendReason, setSuspendReason] = useState("");
   const [showSuspend, setShowSuspend] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [bootstrapEmail, setBootstrapEmail] = useState("");
+  const [bootstrapConfirmOpen, setBootstrapConfirmOpen] = useState(false);
+  const [bootstrapSuccess, setBootstrapSuccess] = useState<BootstrapFirstAdminResult | null>(null);
   const [compPlan, setCompPlan] = useState<string>("Core");
   const [compReason, setCompReason] = useState("");
   const busyRef = useRef(false);
@@ -74,6 +79,7 @@ export default function PlatformTenantDetailPage() {
         if (COMPLIMENTARY_PLANS.includes(detail.tenant.plan as (typeof COMPLIMENTARY_PLANS)[number])) {
           setCompPlan(detail.tenant.plan);
         }
+        setBootstrapEmail(detail.tenant.adminContactEmail ?? "");
       } catch (err) {
         if (requestId !== requestIdRef.current) {
           return;
@@ -112,6 +118,9 @@ export default function PlatformTenantDetailPage() {
     setSuspendReason("");
     setShowSuspend(false);
     setArchiveOpen(false);
+    setBootstrapEmail("");
+    setBootstrapConfirmOpen(false);
+    setBootstrapSuccess(null);
     busyRef.current = false;
     setBusy(false);
     actionGenRef.current += 1;
@@ -203,6 +212,8 @@ export default function PlatformTenantDetailPage() {
   const canReactivate = tenant.status === "Suspended";
   const canArchive = tenant.status !== "Archived" && !isDefaultTenant;
   const canChangeComplimentary = tenant.status !== "Archived" && !isDefaultTenant;
+  const canBootstrapFirstAdmin =
+    tenant.isComplimentary && tenant.status === "Active" && !isDefaultTenant;
   const tenantStatus = describePlatformTenantStatus(tenant.status);
   const billingStatus = describePlatformBillingStatus(tenant.billingStatus);
 
@@ -345,6 +356,108 @@ export default function PlatformTenantDetailPage() {
                 }}
               >
                 Archive workspace
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {canBootstrapFirstAdmin ? (
+          <div className="max-w-xl space-y-3 border-t border-[var(--plat-line)] pt-4">
+            <p className="text-sm leading-relaxed text-[var(--plat-stone)]">
+              Send a first-admin invite so the sponsored workspace can sign in with email
+              verification. This does not create an account until they complete the invite link.
+            </p>
+            <label
+              htmlFor="bootstrap-admin-email"
+              className="block text-xs font-semibold uppercase tracking-[0.06em] text-[var(--plat-stone)]"
+            >
+              Invite email
+            </label>
+            <input
+              id="bootstrap-admin-email"
+              type="email"
+              value={bootstrapEmail}
+              onChange={(event) => setBootstrapEmail(event.target.value)}
+              disabled={busy}
+              className="min-h-11 w-full min-w-0 rounded-[10px] border border-[var(--plat-line-strong)] bg-white/80 px-3 text-sm outline-none focus:border-[var(--plat-lagoon)] focus:ring-2 focus:ring-[var(--plat-lagoon)]/20"
+              placeholder="admin@workspace.example"
+            />
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={busy || bootstrapSuccess !== null || bootstrapEmail.trim().length === 0}
+                onClick={() => setBootstrapConfirmOpen(true)}
+                className="min-h-11 rounded-[10px] bg-[var(--plat-lagoon)] px-4 text-sm font-semibold text-[var(--plat-lagoon-fg)] disabled:opacity-50"
+              >
+                Send first-admin invitation
+              </button>
+            </div>
+            {bootstrapSuccess ? (
+              <p className="text-sm text-[var(--plat-ink-soft)]">
+                Pending invite for{" "}
+                <span className="min-w-0 font-medium text-[var(--plat-ink)]">
+                  {bootstrapSuccess.email}
+                </span>{" "}
+                · expires {formatDateTime(bootstrapSuccess.expiresAt)}.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <AlertDialog open={bootstrapConfirmOpen} onOpenChange={setBootstrapConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Send first-admin invitation?</AlertDialogTitle>
+              <AlertDialogDescription>
+                We will email a one-time activation invite to{" "}
+                <span className="font-medium text-foreground">{bootstrapEmail.trim()}</span> for
+                workspace {tenant.name}. They must verify email before joining.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy} className="min-h-11">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                disabled={busy || bootstrapSuccess !== null || bootstrapEmail.trim().length === 0}
+                className="min-h-11"
+                onClick={() => {
+                  setBootstrapConfirmOpen(false);
+                  if (busyRef.current) {
+                    return;
+                  }
+                  const actionTenantId = tenantIdRef.current;
+                  const actionGen = ++actionGenRef.current;
+                  busyRef.current = true;
+                  setBusy(true);
+                  setActionError(null);
+                  const email = bootstrapEmail.trim();
+                  void bootstrapFirstAdmin(authFetch, actionTenantId, email)
+                    .then((result) => {
+                      if (
+                        actionGen !== actionGenRef.current ||
+                        actionTenantId !== tenantIdRef.current
+                      ) {
+                        return;
+                      }
+                      setBootstrapSuccess(result);
+                      return loadDetail({ clearTenantOnError: false });
+                    })
+                    .catch((err) => {
+                      if (actionGen !== actionGenRef.current || actionTenantId !== tenantIdRef.current) {
+                        return;
+                      }
+                      setActionError(err instanceof Error ? err.message : "Could not send invitation.");
+                    })
+                    .finally(() => {
+                      if (actionGen === actionGenRef.current && actionTenantId === tenantIdRef.current) {
+                        busyRef.current = false;
+                        setBusy(false);
+                      }
+                    });
+                }}
+              >
+                Send invitation
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

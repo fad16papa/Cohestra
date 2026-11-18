@@ -62,9 +62,9 @@ else
 fi
 
 if grep -q 'workflow_run.head_sha' "$WF"; then
-  pass "workflow_run uses head_sha"
+  fail "PR-D must not pin TARGET_SHA from workflow_run.head_sha"
 else
-  fail "workflow_run must pin github.event.workflow_run.head_sha"
+  pass "TARGET_SHA is not derived from workflow_run.head_sha"
 fi
 
 if grep -q 'secrets.DROPLET_DEPLOY_PATH' "$WF" && grep -A2 'script:' "$WF" | grep -q 'secrets.DROPLET_DEPLOY_PATH'; then
@@ -109,10 +109,10 @@ else
   fail "workflow must upload uat-acceptance.json and uat-public-smoke.json"
 fi
 
-if grep -q 'TARGET_SHA:' "$WF" && grep -q 'workflow_run.head_sha' "$WF"; then
-  pass "TARGET_SHA is derived for workflow_run"
+if grep -q 'TARGET_SHA: ${{ github.sha }}' "$WF"; then
+  pass "TARGET_SHA is github.sha on the protected-push path"
 else
-  fail "workflow must define TARGET_SHA from workflow_run.head_sha"
+  fail "workflow must define TARGET_SHA from github.sha"
 fi
 
 if grep -q 'TARGET_SHA must be a full 40-character hexadecimal Git SHA' "$WF"; then
@@ -121,16 +121,16 @@ else
   fail "workflow must fail closed if TARGET_SHA is not a 40-character SHA"
 fi
 
-if grep -qE 'workflow_run\.head_sha \|\| github\.sha' "$WF"; then
-  fail "workflow_run TARGET_SHA must not fall back to github.sha"
+if grep -q 'workflow_run:' "$WF"; then
+  fail "N25 leftover workflow_run listener"
 else
-  pass "workflow_run TARGET_SHA does not fall back to github.sha"
+  pass "N25 no workflow_run listener"
 fi
 
 if grep -q 'TARGET_SHA must equal workflow_run.head_sha' "$WF"; then
-  pass "workflow_run TARGET_SHA is bound to head_sha"
+  fail "PR-D must not bind TARGET_SHA to workflow_run.head_sha"
 else
-  fail "workflow_run must refuse TARGET_SHA that is not head_sha"
+  pass "workflow_run.head_sha binding is gone"
 fi
 
 if grep -q 'EXPECTED_SHA' "$WF" && grep -q 'EXPECTED_SHA != DEPLOYED_SHA' "$WF"; then
@@ -241,6 +241,141 @@ if grep -qE 'tailscale/github-action|PROD_TAILSCALE_|tag:gha-production|environm
   fail "UAT workflow must not gain Production Tailscale or production Environment"
 else
   pass "UAT workflow has no Production overlay or Environment production"
+fi
+
+if grep -q 'name: Pre-UAT eligibility gate' "$WF" \
+  && grep -q 'validate-uat-predeploy-gate.sh' "$WF"; then
+  pass "pre-UAT eligibility gate is invoked before SSH"
+else
+  fail "workflow must run the pre-UAT eligibility gate"
+fi
+
+if grep -q 'needs.predeploy-gate.outputs.eligible' "$WF"; then
+  pass "SSH job is gated on predeploy eligibility"
+else
+  fail "deploy job must require predeploy-gate eligible=true"
+fi
+
+if grep -q "github.event_name == 'workflow_dispatch' ||" "$WF"; then
+  fail "workflow_dispatch must not OR-bypass the predeploy gate"
+else
+  pass "workflow_dispatch is not an OR-bypass of required checks"
+fi
+
+if grep -q 'actions: read' "$WF" && grep -q 'checks: read' "$WF"; then
+  pass "workflow can read Actions and check-run conclusions"
+else
+  fail "workflow must request actions: read and checks: read for the gate"
+fi
+
+if grep -q 'UAT_DEPLOY_GATE_ACTIVE: ${{ vars.UAT_DEPLOY_GATE_ACTIVE }}' "$WF"; then
+  pass "first-merge suppressor reads vars.UAT_DEPLOY_GATE_ACTIVE"
+else
+  fail "workflow must read UAT_DEPLOY_GATE_ACTIVE from vars"
+fi
+
+if grep -q 'UAT_MAIN_DEPLOY_SUPPRESSED: ${{ vars.UAT_MAIN_DEPLOY_SUPPRESSED }}' "$WF"; then
+  pass "cutover suppressor reads vars.UAT_MAIN_DEPLOY_SUPPRESSED"
+else
+  fail "workflow must read UAT_MAIN_DEPLOY_SUPPRESSED from vars"
+fi
+
+if python3 - "$WF" <<'PY'
+from pathlib import Path
+import sys
+text = Path(sys.argv[1]).read_text()
+start = text.find("  predeploy-gate:")
+if start < 0:
+    raise SystemExit("predeploy-gate missing")
+import re
+rest = text[start:]
+m = re.search(r"\n  [A-Za-z0-9_-]+:", rest[1:])
+pre = rest if not m else rest[: m.start() + 1]
+inline = pre.find("Trusted inline suppressors before candidate checkout")
+checkout = pre.find("Checkout accepted SHA")
+if inline < 0 or checkout < 0 or inline > checkout:
+    raise SystemExit("inline suppressor must precede TARGET_SHA checkout")
+block = pre[inline:checkout]
+if 'UAT_MAIN_DEPLOY_SUPPRESSED:-}" != "true"' not in block:
+    raise SystemExit("inline step must HOLD when suppressed is not exact true")
+if "actions/checkout" in block:
+    raise SystemExit("inline suppressor must not checkout the candidate")
+PY
+then
+  pass "inline suppressor runs before candidate checkout"
+else
+  fail "deploy.yml must HOLD UAT_MAIN_DEPLOY_SUPPRESSED before TARGET_SHA checkout"
+fi
+
+if python3 - "$WF" <<'PY'
+from pathlib import Path
+import re, sys
+text = Path(sys.argv[1]).read_text()
+on = text.split("jobs:", 1)[0]
+if "workflow_run:" in on:
+    raise SystemExit("N25 leftover workflow_run")
+if "\n  push:" not in on or "release/uat" not in on:
+    raise SystemExit("AD-23 requires push to release/uat")
+if re.search(r"branches:\n\s+- main", on):
+    raise SystemExit("Deploy UAT must not listen on main")
+PY
+then
+  pass "PR-D Deploy UAT is push to release/uat only"
+else
+  fail "PR-D must use AD-23 push release/uat and delete workflow_run"
+fi
+
+if grep -q 'Re-run UAT predeploy gate before SSH' "$WF"; then
+  pass "gate is revalidated immediately before SSH"
+else
+  fail "deploy job must re-run the predeploy gate before SSH"
+fi
+
+if grep -q 'fetch-origin-uat.sh' "$WF" \
+  && grep -q 'UAT_DEPLOY_GATE_ACTIVE:-}" != "true"' "$WF" \
+  && ! grep -qiE 'AUTHORIZATION:[[:space:]]*bearer' "$WF"; then
+  pass "disabled gate evaluates HOLD before authenticated origin/release/uat fetch"
+else
+  fail "predeploy must HOLD without the broken Bearer git fetch"
+fi
+
+if grep -qiE 'adcp|autonomous delivery control plane' "$WF"; then
+  fail "UAT workflow must not restore ADCP"
+else
+  pass "ADCP is absent from Deploy UAT"
+fi
+
+if grep -q 'env -u COHESTRA_GH_API_MOCK' "$WF"; then
+  pass "live gate unsets COHESTRA_GH_API_MOCK"
+else
+  fail "live Deploy UAT must env -u COHESTRA_GH_API_MOCK before the gate"
+fi
+
+if grep -q 'DEPLOY_SHA is not the current origin/${DEPLOY_BRANCH} tip' "$WF"; then
+  pass "SSH refuses a SHA that is no longer the origin tip"
+else
+  fail "SSH must refuse DEPLOY_SHA that is not the current origin tip"
+fi
+
+if grep -q 'name: UAT final delivery outcome' "$WF" \
+  && grep -q 'uat-final-outcome.sh' "$WF"; then
+  pass "Deploy UAT records a final delivery outcome"
+else
+  fail "deploy.yml must aggregate uat-final-outcome.sh"
+fi
+
+if awk '
+  /record-uat-deploy-dispatch.sh/ && !dispatch { dispatch=NR }
+  /appleboy\/ssh-action/ && !ssh { ssh=NR }
+  /record-uat-ssh-execution.sh/ && !record { record=NR }
+  END { exit(dispatch && ssh && record && dispatch < ssh && ssh < record ? 0 : 1) }
+' "$WF" \
+  && grep -q 'id: ssh-deploy' "$WF" \
+  && grep -q 'steps.ssh-deploy.conclusion' "$WF" \
+  && grep -q 'uat-ssh-execution.json' "$WF"; then
+  pass "pre-SSH dispatch is intent; post-SSH step conclusion is recorded separately"
+else
+  fail "workflow must record SSH-step evidence after SSH and not treat dispatch as execution"
 fi
 
 echo "Passed: ${PASS} | Failed: ${FAIL}"

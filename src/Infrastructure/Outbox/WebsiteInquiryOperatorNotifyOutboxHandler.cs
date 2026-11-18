@@ -18,8 +18,15 @@ public sealed class WebsiteInquiryOperatorNotifyOutboxHandler(
 
     public async Task HandleAsync(OutboxMessage message, CancellationToken cancellationToken = default)
     {
-        var payload = JsonSerializer.Deserialize<WebsiteInquiryOperatorNotifyOutboxPayload>(message.PayloadJson)
-            ?? throw new InvalidOperationException("Website inquiry operator notify outbox payload is invalid.");
+        if (WebsiteInquiryOutboxIdentity.IsRedacted(message.PayloadJson))
+        {
+            return;
+        }
+
+        if (!WebsiteInquiryOutboxIdentity.TryReadClientId(message.PayloadJson, out var clientId))
+        {
+            throw new InvalidOperationException("Website inquiry operator notify outbox payload is invalid.");
+        }
 
         var tenant = await dbContext.Tenants
             .AsNoTracking()
@@ -27,6 +34,43 @@ public sealed class WebsiteInquiryOperatorNotifyOutboxHandler(
             ?? throw new InvalidOperationException($"Tenant {message.TenantId} was not found for outbox message.");
 
         currentTenant.SetResolved(message.TenantId, tenant.Slug);
+
+        var relational = dbContext.Database.IsRelational();
+        await using var transaction = relational
+            ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
+            : null;
+        if (relational)
+        {
+            await WebsiteInquiryOutboxIdentity.LockDispatchAsync(
+                dbContext.Database,
+                message.TenantId,
+                clientId,
+                cancellationToken);
+            await dbContext.Entry(message).ReloadAsync(cancellationToken);
+        }
+
+        if (WebsiteInquiryOutboxIdentity.IsRedacted(message.PayloadJson)
+            || message.Status != OutboxMessageStatus.Processing)
+        {
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+
+            return;
+        }
+
+        var payload = JsonSerializer.Deserialize<WebsiteInquiryOperatorNotifyOutboxPayload>(message.PayloadJson)
+            ?? throw new InvalidOperationException("Website inquiry operator notify outbox payload is invalid.");
+        if (payload.Redacted)
+        {
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+
+            return;
+        }
 
         var result = await websiteInquiryOperatorNotifyService.SendOperatorNotifyIfApplicableAsync(
             new WebsiteInquiryOperatorNotifyRequest(
@@ -42,6 +86,11 @@ public sealed class WebsiteInquiryOperatorNotifyOutboxHandler(
         {
             throw new InvalidOperationException(
                 $"Website inquiry operator notify email was not sent for client {payload.ClientId}.");
+        }
+
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken);
         }
     }
 }

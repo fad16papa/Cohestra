@@ -34,6 +34,13 @@ export type InvitePreview = {
   email: string;
   role: string;
   expiresAt: string;
+  requiresActivationOtp: boolean;
+};
+
+export type InviteActivationStartResult = {
+  codeSent: boolean;
+  maskedEmail: string;
+  expiresInSeconds: number;
 };
 
 export type TeamApiError = Error & { errorCode?: string };
@@ -209,6 +216,58 @@ export async function fetchInvitePreview(token: string): Promise<InvitePreview> 
     email: String(raw.email ?? raw.Email ?? ""),
     role: String(raw.role ?? raw.Role ?? ""),
     expiresAt: String(raw.expiresAt ?? raw.ExpiresAt ?? ""),
+    requiresActivationOtp: Boolean(raw.requiresActivationOtp ?? raw.RequiresActivationOtp),
+  };
+}
+
+export async function startInviteActivation(
+  token: string,
+  nickname: string
+): Promise<InviteActivationStartResult> {
+  const response = await fetch(`${getPublicApiBaseUrl()}/api/v1/public/team/invites/activation`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, nickname }),
+  });
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const detail = raw.detail ?? raw.Detail;
+    throw new Error(typeof detail === "string" ? detail : "Could not start activation.");
+  }
+
+  return {
+    codeSent: Boolean(raw.codeSent ?? raw.CodeSent),
+    maskedEmail: String(raw.maskedEmail ?? raw.MaskedEmail ?? ""),
+    expiresInSeconds: Number(raw.expiresInSeconds ?? raw.ExpiresInSeconds ?? 0),
+  };
+}
+
+export async function verifyInviteActivation(
+  token: string,
+  password: string,
+  nickname: string,
+  code: string
+): Promise<{ email: string; tenantSlug: string; createdAccount: boolean }> {
+  const response = await fetch(
+    `${getPublicApiBaseUrl()}/api/v1/public/team/invites/activation/verify`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password, nickname, code }),
+    }
+  );
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  if (!response.ok) {
+    const detail = raw.detail ?? raw.Detail;
+    throw new Error(typeof detail === "string" ? detail : "Could not verify activation.");
+  }
+
+  return {
+    email: String(raw.email ?? raw.Email ?? ""),
+    tenantSlug: String(raw.tenantSlug ?? raw.TenantSlug ?? ""),
+    createdAccount: Boolean(raw.createdAccount ?? raw.CreatedAccount),
   };
 }
 
