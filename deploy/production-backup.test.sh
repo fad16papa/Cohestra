@@ -53,6 +53,7 @@ export BACKUP_OFFHOST_DIR="$OFFHOST"
 
 STUB_BIN="$TMP/stub-bin"
 INVOCATION_LOG="$TMP/client-invocations.log"
+export INVOCATION_LOG
 mkdir -p "$STUB_BIN"
 : >"$INVOCATION_LOG"
 for tool in pg_dump pg_restore dropdb createdb psql; do
@@ -127,7 +128,30 @@ expect_refuse "live ip in env var" \
   env PGHOST=localhost COHESTRA_TEST_HOST=159.223.55.242 \
   "$SCRIPT" backup --database rehearsal_src
 
-expect_client_refused "protected backup database" \
+expect_client_refused "cohestra backup without dedicated-local plane" \
+  "$SCRIPT" backup --database cohestra
+
+expect_dump_not_drop() {
+  local label="$1"
+  shift
+  : >"$INVOCATION_LOG"
+  if PATH="$STUB_BIN:$PATH" "$@" >"$TMP/out" 2>"$TMP/err"; then
+    fail "$label succeeded unexpectedly"
+  fi
+  if ! grep -q '^pg_dump ' "$INVOCATION_LOG"; then
+    cat "$INVOCATION_LOG" >&2
+    fail "$label did not invoke pg_dump"
+  fi
+  if grep -q '^dropdb ' "$INVOCATION_LOG"; then
+    cat "$INVOCATION_LOG" >&2
+    fail "$label invoked dropdb"
+  fi
+  assert_no_fixture_leak "$label"
+  pass "$label"
+}
+
+expect_dump_not_drop "dedicated-local backup may dump cohestra" \
+  env BACKUP_SOURCE_PLANE=dedicated-local \
   "$SCRIPT" backup --database cohestra
 
 expect_refuse "restore production disposable name" \
@@ -152,9 +176,14 @@ echo "-----BEGIN PGP PUBLIC KEY BLOCK-----
 corrupt
 -----END PGP PUBLIC KEY BLOCK-----" >"$CORRUPT_KEY"
 if command -v gpg >/dev/null 2>&1; then
+  : >"$INVOCATION_LOG"
   expect_fail "encryption failure with corrupt key" \
-    env BACKUP_GPG_PUBLIC_KEY_FILE="$CORRUPT_KEY" PATH="/usr/bin:/bin" \
+    env BACKUP_GPG_PUBLIC_KEY_FILE="$CORRUPT_KEY" PATH="$STUB_BIN:/usr/bin:/bin" \
     "$SCRIPT" backup --database rehearsal_src
+  if [[ -s "$INVOCATION_LOG" ]]; then
+    cat "$INVOCATION_LOG" >&2
+    fail "encryption failure invoked a database client"
+  fi
 else
   expect_fail "encryption failure without gpg" \
     env BACKUP_GPG_PUBLIC_KEY_FILE="$PUBLIC_KEY" PATH="$STUB_BIN" \
@@ -163,11 +192,38 @@ fi
 
 ARTIFACT="synthetic.dump.gpg"
 echo "cipher-bytes" >"$OFFHOST/$ARTIFACT"
-printf '%s' '{"status":"backup_complete","sha256":"%s","artifact":"%s","byte_size":12,"database":"rehearsal_src","created_at":"2026-01-01T00:00:00Z"}\n' \
-  "0000000000000000000000000000000000000000000000000000000000000000" "$ARTIFACT" \
-  >"$OFFHOST/${ARTIFACT}.manifest.json"
+python3 - "$OFFHOST/${ARTIFACT}.manifest.json" "$ARTIFACT" <<'PY'
+import json
+import sys
+path, artifact = sys.argv[1:3]
+payload = {
+    "status": "backup_complete",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "artifact": artifact,
+    "byte_size": 12,
+    "database": "rehearsal_src",
+    "created_at": "2026-01-01T00:00:00Z",
+}
+with open(path, "w", encoding="utf-8") as handle:
+    json.dump(payload, handle)
+    handle.write("\n")
+PY
 expect_fail "sha mismatch on verify-artifact" \
   "$SCRIPT" verify-artifact --artifact-basename "$ARTIFACT"
+
+FAILED_ATTEST="$TMP/failed-attestation.json"
+: >"$INVOCATION_LOG"
+expect_fail "sha mismatch does not restore" \
+  env PATH="$STUB_BIN:/usr/bin:/bin" \
+  "$SCRIPT" restore-isolated --database rehearsal_dst_disposable \
+  --artifact-basename "$ARTIFACT" --attestation-path "$FAILED_ATTEST"
+if [[ -s "$INVOCATION_LOG" ]]; then
+  cat "$INVOCATION_LOG" >&2
+  fail "sha mismatch invoked a database client"
+fi
+failed_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status"))' "$FAILED_ATTEST")"
+[[ "$failed_status" == "failed" ]] || fail "failed restore did not invalidate attestation"
+pass "failed restore invalidates attestation"
 
 ROUNDTRIP=0
 if command -v gpg >/dev/null 2>&1 && command -v pg_dump >/dev/null 2>&1 \
@@ -213,6 +269,7 @@ count="$(psql --dbname="$DST" --tuples-only --no-align --set=ON_ERROR_STOP=1 -c 
 [[ "$count" == "1" ]] || fail "restored marker row count"
 src_count="$(psql --dbname="$SRC" --tuples-only --no-align --set=ON_ERROR_STOP=1 -c 'SELECT count(*) FROM rehearsal_marker;')"
 [[ "$src_count" == "1" ]] || fail "source database was mutated"
+[[ -f "$GPG_HOME/pubring.kbx" ]] || fail "restore removed the operator GNUPGHOME"
 
 pass "synthetic gpg backup roundtrip"
 dropdb --if-exists --force "$SRC" >/dev/null

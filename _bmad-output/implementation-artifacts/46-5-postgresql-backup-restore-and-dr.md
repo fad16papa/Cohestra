@@ -71,7 +71,9 @@ So that **a droplet loss is a 4-hour problem, not a company-ending one**.
 ### Completion Notes
 
 - OPTION A: GnuPG public-key encryption to owner `BACKUP_OFFHOST_DIR`; no S3/rclone/network upload.
-- Isolated restore refuses live hosts, protected names, outbound API env vars, and writes attestation only after integrity checks.
+- Isolated restore refuses live hosts, protected names, outbound API env vars, and writes attestation only after the ciphertext SHA-256 matches the manifest.
+- Source database `cohestra` can be dumped only with `BACKUP_SOURCE_PLANE=dedicated-local` on a local host. Restore cannot target it.
+- A failed backup, verify, or restore rewrites a configured attestation to `status=failed`. The restore command does not delete the operator `GNUPGHOME`.
 - Dedicated Production migrations fail closed without verified attestation; synthetic CI roundtrip does **not** set `production_recovery_proven`.
 - **PRODUCTION_RECOVERY_PROVEN=NO**; cutover **NOT_GRANTED**; Production **NO-GO**.
 
@@ -83,7 +85,7 @@ So that **a droplet loss is a 4-hour problem, not a company-ending one**.
 
 ```text
 PGPASSWORD=crm bash deploy/production-backup.test.sh
-→ all refusal PASS; synthetic gpg backup roundtrip PASS
+→ all refusal PASS, including dedicated-local `cohestra` dump, sha mismatch without a database client, failed attestation invalidation, and synthetic gpg backup roundtrip PASS (source row preserved; operator GNUPGHOME preserved)
 
 PGPASSWORD=crm bash deploy/disposable-backup-restore.test.sh
 → all refusal PASS; representative restore PASS
@@ -110,3 +112,4 @@ dotnet test Cohestra.sln --filter "Category!=Integration"
 ## Change Log
 
 - 2026-11-18: Story 46.5 implementation — encrypted off-host backup script, migration gate, tests, operator DR doc. Status review. Production NO-GO; recovery not proven.
+- 2026-11-18: Safety fix — allow dedicated-local dump of `cohestra`, require manifest SHA-256 before restore, invalidate attestation on failure, and keep the operator keyring.

@@ -9,12 +9,27 @@ usage() {
   exit 2
 }
 
+invalidate_attestation() {
+  [[ "${attestation_committed:-0}" == "1" ]] && return 0
+  [[ -n "${attestation_path:-}" ]] || return 0
+  mkdir -p "$(dirname "$attestation_path")" 2>/dev/null || return 0
+  python3 - "$attestation_path" <<'PY' || true
+import json
+import sys
+with open(sys.argv[1], "w", encoding="utf-8") as handle:
+    json.dump({"status": "failed", "production_recovery_proven": False}, handle)
+    handle.write("\n")
+PY
+}
+
 refuse() {
+  invalidate_attestation
   echo "REFUSED: $1" >&2
   exit 2
 }
 
 fail() {
+  invalidate_attestation
   echo "FAILED: $1" >&2
   exit 1
 }
@@ -114,7 +129,7 @@ import_gpg_public_key() {
   chmod 700 "$tmp_home"
   if ! GNUPGHOME="$tmp_home" gpg --batch --import "$BACKUP_GPG_PUBLIC_KEY_FILE" >/dev/null 2>&1; then
     rm -rf "$tmp_home"
-    fail "gpg public key import failed"
+    return 1
   fi
   echo "$tmp_home"
 }
@@ -126,7 +141,7 @@ encrypt_file() {
   local recipient
   recipient="$(GNUPGHOME="$gpg_home" gpg --batch --list-keys --with-colons | awk -F: '$1=="fpr" {print $10; exit}')"
   [[ -n "$recipient" ]] || return 1
-  GNUPGHOME="$gpg_home" gpg --batch --yes --trust-model always --recipient "$recipient" \
+  GNUPGHOME="$gpg_home" gpg --batch --yes --quiet --trust-model always --recipient "$recipient" \
     --output "$cipher" --encrypt "$plain"
 }
 
@@ -134,7 +149,7 @@ decrypt_file() {
   local cipher="$1"
   local plain="$2"
   local gpg_home="$3"
-  GNUPGHOME="$gpg_home" gpg --batch --yes --trust-model always --output "$plain" --decrypt "$cipher"
+  GNUPGHOME="$gpg_home" gpg --batch --yes --quiet --trust-model always --output "$plain" --decrypt "$cipher"
 }
 
 sha256_file() {
@@ -213,9 +228,17 @@ case "$command" in
     [[ -n "$database" ]] || usage
     require_plain_database_name "$database"
     database_lc="${database,,}"
+    if [[ "$database_lc" == *uat* || "$database_lc" == "cohestra_test" || "$database_lc" == "cohestra_uat" ]]; then
+      refuse "database '$database' is not a backup source"
+    fi
     case "$database_lc" in
-      cohestra|cohestra_test|cohestra_uat|postgres|template0|template1)
+      postgres|template0|template1)
         refuse "database '$database' is protected"
+        ;;
+      cohestra)
+        if [[ "${BACKUP_SOURCE_PLANE:-}" != "dedicated-local" ]]; then
+          refuse "database cohestra requires BACKUP_SOURCE_PLANE=dedicated-local"
+        fi
         ;;
     esac
 
@@ -234,6 +257,11 @@ case "$command" in
     validate_gpg_public_key_file
     command -v gpg >/dev/null 2>&1 || fail "gpg is not available"
     command -v pg_dump >/dev/null 2>&1 || fail "pg_dump is not available"
+    gpg_home="$(import_gpg_public_key)" || fail "gpg public key import failed"
+    gpg_home_owned=1
+    trap '[[ "${gpg_home_owned:-0}" == "1" && -n "${gpg_home:-}" ]] && rm -rf "$gpg_home"; [[ -n "${tmp_dir:-}" ]] && rm -rf "$tmp_dir"' EXIT
+    encrypt_recipient="$(GNUPGHOME="$gpg_home" gpg --batch --list-keys --with-colons | awk -F: '$1=="fpr" {print $10; exit}')"
+    [[ -n "${encrypt_recipient:-}" ]] || fail "gpg encryption failed"
 
     if [[ -z "$artifact_basename" ]]; then
       artifact_basename="cohestra-${database}-$(date -u +%Y%m%dT%H%M%SZ).dump.gpg"
@@ -245,11 +273,8 @@ case "$command" in
     tmp_dir="$(mktemp -d)"
     plain_dump="$tmp_dir/plain.dump"
     cipher_dump="$tmp_dir/cipher.dump.gpg"
-    gpg_home=""
-    trap '[[ -n "${gpg_home:-}" ]] && rm -rf "$gpg_home"; rm -rf "$tmp_dir"' EXIT
 
     pg_dump --host="$host" --format=custom --no-owner --file="$plain_dump" "$database"
-    gpg_home="$(import_gpg_public_key)"
     if ! encrypt_file "$plain_dump" "$cipher_dump" "$gpg_home"; then
       fail "gpg encryption failed"
     fi
@@ -272,7 +297,7 @@ case "$command" in
     manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
     [[ -f "$artifact_path" ]] || fail "encrypted artifact is missing"
     [[ -f "$manifest_path" ]] || fail "manifest is missing"
-    expected="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("sha256",""))' "$manifest_path")"
+    expected="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("sha256",""))' "$manifest_path")" || fail "manifest is not valid JSON"
     [[ "$expected" =~ ^[0-9a-f]{64}$ ]] || fail "manifest sha256 is invalid"
     actual="$(sha256_file "$artifact_path")"
     if [[ "$actual" != "$expected" ]]; then
@@ -307,18 +332,27 @@ case "$command" in
     command -v psql >/dev/null 2>&1 || fail "psql is not available"
 
     artifact_path="$BACKUP_OFFHOST_DIR/$artifact_basename"
+    manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
     [[ -f "$artifact_path" ]] || fail "encrypted artifact is missing"
+    [[ -f "$manifest_path" ]] || fail "manifest is missing"
+    expected="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("sha256",""))' "$manifest_path")" || fail "manifest is not valid JSON"
+    [[ "$expected" =~ ^[0-9a-f]{64}$ ]] || fail "manifest sha256 is invalid"
     digest="$(sha256_file "$artifact_path")"
+    if [[ "$digest" != "$expected" ]]; then
+      fail "sha256 mismatch"
+    fi
 
     tmp_dir="$(mktemp -d)"
     plain_dump="$tmp_dir/plain.dump"
     gpg_home=""
-    trap '[[ -n "${gpg_home:-}" ]] && rm -rf "$gpg_home"; rm -f "$plain_dump"; rm -rf "$tmp_dir"' EXIT
+    gpg_home_owned=0
+    trap '[[ "${gpg_home_owned:-0}" == "1" && -n "${gpg_home:-}" ]] && rm -rf "$gpg_home"; rm -f "$plain_dump"; [[ -n "${tmp_dir:-}" ]] && rm -rf "$tmp_dir"' EXIT
 
     if [[ -n "${GNUPGHOME:-}" && -d "$GNUPGHOME" ]]; then
       gpg_home="$GNUPGHOME"
     else
-      gpg_home="$(import_gpg_public_key)"
+      gpg_home="$(import_gpg_public_key)" || fail "gpg decryption failed"
+      gpg_home_owned=1
     fi
     if ! decrypt_file "$artifact_path" "$plain_dump" "$gpg_home"; then
       fail "gpg decryption failed"
@@ -348,6 +382,7 @@ case "$command" in
     [[ -n "$attestation_path" ]] || refuse "attestation path is required (Backup__AttestationPath or --attestation-path)"
     mkdir -p "$(dirname "$attestation_path")"
     write_attestation "$attestation_path" "$digest" "$artifact_basename" "$database"
+    attestation_committed=1
     echo "RESTORE_ISOLATED verified database=$database artifact=$artifact_basename"
     ;;
 

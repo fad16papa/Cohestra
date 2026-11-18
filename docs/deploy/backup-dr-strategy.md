@@ -40,18 +40,20 @@ The repository documents names only. Never commit keys, passwords, or connection
 
 | Command | Purpose |
 | --- | --- |
-| `backup` | `pg_dump --format=custom --no-owner`, encrypt, SHA-256, copy ciphertext to `BACKUP_OFFHOST_DIR`, write manifest (`status=backup_complete`) |
+| `backup` | `pg_dump --format=custom --no-owner`, encrypt, SHA-256, copy ciphertext to `BACKUP_OFFHOST_DIR`, write manifest (`status=backup_complete`). Source database `cohestra` requires `BACKUP_SOURCE_PLANE=dedicated-local` and a local host (`localhost`, `127.0.0.1`, `::1`, or `postgres`). Set that variable only on the dedicated Production host, never on UAT. |
 | `verify-artifact` | Recompute SHA-256; manifest must match (does not mark verified) |
-| `restore-isolated` | Localhost disposable DB only; decrypt; `pg_restore`; write attestation (`status=verified`, `production_recovery_proven=false`) |
+| `restore-isolated` | Localhost disposable DB only. Refuses the artifact unless its SHA-256 matches the manifest, then decrypts and `pg_restore`. Writes attestation (`status=verified`, `production_recovery_proven=false`) only after that check. Does not delete the operator `GNUPGHOME`. |
 
 Example (names only):
 
 ```bash
 export BACKUP_OFFHOST_DIR=/mnt/cohestra-backups
 export BACKUP_GPG_PUBLIC_KEY_FILE=/etc/cohestra/backup-recipient.pub.asc
+export BACKUP_SOURCE_PLANE=dedicated-local
 export PGHOST=postgres
-./deploy/production-backup.sh backup --database cohestra
-./deploy/production-backup.sh verify-artifact --artifact-basename cohestra-....dump.gpg
+export Backup__AttestationPath=/etc/cohestra/backup-attestation.json
+./deploy/production-backup.sh backup --database cohestra --attestation-path "$Backup__AttestationPath"
+./deploy/production-backup.sh verify-artifact --artifact-basename cohestra-....dump.gpg --attestation-path "$Backup__AttestationPath"
 ```
 
 ## Retention (policy)
@@ -99,7 +101,7 @@ UAT and Development planes are unchanged.
 
 ## Failure behavior
 
-Any backup, encryption, verification, or restore failure leaves **no** verified attestation and blocks dedicated Production migrations until a new verified attestation exists.
+Any backup, encryption, verification, or restore failure exits non-zero. When `--attestation-path` or `Backup__AttestationPath` is set, that failure rewrites the attestation to `status=failed` and does not leave `status=verified`. Dedicated Production then blocks startup migrations until a later isolated restore writes a new verified attestation. A missing attestation path also blocks those migrations. The synthetic rehearsal does not prove Production recovery.
 
 ## Related
 
