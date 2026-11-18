@@ -153,6 +153,9 @@ jobs:
       - name: Disposable backup restore rehearsal
         run: bash deploy/disposable-backup-restore.test.sh
 
+      - name: Production backup restore rehearsal
+        run: bash deploy/production-backup.test.sh
+
       - name: Integration tests
         run: dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release --filter "Category=Integration" --verbosity normal
 

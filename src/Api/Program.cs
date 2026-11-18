@@ -294,6 +294,7 @@ app.Run();
 
 static async Task ApplyMigrationsAsync(WebApplication app)
 {
+    ProductionBackupGate.EnsureMigrationsAllowed(app.Configuration, app.Logger);
     await using var scope = app.Services.CreateAsyncScope();
     var db = scope.ServiceProvider.GetRequiredService<CohestraDbContext>();
     await db.Database.MigrateAsync();
