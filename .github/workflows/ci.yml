@@ -168,13 +168,11 @@ jobs:
           bindir="${HOME}/.local/bin"
           mkdir -p "$bindir"
           for tool in psql pg_dump pg_restore pg_isready dropdb createdb; do
-            cat > "${bindir}/${tool}" <<EOF
-#!/bin/sh
-# Run as the invoking user so dump files under /tmp stay readable and writable.
-exec docker run --rm -i --network host --user "\$(id -u):\$(id -g)" -e HOME=/tmp \\
-  -v /tmp:/tmp -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE \\
-  postgres:16-alpine ${tool} "\$@"
-EOF
+            {
+              printf '%s\n' '#!/bin/sh'
+              printf '%s\n' '# Run as the invoking user so dump files under /tmp stay readable and writable.'
+              printf '%s\n' 'exec docker run --rm -i --network host --user "$(id -u):$(id -g)" -e HOME=/tmp -v /tmp:/tmp -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16-alpine '"${tool}"' "$@"'
+            } > "${bindir}/${tool}"
             chmod +x "${bindir}/${tool}"
           done
           echo "$bindir" >> "$GITHUB_PATH"
