@@ -153,7 +153,7 @@ Required input: `deploy_sha` (exactly 40 hex). Action: `deploy` or `rollback`.
 Two-layer provenance must pass before Environment `production`:
 
 - Layer A: five Actions jobs SUCCESS on the exact merged SHA. `head_branch` must be `main`.
-- Layer B: unique hydrated merged-to-`main` PR + `GitGuardian Security Checks` SUCCESS on `${deploy_sha}^2`, and the same merge+GitGuardian contract on every first-parent commit after the immutable trust anchor `c39f2618bcdcb71875d2da5b654f3a999b39ae35` (`deploy/production-provenance-anchor.txt`).
+- Layer B: unique hydrated merged-to-`main` PR + `GitGuardian Security Checks` SUCCESS on `${deploy_sha}^2`, and the same merge+GitGuardian contract on every first-parent commit after the trust root `230bc33bf81a8c9ed851a100ba0130fbef06aaa1` (`deploy/production-provenance-anchor.txt`, squash merge PR #552). `c39f2618bcdcb71875d2da5b654f3a999b39ae35` remains the recorded historical 46.3 baseline and must stay an ancestor of that trust root. Production remains **NO-GO**; do not treat any SHA here as a released Production deploy.
 
 The Environment `production` job is declared in YAML. The owner must create and protect that Environment in GitHub Settings **before first dispatch**. This repository does not create the Environment, populate `PROD_*`, or SSH Production from Story 46.3 implementation.
 

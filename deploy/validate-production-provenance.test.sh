@@ -14,9 +14,30 @@ pass "GitGuardian check-runs request filter=all"
 
 ANCHOR_FILE="$ROOT_DIR/deploy/production-provenance-anchor.txt"
 [[ -f "$ANCHOR_FILE" ]] || fail "committed provenance anchor is missing"
-[[ "$(tr -d '[:space:]' <"$ANCHOR_FILE")" == "c39f2618bcdcb71875d2da5b654f3a999b39ae35" ]] \
-  || fail "committed provenance anchor must be the 46.3 baseline"
-pass "committed provenance anchor is the 46.3 baseline"
+CANONICAL_ANCHOR="230bc33bf81a8c9ed851a100ba0130fbef06aaa1"
+HISTORICAL_BASELINE="c39f2618bcdcb71875d2da5b654f3a999b39ae35"
+[[ "$(tr -d '[:space:]' <"$ANCHOR_FILE")" == "$CANONICAL_ANCHOR" ]] \
+  || fail "committed provenance anchor must match the canonical trust root"
+pass "committed provenance anchor matches the canonical trust root"
+
+cd "$ROOT_DIR"
+KNOWN_MAIN_DEPLOY_SHA="a784ddf70ad5c8e6059d2c50496fadb72cdd7f98"
+git merge-base --is-ancestor "$HISTORICAL_BASELINE" "$CANONICAL_ANCHOR" \
+  || fail "canonical trust root must descend from historical 46.3 baseline"
+git merge-base --is-ancestor "$CANONICAL_ANCHOR" HEAD \
+  || fail "canonical trust root must be an ancestor of HEAD"
+parent_count="$(git rev-list --parents -n 1 "$CANONICAL_ANCHOR" | awk '{print NF-1}')"
+[[ "$parent_count" == "1" ]] || fail "canonical trust root must be a one-parent squash commit"
+current="$KNOWN_MAIN_DEPLOY_SHA"
+while [[ "$current" != "$CANONICAL_ANCHOR" ]]; do
+  parent_count="$(git rev-list --parents -n 1 "$current" | awk '{print NF-1}')"
+  [[ "$parent_count" == "2" ]] \
+    || fail "first-parent chain after trust root must be two-parent merges only"
+  current="$(git rev-parse "${current}^1")"
+done
+git merge-base --is-ancestor "$KNOWN_MAIN_DEPLOY_SHA" HEAD \
+  || fail "known main deploy SHA must be an ancestor of HEAD"
+pass "real-repo first-parent chain after squash trust root is two-parent only"
 
 TMP="$(mktemp -d)"
 LAUNDER=""

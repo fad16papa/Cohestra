@@ -420,10 +420,10 @@ else
 fi
 
 if [[ -f "$ROOT_DIR/deploy/production-provenance-anchor.txt" ]] \
-  && [[ "$(tr -d '[:space:]' <"$ROOT_DIR/deploy/production-provenance-anchor.txt")" == "c39f2618bcdcb71875d2da5b654f3a999b39ae35" ]]; then
-  pass "immutable Production provenance anchor is the 46.3 baseline"
+  && [[ "$(tr -d '[:space:]' <"$ROOT_DIR/deploy/production-provenance-anchor.txt")" == "230bc33bf81a8c9ed851a100ba0130fbef06aaa1" ]]; then
+  pass "Production provenance anchor is the canonical squash trust root"
 else
-  fail "deploy/production-provenance-anchor.txt must contain c39f2618bcdcb71875d2da5b654f3a999b39ae35"
+  fail "deploy/production-provenance-anchor.txt must contain 230bc33bf81a8c9ed851a100ba0130fbef06aaa1"
 fi
 
 if grep -q 'PROD_IP="159.223.55.242"' "$ROOT_DIR/deploy/validate-production-target.sh" \
