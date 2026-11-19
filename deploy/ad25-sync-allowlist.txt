@@ -5,6 +5,8 @@
 # and dest-vs-parent changed paths must be a subset of this list.
 # Forbidden: application trees (src/, web/), Production workflows,
 # secrets, retired ADCP, #505. A seven-path subset is N39 REFUSE.
+# Fail-closed: canonical POSIX paths only. Trusted-ref authorization
+# (authorize_from_trusted_ref) is required; PR-head is not authority.
 # Baseline-retained (not listed): validate-deploy-production-workflow.sh
 # and other unchanged isolation scripts stay on the PR-C bootstrap tree.
 .github/workflows/ci.yml
