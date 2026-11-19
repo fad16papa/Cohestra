@@ -359,6 +359,101 @@ public sealed class ProductionSecurityValidatorTests
         Assert.Contains("password", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("not-a-url")]
+    [InlineData("http://cohestra.app")]
+    [InlineData("https://uat.cohestra.app")]
+    [InlineData("https://evil.example")]
+    public void Validate_dedicated_production_still_requires_redis_password_when_public_url_is_blank_or_malformed(
+        string publicBaseUrl)
+    {
+        var configuration = DedicatedProductionConfig(redis: "redis:6379", publicBaseUrl: publicBaseUrl);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("password", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_requires_redis_password_when_public_url_is_omitted()
+    {
+        var source = DedicatedProductionConfig(redis: "redis:6379");
+        var values = new Dictionary<string, string?>();
+        foreach (var child in source.AsEnumerable())
+        {
+            if (child.Key != "PublicWeb:BaseUrl")
+            {
+                values[child.Key] = child.Value;
+            }
+        }
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("password", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(configuration["PublicWeb:BaseUrl"]);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("not-a-url")]
+    [InlineData("http://cohestra.app")]
+    public void Validate_dedicated_production_rejects_blank_or_malformed_public_url_when_redis_has_a_password(
+        string publicBaseUrl)
+    {
+        var configuration = DedicatedProductionConfig(publicBaseUrl: publicBaseUrl);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("PublicWeb:BaseUrl", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_dedicated_production_rejects_enabled_recaptcha_without_owner_secret(string? secret)
+    {
+        var extras = new Dictionary<string, string?>
+        {
+            ["SelfServeSignup:Recaptcha:Enabled"] = "true",
+        };
+        if (secret is not null)
+        {
+            extras["SelfServeSignup:Recaptcha:SecretKey"] = secret;
+        }
+
+        var configuration = RebuildWith(DedicatedProductionConfig(), extras);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Recaptcha:SecretKey", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_allows_enabled_recaptcha_with_owner_secret()
+    {
+        var configuration = RebuildWith(
+            DedicatedProductionConfig(),
+            new Dictionary<string, string?>
+            {
+                ["SelfServeSignup:Recaptcha:Enabled"] = "true",
+                ["SelfServeSignup:Recaptcha:SecretKey"] = "production-recaptcha-secret-not-a-google-test-key",
+            });
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
     [Fact]
     public void Validate_dedicated_production_rejects_placeholder_redis_password()
     {

@@ -1,22 +1,22 @@
-# Story 46.9 — documented IgnoreTenantFilters / IgnoreQueryFilters call sites
-# under src/Infrastructure and src/Api. Tests and seed helpers outside these
-# trees are ignored. New production call sites must be added here with a
-# documented PlatformAdmin or system-job reason.
-src/Infrastructure/Persistence/CohestraDbContext.cs
-src/Infrastructure/Activities/ActivityExpirationService.cs
-src/Infrastructure/Outbox/ActivityExpiredOutboxHandler.cs
-src/Infrastructure/Outbox/ActivityExpiringSoonOutboxHandler.cs
-src/Infrastructure/Outbox/SupportIssueOutboxHandlers.cs
-src/Infrastructure/Support/PlatformSupportIssueService.cs
-src/Infrastructure/Support/PlatformSupportReportService.cs
-src/Infrastructure/Team/TeamInviteService.cs
-src/Infrastructure/Seed/DemoDataSeeder.cs
-src/Infrastructure/Site/SiteUpcomingActivitiesResolver.cs
-src/Infrastructure/Platform/PlatformOpsOverviewService.cs
-src/Infrastructure/Platform/PlatformTenantOpsService.cs
-src/Infrastructure/Platform/PlatformTenantService.cs
-src/Infrastructure/Platform/PlatformTenantTimelineService.cs
-src/Infrastructure/PublicDoor/PublicDoorService.cs
-# Tenant-scoped workspace erasure: caller tenantId + client load re-checks TenantId;
-# related deletes also constrain TenantId == tenantId (not Platform Admin cross-tenant).
-src/Infrastructure/Clients/ClientErasureService.cs
+# Story 46.9 — one row per production file that calls IgnoreTenantFilters
+# or IgnoreQueryFilters under src/Infrastructure or src/Api.
+# Format: path  call-site-count  kind
+# kind is platform-admin, system-job, definition, or tenant-recheck.
+# The count is the number of matching lines. A new call site fails this contract
+# until the count is updated. tenant-recheck also requires TenantId rechecks.
+src/Infrastructure/Persistence/CohestraDbContext.cs 2 definition
+src/Infrastructure/Activities/ActivityExpirationService.cs 8 system-job
+src/Infrastructure/Outbox/ActivityExpiredOutboxHandler.cs 1 system-job
+src/Infrastructure/Outbox/ActivityExpiringSoonOutboxHandler.cs 1 system-job
+src/Infrastructure/Outbox/SupportIssueOutboxHandlers.cs 4 system-job
+src/Infrastructure/Support/PlatformSupportIssueService.cs 6 platform-admin
+src/Infrastructure/Support/PlatformSupportReportService.cs 2 platform-admin
+src/Infrastructure/Team/TeamInviteService.cs 7 system-job
+src/Infrastructure/Seed/DemoDataSeeder.cs 10 system-job
+src/Infrastructure/Site/SiteUpcomingActivitiesResolver.cs 1 system-job
+src/Infrastructure/Platform/PlatformOpsOverviewService.cs 1 platform-admin
+src/Infrastructure/Platform/PlatformTenantOpsService.cs 3 platform-admin
+src/Infrastructure/Platform/PlatformTenantService.cs 2 platform-admin
+src/Infrastructure/Platform/PlatformTenantTimelineService.cs 2 platform-admin
+src/Infrastructure/PublicDoor/PublicDoorService.cs 1 system-job
+src/Infrastructure/Clients/ClientErasureService.cs 4 tenant-recheck

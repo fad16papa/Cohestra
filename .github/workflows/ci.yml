@@ -446,7 +446,7 @@ jobs:
         run: bash deploy/validate-production-csp.sh
 
       - name: Tenant-filter bypass allowlist
-        run: bash deploy/validate-tenant-filter-bypass-allowlist.sh
+        run: bash deploy/validate-tenant-filter-bypass-allowlist.test.sh
 
       - name: Production secret inventory contract
         run: bash deploy/validate-production-secret-inventory.sh

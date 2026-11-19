@@ -28,6 +28,7 @@ public static class ProductionSecurityValidator
 
         if (dedicatedProduction)
         {
+            ValidateDedicatedProductionRedis(configuration.GetConnectionString("Redis"));
             ValidateDedicatedProductionPublicUrl(configuration);
         }
 
