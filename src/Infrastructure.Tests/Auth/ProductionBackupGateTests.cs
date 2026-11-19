@@ -116,6 +116,22 @@ public sealed class ProductionBackupGateTests
             () => ProductionBackupGate.EnsureMigrationsAllowed(configuration, NullLogger.Instance));
     }
 
+    [Theory]
+    [InlineData("""{"status":"verified","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifact":"rehearsal.dump.gpg","database":"rehearsal_dst_disposable"}""")]
+    [InlineData("""{"status":"verified","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifact":"rehearsal.dump.gpg","database":"rehearsal_dst_disposable","production_recovery_proven":"false"}""")]
+    [InlineData("""{"status":"verified","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifact":"rehearsal.dump.gpg","database":"rehearsal_dst_disposable","production_recovery_proven":"true"}""")]
+    [InlineData("""{"status":"verified","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifact":"rehearsal.dump.gpg","database":"rehearsal_dst_disposable","production_recovery_proven":0}""")]
+    [InlineData("""{"status":"verified","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifact":"rehearsal.dump.gpg","database":"rehearsal_dst_disposable","production_recovery_proven":1}""")]
+    [InlineData("""{"status":"verified","sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","artifact":"rehearsal.dump.gpg","database":"rehearsal_dst_disposable","production_recovery_proven":null}""")]
+    public void EnsureMigrationsAllowed_RecoveryFlagNotBooleanFalse_Throws(string json)
+    {
+        using var attestation = WriteAttestation(json);
+        var configuration = BuildProductionConfiguration(attestation.Path);
+
+        Assert.Throws<InvalidOperationException>(
+            () => ProductionBackupGate.EnsureMigrationsAllowed(configuration, NullLogger.Instance));
+    }
+
     [Fact]
     public void IsAllowedDisposableDatabaseName_RejectsProtectedNames()
     {

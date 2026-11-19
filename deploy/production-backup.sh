@@ -9,27 +9,65 @@ usage() {
   exit 2
 }
 
-invalidate_attestation() {
-  [[ "${attestation_committed:-0}" == "1" ]] && return 0
-  [[ -n "${attestation_path:-}" ]] || return 0
-  mkdir -p "$(dirname "$attestation_path")" 2>/dev/null || return 0
-  python3 - "$attestation_path" <<'PY' || true
+write_json_file() {
+  local path="$1"
+  local json="$2"
+  python3 - "$path" "$json" <<'PY'
 import json
+import os
 import sys
-with open(sys.argv[1], "w", encoding="utf-8") as handle:
-    json.dump({"status": "failed", "production_recovery_proven": False}, handle)
-    handle.write("\n")
+import tempfile
+
+path, raw = sys.argv[1], sys.argv[2]
+payload = json.loads(raw)
+directory = os.path.dirname(os.path.abspath(path))
+tmp = None
+try:
+    os.makedirs(directory, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".attestation-", dir=directory)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, separators=(",", ":"))
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, path)
+    tmp = None
+except Exception:
+    if tmp is not None:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+    sys.exit(1)
 PY
 }
 
+mark_attestation_unverified() {
+  [[ "${attestation_committed:-0}" == "1" ]] && return 0
+  [[ -n "${attestation_path:-}" ]] || return 0
+  write_json_file "$attestation_path" '{"status":"failed","production_recovery_proven":false}'
+}
+
+require_attestation_unverified() {
+  if ! mark_attestation_unverified; then
+    echo "FAILED: could not write non-verified attestation" >&2
+    exit 1
+  fi
+}
+
 refuse() {
-  invalidate_attestation
+  mark_attestation_unverified || true
   echo "REFUSED: $1" >&2
   exit 2
 }
 
 fail() {
-  invalidate_attestation
+  mark_attestation_unverified || true
   echo "FAILED: $1" >&2
   exit 1
 }
@@ -88,9 +126,31 @@ validate_disposable_target_name() {
 }
 
 refuse_outbound_restore_credentials() {
-  if [[ -n "${PADDLE_API_KEY:-}" || -n "${SENDGRID_API_KEY:-}" || -n "${SENDGRID_API_KEY_ID:-}" ]]; then
-    refuse "outbound API credentials must not be set for isolated restore"
-  fi
+  local name value
+  local names=(
+    PADDLE_API_KEY
+    SENDGRID_API_KEY
+    SENDGRID_API_KEY_ID
+    Paddle__ApiKey
+    Paddle__ClientToken
+    Paddle__WebhookSecret
+    SendGrid__ApiKey
+  )
+  for name in "${names[@]}"; do
+    value="${!name:-}"
+    if [[ -n "$value" ]]; then
+      refuse "outbound API credentials must not be set for isolated restore"
+    fi
+  done
+}
+
+canonicalize_path() {
+  local path="$1"
+  local label="$2"
+  local resolved
+  resolved="$(readlink -f "$path" 2>/dev/null || true)"
+  [[ -n "$resolved" ]] || refuse "cannot resolve $label"
+  printf '%s\n' "$resolved"
 }
 
 validate_offhost_dir() {
@@ -101,14 +161,27 @@ validate_offhost_dir() {
     refuse "BACKUP_OFFHOST_DIR contains a forbidden marker"
   fi
   if [[ -n "${PGDATA:-}" ]]; then
-  local resolved_offhost resolved_pgdata
-  resolved_offhost="$(readlink -f "$dir" 2>/dev/null || realpath "$dir" 2>/dev/null || echo "$dir")"
-  resolved_pgdata="$(readlink -f "$PGDATA" 2>/dev/null || realpath "$PGDATA" 2>/dev/null || echo "$PGDATA")"
-  if [[ "$resolved_offhost" == "$resolved_pgdata" ]]; then
-    refuse "BACKUP_OFFHOST_DIR must not resolve to PGDATA"
-  fi
+    local resolved_offhost resolved_pgdata
+    resolved_offhost="$(canonicalize_path "$dir" BACKUP_OFFHOST_DIR)"
+    resolved_pgdata="$(canonicalize_path "$PGDATA" PGDATA)"
+    if [[ "$resolved_offhost" == "$resolved_pgdata" || "$resolved_offhost" == "$resolved_pgdata"/* ]]; then
+      refuse "BACKUP_OFFHOST_DIR must not be inside PGDATA"
+    fi
   fi
   mkdir -p "$dir"
+}
+
+validate_artifact_basename() {
+  local name="$1"
+  local root dest
+  [[ -n "$name" ]] || refuse "artifact basename is required"
+  [[ "$name" != "." && "$name" != ".." ]] || refuse "artifact basename is not safe"
+  [[ "$name" != /* ]] || refuse "artifact basename must not be absolute"
+  [[ "$name" != */* && "$name" != *\\* ]] || refuse "artifact basename must not contain a path separator"
+  [[ "$name" != *$'\n'* && "$name" != *$'\r'* ]] || refuse "artifact basename is not safe"
+  root="$(canonicalize_path "$BACKUP_OFFHOST_DIR" BACKUP_OFFHOST_DIR)"
+  dest="$(canonicalize_path "$BACKUP_OFFHOST_DIR/$name" "artifact path")"
+  [[ "$dest" == "$root/$name" ]] || refuse "artifact basename escapes BACKUP_OFFHOST_DIR"
 }
 
 validate_gpg_public_key_file() {
@@ -190,27 +263,40 @@ with open(path, "w", encoding="utf-8") as f:
 PY
 }
 
-write_attestation() {
+write_verified_attestation() {
   local path="$1"
   local sha256="$2"
   local basename="$3"
   local database="$4"
-  python3 - "$path" "$sha256" "$basename" "$database" <<'PY'
+  local payload
+  payload="$(python3 - "$sha256" "$basename" "$database" <<'PY'
 import json
 import sys
-path, sha256, artifact, database = sys.argv[1:5]
-payload = {
+sha256, artifact, database = sys.argv[1:4]
+print(json.dumps({
     "status": "verified",
     "production_recovery_proven": False,
     "isolation": "localhost",
     "sha256": sha256,
     "artifact": artifact,
     "database": database,
-}
-with open(path, "w", encoding="utf-8") as f:
-    json.dump(payload, f, separators=(",", ":"))
-    f.write("\n")
+}, separators=(",", ":")))
 PY
+)"
+  write_json_file "$path" "$payload"
+}
+
+require_manifest_sha() {
+  local artifact_path="$1"
+  local manifest_path="$2"
+  local expected actual
+  [[ -f "$artifact_path" ]] || fail "encrypted artifact is missing"
+  [[ -f "$manifest_path" ]] || fail "manifest is missing"
+  expected="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("sha256",""))' "$manifest_path")" || fail "manifest is not valid JSON"
+  [[ "$expected" =~ ^[0-9a-f]{64}$ ]] || fail "manifest sha256 is invalid"
+  actual="$(sha256_file "$artifact_path")" || fail "checksum failed"
+  [[ "$actual" == "$expected" ]] || fail "sha256 mismatch"
+  printf '%s\n' "$actual"
 }
 
 command="${1:-}"
@@ -219,12 +305,25 @@ shift || usage
 database=""
 artifact_basename=""
 attestation_path="${Backup__AttestationPath:-}"
+attestation_committed=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --database) database="${2:-}"; shift 2 ;;
-    --artifact-basename) artifact_basename="${2:-}"; shift 2 ;;
-    --attestation-path) attestation_path="${2:-}"; shift 2 ;;
+    --database)
+      [[ $# -ge 2 ]] || usage
+      database="${2:-}"
+      shift 2
+      ;;
+    --artifact-basename)
+      [[ $# -ge 2 ]] || usage
+      artifact_basename="${2:-}"
+      shift 2
+      ;;
+    --attestation-path)
+      [[ $# -ge 2 ]] || usage
+      attestation_path="${2:-}"
+      shift 2
+      ;;
     *) refuse "unknown argument $1" ;;
   esac
 done
@@ -265,6 +364,7 @@ case "$command" in
     validate_gpg_public_key_file
     command -v gpg >/dev/null 2>&1 || fail "gpg is not available"
     command -v pg_dump >/dev/null 2>&1 || fail "pg_dump is not available"
+    require_attestation_unverified
     gpg_home="$(import_gpg_public_key)" || fail "gpg public key import failed"
     gpg_home_owned=1
     trap '[[ "${gpg_home_owned:-0}" == "1" && -n "${gpg_home:-}" ]] && rm -rf "$gpg_home"; [[ -n "${tmp_dir:-}" ]] && rm -rf "$tmp_dir"' EXIT
@@ -274,44 +374,36 @@ case "$command" in
     if [[ -z "$artifact_basename" ]]; then
       artifact_basename="cohestra-${database}-$(date -u +%Y%m%dT%H%M%SZ).dump.gpg"
     fi
-    if [[ "$artifact_basename" == */* ]]; then
-      refuse "artifact basename must not contain a slash"
-    fi
+    validate_artifact_basename "$artifact_basename"
 
     tmp_dir="$(mktemp -d)"
     plain_dump="$tmp_dir/plain.dump"
     cipher_dump="$tmp_dir/cipher.dump.gpg"
 
-    pg_dump --host="$host" --format=custom --no-owner --file="$plain_dump" "$database"
+    pg_dump --host="$host" --format=custom --no-owner --file="$plain_dump" "$database" || fail "pg_dump failed"
     if ! encrypt_file "$plain_dump" "$cipher_dump" "$gpg_home"; then
       fail "gpg encryption failed"
     fi
 
-    digest="$(sha256_file "$cipher_dump")"
-    byte_size="$(wc -c <"$cipher_dump" | tr -d ' ')"
+    digest="$(sha256_file "$cipher_dump")" || fail "checksum failed"
+    byte_size="$(wc -c <"$cipher_dump" | tr -d ' ')" || fail "checksum failed"
     created_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     dest="$BACKUP_OFFHOST_DIR/$artifact_basename"
-    cp "$cipher_dump" "$dest"
+    cp -T "$cipher_dump" "$dest" || fail "copy failed"
     manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
-    write_manifest "$manifest_path" "backup_complete" "$digest" "$artifact_basename" "$byte_size" "$database" "$created_at"
+    write_manifest "$manifest_path" "backup_complete" "$digest" "$artifact_basename" "$byte_size" "$database" "$created_at" || fail "manifest write failed"
     echo "BACKUP_COMPLETE artifact=$artifact_basename sha256=$digest"
     ;;
 
   verify-artifact)
     [[ -n "$artifact_basename" ]] || refuse "--artifact-basename is required"
-    [[ "$artifact_basename" != */* ]] || refuse "artifact basename must not contain a slash"
     validate_offhost_dir
+    validate_artifact_basename "$artifact_basename"
+    require_attestation_unverified
     artifact_path="$BACKUP_OFFHOST_DIR/$artifact_basename"
     manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
-    [[ -f "$artifact_path" ]] || fail "encrypted artifact is missing"
-    [[ -f "$manifest_path" ]] || fail "manifest is missing"
-    expected="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("sha256",""))' "$manifest_path")" || fail "manifest is not valid JSON"
-    [[ "$expected" =~ ^[0-9a-f]{64}$ ]] || fail "manifest sha256 is invalid"
-    actual="$(sha256_file "$artifact_path")"
-    if [[ "$actual" != "$expected" ]]; then
-      fail "sha256 mismatch"
-    fi
-    echo "VERIFY_OK artifact=$artifact_basename sha256=$actual"
+    require_manifest_sha "$artifact_path" "$manifest_path" >/dev/null
+    echo "VERIFY_OK artifact=$artifact_basename"
     ;;
 
   restore-isolated)
@@ -332,23 +424,20 @@ case "$command" in
     unset PGHOSTADDR PGSERVICE PGSERVICEFILE
 
     validate_offhost_dir
+    validate_artifact_basename "$artifact_basename"
+    [[ -n "$attestation_path" ]] || refuse "attestation path is required (Backup__AttestationPath or --attestation-path)"
+    require_attestation_unverified
+
+    artifact_path="$BACKUP_OFFHOST_DIR/$artifact_basename"
+    manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
+    digest="$(require_manifest_sha "$artifact_path" "$manifest_path")"
+
     validate_gpg_public_key_file
     command -v gpg >/dev/null 2>&1 || fail "gpg is not available"
     command -v pg_restore >/dev/null 2>&1 || fail "pg_restore is not available"
     command -v dropdb >/dev/null 2>&1 || fail "dropdb is not available"
     command -v createdb >/dev/null 2>&1 || fail "createdb is not available"
     command -v psql >/dev/null 2>&1 || fail "psql is not available"
-
-    artifact_path="$BACKUP_OFFHOST_DIR/$artifact_basename"
-    manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
-    [[ -f "$artifact_path" ]] || fail "encrypted artifact is missing"
-    [[ -f "$manifest_path" ]] || fail "manifest is missing"
-    expected="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("sha256",""))' "$manifest_path")" || fail "manifest is not valid JSON"
-    [[ "$expected" =~ ^[0-9a-f]{64}$ ]] || fail "manifest sha256 is invalid"
-    digest="$(sha256_file "$artifact_path")"
-    if [[ "$digest" != "$expected" ]]; then
-      fail "sha256 mismatch"
-    fi
 
     tmp_dir="$(mktemp -d)"
     plain_dump="$tmp_dir/plain.dump"
@@ -378,19 +467,20 @@ case "$command" in
       fail "PostgreSQL client/server major mismatch (server=${server_major}, pg_dump=${dump_major:-unknown}, pg_restore=${restore_major:-unknown})"
     fi
 
-    dropdb --host="$host" --if-exists --force "$database"
-    createdb --host="$host" "$database"
+    dropdb --host="$host" --if-exists --force "$database" || fail "dropdb failed"
+    createdb --host="$host" "$database" || fail "createdb failed"
     pg_restore --host="$host" --dbname="$database" --no-owner --no-privileges "$plain_dump" || fail "pg_restore failed"
     rm -f "$plain_dump"
 
-    current_db="$(psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 -c "SELECT current_database();")"
+    current_db="$(psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 -c "SELECT current_database();")" || fail "psql failed"
     [[ "$current_db" == "$database" ]] || fail "current_database mismatch"
 
     marker_count=""
-    if psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
-      -c "SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_name='rehearsal_marker';" | grep -qx '1'; then
+    marker_probe="$(psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
+      -c "SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_name='rehearsal_marker';")" || fail "psql failed"
+    if [[ "$marker_probe" == "1" ]]; then
       marker_count="$(psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
-        -c "SELECT count(*)::text FROM rehearsal_marker;")"
+        -c "SELECT count(*)::text FROM rehearsal_marker;")" || fail "rehearsal_marker count failed"
       if [[ -n "$marker_count" && "$marker_count" =~ ^[0-9]+$ ]]; then
         :
       else
@@ -399,9 +489,8 @@ case "$command" in
       echo "REHEARSAL_MARKER_COUNT=$marker_count"
     fi
 
-    [[ -n "$attestation_path" ]] || refuse "attestation path is required (Backup__AttestationPath or --attestation-path)"
-    mkdir -p "$(dirname "$attestation_path")"
-    write_attestation "$attestation_path" "$digest" "$artifact_basename" "$database"
+    mkdir -p "$(dirname "$attestation_path")" || fail "could not write verified attestation"
+    write_verified_attestation "$attestation_path" "$digest" "$artifact_basename" "$database" || fail "could not write verified attestation"
     attestation_committed=1
     echo "RESTORE_ISOLATED verified database=$database artifact=$artifact_basename"
     ;;

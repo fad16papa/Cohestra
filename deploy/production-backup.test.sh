@@ -170,6 +170,53 @@ expect_refuse "restore remote host 129" \
 expect_refuse "restore with paddle api key set" \
   env PGHOST=localhost PADDLE_API_KEY=sk_test_dummy \
   "$SCRIPT" restore-isolated --database rehearsal_dst_disposable --artifact-basename x.gpg
+for credential in \
+  SENDGRID_API_KEY \
+  SENDGRID_API_KEY_ID \
+  Paddle__ApiKey \
+  Paddle__ClientToken \
+  Paddle__WebhookSecret \
+  SendGrid__ApiKey
+do
+  expect_refuse "restore with ${credential} set" \
+    env PGHOST=localhost "${credential}=present" \
+    "$SCRIPT" restore-isolated --database rehearsal_dst_disposable --artifact-basename x.gpg
+done
+if env PGHOST=localhost Paddle__ApiKey= \
+  "$SCRIPT" restore-isolated --database rehearsal_dst_disposable --artifact-basename x.gpg \
+  >"$TMP/out" 2>"$TMP/err"; then
+  fail "empty Paddle__ApiKey unexpectedly succeeded"
+fi
+if grep -q 'outbound API credentials' "$TMP/err"; then
+  fail "empty Paddle__ApiKey was treated as populated"
+fi
+pass "empty Paddle__ApiKey is not an outbound credential"
+
+PGROOT="$TMP/pgdata"
+mkdir -p "$PGROOT/nested"
+expect_refuse "offhost inside PGDATA" \
+  env PGDATA="$PGROOT" BACKUP_OFFHOST_DIR="$PGROOT/nested" \
+  "$SCRIPT" backup --database rehearsal_src
+ln -s "$PGROOT/nested" "$TMP/offhost-inside-pgdata"
+expect_refuse "canonical offhost symlink inside PGDATA" \
+  env PGDATA="$PGROOT" BACKUP_OFFHOST_DIR="$TMP/offhost-inside-pgdata" \
+  "$SCRIPT" backup --database rehearsal_src
+
+PARENT="$(dirname "$OFFHOST")"
+echo sentinel >"$PARENT/escape-sentinel"
+before_parent="$(find "$PARENT" -maxdepth 1 -printf '%f\n' | sort)"
+expect_client_refused "artifact basename dotdot" \
+  "$SCRIPT" backup --database rehearsal_src --artifact-basename '..'
+expect_client_refused "artifact basename slash" \
+  "$SCRIPT" backup --database rehearsal_src --artifact-basename 'nested/file.gpg'
+expect_client_refused "artifact basename absolute" \
+  "$SCRIPT" backup --database rehearsal_src --artifact-basename '/tmp/file.gpg'
+expect_client_refused "artifact basename backslash" \
+  "$SCRIPT" backup --database rehearsal_src --artifact-basename 'nested\file.gpg'
+after_parent="$(find "$PARENT" -maxdepth 1 -printf '%f\n' | sort)"
+[[ "$before_parent" == "$after_parent" ]] || fail "unsafe basename wrote outside BACKUP_OFFHOST_DIR"
+[[ "$(cat "$PARENT/escape-sentinel")" == "sentinel" ]] || fail "unsafe basename changed the escape sentinel"
+pass "unsafe artifact basenames do not escape BACKUP_OFFHOST_DIR"
 
 CORRUPT_KEY="$TMP/corrupt.asc"
 echo "-----BEGIN PGP PUBLIC KEY BLOCK-----
@@ -225,15 +272,54 @@ failed_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))
 [[ "$failed_status" == "failed" ]] || fail "failed restore did not invalidate attestation"
 pass "failed restore invalidates attestation"
 
-ROUNDTRIP=0
-if command -v gpg >/dev/null 2>&1 && command -v pg_dump >/dev/null 2>&1 \
-  && pg_isready --host=localhost --username="${PGUSER:-crm}" >/dev/null 2>&1; then
-  ROUNDTRIP=1
-fi
+VERIFIED_BEFORE_CHECKSUM="$TMP/verified-before-checksum.json"
+python3 - "$VERIFIED_BEFORE_CHECKSUM" <<'PY'
+import json
+import sys
+with open(sys.argv[1], "w", encoding="utf-8") as handle:
+    json.dump({"status": "verified", "production_recovery_proven": False}, handle)
+    handle.write("\n")
+PY
+expect_fail "checksum mismatch clears a verified attestation" \
+  "$SCRIPT" verify-artifact --artifact-basename "$ARTIFACT" --attestation-path "$VERIFIED_BEFORE_CHECKSUM"
+checksum_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status"))' "$VERIFIED_BEFORE_CHECKSUM")"
+[[ "$checksum_status" == "failed" ]] || fail "checksum mismatch left a verified attestation"
+pass "checksum mismatch leaves a non-verified attestation"
 
-if [[ "$ROUNDTRIP" -eq 0 ]]; then
-  echo "SKIP: synthetic roundtrip (Postgres or gpg unavailable)"
-  exit 0
+NOT_A_DIR="$TMP/not-a-directory"
+echo blocked >"$NOT_A_DIR"
+: >"$INVOCATION_LOG"
+expect_fail "attestation write failure does not start backup" \
+  env PATH="$STUB_BIN:/usr/bin:/bin" \
+  "$SCRIPT" backup --database rehearsal_src --attestation-path "$NOT_A_DIR/attestation.json"
+if [[ -s "$INVOCATION_LOG" ]]; then
+  cat "$INVOCATION_LOG" >&2
+  fail "attestation write failure invoked a database client"
+fi
+pass "attestation write failure exits before backup work"
+
+rehearsal_tools_ready() {
+  local tool
+  command -v gpg >/dev/null 2>&1 || return 1
+  gpg --version >/dev/null 2>&1 || return 1
+  for tool in pg_dump pg_restore psql dropdb createdb pg_isready; do
+    command -v "$tool" >/dev/null 2>&1 || return 1
+    "$tool" --version >/dev/null 2>&1 || return 1
+  done
+  pg_isready --host=localhost --username="${PGUSER:-crm}" >/dev/null 2>&1 || return 1
+  return 0
+}
+
+SAFE_PATH="$TMP/safe-path"
+mkdir -p "$SAFE_PATH"
+ln -s "$(command -v bash)" "$SAFE_PATH/bash"
+if PATH="$SAFE_PATH" bash -c "$(declare -f rehearsal_tools_ready); rehearsal_tools_ready"; then
+  fail "missing GnuPG and PostgreSQL client tools were treated as a ready rehearsal"
+fi
+pass "missing rehearsal tools are not a successful rehearsal"
+
+if ! rehearsal_tools_ready; then
+  fail "rehearsal requires usable GnuPG and PostgreSQL client tools"
 fi
 
 export PGHOST=localhost
@@ -275,6 +361,53 @@ SQL
 ART="rehearsal-roundtrip.dump.gpg"
 ATTEST="$TMP/attestation.json"
 export BACKUP_GPG_PUBLIC_KEY_FILE="$PUBLIC_KEY"
+
+DUMP_FAIL_BIN="$TMP/dump-fail-bin"
+mkdir -p "$DUMP_FAIL_BIN"
+cat >"$DUMP_FAIL_BIN/pg_dump" <<'EOF'
+#!/bin/sh
+echo "forced dump failure" >&2
+exit 1
+EOF
+chmod +x "$DUMP_FAIL_BIN/pg_dump"
+DUMP_FAIL_ATTEST="$TMP/dump-fail-attestation.json"
+python3 - "$DUMP_FAIL_ATTEST" <<'PY'
+import json
+import sys
+with open(sys.argv[1], "w", encoding="utf-8") as handle:
+    json.dump({"status": "verified", "production_recovery_proven": False, "sha256": "ab"}, handle)
+    handle.write("\n")
+PY
+if PATH="$DUMP_FAIL_BIN:$PATH" "$SCRIPT" backup --database "$SRC" --artifact-basename "dump-fail.dump.gpg" \
+  --attestation-path "$DUMP_FAIL_ATTEST" >"$TMP/out" 2>"$TMP/err"; then
+  fail "forced pg_dump failure was treated as success"
+fi
+dump_fail_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status"))' "$DUMP_FAIL_ATTEST")"
+[[ "$dump_fail_status" == "failed" ]] || fail "forced pg_dump failure left a verified attestation"
+src_count_after_dump_fail="$(psql --dbname="$SRC" --tuples-only --no-align --set=ON_ERROR_STOP=1 -c 'SELECT count(*) FROM rehearsal_marker;')"
+[[ "$src_count_after_dump_fail" == "1" ]] || fail "forced pg_dump failure mutated source data"
+[[ ! -e "$OFFHOST/dump-fail.dump.gpg" ]] || fail "forced pg_dump failure wrote an artifact"
+pass "forced pg_dump failure leaves attestation failed and source intact"
+
+COPY_FAIL_ATTEST="$TMP/copy-fail-attestation.json"
+python3 - "$COPY_FAIL_ATTEST" <<'PY'
+import json
+import sys
+with open(sys.argv[1], "w", encoding="utf-8") as handle:
+    json.dump({"status": "verified", "production_recovery_proven": False}, handle)
+    handle.write("\n")
+PY
+mkdir -p "$OFFHOST/copy-fail.dump.gpg"
+if "$SCRIPT" backup --database "$SRC" --artifact-basename "copy-fail.dump.gpg" \
+  --attestation-path "$COPY_FAIL_ATTEST" >"$TMP/out" 2>"$TMP/err"; then
+  fail "copy failure was treated as success"
+fi
+copy_fail_status="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("status"))' "$COPY_FAIL_ATTEST")"
+[[ "$copy_fail_status" == "failed" ]] || fail "copy failure left a verified attestation"
+src_count_after_copy_fail="$(psql --dbname="$SRC" --tuples-only --no-align --set=ON_ERROR_STOP=1 -c 'SELECT count(*) FROM rehearsal_marker;')"
+[[ "$src_count_after_copy_fail" == "1" ]] || fail "copy failure mutated source data"
+pass "copy failure leaves attestation failed and source intact"
+
 "$SCRIPT" backup --database "$SRC" --artifact-basename "$ART"
 
 FORCED_STUB_BIN="$TMP/forced-restore-stub-bin"

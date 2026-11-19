@@ -22,7 +22,7 @@ WAL archiving is **not** implemented in this story. Do not claim point-in-time r
 
 The repository documents names only. Never commit keys, passwords, or connection strings.
 
-`BACKUP_OFFHOST_DIR` must be an absolute path on an off-host mount the owner provides. A directory used only for local/CI tests is **not** Production off-host proof.
+`BACKUP_OFFHOST_DIR` must be an absolute path on an off-host mount the owner provides. It must not resolve inside PostgreSQL `PGDATA`. Artifact basenames must be a single file name. A directory used only for local/CI tests is **not** Production off-host proof.
 
 ## Encryption
 
@@ -40,9 +40,9 @@ The repository documents names only. Never commit keys, passwords, or connection
 
 | Command | Purpose |
 | --- | --- |
-| `backup` | `pg_dump --format=custom --no-owner`, encrypt, SHA-256, copy ciphertext to `BACKUP_OFFHOST_DIR`, write manifest (`status=backup_complete`). Source database `cohestra` requires `BACKUP_SOURCE_PLANE=dedicated-local` and a local host (`localhost`, `127.0.0.1`, `::1`, or `postgres`). Set that variable only on the dedicated Production host, never on UAT. |
-| `verify-artifact` | Recompute SHA-256; manifest must match (does not mark verified) |
-| `restore-isolated` | Localhost disposable DB only. Refuses the artifact unless its SHA-256 matches the manifest, then decrypts and `pg_restore`. Writes attestation (`status=verified`, `production_recovery_proven=false`) only after that check. Does not delete the operator `GNUPGHOME`. |
+| `backup` | `pg_dump --format=custom --no-owner`, encrypt, SHA-256, copy ciphertext to `BACKUP_OFFHOST_DIR`, write manifest (`status=backup_complete`). Source database `cohestra` requires `BACKUP_SOURCE_PLANE=dedicated-local` and a local host (`localhost`, `127.0.0.1`, `::1`, or `postgres`). Set that variable only on the dedicated Production host, never on UAT. A configured attestation path is rewritten to `status=failed` before the dump. |
+| `verify-artifact` | Recompute SHA-256; manifest must match (does not mark verified). A configured attestation path is rewritten to `status=failed` before the checksum. |
+| `restore-isolated` | Localhost disposable DB only. Requires an attestation path, refuses populated `Paddle__ApiKey`, `Paddle__ClientToken`, `Paddle__WebhookSecret`, and `SendGrid__ApiKey`, and refuses the artifact unless its SHA-256 matches the manifest. Only then does it `dropdb` and `pg_restore`. Writes attestation (`status=verified`, `production_recovery_proven=false`) only after that check. Does not delete the operator `GNUPGHOME`. |
 
 Example (names only):
 

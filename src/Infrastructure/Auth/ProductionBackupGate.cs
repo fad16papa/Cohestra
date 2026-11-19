@@ -114,10 +114,10 @@ public static class ProductionBackupGate
                 Block(logger, "Backup attestation database name is not allowed.");
             }
 
-            if (document.RootElement.TryGetProperty("production_recovery_proven", out var recoveryProp)
-                && recoveryProp.ValueKind == JsonValueKind.True)
+            if (!document.RootElement.TryGetProperty("production_recovery_proven", out var recoveryProp)
+                || recoveryProp.ValueKind != JsonValueKind.False)
             {
-                Block(logger, "production_recovery_proven must not be true in this story.");
+                Block(logger, "production_recovery_proven must be false.");
             }
         }
     }

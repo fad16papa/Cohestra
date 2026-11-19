@@ -70,13 +70,13 @@ So that **a droplet loss is a 4-hour problem, not a company-ending one**.
 
 Reviewed implementation HEAD `9c9b0363709553fb79544419d8a23ea4b30795ab` against base `86669ca9258a7d454c50f3f294fc99d405146cb0`. CI run `44351406310` was green, including the exact-SHA security scan and GitGuardian. Production remains NO-GO. These items are not fixed.
 
-- [ ] [Review][Patch][BLOCKER] A failed backup, verify, or restore can leave a previous verified attestation in place. `set -euo pipefail` exits on `pg_dump`, `cp`, `sha256_file`, `dropdb`, `createdb`, and `psql` without calling `invalidate_attestation`. On the paths that do call it, `mkdir ... || return 0` and `python3 ... || true` ignore a failed rewrite. This breaks AC1. [`deploy/production-backup.sh:12`]
-- [ ] [Review][Patch][BLOCKER] Isolated restore does not refuse the Paddle and SendGrid variables this app uses. The script checks `PADDLE_API_KEY`, `SENDGRID_API_KEY`, and `SENDGRID_API_KEY_ID`. Compose and the API use `Paddle__ApiKey`, `Paddle__ClientToken`, `Paddle__WebhookSecret`, and `SendGrid__ApiKey`. This breaks AC2. [`deploy/production-backup.sh:90`]
-- [ ] [Review][Patch][BLOCKER] The migration gate does not require `production_recovery_proven` to be JSON false. It blocks only a boolean true. An omitted field, null, number, or string still allows dedicated Production migrations. This breaks AC5. [`src/Infrastructure/Auth/ProductionBackupGate.cs:117`]
-- [ ] [Review][Patch][BLOCKER] `--artifact-basename ..` is accepted. The destination becomes the parent of `BACKUP_OFFHOST_DIR` because the check only rejects a slash. [`deploy/production-backup.sh:277`]
-- [ ] [Review][Patch][MAJOR] `restore-isolated` drops and recreates the target database before it requires an attestation path. A missing path then refuses after the disposable database has already been replaced. [`deploy/production-backup.sh:381`]
-- [ ] [Review][Patch][MAJOR] An off-host directory inside `PGDATA` is accepted. The guard refuses only an exact resolved match, so a subdirectory of the data directory still prints `BACKUP_COMPLETE`. [`deploy/production-backup.sh:107`]
-- [ ] [Review][Patch][MAJOR] The production rehearsal exits 0 when `gpg` or the PostgreSQL client tools are missing. `ROUNDTRIP` stays 0 and the script skips the synthetic restore, so CI can pass without proving the roundtrip. [`deploy/production-backup.test.sh:228`]
+- [x] [Review][Patch][BLOCKER] A failed backup, verify, or restore can leave a previous verified attestation in place. Fixed: a configured attestation is rewritten to `status=failed` before work, and a failed rewrite exits non-zero.
+- [x] [Review][Patch][BLOCKER] Isolated restore does not refuse the Paddle and SendGrid variables this app uses. Fixed: restore rejects populated `Paddle__ApiKey`, `Paddle__ClientToken`, `Paddle__WebhookSecret`, and `SendGrid__ApiKey`.
+- [x] [Review][Patch][BLOCKER] The migration gate does not require `production_recovery_proven` to be JSON false. Fixed: dedicated Production migrations require an explicit boolean false. Missing, string, numeric, null, and true values block. This matches AC5.
+- [x] [Review][Patch][BLOCKER] `--artifact-basename ..` is accepted. Fixed: basenames that are absolute, dotted, or contain a path separator are refused before any write outside `BACKUP_OFFHOST_DIR`.
+- [x] [Review][Patch][MAJOR] `restore-isolated` drops and recreates the target database before it requires an attestation path. Fixed: the path and the artifact checksum are required before `dropdb`.
+- [x] [Review][Patch][MAJOR] An off-host directory inside `PGDATA` is accepted. Fixed: canonical paths inside `PGDATA` are refused.
+- [x] [Review][Patch][MAJOR] The production rehearsal exits 0 when `gpg` or the PostgreSQL client tools are missing. Fixed: missing or unusable prerequisites fail the rehearsal.
 
 ## Dev Agent Record
 
@@ -129,3 +129,4 @@ dotnet test Cohestra.sln --filter "Category!=Integration"
 - 2026-11-18: PG16 client alignment — CI `Install PostgreSQL client` pins major-16 `pg_dump`/`pg_restore`/`psql` (apt `postgresql-client-16` or `postgres:16-alpine` wrappers); `restore-isolated` refuses client/server major mismatch and treats `pg_restore` non-zero as failure; rehearsal tests assert client major and a forced `pg_restore` failure. Status remains review; Production NO-GO; recovery not proven.
 - 2026-11-18: The `postgres:16-alpine` wrappers run as the invoking user. A root-owned dump under `/tmp` blocked the disposable rehearsal from appending its restore check. The wrapper text stays inside the workflow `run` block so the file remains valid YAML.
 - 2026-11-19: BMAD code review of `9c9b0363709553fb79544419d8a23ea4b30795ab`. Four BLOCKER and three MAJOR patch findings recorded. Status remains review. Production NO-GO. Recovery not proven.
+- 2026-11-19: Applied the seven review patches. Attestation is non-verified before backup, checksum, and restore work. Restore rejects the app's Paddle and SendGrid credentials and checks the artifact before `dropdb`. The gate requires explicit boolean `production_recovery_proven=false`. Status remains review. Production NO-GO. Recovery not proven.
