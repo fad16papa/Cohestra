@@ -685,6 +685,79 @@ public sealed class ProductionSecurityValidatorTests
         Assert.DoesNotContain("localhost:3000", exception.Message, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("localhost:3000")]
+    [InlineData("  localhost:3000")]
+    [InlineData("127.0.0.1:3000")]
+    public void Validate_dedicated_production_rejects_non_absolute_cors_origin(string origin)
+    {
+        var configuration = DedicatedProductionConfig(corsOrigin: origin);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Cors:AllowedOrigins", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("absolute", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(origin.Trim(), exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("Testing")]
+    public void Validate_allows_non_absolute_cors_in_development_and_testing(string environmentName)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins:0"] = "localhost:3000",
+                ["Jwt:SigningKey"] = "DEV_ONLY_CHANGE_IN_PRODUCTION_use_at_least_32_chars",
+            })
+            .Build();
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(environmentName)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_uat_still_allows_absolute_uat_cors_origin()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+                publicBaseUrl: "https://uat.cohestra.app"),
+            new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins:0"] = "https://uat.cohestra.app",
+                ["ConnectionStrings:Redis"] = "redis:6379",
+            });
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_uat_rejects_non_absolute_cors_origin()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+                publicBaseUrl: "https://uat.cohestra.app"),
+            new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins:0"] = "localhost:3000",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("absolute", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("localhost:3000", exception.Message, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Validate_rejects_uat_cors_origin_on_production_apex()
     {

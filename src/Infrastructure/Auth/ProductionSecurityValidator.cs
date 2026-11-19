@@ -152,9 +152,11 @@ public static class ProductionSecurityValidator
                 continue;
             }
 
-            if (!Uri.TryCreate(raw, UriKind.Absolute, out var uri))
+            var origin = raw.Trim();
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) || string.IsNullOrEmpty(uri.Host))
             {
-                continue;
+                throw new InvalidOperationException(
+                    "Cors:AllowedOrigins must be absolute origins in non-Development environments.");
             }
 
             var host = uri.IdnHost;
@@ -164,7 +166,7 @@ public static class ProductionSecurityValidator
                     "Cors:AllowedOrigins must not include localhost or loopback hosts in non-Development environments.");
             }
 
-            if (productionApex && PaddleCredentialGuard.IsUatPublicHost(raw))
+            if (productionApex && PaddleCredentialGuard.IsUatPublicHost(origin))
             {
                 throw new InvalidOperationException(
                     "Cors:AllowedOrigins must not include UAT hosts when the public host is the Production apex.");

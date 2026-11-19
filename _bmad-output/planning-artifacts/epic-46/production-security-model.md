@@ -64,7 +64,7 @@ nginx owns Production headers (AD-14). Story 46.9 verifies live Paddle `cdn.padd
 
 ## 46.9 evidence matrix
 
-Recorded against main baseline `e962c8c3eead953a1f56f2b397b3e9d4fc669041` plus this story's in-repo hardening. Live Production URL probes were **not** performed (SSH and live Production probes are prohibited). Missing live evidence is **PENDING**, never PASS.
+Recorded against main baseline `4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4` plus this story's in-repo hardening. The previous baseline `e962c8c3eead953a1f56f2b397b3e9d4fc669041` is stale after the rebase. Live Production URL probes were **not** performed (SSH and live Production probes are prohibited). Missing live evidence is **PENDING**, never PASS.
 
 | Area | Verdict | Evidence | Owner gate |
 | --- | --- | --- | --- |
@@ -74,7 +74,7 @@ Recorded against main baseline `e962c8c3eead953a1f56f2b397b3e9d4fc669041` plus t
 | Platform Admin isolation | PASS (in-repo) | `PlatformAdminOnly`; TenantAdmin 403 including `/platform/reports/support` | Apex login host PENDING 46.13 |
 | IgnoreTenantFilters | PASS (in-repo) | Documented allowlist + CI contract; no new undocumented bypass | New sites need 46.9-style review |
 | JWT / refresh / handoff | PASS (in-repo) | `ProductionSecurityValidator` placeholder + min length; Redis stores fail-closed 503 in Production | Host `JWT_SIGNING_KEY` PENDING 46.4 |
-| CORS | PASS (validator) | Rejects localhost/loopback in non-Dev; compose binds `PUBLIC_BASE_URL` | Apex origin value PENDING 46.4 / 46.13 |
+| CORS | PASS (validator) | Non-Development rejects non-absolute origins and localhost/loopback. Dedicated Production allowlist still fail-closes. Development and Testing skip the gate. UAT absolute origins stay valid. Compose binds `PUBLIC_BASE_URL` | Apex origin value PENDING 46.4 / 46.13 |
 | CSP / headers | PASS (in-repo) / PENDING (live URL) | Shared nginx allows live Paddle; `deploy/nginx/production-live-csp.snippet` omits sandbox; `verify-security-headers.sh` on `https://cohestra.app` not run | 46.13 TLS + owner URL |
 | Rate limiting | PASS (in-repo) | Redis fail-closed 503 unchanged | Production Redis password value PENDING 46.4 |
 | reCAPTCHA bypass | PASS (in-repo) | Verifier never honors bypass in Production; validator rejects bypass + Google test keys; apex+open signup requires enabled | Live keys / compose enable PENDING 46.4 |
