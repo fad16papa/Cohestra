@@ -936,14 +936,25 @@ public sealed class ProductionSecurityValidatorTests
     [Fact]
     public void Validate_allows_missing_redis_on_uat_public_host()
     {
-        var configuration = ProductionConfig(
+        var source = ProductionConfig(
             "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
             publicBaseUrl: "https://uat.cohestra.app");
+        var values = new Dictionary<string, string?>();
+        foreach (var child in source.AsEnumerable())
+        {
+            if (child.Key != "ConnectionStrings:Redis")
+            {
+                values[child.Key] = child.Value;
+            }
+        }
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
 
         var exception = Record.Exception(() =>
             ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
 
         Assert.Null(exception);
+        Assert.Null(configuration.GetConnectionString("Redis"));
     }
 
     private static IConfiguration RebuildWith(IConfiguration source, Dictionary<string, string?> extras)

@@ -107,6 +107,7 @@ Cursor Grok 4.6
 - **2026-11-18** — Merged `main` (`a784ddf`) onto branch; `ClientErasureService` tenant-scoped erasure bypass added to `deploy/tenant-filter-bypass-allowlist.txt`. Status remains **review**. October review SHAs/evidence are **stale** relative to this HEAD; re-run BMAD review on merge HEAD before DONE. Production **NO-GO**.
 - **2026-11-19** — Rebased onto `main` `4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4` (Story 46.5 merge). Dedicated Production plane checks from main are kept. Story 46.9 adds the reCAPTCHA test-key denylist, non-Development CORS and open-signup rules, and Redis-with-password on a non-UAT public host. The 46.4 ownership freeze allows this story file only. Status remains **review**. Production **NO-GO**. Cutover is not authorized.
 - **2026-11-19** — Review correction: non-absolute CORS origins now fail closed in every non-Development environment, including dedicated Production and UAT. Development and Testing still skip the gate. UAT absolute origins stay valid. Evidence-matrix baseline updated to `4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4`. Live CSP adoption stays deferred to 46.10.
+- **2026-11-19** — The UAT missing-Redis test now removes the connection string. Auth-store 503 logs the outer reason only, so a Redis inner exception is not written to the log. Status remains **review**. Production **NO-GO**.
 
 ### Completion Notes List
 

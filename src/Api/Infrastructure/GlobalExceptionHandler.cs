@@ -46,11 +46,11 @@ public sealed class GlobalExceptionHandler(
         if (exception is AuthSessionStoreUnavailableException authStoreUnavailable)
         {
             logger.LogWarning(
-                authStoreUnavailable,
-                "Auth session store {StoreName} unavailable during {Method} {Path}",
+                "Auth session store {StoreName} unavailable during {Method} {Path}: {Reason}",
                 authStoreUnavailable.StoreName,
                 httpContext.Request.Method,
-                httpContext.Request.Path);
+                httpContext.Request.Path,
+                authStoreUnavailable.Message);
 
             var authUnavailable = new ProblemDetails
             {
