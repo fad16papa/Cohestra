@@ -47,10 +47,9 @@ required = [
     ("Basic activities room loads", "operator-core-flows.spec.ts"),
     ("Basic website is Core-locked and public stub home loads", "operator-core-flows.spec.ts"),
     ("Basic campaigns room is Pro-locked", "operator-core-flows.spec.ts"),
-    ("Pro dashboard metrics load", "operator-core-flows.spec.ts"),
-    ("Pro analytics room loads", "operator-core-flows.spec.ts"),
-    ("Pro website studio and public branding load", "operator-core-flows.spec.ts"),
-    ("Pro campaigns room loads without sending a blast", "operator-core-flows.spec.ts"),
+    ("does not solve a live Google challenge", "recaptcha-layer-a.spec.ts"),
+    ("empty CAPTCHA token is rejected", "recaptcha-layer-a.spec.ts"),
+    ("invalid CAPTCHA token is rejected", "recaptcha-layer-a.spec.ts"),
 ]
 core = [item for item in required if item[1] == "operator-core-flows.spec.ts"]
 login = [item for item in required if item[1] == "authenticated.spec.ts"]
@@ -73,11 +72,15 @@ payload = {
           "title": title,
           "file": file_name,
           "tests": [{"status": "expected", "results": [{"status": "expected"}]}],
-        } for title, file_name in core] + [{
-          "title": "Pro create, publish, share, register, dedup, CSV, and campaign test-send",
-          "file": "operator-core-flows.spec.ts",
-          "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
-        }],
+        } for title, file_name in core],
+      },
+      {
+        "title": "45.6 Layer A real UAT recaptcha",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "expected", "results": [{"status": "expected"}]}],
+        } for title, file_name in required if file_name == "recaptcha-layer-a.spec.ts"],
       },
       {
         "title": "45.5 OTP mailbox",
@@ -104,10 +107,9 @@ required = [
     ("Basic activities room loads", "operator-core-flows.spec.ts"),
     ("Basic website is Core-locked and public stub home loads", "operator-core-flows.spec.ts"),
     ("Basic campaigns room is Pro-locked", "operator-core-flows.spec.ts"),
-    ("Pro dashboard metrics load", "operator-core-flows.spec.ts"),
-    ("Pro analytics room loads", "operator-core-flows.spec.ts"),
-    ("Pro website studio and public branding load", "operator-core-flows.spec.ts"),
-    ("Pro campaigns room loads without sending a blast", "operator-core-flows.spec.ts"),
+    ("does not solve a live Google challenge", "recaptcha-layer-a.spec.ts"),
+    ("empty CAPTCHA token is rejected", "recaptcha-layer-a.spec.ts"),
+    ("invalid CAPTCHA token is rejected", "recaptcha-layer-a.spec.ts"),
 ]
 payload = {
   "stats": {"expected": 6, "skipped": 10, "unexpected": 0, "flaky": 0},
@@ -129,6 +131,14 @@ payload = {
           "file": file_name,
           "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
         } for title, file_name in required if file_name == "operator-core-flows.spec.ts"],
+      },
+      {
+        "title": "45.6 Layer A real UAT recaptcha",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
+        } for title, file_name in required if file_name == "recaptcha-layer-a.spec.ts"],
       },
     ],
   }],
@@ -433,7 +443,12 @@ out="$(UAT_FINAL_OUTCOME_DIR="$TMP/accepted" TARGET_SHA="$SHA" bash "$OUTCOME")"
 python3 - "$TMP/accepted/uat-final-outcome.json" <<PY
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED_BASIC_BETA", p
+assert p["result"] == "PASS_BASIC_BETA", p
+assert p["scope"] == "basic_beta", p
+assert p["proLive"] == "NOT_TESTED", p
+assert p["marketReadiness"] == "not_claimed", p
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
 assert p["uat_deployed"] is True
 assert p["ssh_executed"] is True
 assert p["deployed_sha"] == "${SHA}"
@@ -449,7 +464,7 @@ blob = json.dumps(p)
 assert "DROPLET_" not in blob
 assert "GITGUARDIAN_API_KEY=" not in blob
 PY
-pass "complete success is DEPLOYED_ACCEPTED"
+pass "complete success is DEPLOYED_ACCEPTED_BASIC_BETA"
 
 mkdir -p "$TMP/lifecycle-skip"
 write_predeploy "$TMP/lifecycle-skip" PASS "ok"
@@ -464,7 +479,7 @@ out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-skip" TARGET_SHA="$SHA" bash "$OUTC
 python3 - "$TMP/lifecycle-skip/uat-final-outcome.json" <<PY
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED_BASIC_BETA", p
 assert p["uat_deployed"] is True
 assert p["lifecycle"] == "skip"
 assert p.get("lifecycle_reason") == "lifecycle_disabled", p
@@ -492,7 +507,7 @@ out="$(UAT_FINAL_OUTCOME_DIR="$TMP/lifecycle-closed" TARGET_SHA="$SHA" bash "$OU
 python3 - "$TMP/lifecycle-closed/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED_BASIC_BETA", p
 assert p["lifecycle"] == "skip"
 assert p.get("lifecycle_reason") == "story_closed", p
 assert p.get("lifecycle_report") == "SKIPPED (story_closed)", p
@@ -603,7 +618,7 @@ assert p["uat_deployment_outcome"] == "INCOMPLETE", (label, p)
 assert p["result"] == "HOLD", (label, p)
 assert p["uat_deployed"] is True, (label, p)
 assert p["browser"] != "pass", (label, p)
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", (label, p)
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED_BASIC_BETA", (label, p)
 PY
   pass "$label"
 }
@@ -662,7 +677,7 @@ p = json.load(open(sys.argv[1]))
 assert p["uat_deployment_outcome"] in {"INCOMPLETE", "INCONSISTENT"}, p
 assert p["result"] == "HOLD", p
 assert p["uat_deployed"] is True, p
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED_BASIC_BETA", p
 PY
 pass "duplicate conflicting Playwright artifacts HOLD with host-proven deploy"
 
@@ -682,7 +697,7 @@ out="$(
 python3 - "$TMP/live/artifacts/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] == "DEPLOYED_ACCEPTED_BASIC_BETA", p
 assert p["browser"] == "pass", p
 assert p["uat_deployed"] is True
 PY
@@ -696,11 +711,11 @@ run_outcome "$TMP/auth-skip/artifacts"
 python3 - "$TMP/auth-skip/artifacts/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED_BASIC_BETA", p
 assert p["browser"] in {"skipped_required", "missing_required"}, p
 assert p["result"] == "HOLD", p
 PY
-pass "skipped mandatory Basic/Pro coverage cannot be DEPLOYED_ACCEPTED"
+pass "skipped mandatory Basic/Pro coverage cannot be DEPLOYED_ACCEPTED_BASIC_BETA"
 
 mkdir -p "$TMP/partial-skip/artifacts"
 write_proven_host "$TMP/partial-skip/artifacts"
@@ -719,11 +734,11 @@ run_outcome "$TMP/partial-skip/artifacts"
 python3 - "$TMP/partial-skip/artifacts/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED_BASIC_BETA", p
 assert p["browser"] == "skipped_required", p
 assert p["result"] == "HOLD", p
 PY
-pass "one required Basic pass plus another required Basic skip cannot be DEPLOYED_ACCEPTED"
+pass "one required Basic pass plus another required Basic skip cannot be DEPLOYED_ACCEPTED_BASIC_BETA"
 
 mkdir -p "$TMP/retry-final-fail/artifacts"
 write_proven_host "$TMP/retry-final-fail/artifacts"
@@ -732,7 +747,7 @@ python3 - "$TMP/retry-final-fail/artifacts/web/test-results/uat-playwright.json"
 import json, sys
 p = json.load(open(sys.argv[1]))
 for spec in p["suites"][0]["suites"][1]["specs"]:
-    if spec["title"] == "Pro analytics room loads":
+    if spec["title"] == "Basic activities room loads":
         spec["tests"][0]["status"] = "unexpected"
         spec["tests"][0]["results"] = [{"status": "passed"}, {"status": "failed"}]
 json.dump(p, open(sys.argv[1], "w"))
@@ -755,7 +770,7 @@ run_outcome "$TMP/stats-only/artifacts"
 python3 - "$TMP/stats-only/artifacts/uat-final-outcome.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1]))
-assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED", p
+assert p["uat_deployment_outcome"] != "DEPLOYED_ACCEPTED_BASIC_BETA", p
 assert p["browser"] == "missing_required", p
 PY
 pass "stats-only Playwright JSON cannot prove authenticated coverage"
@@ -805,25 +820,37 @@ def load(label, raw):
     assert got == label, (got, label, json.dumps(raw)[:400])
 
 load("ok", payload())
-load("skipped_required", payload({"Pro analytics room loads": {"status": "skipped"}}))
+assert mod.pro_live_status(payload()) == "NOT_TESTED"
+assert mod.ACCEPTANCE_SCOPE == "basic_beta"
+passed_pro = payload(extra=[spec_for("Pro dashboard metrics load", status="expected")])
+load("ok", passed_pro)
+assert mod.pro_live_status(passed_pro) == "NOT_TESTED"
+load("skipped_required", payload({"empty CAPTCHA token is rejected": {"status": "skipped"}}))
+mixed_captcha = payload()
+for suite in mixed_captcha["suites"][0]["suites"]:
+    for item in suite.get("specs") or []:
+        if item["title"] == "empty CAPTCHA token is rejected":
+            item["tests"] = [
+                {"status": "expected", "results": [{"status": "expected"}]},
+                {"status": "skipped", "results": [{"status": "skipped"}]},
+            ]
+load("ok", mixed_captcha)
 load("skipped_required", payload({"Basic activities room loads": {"status": "skipped"}}))
-load("missing_required", payload({"Pro campaigns room loads without sending a blast": {"results": []}}))
-# One required Basic/Pro passes while another required test is skipped.
+load("missing_required", payload({"Basic website is Core-locked and public stub home loads": {"results": []}}))
 partial = payload({"Basic campaigns room is Pro-locked": {"status": "skipped"}})
 load("skipped_required", partial)
-# Same group: dashboard pass + website missing must not accept.
 missing_sibling = payload()
 missing_sibling["suites"][0]["suites"][1]["specs"] = [
     item for item in missing_sibling["suites"][0]["suites"][1]["specs"]
-    if item["title"] != "Pro website studio and public branding load"
+    if item["title"] != "Basic website is Core-locked and public stub home loads"
 ]
 load("missing_required", missing_sibling)
-interrupted = payload({"Pro dashboard metrics load": {"status": "interrupted", "results": [{"status": "interrupted"}]}})
+interrupted = payload({"Basic dashboard metrics load": {"status": "interrupted", "results": [{"status": "interrupted"}]}})
 load("missing_required", interrupted)
-retry_pass = payload({"Pro analytics room loads": {"results": [{"status": "failed"}, {"status": "passed"}]}})
+retry_pass = payload({"Basic activities room loads": {"results": [{"status": "failed"}, {"status": "passed"}]}})
 load("ok", retry_pass)
 retry_fail = payload({
-    "Pro analytics room loads": {
+    "Basic activities room loads": {
         "test_status": "unexpected",
         "results": [{"status": "passed"}, {"status": "failed"}],
     }
@@ -856,17 +883,17 @@ def with_duplicate(title, **kwargs):
 
 load("ok", with_duplicate("Basic dashboard metrics load", status="expected"))
 load("skipped_required", with_duplicate("Basic dashboard metrics load", status="skipped"))
-load("skipped_required", payload(extra=[spec_for("Pro analytics room loads", status="skipped")]))
+load("ok", payload(extra=[spec_for("Pro analytics room loads", status="skipped")]))
 load("fail", with_duplicate("Basic activities room loads", status="failed"))
-load("fail", payload(extra=[spec_for("Pro dashboard metrics load", status="failed")]))
-load("missing_required", with_duplicate("Pro website studio and public branding load", results=[]))
+load("ok", payload(extra=[spec_for("Pro dashboard metrics load", status="failed")]))
+load("missing_required", with_duplicate("Basic website is Core-locked and public stub home loads", results=[]))
 load("missing_required", payload(extra=[spec_for("Basic campaigns room is Pro-locked", results=[])]))
 
 from pathlib import Path
 root = Path(sys.argv[1]).resolve().parents[2]
 declared = "\n".join(
     Path(root, "web/e2e-uat", name).read_text()
-    for name in ("authenticated.spec.ts", "operator-core-flows.spec.ts")
+    for name in ("authenticated.spec.ts", "operator-core-flows.spec.ts", "recaptcha-layer-a.spec.ts")
 )
 for title in REQUIRED:
     needle = f'test("{title}"'

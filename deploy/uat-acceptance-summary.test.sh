@@ -71,10 +71,9 @@ required = [
     ("Basic activities room loads", "operator-core-flows.spec.ts"),
     ("Basic website is Core-locked and public stub home loads", "operator-core-flows.spec.ts"),
     ("Basic campaigns room is Pro-locked", "operator-core-flows.spec.ts"),
-    ("Pro dashboard metrics load", "operator-core-flows.spec.ts"),
-    ("Pro analytics room loads", "operator-core-flows.spec.ts"),
-    ("Pro website studio and public branding load", "operator-core-flows.spec.ts"),
-    ("Pro campaigns room loads without sending a blast", "operator-core-flows.spec.ts"),
+    ("does not solve a live Google challenge", "recaptcha-layer-a.spec.ts"),
+    ("empty CAPTCHA token is rejected", "recaptcha-layer-a.spec.ts"),
+    ("invalid CAPTCHA token is rejected", "recaptcha-layer-a.spec.ts"),
 ]
 payload = {
   "stats": {"expected": 10, "skipped": 2, "unexpected": 0, "flaky": 0},
@@ -96,6 +95,14 @@ payload = {
           "file": file_name,
           "tests": [{"status": "expected", "results": [{"status": "expected"}]}],
         } for title, file_name in required if file_name == "operator-core-flows.spec.ts"],
+      },
+      {
+        "title": "45.6 Layer A real UAT recaptcha",
+        "specs": [{
+          "title": title,
+          "file": file_name,
+          "tests": [{"status": "expected", "results": [{"status": "expected"}]}],
+        } for title, file_name in required if file_name == "recaptcha-layer-a.spec.ts"],
       },
       {
         "title": "45.5 OTP mailbox",
@@ -141,6 +148,10 @@ assert p["sha"] == sha
 assert p["deployment"]["shaMatch"] is True
 assert p["deployment"]["apiGitSha"] == sha
 assert p["runtime"]["publicSmoke"] == "pass"
+assert p["scope"] == "basic_beta"
+assert p["proLive"] == "NOT_TESTED"
+assert p["marketReadiness"] == "not_claimed"
+assert p["browser"]["proLive"] == "NOT_TESTED"
 assert p["browser"]["expected"] == 10
 assert p["browser"]["skipped"] == 2
 assert p["browser"]["unexpected"] == 0
@@ -274,13 +285,13 @@ python3 - "$TMP/partial/web/test-results/uat-playwright.json" <<'PY'
 import json, sys
 p = json.load(open(sys.argv[1], encoding="utf-8"))
 for spec in p["suites"][0]["suites"][1]["specs"]:
-    if spec["title"] == "Pro campaigns room loads without sending a blast":
+    if spec["title"] == "Basic website is Core-locked and public stub home loads":
         spec["tests"][0]["status"] = "skipped"
         spec["tests"][0]["results"] = [{"status": "skipped"}]
 json.dump(p, open(sys.argv[1], "w"), indent=2)
 PY
 if run_summary "$TMP/partial" "$TMP/summary-partial.json" >"$TMP/partial.out" 2>"$TMP/partial.err"; then
-  fail "partial Pro skip must fail the summary"
+  fail "partial Basic skip must fail the summary"
 fi
 python3 - "$TMP/summary-partial.json" <<'PY'
 import json, sys
@@ -289,6 +300,49 @@ assert p["result"] == "fail", p
 assert p["browser"]["coverage"] == "skipped_required", p
 assert p["browser"]["authenticatedSkipped"] is True, p
 PY
-pass "one required Pro pass plus another required Pro skip fails acceptance summary"
+pass "one required Basic pass plus another required Basic skip fails acceptance summary"
+
+python3 - "$TMP/summary-ok.json" "$TMP/fake-pro.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+p["proLive"] = "PASS"
+p["result"] = "pass"
+json.dump(p, open(sys.argv[2], "w"), indent=2)
+PY
+if bash "$SCRIPT" --evaluate "$TMP/fake-pro.json" >"$TMP/fake-pro.out" 2>"$TMP/fake-pro.err"; then
+  fail "proLive PASS must not evaluate as acceptance"
+fi
+grep -q 'fake_pass' "$TMP/fake-pro.out" "$TMP/fake-pro.err" || fail "fake full-product pass must be named"
+pass "proLive PASS is a fake full-product pass"
+
+write_ok_inputs "$TMP/proskip"
+python3 - "$TMP/proskip/web/test-results/uat-playwright.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+p["suites"][0]["suites"].append({
+    "title": "pro walks",
+    "specs": [{
+        "title": "Pro dashboard metrics load",
+        "file": "operator-core-flows.spec.ts",
+        "tests": [{"status": "skipped", "results": [{"status": "skipped"}]}],
+    }],
+})
+json.dump(p, open(sys.argv[1], "w"), indent=2)
+PY
+if ! run_summary "$TMP/proskip" "$TMP/summary-proskip.json" >"$TMP/proskip.out" 2>"$TMP/proskip.err"; then
+  echo "OUT:"
+  cat "$TMP/proskip.out" "$TMP/proskip.err"
+  fail "a skipped Pro title must not block basic_beta"
+fi
+python3 - "$TMP/summary-proskip.json" <<'PY'
+import json, sys
+p = json.load(open(sys.argv[1], encoding="utf-8"))
+assert p["result"] == "pass", p
+assert p["scope"] == "basic_beta", p
+assert p["proLive"] == "NOT_TESTED", p
+assert p["marketReadiness"] == "not_claimed", p
+assert p["proLive"] != "PASS", p
+PY
+pass "skipped Pro coverage stays NOT_TESTED and does not block basic_beta"
 
 echo "uat-acceptance-summary contract OK"
