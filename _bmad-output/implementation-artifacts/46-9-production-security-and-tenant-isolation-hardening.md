@@ -1,0 +1,191 @@
+---
+id: 46.9
+key: 46-9-production-security-and-tenant-isolation-hardening
+title: Production security and tenant-isolation hardening
+status: review
+epic: 46
+created: 2026-10-24
+baseline_commit: 4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4
+depends_on:
+  - 46.1
+owner_gate: none for the review; secret rotation if audit demands owner action
+production: NO-GO
+---
+
+# Story 46.9: Production security and tenant-isolation hardening
+
+Status: review
+
+## Story
+
+As an **owner**,
+I want **a recorded Production threat review and the holes it finds closed**,
+so that **launch does not depend on UAT luck**.
+
+## Acceptance Criteria
+
+1. **Given** `production-security-model.md`
+   **When** 46.9 completes
+   **Then** each row has PASS/FAIL/PENDING with evidence
+   **And** Production Redis requires a password (compose + non-UAT validator)
+   **And** Production compose still publishes no 5432/6379
+   **And** Production reCAPTCHA bypass is empty; apex + open signup requires enabled recaptcha
+   **And** CORS origins reject localhost/loopback in non-Development
+   **And** nginx CSP allows live Paddle and a live-only snippet does not require sandbox Paddle
+   **And** secret audit lists names and locations, zero values in git
+
+2. **Given** TenantIsolation
+   **When** CI runs
+   **Then** the SM-1 gate remains required
+   **And** no new Production support query bypasses tenant filters except documented PlatformAdmin IgnoreTenantFilters
+
+3. **Given** negative regression
+   **When** tests run
+   **Then** cross-tenant access is denied
+   **And** tenant impersonation (JWT↔Host and `X-Tenant-Id`) is rejected
+   **And** TenantAdmin is blocked from Platform Admin, including support reports
+   **And** Production auth session stores fail closed on Redis outage (503)
+   **And** reCAPTCHA bypass and Google test keys are rejected in Production
+
+4. **Given** CI/CD provenance
+   **When** 46.3 artifacts are re-reviewed
+   **Then** Production remains `workflow_dispatch` + exact SHA + Layer A/B
+   **And** GitHub Environment and branch settings are not mutated
+   **And** UAT deploy isolation remains
+
+5. **Given** this story
+   **When** evidence is reviewed
+   **Then** no SSH or live Production probe was performed
+   **And** live URL/header/firewall checks stay PENDING
+   **And** Production remains **NO-GO**
+
+## Non-goals
+
+- Do not edit 46.4 runtime/secrets files (`docker-compose.production.yml`, `.env.production.example`, host `.env` wiring).
+- Do not edit 46.6 instrumentation/redaction (`SendGridEmailSender`, OTel SDK).
+- Do not change GitHub Environment or branch protection Settings.
+- Do not SSH, deploy Production, run production migrations, or dispatch Deploy Production.
+- Do not enable live Paddle or charge cards (46.10).
+- Do not weaken `ProductionSecurityValidator` or `PaddleCredentialGuard`.
+
+## Tasks / Subtasks
+
+- [x] Task 1: Evidence-based threat review matrix (AC 1, 5)
+- [x] Task 2: ProductionSecurityValidator hardening — PlatformAdminSeed, CORS, recaptcha, Redis password, JWT length (AC 1, 3)
+- [x] Task 3: Auth session stores fail-closed in Production (AC 3)
+- [x] Task 4: CSP live-Paddle contract + tests (AC 1)
+- [x] Task 5: TenantIsolation negatives + bypass allowlist (AC 2, 3)
+- [x] Task 6: Secret inventory names-only + CI contracts (AC 1, 4)
+- [x] Task 7: BUILD + TEST + BMAD code review on exact HEAD (review recorded below; CI + live gates still open)
+
+## Dev Notes
+
+- Spine: AD-3, AD-6, AD-7, AD-14, AD-15; FR-23–27
+- 46.4 owns host secret values and recaptcha enablement on compose
+- 46.6 owns PII/log redaction
+- 46.3 already owns Layer A/B provenance
+- UAT also runs `ASPNETCORE_ENVIRONMENT=Production` — do not reject UAT CORS/Redis passwordless
+
+### References
+
+- `_bmad-output/planning-artifacts/epics-production-launch-readiness.md` Story 46.9
+- `_bmad-output/planning-artifacts/epic-46/production-security-model.md`
+- `_bmad-output/planning-artifacts/architecture/architecture-cohestra-epic-46-2026-10-19/ARCHITECTURE-SPINE.md`
+- `_bmad/custom/mandatory-code-review-loop.md`
+
+## Dev Agent Record
+
+### Agent Model Used
+
+Cursor Grok 4.6
+
+### Debug Log References
+
+- Baseline `4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4` (rebased 2026-11-19; previous baseline `e962c8c3eead953a1f56f2b397b3e9d4fc669041` is stale)
+- In-repo validators + unit/integration negatives added in this story
+- Live Production probes: not run (prohibited)
+- **2026-11-18** — Merged `main` (`a784ddf`) onto branch; `ClientErasureService` tenant-scoped erasure bypass added to `deploy/tenant-filter-bypass-allowlist.txt`. Status remains **review**. October review SHAs/evidence are **stale** relative to this HEAD; re-run BMAD review on merge HEAD before DONE. Production **NO-GO**.
+- **2026-11-19** — Rebased onto `main` `4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4` (Story 46.5 merge). Dedicated Production plane checks from main are kept. Story 46.9 adds the reCAPTCHA test-key denylist, non-Development CORS and open-signup rules, and Redis-with-password on a non-UAT public host. The 46.4 ownership freeze allows this story file only. Status remains **review**. Production **NO-GO**. Cutover is not authorized.
+- **2026-11-19** — Review correction: non-absolute CORS origins now fail closed in every non-Development environment, including dedicated Production and UAT. Development and Testing still skip the gate. UAT absolute origins stay valid. Evidence-matrix baseline updated to `4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4`. Live CSP adoption stays deferred to 46.10.
+- **2026-11-19** — The UAT missing-Redis test now removes the connection string. Auth-store 503 logs the outer reason only, so a Redis inner exception is not written to the log. Status remains **review**. Production **NO-GO**.
+- **2026-11-19** — Dedicated Production checks the Redis password before the public URL, so a blank or malformed URL cannot skip it. UAT and Development are unchanged. The tenant-filter contract now pins each call-site count and ClientErasureService TenantId rechecks. Dedicated Production rejects enabled reCAPTCHA with an empty secret. Compose defaults are unchanged. Status remains **review**. Production **NO-GO**.
+
+### Completion Notes List
+
+- Recorded PASS/FAIL/PENDING matrix on the threat model.
+- Hardened ProductionSecurityValidator and Redis-backed auth stores without editing 46.4/46.6 files.
+- Added TenantIsolation negatives, CSP live-only contract, secret-name inventory, and CI contracts.
+- PRODUCTION=NO-GO.
+- **GitGuardian (reCAPTCHA denylist):** `GoogleRecaptchaTestKeys` literals stay in `ProductionSecurityValidator` and tests so Production cannot accept Google’s published always-pass keys. No in-repo GitGuardian ignore was added. The owner must resolve the existing GitGuardian incident in the GitGuardian dashboard so the App check can conclude success. Status stays **review**; Production **NO-GO**.
+
+### File List
+
+- src/Application/Auth/AuthSessionStoreUnavailableException.cs
+- src/Application/Auth/AuthErrorCodes.cs
+- src/Infrastructure/Auth/AuthSessionStorePolicy.cs
+- src/Infrastructure/Auth/ProductionSecurityValidator.cs
+- src/Infrastructure/Auth/ResilientRefreshTokenStore.cs
+- src/Infrastructure/Auth/ResilientAuthHandoffStore.cs
+- src/Infrastructure.Tests/Auth/ProductionSecurityValidatorTests.cs
+- src/Infrastructure.Tests/Auth/ResilientAuthSessionStoreTests.cs
+- src/Infrastructure.Tests/RateLimiting/RedisRateLimiterOperationsTests.cs
+- src/Api/Infrastructure/GlobalExceptionHandler.cs
+- src/Api.IntegrationTests/TenantIsolationApiTests.cs
+- src/Api.IntegrationTests/TenantAuthzIntegrationTests.cs
+- web/content-security-policy.ts
+- web/lib/content-security-policy.test.ts
+- deploy/nginx/production-live-csp.snippet
+- deploy/validate-production-csp.sh
+- deploy/tenant-filter-bypass-allowlist.txt
+- deploy/validate-tenant-filter-bypass-allowlist.sh
+- deploy/validate-tenant-filter-bypass-allowlist.test.sh
+- deploy/validate-production-secret-inventory.sh
+- deploy/validate-production-runtime-secrets.sh
+- docs/deploy/production-secret-inventory.md
+- .github/workflows/ci.yml
+- _bmad-output/planning-artifacts/epic-46/production-security-model.md
+- _bmad-output/implementation-artifacts/46-9-production-security-and-tenant-isolation-hardening.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+## Senior Developer Review (AI)
+
+**Reviewer:** Cursor Grok 4.6 (exact-HEAD review after BUILD + TEST)
+**Date:** 2026-10-24 (Asia/Singapore)
+**Outcome:** Changes requested once (UAT CORS on Production apex) → fixed → **Approve** for in-repo merge readiness
+**Unresolved BLOCKER:** 0
+**Unresolved MAJOR:** 0
+
+Layers: Blind Hunter, Edge Case Hunter, Acceptance Auditor, plus Mandatory Code Review Loop checklist (tenant isolation, authz, security, tests, brownfield reuse).
+
+### Findings
+
+| Sev | Finding | Disposition |
+| --- | --- | --- |
+| MAJOR | Production CORS validator rejected localhost but allowed `https://uat.cohestra.app` when `PublicWeb:BaseUrl` was the Production apex | **Fixed** — `ValidateProductionCors` now refuses UAT hosts on the apex; unit test added |
+| MINOR | Shared nginx CSP still includes sandbox Paddle until 46.10 adopts `production-live-csp.snippet` | **Deferred** — documented; sandbox checkout still required until live Paddle. No product/security risk for current sandbox-locked compose |
+| MINOR | Live `verify-security-headers.sh` / firewall / Environment reviewers remain unverified | **Deferred** — prohibited live probes; recorded PENDING, not PASS |
+| NIT | CORS origins with paths are accepted if host is valid | Left as-is; compose uses origin URLs |
+
+### Test evidence on reviewed worktree
+
+- `dotnet test` Category!=Integration: **1261 passed**, 10 skipped (Redis-unavailable pre-existing)
+- TenantIsolation integration: **44 passed**
+- Category=Integration: **221 passed**, 0 failed
+- CSP vitest: **6 passed**
+- `validate-production-csp.sh` / allowlist / secret-inventory: **PASS**
+
+### Product acceptance
+
+- PRODUCT TRUTH: threat matrix recorded; in-repo holes closed; live rows stay PENDING
+- DATA TRUTH: cross-tenant reads remain 404/403 without foreign payload
+- UX TRUTH: no new UI (N/A)
+- INTEGRATION TRUTH: Platform Admin 403s include support reports; UAT deploy isolation untouched
+- REGRESSION TRUTH: full unit + integration suite green
+
+Story stays **review**. Not DONE: GitHub CI on this HEAD, owner live gates, 46.4/46.6 integrations, and no autonomous merge. Production **NO-GO**.
+
+## Change Log
+
+- 2026-10-24 — Story 46.9 implementation: security audit, fail-closed hardening, negative tests, evidence matrix. Production NO-GO.
+- 2026-10-24 — Code review: reject UAT CORS on Production apex; record exact-HEAD review. Status → review.
+- 2026-11-18 — Post-merge `main` fix: allowlist `ClientErasureService` (tenant-scoped workspace erasure with explicit `TenantId` re-checks). Status stays **review**; prior October review SHAs stale. Production NO-GO.

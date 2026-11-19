@@ -8,6 +8,12 @@ namespace Cohestra.Infrastructure.Auth;
 
 public static class ProductionSecurityValidator
 {
+    private static readonly string[] GoogleRecaptchaTestKeys =
+    [
+        "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+        "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
+    ];
+
     public static void Validate(IConfiguration configuration, IHostEnvironment environment)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -22,6 +28,7 @@ public static class ProductionSecurityValidator
 
         if (dedicatedProduction)
         {
+            ValidateDedicatedProductionRedis(configuration.GetConnectionString("Redis"));
             ValidateDedicatedProductionPublicUrl(configuration);
         }
 
@@ -39,6 +46,9 @@ public static class ProductionSecurityValidator
         RejectEnabledSeed(configuration, "OperatorSeed:Enabled");
         RejectEnabledSeed(configuration, "LoadTestSeed:Enabled");
         RejectEnabledSeed(configuration, "DemoDataSeed:Enabled");
+        ValidateNonDevelopmentCors(configuration, publicBaseUrl);
+        ValidateNonDevelopmentRecaptcha(configuration, publicBaseUrl);
+        ValidateNonUatProductionRedis(configuration.GetConnectionString("Redis"), publicBaseUrl);
         ValidateProductionPostgres(configuration.GetConnectionString("DefaultConnection"), require: false);
 
         if (dedicatedProduction)
@@ -131,6 +141,97 @@ public static class ProductionSecurityValidator
             throw new InvalidOperationException($"{displayName} must be unset on the dedicated Production plane.");
         }
     }
+
+    private static void ValidateNonDevelopmentCors(IConfiguration configuration, string? publicBaseUrl)
+    {
+        var origins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        var productionApex = ProductionCorsOrigins.IsProductionPublicBaseUrl(publicBaseUrl);
+        foreach (var raw in origins)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                continue;
+            }
+
+            var origin = raw.Trim();
+            if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) || string.IsNullOrEmpty(uri.Host))
+            {
+                throw new InvalidOperationException(
+                    "Cors:AllowedOrigins must be absolute origins in non-Development environments.");
+            }
+
+            var host = uri.IdnHost;
+            if (IsLoopbackHost(host) || host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "Cors:AllowedOrigins must not include localhost or loopback hosts in non-Development environments.");
+            }
+
+            if (productionApex && PaddleCredentialGuard.IsUatPublicHost(origin))
+            {
+                throw new InvalidOperationException(
+                    "Cors:AllowedOrigins must not include UAT hosts when the public host is the Production apex.");
+            }
+        }
+    }
+
+    private static void ValidateNonDevelopmentRecaptcha(IConfiguration configuration, string? publicBaseUrl)
+    {
+        var bypass = configuration["SelfServeSignup:Recaptcha:TestBypassToken"];
+        if (!string.IsNullOrWhiteSpace(bypass))
+        {
+            throw new InvalidOperationException(
+                "SelfServeSignup:Recaptcha:TestBypassToken must be empty in non-Development environments.");
+        }
+
+        var secret = configuration["SelfServeSignup:Recaptcha:SecretKey"];
+        var siteKey = configuration["SelfServeSignup:Recaptcha:SiteKey"];
+        if (IsGoogleRecaptchaTestKey(secret) || IsGoogleRecaptchaTestKey(siteKey))
+        {
+            throw new InvalidOperationException(
+                "SelfServeSignup:Recaptcha must not use Google test keys in non-Development environments.");
+        }
+
+        var enabled = configuration.GetValue("SelfServeSignup:Recaptcha:Enabled", false);
+        if (enabled && string.IsNullOrWhiteSpace(secret))
+        {
+            throw new InvalidOperationException(
+                "SelfServeSignup:Recaptcha:SecretKey must be set when reCAPTCHA is enabled in non-Development environments.");
+        }
+
+        var registrationClosed = configuration.GetValue("SelfServeSignup:RegistrationClosed", false);
+        if (!registrationClosed
+            && ProductionCorsOrigins.IsProductionPublicBaseUrl(publicBaseUrl)
+            && !enabled)
+        {
+            throw new InvalidOperationException(
+                "SelfServeSignup:Recaptcha:Enabled must be true when self-serve signup is open on the Production apex.");
+        }
+    }
+
+    private static void ValidateNonUatProductionRedis(string? redis, string? publicBaseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(publicBaseUrl) || PaddleCredentialGuard.IsUatPublicHost(publicBaseUrl))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(redis))
+        {
+            throw new InvalidOperationException(
+                "ConnectionStrings:Redis must be configured in non-UAT Production environments.");
+        }
+
+        if (string.IsNullOrWhiteSpace(ReadRedisOption(redis, "password")))
+        {
+            throw new InvalidOperationException(
+                "ConnectionStrings:Redis must include a password in non-UAT Production environments.");
+        }
+    }
+
+    private static bool IsGoogleRecaptchaTestKey(string? value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && GoogleRecaptchaTestKeys.Contains(value.Trim(), StringComparer.Ordinal);
 
     private static void ValidateDedicatedProductionRedis(string? redis)
     {

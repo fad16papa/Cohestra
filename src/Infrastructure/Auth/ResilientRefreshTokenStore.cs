@@ -1,3 +1,4 @@
+using Cohestra.Application.Auth;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
@@ -5,14 +6,37 @@ using StackExchange.Redis;
 namespace Cohestra.Infrastructure.Auth;
 
 /// <summary>
-/// Prefer Redis for refresh tokens; fall back to in-memory storage in Development when Redis fails.
+/// Prefer Redis for refresh tokens. In-memory fallback is Development/Testing only.
+/// Production stays fail-closed (HTTP 503) when Redis is unavailable.
 /// </summary>
-public sealed class ResilientRefreshTokenStore(
-    RedisRefreshTokenStore redisStore,
-    InMemoryRefreshTokenStore memoryStore,
-    IHostEnvironment hostEnvironment,
-    ILogger<ResilientRefreshTokenStore> logger) : IRefreshTokenStore
+public sealed class ResilientRefreshTokenStore : IRefreshTokenStore
 {
+    private readonly IRefreshTokenStore _redisStore;
+    private readonly IRefreshTokenStore _memoryStore;
+    private readonly IHostEnvironment _hostEnvironment;
+    private readonly ILogger<ResilientRefreshTokenStore> _logger;
+
+    public ResilientRefreshTokenStore(
+        RedisRefreshTokenStore redisStore,
+        InMemoryRefreshTokenStore memoryStore,
+        IHostEnvironment hostEnvironment,
+        ILogger<ResilientRefreshTokenStore> logger)
+        : this(redisStore, new InMemoryRefreshTokenStoreAdapter(memoryStore), hostEnvironment, logger)
+    {
+    }
+
+    internal ResilientRefreshTokenStore(
+        IRefreshTokenStore redisStore,
+        IRefreshTokenStore memoryStore,
+        IHostEnvironment hostEnvironment,
+        ILogger<ResilientRefreshTokenStore> logger)
+    {
+        _redisStore = redisStore;
+        _memoryStore = memoryStore;
+        _hostEnvironment = hostEnvironment;
+        _logger = logger;
+    }
+
     public async Task StoreAsync(
         string refreshToken,
         Guid userId,
@@ -22,15 +46,20 @@ public sealed class ResilientRefreshTokenStore(
     {
         try
         {
-            await redisStore.StoreAsync(refreshToken, userId, tenantId, ttl, cancellationToken);
+            await _redisStore.StoreAsync(refreshToken, userId, tenantId, ttl, cancellationToken);
         }
-        catch (Exception ex) when (ShouldFallback(ex))
+        catch (Exception ex) when (IsRedisFailure(ex))
         {
-            logger.LogWarning(
+            if (!AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
+            {
+                throw new AuthSessionStoreUnavailableException("refresh-token", ex);
+            }
+
+            _logger.LogWarning(
                 ex,
                 "Redis refresh token store failed; using in-memory fallback for user {UserId}.",
                 userId);
-            await memoryStore.StoreAsync(refreshToken, userId, tenantId, ttl, cancellationToken);
+            await _memoryStore.StoreAsync(refreshToken, userId, tenantId, ttl, cancellationToken);
         }
     }
 
@@ -40,18 +69,23 @@ public sealed class ResilientRefreshTokenStore(
     {
         try
         {
-            var fromRedis = await redisStore.GetSessionAsync(refreshToken, cancellationToken);
-            if (fromRedis is not null)
+            var fromRedis = await _redisStore.GetSessionAsync(refreshToken, cancellationToken);
+            if (fromRedis is not null || !AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
             {
                 return fromRedis;
             }
         }
-        catch (Exception ex) when (ShouldFallback(ex))
+        catch (Exception ex) when (IsRedisFailure(ex))
         {
-            logger.LogWarning(ex, "Redis refresh token read failed; trying in-memory fallback.");
+            if (!AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
+            {
+                throw new AuthSessionStoreUnavailableException("refresh-token", ex);
+            }
+
+            _logger.LogWarning(ex, "Redis refresh token read failed; trying in-memory fallback.");
         }
 
-        return await memoryStore.GetSessionAsync(refreshToken, cancellationToken);
+        return await _memoryStore.GetSessionAsync(refreshToken, cancellationToken);
     }
 
     public async Task<RefreshTokenSession?> ConsumeAsync(
@@ -60,57 +94,102 @@ public sealed class ResilientRefreshTokenStore(
     {
         try
         {
-            var fromRedis = await redisStore.ConsumeAsync(refreshToken, cancellationToken);
-            if (fromRedis is not null)
+            var fromRedis = await _redisStore.ConsumeAsync(refreshToken, cancellationToken);
+            if (fromRedis is not null || !AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
             {
                 return fromRedis;
             }
         }
-        catch (Exception ex) when (ShouldFallback(ex))
+        catch (Exception ex) when (IsRedisFailure(ex))
         {
-            logger.LogWarning(ex, "Redis refresh token consume failed; trying in-memory fallback.");
+            if (!AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
+            {
+                throw new AuthSessionStoreUnavailableException("refresh-token", ex);
+            }
+
+            _logger.LogWarning(ex, "Redis refresh token consume failed; trying in-memory fallback.");
         }
 
-        return await memoryStore.ConsumeAsync(refreshToken, cancellationToken);
+        return await _memoryStore.ConsumeAsync(refreshToken, cancellationToken);
     }
 
     public async Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
         try
         {
-            await redisStore.RevokeAsync(refreshToken, cancellationToken);
+            await _redisStore.RevokeAsync(refreshToken, cancellationToken);
         }
-        catch (Exception ex) when (ShouldFallback(ex))
+        catch (Exception ex) when (IsRedisFailure(ex))
         {
-            logger.LogWarning(ex, "Redis refresh token revoke failed; trying in-memory fallback.");
+            if (!AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
+            {
+                throw new AuthSessionStoreUnavailableException("refresh-token", ex);
+            }
+
+            _logger.LogWarning(ex, "Redis refresh token revoke failed; trying in-memory fallback.");
         }
 
-        await memoryStore.RevokeAsync(refreshToken, cancellationToken);
+        if (AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
+        {
+            await _memoryStore.RevokeAsync(refreshToken, cancellationToken);
+        }
     }
 
     public async Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         try
         {
-            await redisStore.RevokeAllForUserAsync(userId, cancellationToken);
+            await _redisStore.RevokeAllForUserAsync(userId, cancellationToken);
         }
-        catch (Exception ex) when (ShouldFallback(ex))
+        catch (Exception ex) when (IsRedisFailure(ex))
         {
-            logger.LogWarning(
+            if (!AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
+            {
+                throw new AuthSessionStoreUnavailableException("refresh-token", ex);
+            }
+
+            _logger.LogWarning(
                 ex,
                 "Redis refresh token revoke-all failed; trying in-memory fallback for user {UserId}.",
                 userId);
         }
 
-        await memoryStore.RevokeAllForUserAsync(userId, cancellationToken);
+        if (AuthSessionStorePolicy.AllowsInMemoryFallback(_hostEnvironment))
+        {
+            await _memoryStore.RevokeAllForUserAsync(userId, cancellationToken);
+        }
     }
-
-    private bool ShouldFallback(Exception exception) =>
-        IsRedisFailure(exception) || hostEnvironment.IsDevelopment();
 
     private static bool IsRedisFailure(Exception exception) =>
         exception is RedisException
-        or RedisConnectionException
-        or RedisTimeoutException
-        or TimeoutException;
+            or RedisConnectionException
+            or RedisTimeoutException
+            or TimeoutException;
+
+    private sealed class InMemoryRefreshTokenStoreAdapter(InMemoryRefreshTokenStore inner) : IRefreshTokenStore
+    {
+        public Task StoreAsync(
+            string refreshToken,
+            Guid userId,
+            Guid? tenantId,
+            TimeSpan ttl,
+            CancellationToken cancellationToken = default) =>
+            inner.StoreAsync(refreshToken, userId, tenantId, ttl, cancellationToken);
+
+        public Task<RefreshTokenSession?> GetSessionAsync(
+            string refreshToken,
+            CancellationToken cancellationToken = default) =>
+            inner.GetSessionAsync(refreshToken, cancellationToken);
+
+        public Task<RefreshTokenSession?> ConsumeAsync(
+            string refreshToken,
+            CancellationToken cancellationToken = default) =>
+            inner.ConsumeAsync(refreshToken, cancellationToken);
+
+        public Task RevokeAsync(string refreshToken, CancellationToken cancellationToken = default) =>
+            inner.RevokeAsync(refreshToken, cancellationToken);
+
+        public Task RevokeAllForUserAsync(Guid userId, CancellationToken cancellationToken = default) =>
+            inner.RevokeAllForUserAsync(userId, cancellationToken);
+    }
 }

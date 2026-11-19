@@ -101,6 +101,7 @@ public sealed class ProductionSecurityValidatorTests
                 ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
                 ["ConnectionStrings:DefaultConnection"] =
                     "Host=localhost;Port=5432;Database=cohestra;Username=crm;Password=crm",
+                ["ConnectionStrings:Redis"] = "redis:6379,password=production-redis-secret",
             })
             .Build();
 
@@ -358,6 +359,101 @@ public sealed class ProductionSecurityValidatorTests
         Assert.Contains("password", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("not-a-url")]
+    [InlineData("http://cohestra.app")]
+    [InlineData("https://uat.cohestra.app")]
+    [InlineData("https://evil.example")]
+    public void Validate_dedicated_production_still_requires_redis_password_when_public_url_is_blank_or_malformed(
+        string publicBaseUrl)
+    {
+        var configuration = DedicatedProductionConfig(redis: "redis:6379", publicBaseUrl: publicBaseUrl);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("password", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_requires_redis_password_when_public_url_is_omitted()
+    {
+        var source = DedicatedProductionConfig(redis: "redis:6379");
+        var values = new Dictionary<string, string?>();
+        foreach (var child in source.AsEnumerable())
+        {
+            if (child.Key != "PublicWeb:BaseUrl")
+            {
+                values[child.Key] = child.Value;
+            }
+        }
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("password", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(configuration["PublicWeb:BaseUrl"]);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("not-a-url")]
+    [InlineData("http://cohestra.app")]
+    public void Validate_dedicated_production_rejects_blank_or_malformed_public_url_when_redis_has_a_password(
+        string publicBaseUrl)
+    {
+        var configuration = DedicatedProductionConfig(publicBaseUrl: publicBaseUrl);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("PublicWeb:BaseUrl", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_dedicated_production_rejects_enabled_recaptcha_without_owner_secret(string? secret)
+    {
+        var extras = new Dictionary<string, string?>
+        {
+            ["SelfServeSignup:Recaptcha:Enabled"] = "true",
+        };
+        if (secret is not null)
+        {
+            extras["SelfServeSignup:Recaptcha:SecretKey"] = secret;
+        }
+
+        var configuration = RebuildWith(DedicatedProductionConfig(), extras);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Recaptcha:SecretKey", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_dedicated_production_allows_enabled_recaptcha_with_owner_secret()
+    {
+        var configuration = RebuildWith(
+            DedicatedProductionConfig(),
+            new Dictionary<string, string?>
+            {
+                ["SelfServeSignup:Recaptcha:Enabled"] = "true",
+                ["SelfServeSignup:Recaptcha:SecretKey"] = "production-recaptcha-secret-not-a-google-test-key",
+            });
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
     [Fact]
     public void Validate_dedicated_production_rejects_placeholder_redis_password()
     {
@@ -520,6 +616,7 @@ public sealed class ProductionSecurityValidatorTests
                 ["SendGrid:ApiKey"] = "SG.syntheticIndependentProdKey",
                 ["SendGrid:FromEmail"] = "noreply@cohestra.app",
                 ["SendGrid:UseSandbox"] = "false",
+                ["SelfServeSignup:RegistrationClosed"] = "true",
             })
             .Build();
 
@@ -665,6 +762,312 @@ public sealed class ProductionSecurityValidatorTests
         Assert.Null(exception);
     }
 
+    [Fact]
+    public void Validate_rejects_localhost_cors_in_production()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins:0"] = "http://localhost:3000",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("localhost", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("localhost:3000", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("localhost:3000")]
+    [InlineData("  localhost:3000")]
+    [InlineData("127.0.0.1:3000")]
+    public void Validate_dedicated_production_rejects_non_absolute_cors_origin(string origin)
+    {
+        var configuration = DedicatedProductionConfig(corsOrigin: origin);
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Cors:AllowedOrigins", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("absolute", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain(origin.Trim(), exception.Message, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("Development")]
+    [InlineData("Testing")]
+    public void Validate_allows_non_absolute_cors_in_development_and_testing(string environmentName)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins:0"] = "localhost:3000",
+                ["Jwt:SigningKey"] = "DEV_ONLY_CHANGE_IN_PRODUCTION_use_at_least_32_chars",
+            })
+            .Build();
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(environmentName)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_uat_still_allows_absolute_uat_cors_origin()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+                publicBaseUrl: "https://uat.cohestra.app"),
+            new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins:0"] = "https://uat.cohestra.app",
+                ["ConnectionStrings:Redis"] = "redis:6379",
+            });
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_uat_rejects_non_absolute_cors_origin()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+                publicBaseUrl: "https://uat.cohestra.app"),
+            new Dictionary<string, string?>
+            {
+                ["Cors:AllowedOrigins:0"] = "localhost:3000",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("absolute", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("localhost:3000", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_rejects_uat_cors_origin_on_production_apex()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["PublicWeb:BaseUrl"] = "https://cohestra.app",
+                ["Cors:AllowedOrigins:0"] = "https://uat.cohestra.app",
+                ["SelfServeSignup:RegistrationClosed"] = "true",
+                ["ConnectionStrings:Redis"] = "redis:6379,password=synthetic-redis-password-32chars",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("UAT hosts", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_rejects_recaptcha_bypass_token_in_production()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["SelfServeSignup:Recaptcha:TestBypassToken"] = "test-captcha-pass",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("TestBypassToken", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_rejects_google_recaptcha_test_secret_in_production()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["SelfServeSignup:Recaptcha:Enabled"] = "true",
+                ["SelfServeSignup:Recaptcha:SecretKey"] = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Google test keys", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_rejects_open_signup_without_recaptcha_on_production_apex()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["PublicWeb:BaseUrl"] = "https://cohestra.app",
+                ["SelfServeSignup:RegistrationClosed"] = "false",
+                ["SelfServeSignup:Recaptcha:Enabled"] = "false",
+                ["ConnectionStrings:Redis"] = "redis:6379,password=synthetic-redis-password-32chars",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Recaptcha:Enabled", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_allows_open_signup_on_production_apex_when_recaptcha_is_enabled()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["PublicWeb:BaseUrl"] = "https://cohestra.app",
+                ["SelfServeSignup:RegistrationClosed"] = "false",
+                ["SelfServeSignup:Recaptcha:Enabled"] = "true",
+                ["SelfServeSignup:Recaptcha:SecretKey"] = "production-recaptcha-secret-not-a-google-test-key",
+                ["ConnectionStrings:Redis"] = "redis:6379,password=synthetic-redis-password-32chars",
+            });
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void Validate_rejects_missing_or_empty_redis_on_non_uat_production_host(string? redis)
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["PublicWeb:BaseUrl"] = "https://cohestra.app",
+                ["SelfServeSignup:RegistrationClosed"] = "true",
+            });
+
+        if (redis is not null)
+        {
+            configuration = RebuildWith(configuration, new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:Redis"] = redis,
+            });
+        }
+        else
+        {
+            var values = new Dictionary<string, string?>();
+            foreach (var child in configuration.AsEnumerable())
+            {
+                if (child.Key != "ConnectionStrings:Redis")
+                {
+                    values[child.Key] = child.Value;
+                }
+            }
+
+            configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        }
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Redis", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_rejects_passwordless_redis_on_non_uat_production_host()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length"),
+            new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:Redis"] = "redis:6379",
+                ["PublicWeb:BaseUrl"] = "https://cohestra.app",
+                ["SelfServeSignup:RegistrationClosed"] = "true",
+            });
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Contains("Redis", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Validate_allows_passwordless_redis_on_uat_public_host()
+    {
+        var configuration = RebuildWith(
+            ProductionConfig(
+                "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+                publicBaseUrl: "https://uat.cohestra.app"),
+            new Dictionary<string, string?>
+            {
+                ["ConnectionStrings:Redis"] = "redis:6379",
+            });
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+    }
+
+    [Fact]
+    public void Validate_allows_missing_redis_on_uat_public_host()
+    {
+        var source = ProductionConfig(
+            "Host=postgres;Port=5432;Database=cohestra;Username=crm;Password=production-secret-key-with-sufficient-length",
+            publicBaseUrl: "https://uat.cohestra.app");
+        var values = new Dictionary<string, string?>();
+        foreach (var child in source.AsEnumerable())
+        {
+            if (child.Key != "ConnectionStrings:Redis")
+            {
+                values[child.Key] = child.Value;
+            }
+        }
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+
+        var exception = Record.Exception(() =>
+            ProductionSecurityValidator.Validate(configuration, new StubHostEnvironment(Environments.Production)));
+
+        Assert.Null(exception);
+        Assert.Null(configuration.GetConnectionString("Redis"));
+    }
+
+    private static IConfiguration RebuildWith(IConfiguration source, Dictionary<string, string?> extras)
+    {
+        var values = new Dictionary<string, string?>();
+        foreach (var child in source.AsEnumerable())
+        {
+            values[child.Key] = child.Value;
+        }
+
+        foreach (var extra in extras)
+        {
+            values[extra.Key] = extra.Value;
+        }
+
+        return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+    }
+
     private static IConfiguration DedicatedProductionConfig(
         string? redis = "redis:6379,password=synthetic-redis-password-32chars",
         string? postgres =
@@ -701,6 +1104,7 @@ public sealed class ProductionSecurityValidatorTests
             ["Paddle:ApiKey"] = paddleApiKey,
             ["Paddle:ClientToken"] = paddleClientToken,
             ["Paddle:AllowLive"] = "false",
+            ["SelfServeSignup:RegistrationClosed"] = "true",
         };
         if (corsOrigin1 is not null)
         {
@@ -757,6 +1161,7 @@ public sealed class ProductionSecurityValidatorTests
         {
             ["Jwt:SigningKey"] = "production-secret-key-with-sufficient-length",
             ["ConnectionStrings:DefaultConnection"] = connectionString,
+            ["ConnectionStrings:Redis"] = "redis:6379,password=production-redis-secret",
         };
         if (publicBaseUrl is not null)
         {

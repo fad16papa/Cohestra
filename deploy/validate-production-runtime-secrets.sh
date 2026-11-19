@@ -176,17 +176,24 @@ else
   fail "missing production-runtime-secrets.md or launch-program 46.4 section"
 fi
 
-# Telemetry / 46.9 ownership freeze — 46.4 must not add OTel SDK usage or 46.9 audit files.
+# Telemetry ownership freeze. 46.4 must not add OTel SDK usage or 46.6 files.
+# Story 46.9 owns its own story artifact, so that one path is allowed once this
+# story is the change under review. Any other 46-9 or 46-6 path still fails.
 # Compare trees (two-dot) so shallow CI checkouts do not need a merge-base.
 if ! git -C "$ROOT_DIR" rev-parse --verify origin/main >/dev/null 2>&1; then
   git -C "$ROOT_DIR" fetch --no-tags --depth=1 origin main:refs/remotes/origin/main >/dev/null 2>&1 || true
 fi
+story_46_9_artifact="_bmad-output/implementation-artifacts/46-9-production-security-and-tenant-isolation-hardening.md"
 if ! git -C "$ROOT_DIR" rev-parse --verify origin/main >/dev/null 2>&1; then
   fail "origin/main is required to prove the 46.6 / 46.9 ownership freeze"
-elif git -C "$ROOT_DIR" diff --name-only origin/main HEAD | grep -qE 'OpenTelemetry|46-9-|46-6-'; then
-  fail "46.4 must not edit 46.6 telemetry or 46.9 audit artifacts"
 else
-  pass "no 46.6 / 46.9 owned artifact edits versus origin/main"
+  owned="$(git -C "$ROOT_DIR" diff --name-only origin/main HEAD | grep -E 'OpenTelemetry|46-9-|46-6-' || true)"
+  unexpected="$(printf '%s\n' "$owned" | grep -v -x -F "$story_46_9_artifact" | sed '/^$/d' || true)"
+  if [[ -n "$unexpected" ]]; then
+    fail "46.4 must not edit 46.6 telemetry or 46.9 audit artifacts"
+  else
+    pass "no 46.6 / 46.9 owned artifact edits versus origin/main"
+  fi
 fi
 
 echo ""

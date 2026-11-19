@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   buildContentSecurityPolicy,
   buildEmbedContentSecurityPolicy,
+  contentSecurityPolicyProductionLiveValue,
+  nginxContentSecurityPolicy,
   nginxContentSecurityPolicyForEmbed,
+  nginxContentSecurityPolicyProductionLive,
 } from "../content-security-policy";
 
 describe("buildContentSecurityPolicy", () => {
@@ -37,5 +40,25 @@ describe("nginxContentSecurityPolicyForEmbed", () => {
     expect(nginxContentSecurityPolicyForEmbed(origins)).toBe(
       buildContentSecurityPolicy({ frameAncestors: origins })
     );
+  });
+});
+
+describe("production live Paddle CSP", () => {
+  it("allows live Paddle and does not require sandbox hosts", () => {
+    expect(contentSecurityPolicyProductionLiveValue).toContain("https://cdn.paddle.com");
+    expect(contentSecurityPolicyProductionLiveValue).toContain("https://buy.paddle.com");
+    expect(contentSecurityPolicyProductionLiveValue).toContain("https://api.paddle.com");
+    expect(contentSecurityPolicyProductionLiveValue).not.toContain("sandbox-cdn.paddle.com");
+    expect(contentSecurityPolicyProductionLiveValue).not.toContain("sandbox-buy.paddle.com");
+    expect(contentSecurityPolicyProductionLiveValue).not.toContain("sandbox-api.paddle.com");
+    expect(nginxContentSecurityPolicyProductionLive).toBe(
+      contentSecurityPolicyProductionLiveValue
+    );
+  });
+
+  it("keeps shared nginx CSP able to allow live Paddle", () => {
+    expect(nginxContentSecurityPolicy).toContain("https://cdn.paddle.com");
+    expect(nginxContentSecurityPolicy).toContain("https://buy.paddle.com");
+    expect(nginxContentSecurityPolicy).toContain("https://api.paddle.com");
   });
 });

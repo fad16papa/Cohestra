@@ -1,5 +1,6 @@
 # generated: 2026-06-16
-# last_updated: 2026-11-18
+# last_updated: 2026-11-19
+# Epic 46 in-progress 2026-11-19. Story 46.9 in review, rebased onto main 4c9f895a. Cutover NOT GRANTED. Production NO-GO.
 # Epic 46 in-progress 2026-11-18. Story 46.5 in review (backup/restore/DR). Cutover NOT GRANTED. Production NO-GO. Production recovery not proven.
 # Epic 46 in-progress 2026-10-24. 46.4 in-progress from main e962c8c3. Repository-side runtime/secrets isolation only. Owner host .env and classified live check PENDING. Do not compose-up Production. Do not dispatch Production. Cutover NOT GRANTED; release NOT YET COMPLETE. Production NO-GO.
 # Epic 46 in-progress 2026-10-22. 46.3 planning correction: Layer A exact-SHA CI + Layer B GitGuardian on merge-time PR HEAD. Still ready-for-dev; do not start implementation; do not merge planning PR until owner accepts. Cutover GRANTED; release NOT YET COMPLETE. Production NO-GO.
@@ -506,7 +507,7 @@ development_status:
   46-6-production-observability-instrumentation: backlog
   46-7-metrics-dashboards-and-alerting: backlog
   46-8-platform-admin-production-support-telemetry-integration: backlog
-  46-9-production-security-and-tenant-isolation-hardening: backlog
+  46-9-production-security-and-tenant-isolation-hardening: review
   46-10-paddle-live-readiness: backlog
   46-11-sendgrid-and-email-production-readiness: backlog
   46-12-performance-capacity-and-load-acceptance: backlog
