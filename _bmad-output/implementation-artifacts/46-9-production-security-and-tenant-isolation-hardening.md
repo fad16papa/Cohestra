@@ -101,10 +101,11 @@ Cursor Grok 4.6
 
 ### Debug Log References
 
-- Baseline `e962c8c3eead953a1f56f2b397b3e9d4fc669041`
+- Baseline `4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4` (rebased 2026-11-19; previous baseline `e962c8c3eead953a1f56f2b397b3e9d4fc669041` is stale)
 - In-repo validators + unit/integration negatives added in this story
 - Live Production probes: not run (prohibited)
 - **2026-11-18** — Merged `main` (`a784ddf`) onto branch; `ClientErasureService` tenant-scoped erasure bypass added to `deploy/tenant-filter-bypass-allowlist.txt`. Status remains **review**. October review SHAs/evidence are **stale** relative to this HEAD; re-run BMAD review on merge HEAD before DONE. Production **NO-GO**.
+- **2026-11-19** — Rebased onto `main` `4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4` (Story 46.5 merge). Dedicated Production plane checks from main are kept. Story 46.9 adds the reCAPTCHA test-key denylist, non-Development CORS and open-signup rules, and Redis-with-password on a non-UAT public host. The 46.4 ownership freeze allows this story file only. Status remains **review**. Production **NO-GO**. Cutover is not authorized.
 
 ### Completion Notes List
 
@@ -135,6 +136,7 @@ Cursor Grok 4.6
 - deploy/tenant-filter-bypass-allowlist.txt
 - deploy/validate-tenant-filter-bypass-allowlist.sh
 - deploy/validate-production-secret-inventory.sh
+- deploy/validate-production-runtime-secrets.sh
 - docs/deploy/production-secret-inventory.md
 - .github/workflows/ci.yml
 - _bmad-output/planning-artifacts/epic-46/production-security-model.md
