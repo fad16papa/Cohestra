@@ -1,0 +1,132 @@
+---
+id: 46.5
+key: 46-5-postgresql-backup-restore-and-dr
+title: PostgreSQL backup, restore, and DR
+status: review
+epic: 46
+created: 2026-11-18
+baseline_commit: 86669ca9258a7d454c50f3f294fc99d405146cb0
+depends_on:
+  - 46.4
+owner_gate: none (OPTION A default; OPTION B purchase not selected)
+cutover_authorization: NOT_GRANTED
+production: NO-GO
+production_recovery_proven: NO
+implementation_authorized: true
+---
+
+# Story 46.5: PostgreSQL backup, restore, and DR
+
+Status: review
+
+## Story
+
+As an **owner**,
+I want **encrypted off-host backups that we have actually restored**,
+So that **a droplet loss is a 4-hour problem, not a company-ending one**.
+
+**FRs:** FR-10, FR-11, FR-12, FR-4  
+**Track:** A + D  
+**Depends on:** 46.4  
+**Owner gate:** OPTION B purchase only if selected (default OPTION A)  
+**Rollback:** keep dumps; do not claim DR if restore failed
+
+## Acceptance Criteria
+
+1. **Given** OPTION A  
+   **When** the daily backup job runs  
+   **Then** an encrypted dump is stored off-host  
+   **And** backup failure leaves no verified attestation (CRITICAL alerting is 46.7 — not implemented here)
+
+2. **Given** a dump  
+   **When** the isolated restore procedure runs on a non-production target  
+   **Then** integrity checks pass  
+   **And** outbound Paddle/SendGrid env vars are refused on restore  
+   **And** evidence JSON contains no secrets
+
+3. **Given** no passing isolated restore against a **real** Production backup  
+   **When** anyone claims backup readiness  
+   **Then** the readiness matrix row is FAIL (`production_recovery_proven` remains NO)
+
+4. **Given** planning defaults  
+   **When** restore evidence exists only for dumps  
+   **Then** advertised RPO is 24 hours and RTO 4 hours until WAL archive is also proven
+
+5. **Given** dedicated Production plane  
+   **When** EF migrations would run  
+   **Then** `ProductionBackupGate.EnsureMigrationsAllowed` requires verified attestation with `production_recovery_proven=false`  
+   **And** UAT / Development are unchanged
+
+## Tasks / Subtasks
+
+- [x] Add `deploy/production-backup.sh` (`backup`, `verify-artifact`, `restore-isolated`) with GnuPG + `BACKUP_OFFHOST_DIR` guards
+- [x] Add `Cohestra.Infrastructure.Auth.ProductionBackupGate` and wire `ApplyMigrationsAsync` in `src/Api/Program.cs`
+- [x] Add `ProductionBackupGateTests` and `deploy/production-backup.test.sh`
+- [x] Add `docs/deploy/backup-dr-strategy.md` operator procedure
+- [x] Wire CI step for `production-backup.test.sh`
+- [x] Run required test commands and record results
+
+### Review Findings
+
+Reviewed implementation HEAD `9c9b0363709553fb79544419d8a23ea4b30795ab` against base `86669ca9258a7d454c50f3f294fc99d405146cb0`. CI run `44351406310` was green, including the exact-SHA security scan and GitGuardian. Production remains NO-GO. These items are not fixed.
+
+- [x] [Review][Patch][BLOCKER] A failed backup, verify, or restore can leave a previous verified attestation in place. Fixed: a configured attestation is rewritten to `status=failed` before work, and a failed rewrite exits non-zero.
+- [x] [Review][Patch][BLOCKER] Isolated restore does not refuse the Paddle and SendGrid variables this app uses. Fixed: restore rejects populated `Paddle__ApiKey`, `Paddle__ClientToken`, `Paddle__WebhookSecret`, and `SendGrid__ApiKey`.
+- [x] [Review][Patch][BLOCKER] The migration gate does not require `production_recovery_proven` to be JSON false. Fixed: dedicated Production migrations require an explicit boolean false. Missing, string, numeric, null, and true values block. This matches AC5.
+- [x] [Review][Patch][BLOCKER] `--artifact-basename ..` is accepted. Fixed: basenames that are absolute, dotted, or contain a path separator are refused before any write outside `BACKUP_OFFHOST_DIR`.
+- [x] [Review][Patch][MAJOR] `restore-isolated` drops and recreates the target database before it requires an attestation path. Fixed: the path and the artifact checksum are required before `dropdb`.
+- [x] [Review][Patch][MAJOR] An off-host directory inside `PGDATA` is accepted. Fixed: canonical paths inside `PGDATA` are refused.
+- [x] [Review][Patch][MAJOR] The production rehearsal exits 0 when `gpg` or the PostgreSQL client tools are missing. Fixed: missing or unusable prerequisites fail the rehearsal.
+
+## Dev Agent Record
+
+### Completion Notes
+
+- OPTION A: GnuPG public-key encryption to owner `BACKUP_OFFHOST_DIR`; no S3/rclone/network upload.
+- Isolated restore refuses live hosts, protected names, outbound API env vars, and writes attestation only after the ciphertext SHA-256 matches the manifest.
+- Source database `cohestra` can be dumped only with `BACKUP_SOURCE_PLANE=dedicated-local` on a local host. Restore cannot target it.
+- A failed backup, verify, or restore rewrites a configured attestation to `status=failed`. The restore command does not delete the operator `GNUPGHOME`.
+- Dedicated Production migrations fail closed without verified attestation; synthetic CI roundtrip does **not** set `production_recovery_proven`.
+- CI and `restore-isolated` require PostgreSQL **16** client majors to match the server (`transaction_timeout` and similar PG17+ dump settings otherwise break `pg_restore` on PG16).
+- **PRODUCTION_RECOVERY_PROVEN=NO**; cutover **NOT_GRANTED**; Production **NO-GO**.
+
+### Debug Log
+
+- GnuPG quick-generated keys require an `encr` subkey for public-only encryption (documented in operator guide).
+
+### Test commands and results (2026-11-18)
+
+```text
+PGPASSWORD=crm bash deploy/production-backup.test.sh
+→ exit 0; all refusal PASS; rehearsal client major matches server (16); forced pg_restore failure PASS; synthetic gpg backup roundtrip PASS
+
+PGPASSWORD=crm bash deploy/disposable-backup-restore.test.sh
+→ exit 0; all refusal PASS; representative restore PASS
+
+dotnet test src/Infrastructure.Tests/Infrastructure.Tests.csproj --filter ProductionBackupGateTests
+→ Passed: 10, Failed: 0
+
+dotnet test Cohestra.sln --filter "Category!=Integration"
+→ Passed: 1341, Failed: 0, Skipped: 0
+```
+
+## File List
+
+- deploy/production-backup.sh
+- deploy/production-backup.test.sh
+- docs/deploy/backup-dr-strategy.md
+- src/Infrastructure/Auth/ProductionBackupGate.cs
+- src/Infrastructure.Tests/Auth/ProductionBackupGateTests.cs
+- src/Api/Program.cs
+- .github/workflows/ci.yml
+- _bmad-output/implementation-artifacts/46-5-postgresql-backup-restore-and-dr.md
+- _bmad-output/implementation-artifacts/sprint-status.yaml
+
+## Change Log
+
+- 2026-11-18: Story 46.5 implementation — encrypted off-host backup script, migration gate, tests, operator DR doc. Status review. Production NO-GO; recovery not proven.
+- 2026-11-18: Safety fix — allow dedicated-local dump of `cohestra`, require manifest SHA-256 before restore, invalidate attestation on failure, and keep the operator keyring.
+- 2026-11-18: PG16 client alignment — CI `Install PostgreSQL client` pins major-16 `pg_dump`/`pg_restore`/`psql` (apt `postgresql-client-16` or `postgres:16-alpine` wrappers); `restore-isolated` refuses client/server major mismatch and treats `pg_restore` non-zero as failure; rehearsal tests assert client major and a forced `pg_restore` failure. Status remains review; Production NO-GO; recovery not proven.
+- 2026-11-18: The `postgres:16-alpine` wrappers run as the invoking user. A root-owned dump under `/tmp` blocked the disposable rehearsal from appending its restore check. The wrapper text stays inside the workflow `run` block so the file remains valid YAML.
+- 2026-11-19: BMAD code review of `9c9b0363709553fb79544419d8a23ea4b30795ab`. Four BLOCKER and three MAJOR patch findings recorded. Status remains review. Production NO-GO. Recovery not proven.
+- 2026-11-19: Applied the seven review patches. Attestation is non-verified before backup, checksum, and restore work. Restore rejects the app's Paddle and SendGrid credentials and checks the artifact before `dropdb`. The gate requires explicit boolean `production_recovery_proven=false`. Status remains review. Production NO-GO. Recovery not proven.

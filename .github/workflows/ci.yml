@@ -117,41 +117,73 @@ jobs:
       - name: Install PostgreSQL client
         run: |
           set -euo pipefail
-          if command -v psql >/dev/null && command -v pg_dump >/dev/null && command -v pg_isready >/dev/null && command -v dropdb >/dev/null && command -v createdb >/dev/null; then
-            echo "Host PostgreSQL client tools already exist"
-            exit 0
-          fi
-          installed=0
-          for attempt in 1 2 3; do
-            if sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client; then
-              installed=1
-              break
+          pg_client_major() {
+            local tool="$1"
+            if ! command -v "$tool" >/dev/null 2>&1; then
+              echo ""
+              return 0
             fi
-            echo "apt postgresql-client attempt ${attempt} failed"
-            sleep $((attempt * 10))
-          done
-          if [[ "$installed" -eq 1 ]]; then
+            "$tool" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1 | cut -d. -f1
+          }
+          assert_pg16_clients() {
+            local dump_major restore_major psql_major
+            dump_major="$(pg_client_major pg_dump)"
+            restore_major="$(pg_client_major pg_restore)"
+            psql_major="$(pg_client_major psql)"
+            if [[ "$dump_major" != "16" || "$restore_major" != "16" || "$psql_major" != "16" ]]; then
+              echo "PostgreSQL client major version check failed (pg_dump=${dump_major:-missing}, pg_restore=${restore_major:-missing}, psql=${psql_major:-missing})"
+              exit 1
+            fi
+            echo "pg_dump: $(command -v pg_dump) ($(pg_dump --version))"
+            echo "pg_restore: $(command -v pg_restore) ($(pg_restore --version))"
+            echo "psql: $(command -v psql) ($(psql --version))"
+          }
+          dump_major="$(pg_client_major pg_dump)"
+          restore_major="$(pg_client_major pg_restore)"
+          psql_major="$(pg_client_major psql)"
+          if [[ "$dump_major" == "16" && "$restore_major" == "16" && "$psql_major" == "16" ]]; then
+            echo "Host PostgreSQL 16 client tools already selected"
+            assert_pg16_clients
             exit 0
           fi
-          echo "Ubuntu archives unreachable. Using the already pulled postgres:16-alpine client."
+          echo "Selecting PostgreSQL 16 client (pg_dump=${dump_major:-missing}, pg_restore=${restore_major:-missing}, psql=${psql_major:-missing})"
+          installed=0
+          if sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client-16; then
+            installed=1
+          else
+            echo "apt postgresql-client-16 is not available; using the postgres:16-alpine client"
+          fi
+          if [[ "$installed" -eq 1 ]] && [[ -d /usr/lib/postgresql/16/bin ]]; then
+            apt_dump="$(/usr/lib/postgresql/16/bin/pg_dump --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1 | cut -d. -f1 || true)"
+            apt_restore="$(/usr/lib/postgresql/16/bin/pg_restore --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1 | cut -d. -f1 || true)"
+            if [[ "$apt_dump" == "16" && "$apt_restore" == "16" ]]; then
+              echo "/usr/lib/postgresql/16/bin" >> "$GITHUB_PATH"
+              export PATH="/usr/lib/postgresql/16/bin:${PATH}"
+              assert_pg16_clients
+              exit 0
+            fi
+          fi
+          echo "Ubuntu archives did not yield PostgreSQL 16 client. Using postgres:16-alpine wrappers."
           docker image inspect postgres:16-alpine >/dev/null
           bindir="${HOME}/.local/bin"
           mkdir -p "$bindir"
           for tool in psql pg_dump pg_restore pg_isready dropdb createdb; do
-            printf '%s\n' \
-              '#!/bin/sh' \
-              "exec docker run --rm -i --network host -v /tmp:/tmp -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16-alpine ${tool} \"\$@\"" \
-              > "${bindir}/${tool}"
+            {
+              printf '%s\n' '#!/bin/sh'
+              printf '%s\n' '# Run as the invoking user so dump files under /tmp stay readable and writable.'
+              printf '%s\n' 'exec docker run --rm -i --network host --user "$(id -u):$(id -g)" -e HOME=/tmp -v /tmp:/tmp -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE postgres:16-alpine '"${tool}"' "$@"'
+            } > "${bindir}/${tool}"
             chmod +x "${bindir}/${tool}"
           done
           echo "$bindir" >> "$GITHUB_PATH"
           export PATH="${bindir}:${PATH}"
-          command -v psql
-          command -v pg_dump
-          command -v pg_isready
+          assert_pg16_clients
 
       - name: Disposable backup restore rehearsal
         run: bash deploy/disposable-backup-restore.test.sh
+
+      - name: Production backup restore rehearsal
+        run: bash deploy/production-backup.test.sh
 
       - name: Integration tests
         run: dotnet test src/Api.IntegrationTests/Api.IntegrationTests.csproj --no-build -c Release --filter "Category=Integration" --verbosity normal
