@@ -42,9 +42,13 @@ export function ClientPhoneDisplay({
           {formatted.flag}
         </span>
         <span aria-hidden data-contact-separator="prefix"> | </span>
-        <span className="font-medium text-text-muted-warm">{formatted.prefix}</span>
+        <span aria-hidden className="font-medium text-text-muted-warm">
+          {formatted.prefix}
+        </span>
         <span aria-hidden data-contact-separator="number"> - </span>
-        <span className="text-text-warm">{nationalDisplay}</span>
+        <span aria-hidden className="text-text-warm">
+          {nationalDisplay}
+        </span>
         <span className="sr-only">
           {countryName} {formatted.prefix} {nationalDisplay}
         </span>

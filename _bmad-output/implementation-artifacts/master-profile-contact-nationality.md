@@ -117,6 +117,7 @@ Grok 4.7
 - Nationality still uses `buildNationalityChoices`. The phone country list is the existing `CALLING_CODES` set. Canada is not in that set, so it is not a new choice.
 - API payload and `PhoneCountrySelect` call sites were not changed.
 - Status is review. This is not DONE. The next gate is `bmad-code-review` on the implementation HEAD. Do not merge or deploy.
+- 2026-11-21 — The read-only Master Profile phone hides the visible prefix and number from assistive tech. The screen-reader string announces the country and full number once. The edit control and the default phone display are unchanged.
 
 ### File List
 
@@ -127,6 +128,7 @@ Grok 4.7
 - `web/components/clients/contact-number-field.tsx`
 - `web/components/clients/searchable-listbox.tsx`
 - `web/lib/master-profile-fields.test.ts`
+- `web/lib/client-phone-display.test.ts`
 
 ## Composer implementation brief
 

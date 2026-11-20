@@ -65,6 +65,10 @@ describe("master profile contact and nationality layout", () => {
     expect(DISPLAY).toContain('data-contact-layout="flag-prefix-number"');
     expect(DISPLAY).toContain("> | </span>");
     expect(DISPLAY).toContain("> - </span>");
+    expect(DISPLAY).toContain(
+      '<span aria-hidden className="font-medium text-text-muted-warm">'
+    );
+    expect(DISPLAY).toContain('<span aria-hidden className="text-text-warm">');
     expect(HISTORY).not.toContain('layout="master-profile"');
     expect(BILLING).toContain("PhoneCountrySelect");
     expect(ACTIVITY_FORM).toContain("PhoneCountrySelect");
