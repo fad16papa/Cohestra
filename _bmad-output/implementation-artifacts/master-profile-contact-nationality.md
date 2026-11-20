@@ -118,6 +118,7 @@ Grok 4.7
 - API payload and `PhoneCountrySelect` call sites were not changed.
 - Status is review. This is not DONE. The next gate is `bmad-code-review` on the implementation HEAD. Do not merge or deploy.
 - 2026-11-21 — The read-only Master Profile phone hides the visible prefix and number from assistive tech. The screen-reader string announces the country and full number once. The edit control and the default phone display are unchanged.
+- 2026-11-21 — Compact edit mode applies `sm:col-span-2` to Name, Consent, and Notes only when `compact` is false, matching the read-only layout. Status stays review.
 
 ### File List
 
@@ -129,6 +130,7 @@ Grok 4.7
 - `web/components/clients/searchable-listbox.tsx`
 - `web/lib/master-profile-fields.test.ts`
 - `web/lib/client-phone-display.test.ts`
+- `web/lib/client-master-fields-compact.test.ts`
 
 ## Composer implementation brief
 

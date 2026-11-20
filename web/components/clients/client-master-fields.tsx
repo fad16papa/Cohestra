@@ -242,7 +242,7 @@ export function ClientMasterFields({
           </dl>
         ) : (
           <div className={cn("grid gap-4", !compact && "sm:grid-cols-2")}>
-            <div className="space-y-2 sm:col-span-2">
+            <div className={cn("space-y-2", !compact && "sm:col-span-2")}>
               <Label htmlFor="master-full-name">Name</Label>
               <Input
                 id="master-full-name"
@@ -342,7 +342,7 @@ export function ClientMasterFields({
               />
             </div>
 
-            <div className="flex items-center gap-2 sm:col-span-2">
+            <div className={cn("flex items-center gap-2", !compact && "sm:col-span-2")}>
               <input
                 id="master-consent"
                 type="checkbox"
@@ -361,7 +361,7 @@ export function ClientMasterFields({
               </Label>
             </div>
 
-            <div className="space-y-2 sm:col-span-2">
+            <div className={cn("space-y-2", !compact && "sm:col-span-2")}>
               <Label htmlFor="master-notes">Notes</Label>
               <textarea
                 id="master-notes"
