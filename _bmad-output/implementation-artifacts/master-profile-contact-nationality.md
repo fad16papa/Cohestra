@@ -2,7 +2,7 @@
 id: master-profile-contact-nationality
 key: master-profile-contact-nationality
 title: Master Profile contact number and nationality
-status: ready-for-dev
+status: review
 created: 2026-11-20
 baseline_commit: 4c9f895ab2ed0c2a004e4a4c76f5cdf4f1fcaed4
 owner_gate: none
@@ -11,7 +11,7 @@ production: NO-GO
 
 # Story: Master Profile contact number and nationality
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -38,10 +38,10 @@ so that I can correct contact details without a separate country control and wit
 
 ## Tasks / Subtasks
 
-- [ ] Adjust only the Master Profile contact presentation to the `[flag] | [prefix] - [number]` pattern (AC 2, 3, 7).
-- [ ] Keep Email / social beside that field on desktop and stacked when compact or narrow (AC 4, 7).
-- [ ] Confirm Nationality uses `buildNationalityChoices` and does not replace the dataset (AC 5, 6).
-- [ ] Add or extend the regression checks above. Do not add a new country library.
+- [x] Adjust only the Master Profile contact presentation to the `[flag] | [prefix] - [number]` pattern (AC 2, 3, 7).
+- [x] Keep Email / social beside that field on desktop and stacked when compact or narrow (AC 4, 7).
+- [x] Confirm Nationality uses `buildNationalityChoices` and does not replace the dataset (AC 5, 6).
+- [x] Add or extend the regression checks above. Do not add a new country library.
 
 ## Dev Notes
 
@@ -101,21 +101,32 @@ Production remains NO-GO. Do not merge, deploy, change DNS, or touch the live ho
 
 ### Agent Model Used
 
-Spec only. No form implementation in this commit.
+Grok 4.7
 
 ### Debug Log References
 
-- 2026-11-20 — Inspected main `4c9f895`. No open Master Profile PR. PR #585 is merged. The story records the display-pattern delta only.
+- 2026-11-20 — Continued PR #592 at `8b4844ac`. Working tree clean. Diff against main was the spec only.
+- 2026-11-20 — `npx vitest run lib/master-profile-fields.test.ts` failed on the new display assertions, then passed after the presentation change. `lib/nationalities.test.ts` passed (8).
+- 2026-11-20 — Browser check on client `5eef9550-a290-420f-b9a7-14f467ad050b` (Ava Tan). Desktop read and edit place Email / social beside contact. Narrow layout stacks them. Contact stays on one line. No profile save.
 
 ### Completion Notes List
 
-- Ultimate context engine analysis completed - comprehensive developer guide created.
-- Status is ready-for-dev. The form was not changed in this commit.
+- Selected contact control and Master Profile read-only contact use `[flag] | [prefix] - [number]`.
+- `ClientPhoneDisplay` default layout is unchanged, so registration history stays on the previous presentation.
+- Read-only Name and Notes span the desktop row so Contact and Email / social share the next row. Compact layout stays one column.
+- Nationality still uses `buildNationalityChoices`. The phone country list is the existing `CALLING_CODES` set. Canada is not in that set, so it is not a new choice.
+- API payload and `PhoneCountrySelect` call sites were not changed.
+- Status is review. This is not DONE. The next gate is `bmad-code-review` on the implementation HEAD. Do not merge or deploy.
 
 ### File List
 
 - `_bmad-output/implementation-artifacts/master-profile-contact-nationality.md`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+- `web/components/clients/client-master-fields.tsx`
+- `web/components/clients/client-phone-display.tsx`
+- `web/components/clients/contact-number-field.tsx`
+- `web/components/clients/searchable-listbox.tsx`
+- `web/lib/master-profile-fields.test.ts`
 
 ## Composer implementation brief
 
