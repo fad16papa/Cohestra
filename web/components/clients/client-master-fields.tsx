@@ -202,7 +202,9 @@ export function ClientMasterFields({
               { label: "Name", value: client.fullName },
               {
                 label: "Contact number",
-                value: <ClientPhoneDisplay phone={client.phone} />,
+                value: (
+                  <ClientPhoneDisplay phone={client.phone} layout="master-profile" />
+                ),
               },
               { label: "Email / social", value: displayValue(client.email) },
               { label: "Profession", value: displayValue(client.profession) },
@@ -223,7 +225,13 @@ export function ClientMasterFields({
             ].map((field) => (
               <div
                 key={field.label}
-                className={cn("space-y-1", clientProfileFieldRowClassName)}
+                className={cn(
+                  "space-y-1",
+                  clientProfileFieldRowClassName,
+                  !compact &&
+                    (field.label === "Name" || field.label === "Notes") &&
+                    "sm:col-span-2"
+                )}
               >
                 <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
                   {field.label}

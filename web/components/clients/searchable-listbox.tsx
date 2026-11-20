@@ -33,6 +33,7 @@ type SearchableListboxProps<T extends SearchableOption> = {
   renderOption: (option: T, selected: boolean) => ReactNode;
   emptyLabel?: string;
   allowEmptyLabel?: string;
+  hideChevron?: boolean;
 };
 
 export function SearchableListbox<T extends SearchableOption>({
@@ -49,6 +50,7 @@ export function SearchableListbox<T extends SearchableOption>({
   renderOption,
   emptyLabel = "No matches",
   allowEmptyLabel,
+  hideChevron = false,
 }: SearchableListboxProps<T>) {
   const listId = useId();
   const listRef = useRef<HTMLDivElement>(null);
@@ -159,12 +161,14 @@ export function SearchableListbox<T extends SearchableOption>({
           />
         }
       >
-        <span className="min-w-0 truncate">
+        <span className={cn("min-w-0", hideChevron ? "shrink-0 whitespace-nowrap" : "truncate")}>
           {selected ? trigger(selected, open) : (
             <span className="text-muted-foreground">{placeholder}</span>
           )}
         </span>
-        <ChevronDown className="size-4 shrink-0 text-text-muted-warm" aria-hidden />
+        {hideChevron ? null : (
+          <ChevronDown className="size-4 shrink-0 text-text-muted-warm" aria-hidden />
+        )}
       </PopoverTrigger>
       <PopoverContent
         align="start"

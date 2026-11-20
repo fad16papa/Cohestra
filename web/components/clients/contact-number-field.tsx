@@ -41,8 +41,9 @@ export function ContactNumberField({
     <div className="min-w-0 space-y-2">
       <Label htmlFor={numberId}>Contact number</Label>
       <div
+        data-contact-layout="flag-prefix-number"
         className={cn(
-          "flex min-w-0 overflow-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring",
+          "flex min-w-0 flex-nowrap items-center overflow-hidden rounded-lg border border-input bg-background shadow-xs focus-within:border-ring focus-within:ring-2 focus-within:ring-ring",
           error && "border-destructive ring-3 ring-destructive"
         )}
       >
@@ -52,13 +53,15 @@ export function ContactNumberField({
           value={countryCode}
           options={phoneCountrySelectChoices}
           disabled={disabled}
+          hideChevron
           searchPlaceholder="Search country or code"
-          triggerClassName="h-auto min-h-9 w-auto shrink-0 self-stretch rounded-none border-0 border-r border-input bg-muted/40 px-2.5 shadow-none focus-visible:ring-0"
+          triggerClassName="h-auto min-h-9 w-auto shrink-0 self-stretch rounded-none border-0 bg-transparent px-2.5 shadow-none focus-visible:ring-0"
           trigger={(option: PhoneCountrySelectChoice) => (
-            <span className="inline-flex items-center gap-1.5 text-text-warm">
+            <span className="inline-flex items-center whitespace-nowrap text-text-warm">
               <span aria-hidden className="text-base leading-none">
                 {option.flag}
               </span>
+              <span aria-hidden data-contact-separator="prefix"> | </span>
               <span className="tabular-nums">+{option.callingCode}</span>
             </span>
           )}
@@ -76,6 +79,7 @@ export function ContactNumberField({
             onLocalNumberChange(normalizeLocalPhoneInput(nextCountry, localNumber));
           }}
         />
+        <span aria-hidden data-contact-separator="number"> - </span>
         <Input
           id={numberId}
           type="tel"
