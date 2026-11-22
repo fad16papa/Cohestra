@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text;
 using Cohestra.Infrastructure.Signup;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -77,6 +79,37 @@ public sealed class GoogleRecaptchaVerifierTests
     }
 
     [Fact]
+    public async Task Enabled_recaptcha_rejects_token_when_siteverify_fails()
+    {
+        var verifier = Create(
+            "Production",
+            enabled: true,
+            bypass: "",
+            secret: "isolated-secret",
+            handler: new StubSiteVerifyHandler(
+                "{\"success\":false,\"error-codes\":[\"invalid-input-response\"]}"));
+        var (valid, error) = await verifier.VerifyAsync("not-a-google-token", "127.0.0.1");
+        Assert.False(valid);
+        Assert.Contains("CAPTCHA", error, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Enabled_recaptcha_rejects_empty_token_before_siteverify()
+    {
+        var handler = new StubSiteVerifyHandler("{\"success\":true}");
+        var verifier = Create(
+            "Production",
+            enabled: true,
+            bypass: "",
+            secret: "isolated-secret",
+            handler: handler);
+        var (valid, error) = await verifier.VerifyAsync(null, "127.0.0.1");
+        Assert.False(valid);
+        Assert.Contains("CAPTCHA", error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, handler.Calls);
+    }
+
+    [Fact]
     public async Task Production_never_honors_test_bypass_when_recaptcha_is_enabled()
     {
         var verifier = Create("Production", enabled: true, bypass: "test-captcha-pass");
@@ -85,29 +118,57 @@ public sealed class GoogleRecaptchaVerifierTests
         Assert.Contains("unavailable", error, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static GoogleRecaptchaVerifier Create(string environmentName, bool enabled, string bypass)
+    private static GoogleRecaptchaVerifier Create(
+        string environmentName,
+        bool enabled,
+        string bypass,
+        string secret = "",
+        HttpMessageHandler? handler = null)
     {
         var settings = new SelfServeSignupSettings
         {
             Recaptcha = new RecaptchaSettings
             {
                 Enabled = enabled,
-                SecretKey = "",
+                SecretKey = secret,
                 TestBypassToken = bypass,
             },
         };
 
         return new GoogleRecaptchaVerifier(
-            new UnusedHttpFactory(),
+            new UnusedHttpFactory(handler),
             new StubHostEnvironment(environmentName),
             Options.Create(settings),
             NullLogger<GoogleRecaptchaVerifier>.Instance);
     }
 
-    private sealed class UnusedHttpFactory : IHttpClientFactory
+    private sealed class UnusedHttpFactory(HttpMessageHandler? handler) : IHttpClientFactory
     {
-        public HttpClient CreateClient(string name) =>
-            throw new InvalidOperationException("HTTP client must not be used in these cases.");
+        public HttpClient CreateClient(string name)
+        {
+            if (handler is null)
+            {
+                throw new InvalidOperationException("HTTP client must not be used in these cases.");
+            }
+
+            return new HttpClient(handler, disposeHandler: false);
+        }
+    }
+
+    private sealed class StubSiteVerifyHandler(string json) : HttpMessageHandler
+    {
+        public int Calls { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            Calls++;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, Encoding.UTF8, "application/json"),
+            });
+        }
     }
 
     private sealed class StubHostEnvironment(string environmentName) : IHostEnvironment

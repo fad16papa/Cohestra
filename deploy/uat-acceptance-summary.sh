@@ -5,8 +5,10 @@
 #   bash deploy/uat-acceptance-summary.sh --evaluate FILE.json
 #
 # Required summary sections:
-#   story, sha, deployment, runtime, browser, security, provider, tests, result
-# Missing required section => result=fail. Never a fake PASS.
+#   story, sha, scope, proLive, marketReadiness, deployment, runtime, browser,
+#   security, provider, tests, result
+# scope must be basic_beta and proLive must be NOT_TESTED.
+# Missing required section or a full-product pass => result=fail. Never a fake PASS.
 
 set -euo pipefail
 
@@ -61,6 +63,9 @@ spec.loader.exec_module(coverage_mod)
 REQUIRED = (
     "story",
     "sha",
+    "scope",
+    "proLive",
+    "marketReadiness",
     "deployment",
     "runtime",
     "browser",
@@ -171,7 +176,18 @@ def evaluate(payload: dict) -> list[str]:
     result = payload.get("result")
     if result not in {"pass", "fail", "owner_gate"}:
         failures.append("invalid_result")
-    if result == "pass" and any(item.startswith("missing_section:") for item in failures):
+    if payload.get("scope") != coverage_mod.ACCEPTANCE_SCOPE:
+        failures.append("scope_not_basic_beta")
+    if payload.get("proLive") != coverage_mod.PRO_LIVE_STATUS:
+        failures.append("pro_live_not_explicit")
+    if payload.get("marketReadiness") != coverage_mod.MARKET_READINESS:
+        failures.append("market_readiness_claimed")
+    if result == "pass" and (
+        payload.get("proLive") != "NOT_TESTED"
+        or payload.get("scope") != "basic_beta"
+        or payload.get("marketReadiness") != "not_claimed"
+        or any(item.startswith("missing_section:") for item in failures)
+    ):
         failures.append("fake_pass")
     return failures
 
@@ -197,6 +213,9 @@ def playwright_stats(raw: dict | None) -> dict:
         "viewports": ["1440x900", "390x844"],
         "authenticatedSkipped": auth_skipped,
         "coverage": coverage,
+        "scope": coverage_mod.ACCEPTANCE_SCOPE,
+        "proLive": coverage_mod.pro_live_status(raw),
+        "marketReadiness": coverage_mod.MARKET_READINESS,
         "artifacts": ["web/test-results/uat-playwright.json"],
     }
 
@@ -302,6 +321,9 @@ def build() -> dict:
     payload = {
         "story": story,
         "sha": sha or None,
+        "scope": coverage_mod.ACCEPTANCE_SCOPE,
+        "proLive": coverage_mod.PRO_LIVE_STATUS,
+        "marketReadiness": coverage_mod.MARKET_READINESS,
         "recordedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "result": "fail" if failures else "pass",
         "failures": failures,

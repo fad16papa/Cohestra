@@ -193,6 +193,9 @@ def base_payload() -> dict:
         "smoke": "missing",
         "browser": "missing",
         "lifecycle": "missing",
+        "scope": coverage_mod.ACCEPTANCE_SCOPE,
+        "proLive": coverage_mod.PRO_LIVE_STATUS,
+        "marketReadiness": coverage_mod.MARKET_READINESS,
         "uat_deployed": None,
         "uat_deployment_outcome": "MISSING_EVIDENCE",
         "diagnostics": "",
@@ -405,8 +408,17 @@ def limb(label: str, value: str, reason: str = "") -> str:
 payload["lifecycle_report"] = (
     f"SKIPPED ({lifecycle_reason})" if payload["lifecycle"] == "skip" else "PASS"
 )
-payload["uat_deployment_outcome"] = "DEPLOYED_ACCEPTED"
+payload["scope"] = coverage_mod.ACCEPTANCE_SCOPE
+payload["proLive"] = coverage_mod.PRO_LIVE_STATUS
+payload["marketReadiness"] = coverage_mod.MARKET_READINESS
+if payload["proLive"] != "NOT_TESTED" or payload["scope"] != "basic_beta":
+    payload["uat_deployment_outcome"] = "HOLD"
+    payload["diagnostics"] = "scoped acceptance refused a full-product pass"
+    payload["result"] = "HOLD"
+    emit(payload, 1)
+payload["uat_deployment_outcome"] = "DEPLOYED_ACCEPTED_BASIC_BETA"
 payload["diagnostics"] = (
+    "scope=basic_beta; Pro live NOT_TESTED; not full Basic/Core/Pro market readiness; "
     "Host accepted SHA; "
     + "; ".join(
         [
@@ -417,6 +429,6 @@ payload["diagnostics"] = (
         ]
     )
 )
-payload["result"] = "PASS"
+payload["result"] = "PASS_BASIC_BETA"
 emit(payload, 0)
 PY

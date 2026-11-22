@@ -135,6 +135,39 @@ public sealed class PublicSignupAbuseIntegrationTests : IAsyncLifetime
     }
 
     [SkippableFact]
+    public async Task Signup_registration_closed_rejects_bad_captcha_as_closed()
+    {
+        await using var closedFactory = new PublicSignupAbuseWebApplicationFactory(
+            extraConfigure: builder => builder.UseSetting("SelfServeSignup:RegistrationClosed", "true"));
+        await closedFactory.InitializeAsync();
+        IntegrationTestHelpers.SkipIfUnavailable(closedFactory);
+
+        using var client = CreateClientWithUniqueIp(closedFactory);
+        foreach (var captcha in new string?[] { null, "not-a-google-token" })
+        {
+            var slug = $"closed-{Guid.NewGuid():N}"[..20];
+            var email = $"closed-{Guid.NewGuid():N}@example.com";
+            using var response = await client.PostAsJsonAsync(
+                "/api/v1/public/signup",
+                new PublicSignupRequest(
+                    AcceptTermsAndPrivacy: true,
+                    TermsVersion: "2026-07-21",
+                    PrivacyVersion: "2026-07-21",
+                    OrgName: "Closed Captcha Atelier",
+                    Slug: slug,
+                    Email: email,
+                    Password: "ChangeMe123!",
+                    CaptchaToken: captcha));
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            var body = await response.Content.ReadAsStringAsync();
+            Assert.Contains("signup-closed", body, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("currently closed", body, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("CAPTCHA", body, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [SkippableFact]
     public async Task Verify_email_brute_force_returns_429_after_threshold()
     {
         IntegrationTestHelpers.SkipIfUnavailable(Factory);

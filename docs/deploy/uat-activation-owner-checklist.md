@@ -12,8 +12,8 @@ activation approval. This checklist does not authorize activation.
 - [ ] Dedicated Actions-only `DROPLET_SSH_KEY` (not a personal laptop key)
 - [ ] Optional `DROPLET_DEPLOY_PATH` (default `/home/deploy/cohestra`)
 - [ ] `UAT_PUBLIC_BASE_URL` (https://, not the shared CRM host)
-- [ ] `UAT_AUTO_BASIC_EMAIL` / `UAT_AUTO_BASIC_PASSWORD` / Basic slug
-- [ ] `UAT_AUTO_PRO_EMAIL` / `UAT_AUTO_PRO_PASSWORD` / Pro slug
+- [ ] `UAT_AUTO_BASIC_EMAIL` / `UAT_AUTO_BASIC_PASSWORD` / `UAT_AUTO_BASIC_SLUG=cohestra-qa-basic`
+- [ ] Pro automation secrets are not required. Do not create a Pro QA tenant for basic-beta acceptance. Pro live coverage stays `NOT_TESTED`.
 - [ ] OTP mailbox names only if OTP is in desired acceptance scope
 - [ ] Repository `GITGUARDIAN_API_KEY` remains scan-only and off `pull_request`
 
