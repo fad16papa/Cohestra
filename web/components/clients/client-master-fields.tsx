@@ -202,7 +202,9 @@ export function ClientMasterFields({
               { label: "Name", value: client.fullName },
               {
                 label: "Contact number",
-                value: <ClientPhoneDisplay phone={client.phone} />,
+                value: (
+                  <ClientPhoneDisplay phone={client.phone} layout="master-profile" />
+                ),
               },
               { label: "Email / social", value: displayValue(client.email) },
               { label: "Profession", value: displayValue(client.profession) },
@@ -223,7 +225,13 @@ export function ClientMasterFields({
             ].map((field) => (
               <div
                 key={field.label}
-                className={cn("space-y-1", clientProfileFieldRowClassName)}
+                className={cn(
+                  "space-y-1",
+                  clientProfileFieldRowClassName,
+                  !compact &&
+                    (field.label === "Name" || field.label === "Notes") &&
+                    "sm:col-span-2"
+                )}
               >
                 <dt className="text-xs font-medium uppercase tracking-wide text-text-muted-warm">
                   {field.label}
@@ -234,7 +242,7 @@ export function ClientMasterFields({
           </dl>
         ) : (
           <div className={cn("grid gap-4", !compact && "sm:grid-cols-2")}>
-            <div className="space-y-2 sm:col-span-2">
+            <div className={cn("space-y-2", !compact && "sm:col-span-2")}>
               <Label htmlFor="master-full-name">Name</Label>
               <Input
                 id="master-full-name"
@@ -334,7 +342,7 @@ export function ClientMasterFields({
               />
             </div>
 
-            <div className="flex items-center gap-2 sm:col-span-2">
+            <div className={cn("flex items-center gap-2", !compact && "sm:col-span-2")}>
               <input
                 id="master-consent"
                 type="checkbox"
@@ -353,7 +361,7 @@ export function ClientMasterFields({
               </Label>
             </div>
 
-            <div className="space-y-2 sm:col-span-2">
+            <div className={cn("space-y-2", !compact && "sm:col-span-2")}>
               <Label htmlFor="master-notes">Notes</Label>
               <textarea
                 id="master-notes"
