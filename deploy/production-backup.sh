@@ -1,0 +1,501 @@
+#!/usr/bin/env bash
+# Production backup: GnuPG-encrypted pg_dump to owner-supplied BACKUP_OFFHOST_DIR.
+# restore-isolated targets localhost disposable databases only. No network upload.
+
+set -euo pipefail
+
+usage() {
+  echo "usage: production-backup.sh backup|verify-artifact|restore-isolated --database NAME [options]" >&2
+  exit 2
+}
+
+write_json_file() {
+  local path="$1"
+  local json="$2"
+  python3 - "$path" "$json" <<'PY'
+import json
+import os
+import sys
+import tempfile
+
+path, raw = sys.argv[1], sys.argv[2]
+payload = json.loads(raw)
+directory = os.path.dirname(os.path.abspath(path))
+tmp = None
+try:
+    os.makedirs(directory, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".attestation-", dir=directory)
+    with os.fdopen(fd, "w", encoding="utf-8") as handle:
+        json.dump(payload, handle, separators=(",", ":"))
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, path)
+    tmp = None
+except Exception:
+    if tmp is not None:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+    sys.exit(1)
+PY
+}
+
+mark_attestation_unverified() {
+  [[ "${attestation_committed:-0}" == "1" ]] && return 0
+  [[ -n "${attestation_path:-}" ]] || return 0
+  write_json_file "$attestation_path" '{"status":"failed","production_recovery_proven":false}'
+}
+
+require_attestation_unverified() {
+  if ! mark_attestation_unverified; then
+    echo "FAILED: could not write non-verified attestation" >&2
+    exit 1
+  fi
+}
+
+refuse() {
+  mark_attestation_unverified || true
+  echo "REFUSED: $1" >&2
+  exit 2
+}
+
+fail() {
+  mark_attestation_unverified || true
+  echo "FAILED: $1" >&2
+  exit 1
+}
+
+FORBIDDEN_MARKERS=(
+  159.223.55.242
+  129.212.235.2
+  cohestra.app
+  uat.cohestra
+)
+
+contains_forbidden_text() {
+  local value="$1"
+  local marker
+  for marker in "${FORBIDDEN_MARKERS[@]}"; do
+    if [[ "$value" == *"$marker"* ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+scan_env_for_forbidden() {
+  local key value
+  while IFS= read -r line; do
+  key="${line%%=*}"
+  value="${line#*=}"
+  if contains_forbidden_text "$value"; then
+    refuse "environment value for ${key} contains a forbidden host marker"
+  fi
+  done < <(env)
+}
+
+require_plain_database_name() {
+  local name="$1"
+  if [[ ! "$name" =~ ^[A-Za-z_][A-Za-z0-9_]{0,62}$ ]]; then
+    refuse "database name must be a plain identifier"
+  fi
+}
+
+validate_disposable_target_name() {
+  local database="$1"
+  require_plain_database_name "$database"
+  local database_lc="${database,,}"
+  if [[ "$database_lc" != *_disposable ]]; then
+    refuse "restore database must end with _disposable"
+  fi
+  if [[ "$database_lc" == *uat* || "$database_lc" == *prod* || "$database_lc" == *production* || "$database_lc" == *cohestra* ]]; then
+    refuse "database name '$database' is not an allowed disposable target"
+  fi
+  case "$database_lc" in
+    cohestra|cohestra_test|cohestra_uat|postgres|template0|template1)
+      refuse "database '$database' is protected"
+      ;;
+  esac
+}
+
+refuse_outbound_restore_credentials() {
+  local name value
+  local names=(
+    PADDLE_API_KEY
+    SENDGRID_API_KEY
+    SENDGRID_API_KEY_ID
+    Paddle__ApiKey
+    Paddle__ClientToken
+    Paddle__WebhookSecret
+    SendGrid__ApiKey
+  )
+  for name in "${names[@]}"; do
+    value="${!name:-}"
+    if [[ -n "$value" ]]; then
+      refuse "outbound API credentials must not be set for isolated restore"
+    fi
+  done
+}
+
+canonicalize_path() {
+  local path="$1"
+  local label="$2"
+  local resolved
+  resolved="$(readlink -f "$path" 2>/dev/null || true)"
+  [[ -n "$resolved" ]] || refuse "cannot resolve $label"
+  printf '%s\n' "$resolved"
+}
+
+validate_offhost_dir() {
+  local dir="${BACKUP_OFFHOST_DIR:-}"
+  [[ -n "$dir" ]] || refuse "BACKUP_OFFHOST_DIR is not set"
+  [[ "$dir" == /* ]] || refuse "BACKUP_OFFHOST_DIR must be an absolute path"
+  if contains_forbidden_text "$dir"; then
+    refuse "BACKUP_OFFHOST_DIR contains a forbidden marker"
+  fi
+  if [[ -n "${PGDATA:-}" ]]; then
+    local resolved_offhost resolved_pgdata
+    resolved_offhost="$(canonicalize_path "$dir" BACKUP_OFFHOST_DIR)"
+    resolved_pgdata="$(canonicalize_path "$PGDATA" PGDATA)"
+    if [[ "$resolved_offhost" == "$resolved_pgdata" || "$resolved_offhost" == "$resolved_pgdata"/* ]]; then
+      refuse "BACKUP_OFFHOST_DIR must not be inside PGDATA"
+    fi
+  fi
+  mkdir -p "$dir"
+}
+
+validate_artifact_basename() {
+  local name="$1"
+  local root dest
+  [[ -n "$name" ]] || refuse "artifact basename is required"
+  [[ "$name" != "." && "$name" != ".." ]] || refuse "artifact basename is not safe"
+  [[ "$name" != /* ]] || refuse "artifact basename must not be absolute"
+  [[ "$name" != */* && "$name" != *\\* ]] || refuse "artifact basename must not contain a path separator"
+  [[ "$name" != *$'\n'* && "$name" != *$'\r'* ]] || refuse "artifact basename is not safe"
+  root="$(canonicalize_path "$BACKUP_OFFHOST_DIR" BACKUP_OFFHOST_DIR)"
+  dest="$(canonicalize_path "$BACKUP_OFFHOST_DIR/$name" "artifact path")"
+  [[ "$dest" == "$root/$name" ]] || refuse "artifact basename escapes BACKUP_OFFHOST_DIR"
+}
+
+validate_gpg_public_key_file() {
+  local key_file="${BACKUP_GPG_PUBLIC_KEY_FILE:-}"
+  [[ -n "$key_file" ]] || refuse "BACKUP_GPG_PUBLIC_KEY_FILE is not set"
+  [[ -f "$key_file" ]] || refuse "BACKUP_GPG_PUBLIC_KEY_FILE is missing"
+  if grep -q 'BEGIN PGP PRIVATE KEY BLOCK' "$key_file"; then
+    refuse "BACKUP_GPG_PUBLIC_KEY_FILE must contain a public key only"
+  fi
+  if ! grep -q 'BEGIN PGP PUBLIC KEY BLOCK' "$key_file"; then
+    refuse "BACKUP_GPG_PUBLIC_KEY_FILE is not an armored public key"
+  fi
+}
+
+import_gpg_public_key() {
+  local tmp_home
+  tmp_home="$(mktemp -d)"
+  chmod 700 "$tmp_home"
+  if ! GNUPGHOME="$tmp_home" gpg --batch --import "$BACKUP_GPG_PUBLIC_KEY_FILE" >/dev/null 2>&1; then
+    rm -rf "$tmp_home"
+    return 1
+  fi
+  echo "$tmp_home"
+}
+
+encrypt_file() {
+  local plain="$1"
+  local cipher="$2"
+  local gpg_home="$3"
+  local recipient
+  recipient="$(GNUPGHOME="$gpg_home" gpg --batch --list-keys --with-colons | awk -F: '$1=="fpr" {print $10; exit}')"
+  [[ -n "$recipient" ]] || return 1
+  GNUPGHOME="$gpg_home" gpg --batch --yes --quiet --trust-model always --recipient "$recipient" \
+    --output "$cipher" --encrypt "$plain"
+}
+
+decrypt_file() {
+  local cipher="$1"
+  local plain="$2"
+  local gpg_home="$3"
+  GNUPGHOME="$gpg_home" gpg --batch --yes --quiet --trust-model always --output "$plain" --decrypt "$cipher"
+}
+
+sha256_file() {
+  sha256sum "$1" | awk '{print $1}'
+}
+
+pg_tool_major() {
+  local tool="$1"
+  local ver
+  ver="$("$tool" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -n1)" || return 1
+  [[ -n "$ver" ]] || return 1
+  echo "${ver%%.*}"
+}
+
+write_manifest() {
+  local path="$1"
+  local status="$2"
+  local sha256="$3"
+  local basename="$4"
+  local bytes="$5"
+  local database="$6"
+  local created_at="$7"
+  python3 - "$path" "$status" "$sha256" "$basename" "$bytes" "$database" "$created_at" <<'PY'
+import json
+import sys
+path, status, sha256, basename, nbytes, database, created_at = sys.argv[1:8]
+payload = {
+    "status": status,
+    "sha256": sha256,
+    "artifact": basename,
+    "byte_size": int(nbytes),
+    "database": database,
+    "created_at": created_at,
+}
+with open(path, "w", encoding="utf-8") as f:
+    json.dump(payload, f, separators=(",", ":"))
+    f.write("\n")
+PY
+}
+
+write_verified_attestation() {
+  local path="$1"
+  local sha256="$2"
+  local basename="$3"
+  local database="$4"
+  local payload
+  payload="$(python3 - "$sha256" "$basename" "$database" <<'PY'
+import json
+import sys
+sha256, artifact, database = sys.argv[1:4]
+print(json.dumps({
+    "status": "verified",
+    "production_recovery_proven": False,
+    "isolation": "localhost",
+    "sha256": sha256,
+    "artifact": artifact,
+    "database": database,
+}, separators=(",", ":")))
+PY
+)"
+  write_json_file "$path" "$payload"
+}
+
+require_manifest_sha() {
+  local artifact_path="$1"
+  local manifest_path="$2"
+  local expected actual
+  [[ -f "$artifact_path" ]] || fail "encrypted artifact is missing"
+  [[ -f "$manifest_path" ]] || fail "manifest is missing"
+  expected="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("sha256",""))' "$manifest_path")" || fail "manifest is not valid JSON"
+  [[ "$expected" =~ ^[0-9a-f]{64}$ ]] || fail "manifest sha256 is invalid"
+  actual="$(sha256_file "$artifact_path")" || fail "checksum failed"
+  [[ "$actual" == "$expected" ]] || fail "sha256 mismatch"
+  printf '%s\n' "$actual"
+}
+
+command="${1:-}"
+shift || usage
+
+database=""
+artifact_basename=""
+attestation_path="${Backup__AttestationPath:-}"
+attestation_committed=0
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --database)
+      [[ $# -ge 2 ]] || usage
+      database="${2:-}"
+      shift 2
+      ;;
+    --artifact-basename)
+      [[ $# -ge 2 ]] || usage
+      artifact_basename="${2:-}"
+      shift 2
+      ;;
+    --attestation-path)
+      [[ $# -ge 2 ]] || usage
+      attestation_path="${2:-}"
+      shift 2
+      ;;
+    *) refuse "unknown argument $1" ;;
+  esac
+done
+
+scan_env_for_forbidden
+
+case "$command" in
+  backup)
+    [[ -n "$database" ]] || usage
+    require_plain_database_name "$database"
+    database_lc="${database,,}"
+    if [[ "$database_lc" == *uat* || "$database_lc" == "cohestra_test" || "$database_lc" == "cohestra_uat" ]]; then
+      refuse "database '$database' is not a backup source"
+    fi
+    case "$database_lc" in
+      postgres|template0|template1)
+        refuse "database '$database' is protected"
+        ;;
+      cohestra)
+        if [[ "${BACKUP_SOURCE_PLANE:-}" != "dedicated-local" ]]; then
+          refuse "database cohestra requires BACKUP_SOURCE_PLANE=dedicated-local"
+        fi
+        ;;
+    esac
+
+    host="${PGHOST:-localhost}"
+    case "$host" in
+      localhost|127.0.0.1|::1|postgres) ;;
+      *) refuse "host '$host' is not allowed for backup" ;;
+    esac
+
+    if [[ -n "${PGHOSTADDR:-}" || -n "${PGSERVICE:-}" || -n "${PGSERVICEFILE:-}" ]]; then
+      refuse "PGHOSTADDR, PGSERVICE, and PGSERVICEFILE are not allowed"
+    fi
+    unset PGHOSTADDR PGSERVICE PGSERVICEFILE
+
+    validate_offhost_dir
+    validate_gpg_public_key_file
+    command -v gpg >/dev/null 2>&1 || fail "gpg is not available"
+    command -v pg_dump >/dev/null 2>&1 || fail "pg_dump is not available"
+    require_attestation_unverified
+    gpg_home="$(import_gpg_public_key)" || fail "gpg public key import failed"
+    gpg_home_owned=1
+    trap '[[ "${gpg_home_owned:-0}" == "1" && -n "${gpg_home:-}" ]] && rm -rf "$gpg_home"; [[ -n "${tmp_dir:-}" ]] && rm -rf "$tmp_dir"' EXIT
+    encrypt_recipient="$(GNUPGHOME="$gpg_home" gpg --batch --list-keys --with-colons | awk -F: '$1=="fpr" {print $10; exit}')"
+    [[ -n "${encrypt_recipient:-}" ]] || fail "gpg encryption failed"
+
+    if [[ -z "$artifact_basename" ]]; then
+      artifact_basename="cohestra-${database}-$(date -u +%Y%m%dT%H%M%SZ).dump.gpg"
+    fi
+    validate_artifact_basename "$artifact_basename"
+
+    tmp_dir="$(mktemp -d)"
+    plain_dump="$tmp_dir/plain.dump"
+    cipher_dump="$tmp_dir/cipher.dump.gpg"
+
+    pg_dump --host="$host" --format=custom --no-owner --file="$plain_dump" "$database" || fail "pg_dump failed"
+    if ! encrypt_file "$plain_dump" "$cipher_dump" "$gpg_home"; then
+      fail "gpg encryption failed"
+    fi
+
+    digest="$(sha256_file "$cipher_dump")" || fail "checksum failed"
+    byte_size="$(wc -c <"$cipher_dump" | tr -d ' ')" || fail "checksum failed"
+    created_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    dest="$BACKUP_OFFHOST_DIR/$artifact_basename"
+    cp -T "$cipher_dump" "$dest" || fail "copy failed"
+    manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
+    write_manifest "$manifest_path" "backup_complete" "$digest" "$artifact_basename" "$byte_size" "$database" "$created_at" || fail "manifest write failed"
+    echo "BACKUP_COMPLETE artifact=$artifact_basename sha256=$digest"
+    ;;
+
+  verify-artifact)
+    [[ -n "$artifact_basename" ]] || refuse "--artifact-basename is required"
+    validate_offhost_dir
+    validate_artifact_basename "$artifact_basename"
+    require_attestation_unverified
+    artifact_path="$BACKUP_OFFHOST_DIR/$artifact_basename"
+    manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
+    require_manifest_sha "$artifact_path" "$manifest_path" >/dev/null
+    echo "VERIFY_OK artifact=$artifact_basename"
+    ;;
+
+  restore-isolated)
+    [[ -n "$database" ]] || usage
+    [[ -n "$artifact_basename" ]] || refuse "--artifact-basename is required"
+    validate_disposable_target_name "$database"
+    refuse_outbound_restore_credentials
+
+    host="${PGHOST:-localhost}"
+    case "$host" in
+      localhost|127.0.0.1|::1) ;;
+      *) refuse "host '$host' is not local for restore" ;;
+    esac
+
+    if [[ -n "${PGHOSTADDR:-}" || -n "${PGSERVICE:-}" || -n "${PGSERVICEFILE:-}" ]]; then
+      refuse "PGHOSTADDR, PGSERVICE, and PGSERVICEFILE are not allowed"
+    fi
+    unset PGHOSTADDR PGSERVICE PGSERVICEFILE
+
+    validate_offhost_dir
+    validate_artifact_basename "$artifact_basename"
+    [[ -n "$attestation_path" ]] || refuse "attestation path is required (Backup__AttestationPath or --attestation-path)"
+    require_attestation_unverified
+
+    artifact_path="$BACKUP_OFFHOST_DIR/$artifact_basename"
+    manifest_path="$BACKUP_OFFHOST_DIR/${artifact_basename}.manifest.json"
+    digest="$(require_manifest_sha "$artifact_path" "$manifest_path")"
+
+    validate_gpg_public_key_file
+    command -v gpg >/dev/null 2>&1 || fail "gpg is not available"
+    command -v pg_restore >/dev/null 2>&1 || fail "pg_restore is not available"
+    command -v dropdb >/dev/null 2>&1 || fail "dropdb is not available"
+    command -v createdb >/dev/null 2>&1 || fail "createdb is not available"
+    command -v psql >/dev/null 2>&1 || fail "psql is not available"
+
+    tmp_dir="$(mktemp -d)"
+    plain_dump="$tmp_dir/plain.dump"
+    gpg_home=""
+    gpg_home_owned=0
+    trap '[[ "${gpg_home_owned:-0}" == "1" && -n "${gpg_home:-}" ]] && rm -rf "$gpg_home"; rm -f "$plain_dump"; [[ -n "${tmp_dir:-}" ]] && rm -rf "$tmp_dir"' EXIT
+
+    if [[ -n "${GNUPGHOME:-}" && -d "$GNUPGHOME" ]]; then
+      gpg_home="$GNUPGHOME"
+    else
+      gpg_home="$(import_gpg_public_key)" || fail "gpg decryption failed"
+      gpg_home_owned=1
+    fi
+    if ! decrypt_file "$artifact_path" "$plain_dump" "$gpg_home"; then
+      fail "gpg decryption failed"
+    fi
+
+    server_version_num="$(psql --host="$host" --dbname=postgres --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
+      -c "SHOW server_version_num;" 2>/dev/null | tr -d '[:space:]')" || server_version_num=""
+    if [[ ! "$server_version_num" =~ ^[0-9]+$ ]]; then
+      fail "could not read PostgreSQL server major version"
+    fi
+    server_major=$((server_version_num / 10000))
+    dump_major="$(pg_tool_major pg_dump)" || dump_major=""
+    restore_major="$(pg_tool_major pg_restore)" || restore_major=""
+    if [[ -z "$dump_major" || -z "$restore_major" || "$dump_major" != "$server_major" || "$restore_major" != "$server_major" ]]; then
+      fail "PostgreSQL client/server major mismatch (server=${server_major}, pg_dump=${dump_major:-unknown}, pg_restore=${restore_major:-unknown})"
+    fi
+
+    dropdb --host="$host" --if-exists --force "$database" || fail "dropdb failed"
+    createdb --host="$host" "$database" || fail "createdb failed"
+    pg_restore --host="$host" --dbname="$database" --no-owner --no-privileges "$plain_dump" || fail "pg_restore failed"
+    rm -f "$plain_dump"
+
+    current_db="$(psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 -c "SELECT current_database();")" || fail "psql failed"
+    [[ "$current_db" == "$database" ]] || fail "current_database mismatch"
+
+    marker_count=""
+    marker_probe="$(psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
+      -c "SELECT count(*)::text FROM information_schema.tables WHERE table_schema='public' AND table_name='rehearsal_marker';")" || fail "psql failed"
+    if [[ "$marker_probe" == "1" ]]; then
+      marker_count="$(psql --host="$host" --dbname="$database" --no-psqlrc --tuples-only --no-align --set=ON_ERROR_STOP=1 \
+        -c "SELECT count(*)::text FROM rehearsal_marker;")" || fail "rehearsal_marker count failed"
+      if [[ -n "$marker_count" && "$marker_count" =~ ^[0-9]+$ ]]; then
+        :
+      else
+        fail "rehearsal_marker count is invalid"
+      fi
+      echo "REHEARSAL_MARKER_COUNT=$marker_count"
+    fi
+
+    mkdir -p "$(dirname "$attestation_path")" || fail "could not write verified attestation"
+    write_verified_attestation "$attestation_path" "$digest" "$artifact_basename" "$database" || fail "could not write verified attestation"
+    attestation_committed=1
+    echo "RESTORE_ISOLATED verified database=$database artifact=$artifact_basename"
+    ;;
+
+  *)
+    usage
+    ;;
+esac

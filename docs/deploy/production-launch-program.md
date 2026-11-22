@@ -83,8 +83,8 @@ Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-e
   - Layer A = five Actions CI jobs SUCCESS on the exact merged `deploy_sha` (newest unfiltered `push`/`workflow_dispatch` run).
   - Layer B = unique associated PR targeting `main` with hydrated `merged == true` and `merge_commit_sha == deploy_sha`, plus `GitGuardian Security Checks` (`app.slug=gitguardian`) SUCCESS on immutable `${deploy_sha}^2`.
 - GitGuardian is not required on the merge commit itself (it attaches to the PR HEAD). Requiring it on `deploy_sha` would refuse legitimate merges.
-- Direct-to-main commits fail closed, including when a later clean merge would launder them. First-parent history is walked to the immutable trust anchor `c39f2618bcdcb71875d2da5b654f3a999b39ae35`. `ancestor of main` is not reviewed. Branch protection is not mutated in 46.3.
-- One-parent squash/rebase deploys fail closed (no immutable merge-time PR HEAD). Merge-method Settings are not changed in 46.3.
+- Direct-to-main commits fail closed, including when a later clean merge would launder them. First-parent history is walked to the trust root `230bc33bf81a8c9ed851a100ba0130fbef06aaa1` (reviewed squash merge PR #552). `c39f2618bcdcb71875d2da5b654f3a999b39ae35` remains the recorded historical 46.3 baseline and must stay an ancestor of that trust root; the squash anchor itself is not revalidated on each deploy. Commits after the trust root must still be two-parent merges. `ancestor of main` is not reviewed. Branch protection is not mutated in 46.3.
+- Deploy SHAs that are one-parent squash/rebase commits after the trust root still fail closed (no immutable merge-time PR HEAD). Merge-method Settings are not changed in 46.3. Production remains **NO-GO**; do not claim a release SHA.
 - Secrets: `PROD_DROPLET_*` + `PROD_PUBLIC_BASE_URL` names only. Fail closed with `MISSING_SECRET=<NAME>`.
 - Overlay variables (later, not populated here): `PROD_TAILSCALE_CLIENT_ID`, `PROD_TAILSCALE_AUDIENCE`, `PROD_TAILSCALE_HOST`.
 - Inventory identity: droplet `cohestra-production` / `159.223.55.242`. SSH transport identity: live Tailscale IPv4 `100.90.12.72` (Environment variable not populated). UAT `129.212.235.2` is forbidden.
@@ -92,3 +92,16 @@ Canonical story: `_bmad-output/implementation-artifacts/46-3-github-production-e
 - Rollback: `deploy/production-rollback.sh` with explicit SHA; DB restore is 46.5 and never implicit.
 - UAT `deploy.yml` / `deploy-uat` remains automatic and unchanged.
 - Control-plane files exist in-repo. Environment `production` is not created here. Do not dispatch. This file does not deploy Production.
+
+## Story 46.4 runtime / secrets isolation (repository contract)
+
+Canonical story: `_bmad-output/implementation-artifacts/46-4-production-runtime-config-and-secrets-isolation.md`
+
+- Dedicated plane marker: `Cohestra__DeploymentPlane=Production` (compose-locked). UAT keeps running `ASPNETCORE_ENVIRONMENT=Production` without this marker.
+- API start is fail-closed: seeds off, `DEV_TENANT_SLUG` unset, Redis password required, Production-only CORS / `PUBLIC_BASE_URL`, independent SendGrid, placeholder secrets refused.
+- `PaddleCredentialGuard` is unchanged: sandbox/live mix and live Paddle on UAT hosts still refuse. Compose still locks sandbox / `AllowLive=false` (46.10).
+- PostgreSQL 16 and Redis 7 remain on `cohestra_production_internal` with no published 5432/6379.
+- Owner procedure: [production-runtime-secrets.md](./production-runtime-secrets.md). `deploy/prepare-production-host-env.sh` does not write a repo `.env`.
+- Classified UAT-versus-Production comparison uses names + 4-character suffixes only. Synthetic fixtures are not live proof.
+- Owner gate `production_host_application_secrets` is **PENDING** until the owner runs classified verification.
+- 46.6 telemetry and 46.9 security audit are out of scope. Do not compose-up Production. Production remains **NO-GO**.
