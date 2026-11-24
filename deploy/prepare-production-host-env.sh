@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Owner-controlled Production host .env procedure (Story 46.4).
 # Does not SSH. Does not write .env inside the git worktree. Does not print values.
+# --check-names may inspect only the checkout-root .env beside
+# docker-compose.production.yml, and only when that file is a regular
+# non-symlink, untracked, and ignored by this repository's .gitignore.
+# Every other worktree path is refused.
 #
 # Usage:
 #   bash deploy/prepare-production-host-env.sh --print-procedure
@@ -38,9 +42,91 @@ is_under_repo() {
   python3 - "$ROOT_DIR" "$target" <<'PY'
 import os, sys
 root = os.path.realpath(sys.argv[1])
-target = os.path.realpath(sys.argv[2])
-print("yes" if target == root or target.startswith(root + os.sep) else "no")
+path = os.path.normpath(sys.argv[2])
+followed = os.path.realpath(sys.argv[2])
+
+def inside(candidate):
+    return candidate == root or candidate.startswith(root + os.sep)
+
+# Match the path's own location and its followed target. A worktree symlink
+# that points outside is still a worktree path and must be refused.
+print("yes" if inside(path) or inside(followed) else "no")
 PY
+}
+
+is_canonical_root_env() {
+  python3 - "$ROOT_DIR" "$1" <<'PY'
+import os, sys
+root = os.path.realpath(sys.argv[1])
+path = sys.argv[2]
+if not path.startswith("/") or path.endswith("/"):
+    print("no")
+    raise SystemExit(0)
+parent = os.path.realpath(os.path.dirname(path))
+base = os.path.basename(path)
+print("yes" if base == ".env" and parent == root else "no")
+PY
+}
+
+canonical_env_gate() {
+  local path="$1"
+  local ignore_out ignore_rc py_rc
+  if [[ -L "$path" ]]; then
+    echo "REFUSE: canonical .env must be a regular non-symlink file."
+    return 1
+  fi
+  if [[ ! -e "$path" ]]; then
+    echo "REFUSE: host env file is missing."
+    echo "OWNER_GATE=production_host_application_secrets"
+    return 1
+  fi
+  if [[ ! -f "$path" ]]; then
+    echo "REFUSE: canonical .env must be a regular non-symlink file."
+    return 1
+  fi
+  if ! git -C "$ROOT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "REFUSE: canonical .env requires the repository checkout."
+    return 1
+  fi
+  if git -C "$ROOT_DIR" ls-files --error-unmatch -- .env >/dev/null 2>&1; then
+    echo "REFUSE: canonical .env is tracked."
+    return 1
+  fi
+  ignore_out="$(mktemp)"
+  set +e
+  printf '%s\0' '.env' | git -C "$ROOT_DIR" -c core.excludesFile=/dev/null check-ignore -v -z --stdin --no-index >"$ignore_out" 2>/dev/null
+  ignore_rc=$?
+  set -e
+  if [[ "$ignore_rc" -ne 0 ]]; then
+    rm -f "$ignore_out"
+    echo "REFUSE: canonical .env is not ignored by the repository .gitignore."
+    return 1
+  fi
+  py_rc=0
+  python3 - "$ROOT_DIR" "$ignore_out" <<'PY' || py_rc=$?
+import os, sys
+root = os.path.realpath(sys.argv[1])
+fields = open(sys.argv[2], "rb").read().split(b"\0")
+if len(fields) < 4:
+    raise SystemExit(1)
+source, _line, pattern, pathname = fields[0], fields[1], fields[2], fields[3]
+if pathname != b".env" or pattern.startswith(b"!"):
+    raise SystemExit(1)
+source_text = source.decode("utf-8", "surrogateescape")
+if os.path.isabs(source_text):
+    source_path = os.path.realpath(source_text)
+else:
+    source_path = os.path.realpath(os.path.join(root, source_text))
+expected = os.path.realpath(os.path.join(root, ".gitignore"))
+if source_path != expected:
+    raise SystemExit(1)
+PY
+  rm -f "$ignore_out"
+  if [[ "$py_rc" -ne 0 ]]; then
+    echo "REFUSE: canonical .env is not ignored by the repository .gitignore."
+    return 1
+  fi
+  return 0
 }
 
 case "$1" in
@@ -62,6 +148,11 @@ Production host application secrets — owner procedure
    Record PASS/FAIL without secret values. Live check is an owner gate.
 6. Never paste values into git, chat, Docker layers, PRs, or evidence.
 7. This script will not write .env for you inside the repository.
+   --check-names may inspect only the checkout-root .env beside
+   docker-compose.production.yml when that file is a regular non-symlink,
+   untracked, and ignored by this repository's .gitignore. Every other
+   path inside the worktree is refused. A global ignore rule alone does
+   not qualify.
 
 PRODUCTION=NO-GO. This procedure does not authorize public cutover; the owner phrase PRODUCTION CUTOVER: AUTHORIZED is absent here and is not claimed as granted.
 EOF
@@ -99,12 +190,13 @@ EOF
       echo "REFUSE: --check-names requires an absolute path."
       exit 1
     fi
-    if [[ "$(is_under_repo "$path")" == "yes" ]]; then
+    if [[ "$(is_canonical_root_env "$path")" == "yes" ]]; then
+      canonical_env_gate "$path"
+    elif [[ "$(is_under_repo "$path")" == "yes" ]]; then
       echo "REFUSE: will not inspect a path inside the git worktree."
       echo "Create the host .env on the dedicated Production droplet only."
       exit 1
-    fi
-    if [[ ! -f "$path" ]]; then
+    elif [[ ! -f "$path" ]]; then
       echo "REFUSE: host env file is missing."
       echo "OWNER_GATE=production_host_application_secrets"
       exit 1

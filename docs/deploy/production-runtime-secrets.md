@@ -16,7 +16,7 @@ UAT continues to run the Production ASP.NET environment name with sandbox Paddle
 
 ## Host `.env` (owner-controlled, later)
 
-Do **not** create this file in git. On the dedicated Production droplet only:
+Do **not** create this file in git. Production Compose reads the checkout-root `.env` beside `docker-compose.production.yml`. On the dedicated Production droplet that path is `/home/deploy/cohestra-production/.env`:
 
 ```bash
 cp .env.production.example .env
@@ -24,7 +24,7 @@ cp .env.production.example .env
 bash deploy/prepare-production-host-env.sh --check-names /home/deploy/cohestra-production/.env
 ```
 
-`deploy/prepare-production-host-env.sh` refuses to write or inspect any path inside the repository worktree.
+`deploy/prepare-production-host-env.sh` does not write `.env`. `--check-names` may inspect only that exact checkout-root `.env`, and only when it is a regular non-symlink file, untracked, and ignored by this repository's `.gitignore`. A global Git ignore rule or a `.git/info/exclude` entry alone does not qualify. Every other path inside the worktree is refused. This document does not move the host checkout or authorize a deploy.
 
 Required names (values never recorded here):
 
