@@ -303,6 +303,21 @@ assert_values_hidden "dangling HEAD .env was read"
 assert_not_opened "dangling HEAD .env reached the content check"
 pass "dangling HEAD is refused before content validation"
 
+prepare_fixture "$fixture" ".env"
+write_valid_env "$fixture/.env"
+tree_id="$(git -C "$fixture" rev-parse 'HEAD^{tree}')"
+rm -f "$fixture/.git/objects/${tree_id:0:2}/${tree_id:2}"
+if bash "$fixture_script" --check-names "$fixture/.env" >"$out" 2>&1; then
+  fail "missing HEAD tree must not be treated as an untracked .env"
+fi
+grep -q 'REFUSE: canonical .env tracked-file check failed.' "$out" || fail "missing tree marker"
+if grep -q 'fatal:' "$out" || grep -q "$tree_id" "$out"; then
+  fail "missing tree error was not sanitized"
+fi
+assert_values_hidden "missing-tree .env was read"
+assert_not_opened "missing-tree .env reached the content check"
+pass "missing HEAD tree is refused before content validation"
+
 prepare_fixture "$fixture" "*.log"
 write_valid_env "$fixture/.env"
 printf '.env\n' > "$work/global-ignore"

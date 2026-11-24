@@ -70,7 +70,7 @@ PY
 
 canonical_env_gate() {
   local path="$1"
-  local ignore_out ignore_rc py_rc tracked_out tracked_rc head_rc head_commit_rc
+  local ignore_out ignore_rc py_rc tracked_out tracked_rc head_rc head_commit_rc head_tree_rc
   if [[ -L "$path" ]]; then
     echo "REFUSE: canonical .env must be a regular non-symlink file."
     return 1
@@ -94,6 +94,15 @@ canonical_env_gate() {
   head_commit_rc=$?
   set -e
   if [[ "$head_commit_rc" -ne 0 ]]; then
+    echo "REFUSE: canonical .env tracked-file check failed."
+    return 1
+  fi
+  # HEAD:.env exits 1 both when the path is absent and when the tree object is missing.
+  set +e
+  git -C "$ROOT_DIR" rev-parse --verify --quiet 'HEAD^{tree}' >/dev/null 2>&1
+  head_tree_rc=$?
+  set -e
+  if [[ "$head_tree_rc" -ne 0 ]]; then
     echo "REFUSE: canonical .env tracked-file check failed."
     return 1
   fi
