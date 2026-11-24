@@ -70,7 +70,7 @@ PY
 
 canonical_env_gate() {
   local path="$1"
-  local ignore_out ignore_rc py_rc
+  local ignore_out ignore_rc py_rc tracked_out tracked_rc head_rc
   if [[ -L "$path" ]]; then
     echo "REFUSE: canonical .env must be a regular non-symlink file."
     return 1
@@ -88,8 +88,36 @@ canonical_env_gate() {
     echo "REFUSE: canonical .env requires the repository checkout."
     return 1
   fi
-  if git -C "$ROOT_DIR" ls-files --error-unmatch -- .env >/dev/null 2>&1; then
+  # ls-files --error-unmatch: 0 means tracked, 1 means no tracked path matched.
+  # Any other status is a Git failure and must not be treated as untracked.
+  tracked_out="$(mktemp)"
+  set +e
+  git -C "$ROOT_DIR" ls-files --error-unmatch -- .env >"$tracked_out" 2>/dev/null
+  tracked_rc=$?
+  set -e
+  if [[ "$tracked_rc" -eq 0 ]]; then
+    rm -f "$tracked_out"
     echo "REFUSE: canonical .env is tracked."
+    return 1
+  fi
+  if [[ "$tracked_rc" -ne 1 || -s "$tracked_out" ]]; then
+    rm -f "$tracked_out"
+    echo "REFUSE: canonical .env tracked-file check failed."
+    return 1
+  fi
+  rm -f "$tracked_out"
+  # A missing index makes ls-files report no match. Refuse when HEAD still has .env.
+  # rev-parse --verify: 0 is present, 1 is absent, anything else is a Git failure.
+  set +e
+  git -C "$ROOT_DIR" rev-parse --verify --quiet HEAD:.env >/dev/null 2>&1
+  head_rc=$?
+  set -e
+  if [[ "$head_rc" -eq 0 ]]; then
+    echo "REFUSE: canonical .env is tracked."
+    return 1
+  fi
+  if [[ "$head_rc" -ne 1 ]]; then
+    echo "REFUSE: canonical .env tracked-file check failed."
     return 1
   fi
   ignore_out="$(mktemp)"

@@ -242,6 +242,53 @@ assert_values_hidden "tracked .env was read"
 assert_not_opened "tracked .env reached the content check"
 pass "tracked checkout-root .env is refused"
 
+prepare_fixture "$fixture" ".env"
+write_valid_env "$fixture/.env"
+git_stub="$work/git-stub"
+mkdir -p "$git_stub"
+real_git="$(command -v git)"
+git_log="$work/git-calls"
+rm -f "$git_log"
+cat > "$git_stub/git" <<EOF
+#!/usr/bin/env bash
+printf '%s\\n' "\$*" >> $(printf '%q' "$git_log")
+for arg in "\$@"; do
+  if [[ "\$arg" == "ls-files" ]]; then
+    echo "fatal: simulated index error" >&2
+    exit 128
+  fi
+done
+exec $(printf '%q' "$real_git") "\$@"
+EOF
+chmod +x "$git_stub/git"
+if PATH="$git_stub:$PATH" bash "$fixture_script" --check-names "$fixture/.env" >"$out" 2>&1; then
+  fail "unexpected git ls-files error must fail closed"
+fi
+grep -q 'REFUSE: canonical .env tracked-file check failed.' "$out" || fail "git error marker"
+if grep -q 'fatal:' "$out" || grep -q 'simulated index error' "$out"; then
+  fail "git error text was not sanitized"
+fi
+assert_values_hidden "git error path was read"
+assert_not_opened "git error reached the content check"
+grep -q 'rev-parse' "$git_log" || fail "other git checks must still run"
+if grep -q 'check-ignore' "$git_log"; then
+  fail "gitignore check must not run after a git index error"
+fi
+pass "unexpected git ls-files error is refused before content validation"
+
+prepare_fixture "$fixture" ".env"
+write_valid_env "$fixture/.env"
+git -C "$fixture" add -f .env
+git -C "$fixture" commit -qm "track env"
+rm -f "$fixture/.git/index"
+if bash "$fixture_script" --check-names "$fixture/.env" >"$out" 2>&1; then
+  fail "missing index must not treat a committed .env as untracked"
+fi
+grep -q 'REFUSE: canonical .env is tracked.' "$out" || fail "missing-index tracked marker"
+assert_values_hidden "missing-index .env was read"
+assert_not_opened "missing-index .env reached the content check"
+pass "missing index still refuses a committed .env"
+
 prepare_fixture "$fixture" "*.log"
 write_valid_env "$fixture/.env"
 printf '.env\n' > "$work/global-ignore"
