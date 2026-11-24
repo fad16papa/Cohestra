@@ -289,6 +289,20 @@ assert_values_hidden "missing-index .env was read"
 assert_not_opened "missing-index .env reached the content check"
 pass "missing index still refuses a committed .env"
 
+prepare_fixture "$fixture" ".env"
+write_valid_env "$fixture/.env"
+echo aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa > "$fixture/.git/refs/heads/main"
+if bash "$fixture_script" --check-names "$fixture/.env" >"$out" 2>&1; then
+  fail "dangling HEAD must not be treated as an untracked .env"
+fi
+grep -q 'REFUSE: canonical .env tracked-file check failed.' "$out" || fail "dangling HEAD marker"
+if grep -q 'fatal:' "$out" || grep -q 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' "$out"; then
+  fail "dangling HEAD error was not sanitized"
+fi
+assert_values_hidden "dangling HEAD .env was read"
+assert_not_opened "dangling HEAD .env reached the content check"
+pass "dangling HEAD is refused before content validation"
+
 prepare_fixture "$fixture" "*.log"
 write_valid_env "$fixture/.env"
 printf '.env\n' > "$work/global-ignore"
