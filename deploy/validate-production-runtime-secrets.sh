@@ -170,6 +170,11 @@ if [[ -f "$DOCS" && -f "$LAUNCH" ]] \
   && grep -q 'OWNER_GATE' "$DOCS" \
   && grep -qi 'classified' "$DOCS" \
   && grep -q 'NO-GO' "$DOCS" \
+  && grep -F -q '**Live check: BLOCKED.**' "$DOCS" \
+  && grep -q '7e1cf5d48064b28a831ba20b25ac06d27e1a17fc' "$DOCS" \
+  && grep -q 'does not contain `deploy/prepare-production-host-env.sh`' "$DOCS" \
+  && grep -q 'No authorized procedure currently updates that checkout' "$DOCS" \
+  && grep -q 'does not update the droplet' "$DOCS" \
   && grep -q '46.4' "$LAUNCH"; then
   pass "owner procedure and launch program document 46.4"
 else

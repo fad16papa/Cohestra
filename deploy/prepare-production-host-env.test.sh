@@ -21,6 +21,11 @@ if ! bash "$SCRIPT" --print-procedure >"$out"; then
 fi
 grep -q 'cp .env.production.example .env' "$out" || fail "procedure copy step"
 grep -q 'NO-GO' "$out" || fail "procedure NO-GO"
+grep -q 'LIVE CHECK=BLOCKED' "$out" || fail "procedure must mark the live check blocked"
+grep -q '7e1cf5d48064b28a831ba20b25ac06d27e1a17fc' "$out" || fail "procedure must name the recorded checkout"
+grep -q 'does not contain this' "$out" || fail "procedure must say the recorded checkout lacks the validator"
+grep -q 'No authorized procedure currently updates that checkout' "$out" || fail "procedure must state no authorized checkout update"
+grep -q 'Do not run the host commands below on that' "$out" || fail "procedure must not present the validator as runnable on the recorded checkout"
 if grep -qiE 'SG\.[A-Za-z0-9]|BEGIN (OPENSSH |RSA )?PRIVATE KEY|pdl_' "$out"; then
   fail "procedure leaked a secret-like value"
 fi

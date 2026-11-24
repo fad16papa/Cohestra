@@ -16,15 +16,19 @@ UAT continues to run the Production ASP.NET environment name with sandbox Paddle
 
 ## Host `.env` (owner-controlled, later)
 
-Do **not** create this file in git. Production Compose reads the checkout-root `.env` beside `docker-compose.production.yml`. On the dedicated Production droplet that path is `/home/deploy/cohestra-production/.env`:
+Do **not** create this file in git. Production Compose reads the checkout-root `.env` beside `docker-compose.production.yml`. On the dedicated Production droplet that path is `/home/deploy/cohestra-production/.env`.
+
+**Live check: BLOCKED.** The recorded Production checkout is `7e1cf5d48064b28a831ba20b25ac06d27e1a17fc`. That commit does not contain `deploy/prepare-production-host-env.sh`. No authorized procedure currently updates that checkout or supplies this validator. Adding this documentation, or merging the pull request that contains it, does not update the droplet. Do not run the command below on the recorded checkout.
+
+The command is future-only. Use it only after an approved procedure has put a revision that contains this validator on the host checkout:
 
 ```bash
 cp .env.production.example .env
-# fill values on the host
+# fill values on the host; do not copy the UAT .env
 bash deploy/prepare-production-host-env.sh --check-names /home/deploy/cohestra-production/.env
 ```
 
-`deploy/prepare-production-host-env.sh` does not write `.env`. `--check-names` may inspect only that exact checkout-root `.env`, and only when it is a regular non-symlink file, untracked, and ignored by this repository's `.gitignore`. A global Git ignore rule or a `.git/info/exclude` entry alone does not qualify. Every other path inside the worktree is refused. This document does not move the host checkout or authorize a deploy.
+`deploy/prepare-production-host-env.sh` does not write `.env`. Once that revision is the checkout being checked, `--check-names` may inspect only that exact checkout-root `.env`, and only when it is a regular non-symlink file, untracked, and ignored by this repository's `.gitignore`. A global Git ignore rule or a `.git/info/exclude` entry alone does not qualify. Every other path inside the worktree is refused. This document does not authorize a checkout move, a deploy, or public cutover.
 
 Required names (values never recorded here):
 
@@ -84,6 +88,8 @@ Repository fixtures under `deploy/fixtures/46-4/` are **synthetic**. Passing tho
 - Story 46.10 owns live Paddle.
 
 ## Production state
+
+Live checkout-root `.env` check: **BLOCKED**. Recorded checkout `7e1cf5d48064b28a831ba20b25ac06d27e1a17fc` does not contain the validator, and no authorized procedure currently supplies it. This document does not update the droplet.
 
 Cutover authorization: **NOT GRANTED** (does not waive this gate).
 

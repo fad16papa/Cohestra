@@ -134,7 +134,16 @@ case "$1" in
     cat <<'EOF'
 Production host application secrets — owner procedure
 
-1. On the dedicated Production droplet only (never the UAT/CRM host):
+LIVE CHECK=BLOCKED. Recorded Production checkout
+7e1cf5d48064b28a831ba20b25ac06d27e1a17fc does not contain this
+validator. No authorized procedure currently updates that checkout or
+supplies this validator. Do not run the host commands below on that
+checkout. They apply only after an approved procedure has placed a
+revision that contains this validator on the host. Printing this
+procedure does not update the droplet.
+
+1. On the dedicated Production droplet only, and only on that later
+   revision (never the UAT/CRM host):
      cp .env.production.example .env
    Fill values there. Do not copy UAT .env.
 2. Required names: POSTGRES_PASSWORD, REDIS_PASSWORD, JWT_SIGNING_KEY,
